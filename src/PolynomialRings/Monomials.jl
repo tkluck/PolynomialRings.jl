@@ -34,7 +34,7 @@ abstract type AbstractMonomial end
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: getindex, gcd, lcm
+import Base: getindex, gcd, lcm, one
 
 
 # -----------------------------------------------------------------------------
@@ -45,7 +45,7 @@ import Base: getindex, gcd, lcm
 
 +(a::M, b::M) where M <: AbstractMonomial = M(i -> a[i] + b[i], max(num_variables(a), num_variables(b)))
 
-total_degree(a::AbstractMonomial) = sum( a[i] for i in 1:num_variables(a) )
+total_degree(a::A) where A <: AbstractMonomial = sum( a[i] for i in 1:num_variables(a) )
 
 lcm(a::M, b::M) where M <: AbstractMonomial = M(i -> max(a[i], b[i]), max(num_variables(a), num_variables(b)))
 gcd(a::M, b::M) where M <: AbstractMonomial = M(i -> min(a[i], b[i]), max(num_variables(a), num_variables(b)))
@@ -56,7 +56,7 @@ enumerate(a::M) where M <: AbstractMonomial = Channel(chtype=Tuple{Int,exptype(M
 end
 
 exptype(a::AbstractMonomial) = exptype(typeof(a))
-num_variables(a::AbstractMonomial) = num_variables(typeof(a))
+num_variables(a::A) where A <: AbstractMonomial = num_variables(A)
 
 # -----------------------------------------------------------------------------
 #
@@ -76,14 +76,19 @@ struct TupleMonomial{N, I} <: AbstractMonomial
     TupleMonomial{N,I}(e,deg) where I <: Integer where N = new(e,deg)
 end
 
-function TupleMonomial(f::Function, num_variables::Int)
-    t = ntuple(f, num_variables)
-    TupleMonomial{num_variables, eltype(t)}(t, sum(t))
+function TupleMonomial(f::Function, num_variables::Type{Val{N}}) where N
+    t = ntuple(f, Val{N})
+    TupleMonomial{N, eltype(t)}(t, sum(t))
 end
 
-num_variables(::Type{TupleMonomial{N}}) where N = N
+TupleMonomial(f::Function, num_variables::Int) = TupleMonomial(f, Val{num_variables})
+
+num_variables(::Type{TupleMonomial{N,I}}) where {N,I} = N
 exptype(::Type{TupleMonomial{N,I}}) where I <: Integer where N = I
 getindex(m::TupleMonomial, i::Integer) = m.e[i]
+
+
+one(::Type{TupleMonomial{N, I}}) where {N, I} = TupleMonomial(i->zero(I), Val{N})
 
 # -----------------------------------------------------------------------------
 #

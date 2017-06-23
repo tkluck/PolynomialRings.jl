@@ -21,7 +21,9 @@ struct Polynomial{A, Order}
 end
 
 terms(p::Polynomial) = p.terms
-termtype(::Type{Polynomial{A, Order}}) where {A,T} = eltype(A)
+
+termtype(::Type{Polynomial{A, Order}}) where {A,Order} = eltype(A)
+basering(::Type{Polynomial{A, Order}}) where {A,Order} = basering(termtype(A))
 
 Polynomial(terms::AbstractVector{<:Term}) = Polynomial{typeof(terms), Val{:degrevlex}}(terms)
 

@@ -1,7 +1,7 @@
 module MonomialOrderings
 
 import Base: isless
-import PolynomialRings.Monomials: AbstractMonomial
+import PolynomialRings.Monomials: AbstractMonomial, total_degree, num_variables
 
 function isless(a::M,b::M,::Type{Val{:degrevlex}}) where M <: AbstractMonomial
     if total_degree(a) == total_degree(b)

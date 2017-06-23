@@ -20,7 +20,7 @@ end
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: *
+import Base: *, -, one
 
 
 # -----------------------------------------------------------------------------
@@ -29,6 +29,12 @@ import Base: *
 #
 # -----------------------------------------------------------------------------
 *(a::T, b::T) where T <: Term = T(a.m + b.m, a.c*b.c)
+-(a::T) where T <: Term = T(a.m, -a.c)
+
+one(::Type{Term{M,C}}) where {M, C} = Term{M,C}(one(M), one(C))
+
+exponent(a::Term) = a.m
+coefficient(a::Term) = a.c
 
 
 end
