@@ -1,5 +1,7 @@
 module PolynomialRings
 
+include("PolynomialRings/Util.jl")
+
 include("PolynomialRings/Monomials.jl")
 include("PolynomialRings/Terms.jl")
 include("PolynomialRings/Polynomials.jl")

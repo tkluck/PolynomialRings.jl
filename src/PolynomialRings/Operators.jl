@@ -9,7 +9,7 @@ import PolynomialRings.Polynomials: Polynomial, termtype, terms
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: zero, one, +, -
+import Base: zero, one, +, -, *
 
 # -----------------------------------------------------------------------------
 #
@@ -18,6 +18,7 @@ import Base: zero, one, +, -
 # -----------------------------------------------------------------------------
 zero(::Type{P}) where P <: Polynomial = P([])
 one(::Type{P})  where P <: Polynomial = P([one(termtype(P))])
+iszero(a::P) where P <: Polynomial = length(terms(a)) == 0
 
 # -----------------------------------------------------------------------------
 #
@@ -104,6 +105,73 @@ function -(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
 
     resize!(res, n)
     return Polynomial(res)
+end
+
+# -----------------------------------------------------------------------------
+#
+# multiplication
+#
+# -----------------------------------------------------------------------------
+import PolynomialRings.Util: BoundedHeap
+import DataStructures: enqueue!, dequeue!, peek
+
+function *(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
+
+    T = Term{M, promote_type(C1,C2)}
+    PP = Polynomial{Vector{T}, Order}
+
+    if iszero(a) || iszero(b)
+        return zero(PP)
+    end
+
+    summands = Vector{T}(length(terms(a)) * length(terms(b)))
+    k = 0
+
+    row_indices= zeros(Int, length(terms(a)))
+    col_indices= zeros(Int, length(terms(b)))
+
+    # using a bounded queue not to drop items when it gets too big, but to allocate it
+    # once to its maximal theoretical size and never reallocate.
+    lt = Base.Order.Lt( (a,b) -> isless(monomial(a[3]),monomial(b[3]),Order) )
+    minimal_corners = BoundedHeap{Tuple{Int, Int, T}, lt}(min(length(terms(a)), length(terms(b))))
+    @inbounds t = terms(a)[1] * terms(b)[1]
+    enqueue!(minimal_corners, (1,1,t))
+    @inbounds while length(minimal_corners)>0
+        row, col, t = peek(minimal_corners)
+        dequeue!(minimal_corners)
+        summands[k+=1] = t
+        row_indices[row] = col
+        col_indices[col] = row
+        if row < length(terms(a)) && row_indices[row+1] == col - 1
+            @inbounds t = terms(a)[row+1] * terms(b)[col]
+            enqueue!(minimal_corners, (row+1,col, t))
+        end
+        if col < length(terms(b)) && col_indices[col+1] == row - 1
+            @inbounds t = terms(a)[row] * terms(b)[col+1]
+            enqueue!(minimal_corners, (row,col+1, t))
+        end
+    end
+
+    assert(k == length(summands))
+    assert(issorted(summands, lt=(a,b)->isless(exponent(a),exponent(b),Order)))
+
+    if length(summands) > 0
+        last_exp = exponent(summands[1])
+        n = 1
+        for j in 2:length(summands)
+            exponent, coef = summands[j]
+            if exponent == last_exp
+                cur_coef = coefficient(summands[n])
+                @inbounds summands[n] = Term(exponent, cur_coef + coef)
+            else
+                @inbounds summands[n+=1] = summands[j]
+                last_exp = exponent
+            end
+        end
+        resize!(summands, n)
+        filter!(m -> coefficient(m) != 0, summands)
+    end
+    return PP(summands)
 end
 
 

@@ -34,7 +34,7 @@ abstract type AbstractMonomial end
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: getindex, gcd, lcm, one
+import Base: getindex, gcd, lcm, one, +
 
 
 # -----------------------------------------------------------------------------
