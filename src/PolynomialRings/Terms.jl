@@ -34,7 +34,7 @@ import PolynomialRings: generators
 
 one(::Type{Term{M,C}}) where {M, C} = Term{M,C}(one(M), one(C))
 
-exponent(a::Term) = a.m
+monomial(a::Term) = a.m
 coefficient(a::Term) = a.c
 
 generators(::Type{Term{M,C}}) where {M, C} = [Term{M,C}(g, one(C)) for g in generators(M)]

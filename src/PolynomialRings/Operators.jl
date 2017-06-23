@@ -1,7 +1,7 @@
 module Operators
 
 import PolynomialRings.Monomials: AbstractMonomial
-import PolynomialRings.Terms: Term, exponent, coefficient
+import PolynomialRings.Terms: Term, monomial, coefficient
 import PolynomialRings.Polynomials: Polynomial, termtype, terms
 
 # -----------------------------------------------------------------------------
@@ -36,8 +36,8 @@ function +(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
     while !done(terms(a), state_a) && !done(terms(b), state_b)
         (term_a, next_state_a) = next(terms(a), state_a)
         (term_b, next_state_b) = next(terms(b), state_b)
-        exponent_a, coefficient_a = exponent(term_a), coefficient(term_a)
-        exponent_b, coefficient_b = exponent(term_b), coefficient(term_b)
+        exponent_a, coefficient_a = monomial(term_a), coefficient(term_a)
+        exponent_b, coefficient_b = monomial(term_b), coefficient(term_b)
 
         if isless(exponent_a, exponent_b, Order)
             @inbounds res[n+=1] = term_a
@@ -77,8 +77,8 @@ function -(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
     while !done(terms(a), state_a) && !done(terms(b), state_b)
         (term_a, next_state_a) = next(terms(a), state_a)
         (term_b, next_state_b) = next(terms(b), state_b)
-        exponent_a, coefficient_a = exponent(term_a), coefficient(term_a)
-        exponent_b, coefficient_b = exponent(term_b), coefficient(term_b)
+        exponent_a, coefficient_a = monomial(term_a), coefficient(term_a)
+        exponent_b, coefficient_b = monomial(term_b), coefficient(term_b)
 
         if isless(exponent_a, exponent_b, Order)
             @inbounds res[n+=1] = term_a
@@ -153,13 +153,13 @@ function *(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
     end
 
     assert(k == length(summands))
-    assert(issorted(summands, lt=(a,b)->isless(exponent(a),exponent(b),Order)))
+    assert(issorted(summands, lt=(a,b)->isless(monomial(a),monomial(b),Order)))
 
     if length(summands) > 0
-        last_exp = exponent(summands[1])
+        last_exp = monomial(summands[1])
         n = 1
         for j in 2:length(summands)
-            exponent, coef = summands[j]
+            exponent, coef = monomial(summands[j]), coefficient(summands[j])
             if exponent == last_exp
                 cur_coef = coefficient(summands[n])
                 @inbounds summands[n] = Term(exponent, cur_coef + coef)
