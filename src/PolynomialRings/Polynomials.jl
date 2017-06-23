@@ -1,6 +1,7 @@
 module Polynomials
 
 import PolynomialRings.Terms: Term
+import PolynomialRings: generators
 
 # -----------------------------------------------------------------------------
 #
@@ -20,11 +21,22 @@ struct Polynomial{A, Order}
     Polynomial{A, Order}(terms::A) where A <: AbstractVector{T} where T <: Term where Order <: Val = new(terms)
 end
 
+Polynomial(terms::AbstractVector{<:Term}) = Polynomial{typeof(terms), Val{:degrevlex}}(terms)
+
+# -----------------------------------------------------------------------------
+#
+# Type information
+#
+# -----------------------------------------------------------------------------
+
 terms(p::Polynomial) = p.terms
 
 termtype(::Type{Polynomial{A, Order}}) where {A,Order} = eltype(A)
 basering(::Type{Polynomial{A, Order}}) where {A,Order} = basering(termtype(A))
 
-Polynomial(terms::AbstractVector{<:Term}) = Polynomial{typeof(terms), Val{:degrevlex}}(terms)
+generators(::Type{P}) where P <: Polynomial = [
+    Polynomial([g]) for g in generators(termtype(P))
+]
+
 
 end

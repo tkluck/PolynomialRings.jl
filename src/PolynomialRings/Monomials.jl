@@ -35,6 +35,7 @@ abstract type AbstractMonomial end
 #
 # -----------------------------------------------------------------------------
 import Base: getindex, gcd, lcm, one, +
+import PolynomialRings: generators
 
 
 # -----------------------------------------------------------------------------
@@ -89,6 +90,10 @@ getindex(m::TupleMonomial, i::Integer) = m.e[i]
 
 
 one(::Type{TupleMonomial{N, I}}) where {N, I} = TupleMonomial(i->zero(I), Val{N})
+generators(::Type{TupleMonomial{N, I}}) where {N, I} = [
+    TupleMonomial(i->i==j?one(I):zero(I), Val{N})
+    for j in 1:N
+]
 
 # -----------------------------------------------------------------------------
 #
