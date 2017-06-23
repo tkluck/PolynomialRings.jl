@@ -37,7 +37,8 @@ one(::Type{Term{M,C}}) where {M, C} = Term{M,C}(one(M), one(C))
 monomial(a::Term) = a.m
 coefficient(a::Term) = a.c
 
-generators(::Type{Term{M,C}}) where {M, C} = [Term{M,C}(g, one(C)) for g in generators(M)]
+import PolynomialRings.Util: lazymap
+generators(::Type{Term{M,C}}) where {M, C} = lazymap(g -> Term{M,C}(g, one(C)), generators(M))
 
 
 end

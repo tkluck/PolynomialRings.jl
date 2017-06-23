@@ -102,7 +102,7 @@ generators(::Type{TupleMonomial{N, I}}) where {N, I} = [
 # -----------------------------------------------------------------------------
 
 """
-    Vector{V, I} <: AbstractMonomial where V <: AbstractVector{I} where I <: Integer
+    VectorMonomial{V} <: AbstractMonomial where V <: AbstractVector{I} where I <: Integer
 
 An implementation of AbstractMonomial that stores exponents as a vector
 of integers. This can be a sparse or dense representation, depending on the
@@ -112,20 +112,28 @@ This representation is intended for the case when the number of variables
 is unbounded. In particular, the indexing operation `m[i]` returns `0` when `i`
 is out-of-bounds, instead of throwing an exception.
 """
-struct VectorMonomial{V, I} <: AbstractMonomial
+struct VectorMonomial{V} <: AbstractMonomial
     e::V
-    deg::I
-    VectorMonomial{V, I}(e, deg) where V <: AbstractVector{I} where I <: Integer = new(e, deg)
+    VectorMonomial{V}(e) where V <: AbstractVector{<:Integer} = new(e)
 end
 
 function VectorMonomial(f::Function, num_variables::Int)
     e = [f(i) for i in 1:num_variables]
-    VectorMonomial(e, sum(e))
+    VectorMonomial(e)
 end
 
 num_variables(m::VectorMonomial) = length(m.e)
-exptype(::Type{VectorMonomial{V,I}}) where I <: Integer where V = I
+exptype(::Type{VectorMonomial{V}}) where V = eltype(V)
 getindex(m::VectorMonomial, i::Integer) = i <= length(m.e) ? m.e[i] : zero(exptype(m))
+
+generators(::Type{VectorMonomial{V}}) where V = Channel(ctype=VectorMonomial{V}) do ch
+    for j in 1:typemax(Int)
+        x = spzeros(eltype(V), j)
+        x[j] = one(eltype(V))
+        push!(ch, VectorMonomial{V}(x))
+    end
+    throw(AssertionError("typemax exhausted"))
+end
 
 # -----------------------------------------------------------------------------
 #
@@ -139,6 +147,23 @@ getindex(m::VectorMonomial, i::Integer) = i <= length(m.e) ? m.e[i] : zero(expty
     end
     return quote
         M($result, a.deg + b.deg)
+    end
+end
+
+# -----------------------------------------------------------------------------
+#
+# VectorMonomial: overloads for speedup
+#
+# -----------------------------------------------------------------------------
+function +(a::M, b::M) where M <: VectorMonomial
+    if length(a.e) >= length(b.e)
+        res = a.e
+        res[1:length(b.e)] += b.e
+        return M(res)
+    else
+        res = b.e
+        res[1:length(a.e)] += a.e
+        return M(res)
     end
 end
 

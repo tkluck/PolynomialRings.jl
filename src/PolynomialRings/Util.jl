@@ -37,4 +37,12 @@ end
 import Base: length
 length(x::BoundedHeap) = x.cur_length
 
+
+lazymap(f::Function, c) = map(f,c)
+lazymap(f::Function, c::C) where C<:Channel = Channel() do ch
+    for x in c
+        push!(ch, f(x))
+    end
+end
+
 end
