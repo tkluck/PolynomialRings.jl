@@ -34,7 +34,7 @@ abstract type AbstractMonomial end
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: getindex, gcd, lcm, one, +
+import Base: getindex, gcd, lcm, one, +, enumerate
 import PolynomialRings: generators
 
 
@@ -50,7 +50,7 @@ total_degree(a::A) where A <: AbstractMonomial = sum( a[i] for i in 1:num_variab
 
 lcm(a::M, b::M) where M <: AbstractMonomial = M(i -> max(a[i], b[i]), max(num_variables(a), num_variables(b)))
 gcd(a::M, b::M) where M <: AbstractMonomial = M(i -> min(a[i], b[i]), max(num_variables(a), num_variables(b)))
-enumerate(a::M) where M <: AbstractMonomial = Channel(chtype=Tuple{Int,exptype(M)}) do ch
+enumerate(a::M) where M <: AbstractMonomial = Channel(ctype=Tuple{Int,exptype(M)}) do ch
     for i = 1:num_variables(a)
         push!(ch, (i, a[i]))
     end

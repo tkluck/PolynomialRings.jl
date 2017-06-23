@@ -9,6 +9,7 @@ include("PolynomialRings/Terms.jl")
 include("PolynomialRings/Polynomials.jl")
 include("PolynomialRings/MonomialOrderings.jl")
 include("PolynomialRings/Operators.jl")
+include("PolynomialRings/Display.jl")
 
 import .Monomials: TupleMonomial
 import .Terms: Term
