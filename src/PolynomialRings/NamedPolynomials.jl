@@ -9,7 +9,7 @@ import PolynomialRings.Constructors: free_generators
 #
 # -----------------------------------------------------------------------------
 import Base: promote_rule, convert
-import Base: +,*,-,zero,one
+import Base: +,*,-,==,zero,one
 import PolynomialRings: iszero
 
 
@@ -22,7 +22,7 @@ struct NamedPolynomial{P<:Polynomial, Names}
     p::P
 end
 
-polynomialtype(::Type{NamedPolynomial{P}}) where P <: Polynomial = P
+polynomialtype(::Type{NamedPolynomial{P,Names}}) where P <: Polynomial where Names = P
 
 
 # -----------------------------------------------------------------------------
@@ -33,7 +33,7 @@ polynomialtype(::Type{NamedPolynomial{P}}) where P <: Polynomial = P
 
 promote_rule(::Type{NP}, ::Type{C}) where NP <: NamedPolynomial{P, Names} where P <: Polynomial where {C,Names} = NamedPolynomial{promote_type(P, C), Names}
 
-convert(::Type{NP}, a::C) where NP <: NamedPolynomial{P, Names} where P <: Polynomial where {C,Names} = NP(convert(p, a))
+convert(::Type{NP}, a::C) where NP <: NamedPolynomial{P, Names} where P <: Polynomial where {C,Names} = NP(convert(promote_type(P,C), a))
 
 # -----------------------------------------------------------------------------
 #
@@ -43,10 +43,11 @@ convert(::Type{NP}, a::C) where NP <: NamedPolynomial{P, Names} where P <: Polyn
 +(a::NP,b::NP) where NP <: NamedPolynomial = NP(a.p+b.p)
 -(a::NP,b::NP) where NP <: NamedPolynomial = NP(a.p-b.p)
 *(a::NP,b::NP) where NP <: NamedPolynomial = NP(a.p*b.p)
+
+==(a::NP,b::NP) where NP <: NamedPolynomial = a.p==b.p
 iszero(a::NamedPolynomial) = iszero(a.p)
 zero(::Type{NP}) where NP <: NamedPolynomial = NP(zero(polynomialtype(NP)))
 one(::Type{NP})  where NP <: NamedPolynomial = NP( one(polynomialtype(NP)))
-
 
 # -----------------------------------------------------------------------------
 #

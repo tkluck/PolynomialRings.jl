@@ -9,7 +9,7 @@ import PolynomialRings.Polynomials: Polynomial, termtype, terms
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: zero, one, +, -, *
+import Base: zero, one, +, -, *, ==
 import PolynomialRings: iszero
 
 # -----------------------------------------------------------------------------
@@ -17,9 +17,10 @@ import PolynomialRings: iszero
 # zero, one, etc
 #
 # -----------------------------------------------------------------------------
-zero(::Type{P}) where P <: Polynomial = P([])
+zero(::Type{P}) where P <: Polynomial = P(termtype(P)[])
 one(::Type{P})  where P <: Polynomial = P([one(termtype(P))])
 iszero(a::P) where P <: Polynomial = length(terms(a)) == 0
+==(a::P,b::P) where P <: Polynomial = a.terms == b.terms
 
 # -----------------------------------------------------------------------------
 #

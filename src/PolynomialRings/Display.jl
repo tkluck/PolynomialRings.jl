@@ -1,6 +1,6 @@
 module Display
 
-import PolynomialRings.Polynomials: Polynomial, terms
+import PolynomialRings.Polynomials: Polynomial, terms, basering
 import PolynomialRings.NamedPolynomials: NamedPolynomial
 import PolynomialRings.Terms: coefficient, monomial
 
@@ -18,7 +18,7 @@ function show(io::IO, np::NP) where NP <: NamedPolynomial{P, Names} where {P, Na
     p = np.p
     frst = true
     if length(terms(p)) == 0
-        print(io, zero(R))
+        print(io, zero(basering(P)))
     end
     for t in terms(p)
         if !frst

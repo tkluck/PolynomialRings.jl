@@ -11,8 +11,8 @@ import PolynomialRings.Monomials: AbstractMonomial
 #
 # -----------------------------------------------------------------------------
 import Base: promote_rule, convert
-import Base: +,*,-
-import PolynomialRings: iszero
+import Base: +,*,-,==
+import PolynomialRings: iszero, ⊗
 
 # -----------------------------------------------------------------------------
 #
@@ -22,7 +22,7 @@ import PolynomialRings: iszero
 
 promote_rule(::Type{P}, ::Type{C2}) where P <: Polynomial{V,O} where V <: AbstractVector{T} where T <: Term{M,C1} where {M,O,C1,C2} = Polynomial{Vector{Term{M, promote_type(C1,C2)}}, O}
 
-convert(::Type{P}, a::C2) where P <: Polynomial{V,O} where V <: AbstractVector{T} where T <: Term{M,C1} where {M,O,C1,C2} = promote_type(P, C2)([termtype(P)(a)])
+convert(::Type{P}, a::C2) where P <: Polynomial{V,O} where V <: AbstractVector{T} where T <: Term{M,C1} where {M,O,C1,C2} = iszero(a) ? zero(promote_type(P, C2)) : promote_type(P, C2)([termtype(P)(a)])
 
 # -----------------------------------------------------------------------------
 #
@@ -64,8 +64,6 @@ _P = Union{Polynomial, NamedPolynomial}
 -(a::P,b::C) where P<:_P where C = -(promote(a,b)...)
 ==(a::P,b::C) where P<:_P where C = ==(promote(a,b)...)
 ==(a::C,b::P) where P<:_P where C = ==(promote(a,b)...)
-!=(a::P,b::C) where P<:_P where C = !=(promote(a,b)...)
-!=(a::C,b::P) where P<:_P where C = !=(promote(a,b)...)
 
 # -----------------------------------------------------------------------------
 #
