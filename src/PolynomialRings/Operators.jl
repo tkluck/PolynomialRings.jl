@@ -39,10 +39,10 @@ function +(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
         exponent_a, coefficient_a = monomial(term_a), coefficient(term_a)
         exponent_b, coefficient_b = monomial(term_b), coefficient(term_b)
 
-        if isless(exponent_a, exponent_b, Order)
+        if isless(exponent_a, exponent_b, Val{Order})
             @inbounds res[n+=1] = term_a
             state_a = next_state_a
-        elseif isless(exponent_b, exponent_a, Order)
+        elseif isless(exponent_b, exponent_a, Val{Order})
             @inbounds res[n+=1] = term_b
             state_b = next_state_b
         else
@@ -80,10 +80,10 @@ function -(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
         exponent_a, coefficient_a = monomial(term_a), coefficient(term_a)
         exponent_b, coefficient_b = monomial(term_b), coefficient(term_b)
 
-        if isless(exponent_a, exponent_b, Order)
+        if isless(exponent_a, exponent_b, Val{Order})
             @inbounds res[n+=1] = term_a
             state_a = next_state_a
-        elseif isless(exponent_b, exponent_a, Order)
+        elseif isless(exponent_b, exponent_a, Val{Order})
             @inbounds res[n+=1] = -term_b
             state_b = next_state_b
         else
@@ -132,7 +132,7 @@ function *(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
 
     # using a bounded queue not to drop items when it gets too big, but to allocate it
     # once to its maximal theoretical size and never reallocate.
-    lt = Base.Order.Lt( (a,b) -> isless(monomial(a[3]),monomial(b[3]),Order) )
+    lt = Base.Order.Lt( (a,b) -> isless(monomial(a[3]),monomial(b[3]),Val{Order}) )
     minimal_corners = BoundedHeap{Tuple{Int, Int, T}, lt}(min(length(terms(a)), length(terms(b))))
     @inbounds t = terms(a)[1] * terms(b)[1]
     enqueue!(minimal_corners, (1,1,t))
@@ -153,7 +153,7 @@ function *(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
     end
 
     assert(k == length(summands))
-    assert(issorted(summands, lt=(a,b)->isless(monomial(a),monomial(b),Order)))
+    assert(issorted(summands, lt=(a,b)->isless(monomial(a),monomial(b),Val{Order})))
 
     if length(summands) > 0
         last_exp = monomial(summands[1])

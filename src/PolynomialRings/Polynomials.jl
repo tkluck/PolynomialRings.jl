@@ -18,10 +18,10 @@ that the vector is sorted by increasing monomial order, according to `Order` (se
 """
 struct Polynomial{A, Order}
     terms::A
-    Polynomial{A, Order}(terms::A) where A <: AbstractVector{T} where T <: Term where Order <: Val = new(terms)
+    Polynomial{A, Order}(terms::A) where A <: AbstractVector{T} where T <: Term where Order = new(terms)
 end
 
-Polynomial(terms::AbstractVector{<:Term}) = Polynomial{typeof(terms), Val{:degrevlex}}(terms)
+Polynomial(terms::AbstractVector{<:Term}) = Polynomial{typeof(terms), :degrevlex}(terms)
 
 # -----------------------------------------------------------------------------
 #
