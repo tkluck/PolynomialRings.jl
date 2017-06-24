@@ -19,7 +19,7 @@ Each concrete implementation should implement:
     exptype(M)
 
 and optionally:
-    +(a,b)
+    *(a,b)
     total_degree(a)
     lcm(a,b)
     gcd(a,b)
@@ -34,7 +34,7 @@ abstract type AbstractMonomial end
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: getindex, gcd, lcm, one, +, enumerate
+import Base: getindex, gcd, lcm, one, *, enumerate
 import PolynomialRings: generators
 
 
@@ -44,7 +44,7 @@ import PolynomialRings: generators
 #
 # -----------------------------------------------------------------------------
 
-+(a::M, b::M) where M <: AbstractMonomial = M(i -> a[i] + b[i], max(num_variables(a), num_variables(b)))
+*(a::M, b::M) where M <: AbstractMonomial = M(i -> a[i] + b[i], max(num_variables(a), num_variables(b)))
 
 total_degree(a::A) where A <: AbstractMonomial = sum( a[i] for i in 1:num_variables(a) )
 
@@ -140,7 +140,7 @@ end
 # TupleMonomial: overloads for speedup
 #
 # -----------------------------------------------------------------------------
-@generated function +(a::M, b::M) where M <: TupleMonomial{N} where N
+@generated function *(a::M, b::M) where M <: TupleMonomial{N} where N
     result = :( tuple() )
     for i in 1:N
         push!(result.args, :( a[$i] + b[$i] ))
@@ -157,7 +157,7 @@ total_degree(a::TupleMonomial) = a.deg
 # VectorMonomial: overloads for speedup
 #
 # -----------------------------------------------------------------------------
-function +(a::M, b::M) where M <: VectorMonomial
+function *(a::M, b::M) where M <: VectorMonomial
     if length(a.e) >= length(b.e)
         res = copy(a.e)
         res[1:length(b.e)] += b.e
