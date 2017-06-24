@@ -88,8 +88,8 @@ num_variables(::Type{TupleMonomial{N,I}}) where {N,I} = N
 exptype(::Type{TupleMonomial{N,I}}) where I <: Integer where N = I
 getindex(m::TupleMonomial, i::Integer) = m.e[i]
 
-
 one(::Type{TupleMonomial{N, I}}) where {N, I} = TupleMonomial(i->zero(I), Val{N})
+
 generators(::Type{TupleMonomial{N, I}}) where {N, I} = [
     TupleMonomial(i->i==j?one(I):zero(I), Val{N})
     for j in 1:N
@@ -125,6 +125,9 @@ end
 num_variables(m::VectorMonomial) = length(m.e)
 exptype(::Type{VectorMonomial{V}}) where V = eltype(V)
 getindex(m::VectorMonomial, i::Integer) = i <= length(m.e) ? m.e[i] : zero(exptype(m))
+
+# the empty vector corresponds to all exponents equal to zero
+one(::Type{VectorMonomial{V}}) where V = V()
 
 generators(::Type{VectorMonomial{V}}) where V = Channel(ctype=VectorMonomial{V}) do ch
     for j in 1:typemax(Int)
