@@ -1,7 +1,12 @@
 module NamedPolynomials
 
+import PolynomialRings: generators, ⊗
 import PolynomialRings.Polynomials: Polynomial
 import PolynomialRings.Constructors: free_generators
+import PolynomialRings.Polynomials: Polynomial
+import PolynomialRings.Terms: Term
+import PolynomialRings.Monomials: TupleMonomial, VectorMonomial
+import PolynomialRings.Util: lazymap
 
 # -----------------------------------------------------------------------------
 #
@@ -60,6 +65,14 @@ function polynomial_ring(basering::Type, symbols::Symbol...)
     NP = NamedPolynomial{eltype(gens), Names}
 
     return NP, map(g->NP(g), gens)
+end
+
+function generic_coefficients(::Type{NP}, name::Symbol) where NP <: NamedPolynomial
+    P = polynomialtype(NP)
+    C = Polynomial{Vector{Term{VectorMonomial{SparseVector{Int,Int}}, Int}}, :deglex}
+    NP2 = NamedPolynomial{C, name}
+
+    return lazymap(g->NP2(g)⊗one(P), generators(C))
 end
 
 

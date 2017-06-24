@@ -1,7 +1,9 @@
 module PolynomialRings
 
 generators(x) = throw(AssertionError("Not implemented"))
+⊗(x) = throw(AssertionError("Not implemented"))
 iszero(x) = x == 0
+
 
 include("PolynomialRings/Util.jl")
 
@@ -19,7 +21,6 @@ import .Monomials: TupleMonomial, VectorMonomial
 import .Terms: Term
 import .Polynomials: Polynomial, generators
 import .Constructors: free_generators
-import .Conversions: ⊗
 import .NamedPolynomials: polynomial_ring
 
 export TupleMonomial, Term, Polynomial, generators, free_generators, ⊗, polynomial_ring
