@@ -21,7 +21,7 @@ end
 #
 # -----------------------------------------------------------------------------
 import Base: *, -, one
-import PolynomialRings: generators
+import PolynomialRings: generators, iszero
 
 
 # -----------------------------------------------------------------------------
@@ -39,6 +39,8 @@ coefficient(a::Term) = a.c
 
 import PolynomialRings.Util: lazymap
 generators(::Type{Term{M,C}}) where {M, C} = lazymap(g -> Term{M,C}(g, one(C)), generators(M))
+
+iszero(a::Term) = coefficient(a) == 0
 
 
 end

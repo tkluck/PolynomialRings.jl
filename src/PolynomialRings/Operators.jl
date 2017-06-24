@@ -10,6 +10,7 @@ import PolynomialRings.Polynomials: Polynomial, termtype, terms
 #
 # -----------------------------------------------------------------------------
 import Base: zero, one, +, -, *
+import PolynomialRings: iszero
 
 # -----------------------------------------------------------------------------
 #
