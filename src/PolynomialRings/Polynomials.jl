@@ -37,7 +37,7 @@ monomialtype(::Type{P}) where P <: Polynomial = monomialtype(termtype(P))
 
 import PolynomialRings.Util: lazymap
 generators(::Type{P}) where P <: Polynomial = lazymap(
-    g->Polynomial([g]), generators(termtype(P))
+    g->P([g]), generators(termtype(P))
 )
 
 
