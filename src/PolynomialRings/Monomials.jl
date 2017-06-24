@@ -157,11 +157,11 @@ end
 # -----------------------------------------------------------------------------
 function +(a::M, b::M) where M <: VectorMonomial
     if length(a.e) >= length(b.e)
-        res = a.e
+        res = copy(a.e)
         res[1:length(b.e)] += b.e
         return M(res)
     else
-        res = b.e
+        res = copy(b.e)
         res[1:length(a.e)] += a.e
         return M(res)
     end
