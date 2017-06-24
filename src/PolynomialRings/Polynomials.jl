@@ -1,6 +1,6 @@
 module Polynomials
 
-import PolynomialRings.Terms: Term
+import PolynomialRings.Terms: Term, monomialtype
 import PolynomialRings: generators
 
 # -----------------------------------------------------------------------------
@@ -33,6 +33,7 @@ terms(p::Polynomial) = p.terms
 
 termtype(::Type{Polynomial{A, Order}}) where {A,Order} = eltype(A)
 basering(::Type{Polynomial{A, Order}}) where {A,Order} = basering(termtype(A))
+monomialtype(::Type{P}) where P <: Polynomial = monomialtype(termtype(P))
 
 import PolynomialRings.Util: lazymap
 generators(::Type{P}) where P <: Polynomial = lazymap(

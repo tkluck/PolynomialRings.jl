@@ -18,8 +18,9 @@ import .Monomials: TupleMonomial, VectorMonomial
 import .Terms: Term
 import .Polynomials: Polynomial, generators
 import .Constructors: free_generators
+import .Conversions: ⊗
 
-export TupleMonomial, Term, Polynomial, generators, free_generators
+export TupleMonomial, Term, Polynomial, generators, free_generators, ⊗
 
 
 end # module

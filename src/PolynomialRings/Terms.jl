@@ -23,13 +23,20 @@ end
 import Base: *, -, one
 import PolynomialRings: generators, iszero
 
+# -----------------------------------------------------------------------------
+#
+# Type information
+#
+# -----------------------------------------------------------------------------
+monomialtype(::Type{Term{M,C}}) where {M,C} = M
+basering(::Type{Term{M,C}}) where {M,C} = C
 
 # -----------------------------------------------------------------------------
 #
 # Term functions
 #
 # -----------------------------------------------------------------------------
-*(a::T, b::T) where T <: Term = T(a.m + b.m, a.c*b.c)
+*(a::Term{M, C1}, b::Term{M, C2}) where M <: AbstractMonomial where {C1,C2} = Term(a.m + b.m, a.c*b.c)
 -(a::T) where T <: Term = T(a.m, -a.c)
 
 one(::Type{Term{M,C}}) where {M, C} = Term{M,C}(one(M), one(C))
