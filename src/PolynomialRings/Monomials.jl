@@ -150,6 +150,8 @@ end
     end
 end
 
+total_degree(a::TupleMonomial) = a.deg
+
 # -----------------------------------------------------------------------------
 #
 # VectorMonomial: overloads for speedup
@@ -166,6 +168,8 @@ function +(a::M, b::M) where M <: VectorMonomial
         return M(res)
     end
 end
+
+total_degree(a::VectorMonomial{V}) where V <: SparseVector = sum(nonzeros(a.e))
 
 
 end
