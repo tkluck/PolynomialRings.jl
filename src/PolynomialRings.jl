@@ -10,17 +10,19 @@ include("PolynomialRings/Terms.jl")
 include("PolynomialRings/Polynomials.jl")
 include("PolynomialRings/MonomialOrderings.jl")
 include("PolynomialRings/Operators.jl")
-include("PolynomialRings/Display.jl")
 include("PolynomialRings/Constructors.jl")
 include("PolynomialRings/Conversions.jl")
+include("PolynomialRings/NamedPolynomials.jl")
+include("PolynomialRings/Display.jl")
 
 import .Monomials: TupleMonomial, VectorMonomial
 import .Terms: Term
 import .Polynomials: Polynomial, generators
 import .Constructors: free_generators
 import .Conversions: ⊗
+import .NamedPolynomials: polynomial_ring
 
-export TupleMonomial, Term, Polynomial, generators, free_generators, ⊗
+export TupleMonomial, Term, Polynomial, generators, free_generators, ⊗, polynomial_ring
 
 
 end # module
