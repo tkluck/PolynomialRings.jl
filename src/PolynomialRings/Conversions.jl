@@ -1,5 +1,6 @@
 module Conversions
 
+import PolynomialRings.NamedPolynomials: NamedPolynomial
 import PolynomialRings.Polynomials: Polynomial, termtype, monomialtype
 import PolynomialRings.Terms: Term
 import PolynomialRings.Monomials: AbstractMonomial
@@ -54,12 +55,17 @@ convert(::Type{P}, a::T) where P <: Polynomial{<:AbstractArray{T}} where T <: Te
 # a version of polynomials with named variables.)
 #
 # -----------------------------------------------------------------------------
-+(a::C,b::Polynomial) where C = +(promote(a,b)...)
-+(a::Polynomial,b::C) where C = +(promote(a,b)...)
-*(a::C,b::Polynomial) where C = *(promote(a,b)...)
-*(a::Polynomial,b::C) where C = *(promote(a,b)...)
--(a::C,b::Polynomial) where C = -(promote(a,b)...)
--(a::Polynomial,b::C) where C = -(promote(a,b)...)
+_P = Union{Polynomial, NamedPolynomial}
++(a::C,b::P) where P<:_P where C = +(promote(a,b)...)
++(a::P,b::C) where P<:_P where C = +(promote(a,b)...)
+*(a::C,b::P) where P<:_P where C = *(promote(a,b)...)
+*(a::P,b::C) where P<:_P where C = *(promote(a,b)...)
+-(a::C,b::P) where P<:_P where C = -(promote(a,b)...)
+-(a::P,b::C) where P<:_P where C = -(promote(a,b)...)
+==(a::P,b::C) where P<:_P where C = ==(promote(a,b)...)
+==(a::C,b::P) where P<:_P where C = ==(promote(a,b)...)
+!=(a::P,b::C) where P<:_P where C = !=(promote(a,b)...)
+!=(a::C,b::P) where P<:_P where C = !=(promote(a,b)...)
 
 # -----------------------------------------------------------------------------
 #

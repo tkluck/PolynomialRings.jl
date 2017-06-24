@@ -11,8 +11,8 @@ include("PolynomialRings/Polynomials.jl")
 include("PolynomialRings/MonomialOrderings.jl")
 include("PolynomialRings/Operators.jl")
 include("PolynomialRings/Constructors.jl")
-include("PolynomialRings/Conversions.jl")
 include("PolynomialRings/NamedPolynomials.jl")
+include("PolynomialRings/Conversions.jl")
 include("PolynomialRings/Display.jl")
 
 import .Monomials: TupleMonomial, VectorMonomial
