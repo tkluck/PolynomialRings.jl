@@ -84,6 +84,8 @@ end
 
 TupleMonomial(f::Function, num_variables::Int) = TupleMonomial(f, Val{num_variables})
 
+TupleMonomial(e::NTuple{N,I}) where I <: Integer where N = TupleMonomial{N,I}(e,sum(e))
+
 num_variables(::Type{TupleMonomial{N,I}}) where {N,I} = N
 exptype(::Type{TupleMonomial{N,I}}) where I <: Integer where N = I
 getindex(m::TupleMonomial, i::Integer) = m.e[i]

@@ -56,6 +56,11 @@ convert(::Type{P}, a::T) where P <: Polynomial{<:AbstractArray{T}} where T <: Te
 #
 # -----------------------------------------------------------------------------
 _P = Union{Polynomial, NamedPolynomial}
++(a::P1,b::P2) where {P1<:_P,P2<:_P} = +(promote(a,b)...)
+*(a::P1,b::P2) where {P1<:_P,P2<:_P} = *(promote(a,b)...)
+-(a::P1,b::P2) where {P1<:_P,P2<:_P} = -(promote(a,b)...)
+==(a::P1,b::P2) where {P1<:_P,P2<:_P} = ==(promote(a,b)...)
+
 +(a::C,b::P) where P<:_P where C = +(promote(a,b)...)
 +(a::P,b::C) where P<:_P where C = +(promote(a,b)...)
 *(a::C,b::P) where P<:_P where C = *(promote(a,b)...)
@@ -76,7 +81,7 @@ _P = Union{Polynomial, NamedPolynomial}
 """
     ⊗(a::Polynomial, b::Polynomial)
 
-Construct a polynomial with polynomial coefficients, by promoting a with the coefficients of b.
+Construct a polynomial with polynomial coefficients, by promoting a with the type of the coefficients of b.
 """
 
 ⊗(a::P1, b::P2) where P1 <: Polynomial where P2 <: Polynomial = Polynomial([Term(one(monomialtype(P1)), a)]) * b

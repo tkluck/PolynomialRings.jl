@@ -3,9 +3,9 @@ module NamedPolynomials
 import PolynomialRings: generators, ⊗
 import PolynomialRings.Polynomials: Polynomial
 import PolynomialRings.Constructors: free_generators
-import PolynomialRings.Polynomials: Polynomial
-import PolynomialRings.Terms: Term
-import PolynomialRings.Monomials: TupleMonomial, VectorMonomial
+import PolynomialRings.Polynomials: Polynomial, terms, termtype
+import PolynomialRings.Terms: Term, basering, monomial, coefficient
+import PolynomialRings.Monomials: TupleMonomial, VectorMonomial, AbstractMonomial
 import PolynomialRings.Util: lazymap
 
 # -----------------------------------------------------------------------------
@@ -75,5 +75,54 @@ function generic_coefficients(::Type{NP}, name::Symbol) where NP <: NamedPolynom
     return lazymap(g->NP2(g)⊗one(P), generators(C))
 end
 
+# -----------------------------------------------------------------------------
+#
+# Promotions for different variable name sets
+#
+# -----------------------------------------------------------------------------
+_fieldtypes{T <: Tuple}(t::Type{T}) = Symbol[fieldtype(T, i) for i in 1:nfields(T)]
+
+@generated function _convert_monomial(::Type{T}, ::Type{U}, monomial::AbstractMonomial) where T <: Tuple where U <: Tuple
+    for j in 1:nfields(U)
+        if !any(fieldtype(T,i) == fieldtype(U,j) for i in 1:nfields(T))
+            throw(ArgumentError("Cannot convert variables $U to variables $T"))
+        end
+    end
+    :( _lossy_convert_monomial(T, U, monomial) )
+end
+
+@generated function _lossy_convert_monomial(::Type{T}, ::Type{U}, monomial::AbstractMonomial) where T <: Tuple where U <: Tuple
+    # create an expression that calls the tuple constructor. No arguments -- so far
+    converter = :( tuple() )
+    for i in 1:nfields(T)
+        # for every result field, add the constant 0 as an argument
+        push!(converter.args, 0)
+        for j in 1:nfields(U)
+            if fieldtype(T, i) == fieldtype(U,j)
+                # HOWEVER, if it actually also exists in U, then replace the 0
+                # by reading from exponent_tuple
+                converter.args[end]= :( monomial[$j] )
+                break
+            end
+        end
+    end
+    return :( TupleMonomial( $converter ) )
+end
+
+function promote_rule(::Type{NP1}, ::Type{NP2}) where NP1 <: NamedPolynomial{P1, Names1} where NP2 <: NamedPolynomial{P2, Names2} where {P1<:Polynomial,P2<:Polynomial,Names1<:Tuple,Names2<:Tuple}
+    AllNames = Set()
+    union!(AllNames, _fieldtypes(Names1))
+    union!(AllNames, _fieldtypes(Names2))
+    Symbols = sort(collect(AllNames))
+    Names = Tuple{Symbols...}
+    N = length(Symbols)
+    C = promote_type(basering(P1), basering(P2))
+    return NamedPolynomial{Polynomial{Vector{Term{TupleMonomial{N,Int},C}}, :degrevlex}, Names}
+end
+
+function convert(::Type{NP1}, a::NP2) where NP1 <: NamedPolynomial{P1, Names1} where NP2 <: NamedPolynomial{P2, Names2} where {P1<:Polynomial,P2<:Polynomial,Names1<:Tuple,Names2<:Tuple}
+    f = t->termtype(P1)( _convert_monomial(Names1, Names2, monomial(t)), coefficient(t) )
+    NP1(P1(map(f, terms(a.p))))
+end
 
 end
