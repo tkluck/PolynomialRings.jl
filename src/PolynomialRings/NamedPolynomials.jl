@@ -59,7 +59,9 @@ end
 ==(a::NP,b::NP) where NP <: NamedPolynomial = a.p==b.p
 iszero(a::NamedPolynomial) = iszero(a.p)
 zero(::Type{NP}) where NP <: NamedPolynomial = NP(zero(polynomialtype(NP)))
+zero(a::NamedPolynomial) = zero(typeof(a))
 one(::Type{NP})  where NP <: NamedPolynomial = NP( one(polynomialtype(NP)))
+one(a::NamedPolynomial) = one(typeof(a))
 
 basering(::Type{NP}) where NP <: NamedPolynomial = basering(polynomialtype(NP))
 
