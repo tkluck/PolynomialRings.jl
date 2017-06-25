@@ -183,6 +183,11 @@ function *(a::M, b::M) where M <: VectorMonomial
 end
 
 total_degree(a::VectorMonomial{V}) where V <: SparseVector = sum(nonzeros(a.e))
+enumerate(a::M) where M <: VectorMonomial{V} where V <: SparseVector = Channel(ctype=Tuple{Int,exptype(M)}) do ch
+    for i in find(a.e)
+        push!(ch, (i, a.e[i]))
+    end
+end
 
 function *(a::M, b::M) where M <: VectorMonomial{V} where V<:SparseVector
     if length(a.e) >= length(b.e)
