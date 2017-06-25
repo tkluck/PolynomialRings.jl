@@ -22,9 +22,15 @@ import .Monomials: TupleMonomial, VectorMonomial
 import .Terms: Term
 import .Polynomials: Polynomial, generators
 import .Constructors: free_generators
-import .NamedPolynomials: polynomial_ring, formal_coefficients
+import .NamedPolynomials: NamedPolynomial, polynomial_ring, formal_coefficients
 
-export TupleMonomial, Term, Polynomial, generators, free_generators, ⊗, polynomial_ring, formal_coefficients
+export TupleMonomial, Term, Polynomial, NamedPolynomial, generators, free_generators, ⊗, polynomial_ring, formal_coefficients
 
+# TODO: needs a better place
+import .NamedPolynomials: polynomialtype
+import .Polynomials: termtype, basering, monomialtype
+monomial(::Type{P}, e::T) where P<:Polynomial where T<:Tuple = P([termtype(P)(monomialtype(P)(e, sum(e)),one(basering(P)))])
+monomial(::Type{NP}, e::T) where NP<:NamedPolynomial where T<:Tuple = NP(monomial(polynomialtype(NP), e))
+export monomial
 
 end # module
