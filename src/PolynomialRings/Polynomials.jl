@@ -21,8 +21,6 @@ struct Polynomial{A, Order}
     Polynomial{A, Order}(terms::A) where A <: AbstractVector{T} where T <: Term where Order = new(terms)
 end
 
-Polynomial(terms::AbstractVector{<:Term}) = Polynomial{typeof(terms), :degrevlex}(terms)
-
 # -----------------------------------------------------------------------------
 #
 # Type information

@@ -1,6 +1,6 @@
 module NamedPolynomials
 
-import PolynomialRings: generators, ⊗
+import PolynomialRings: generators, ⊗, base_extend
 import PolynomialRings.Polynomials: Polynomial
 import PolynomialRings.Constructors: free_generators
 import PolynomialRings.Polynomials: Polynomial, terms, termtype
@@ -13,7 +13,7 @@ import PolynomialRings.Util: lazymap
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: promote_rule, convert
+import Base: promote_rule, convert, promote_type
 import Base: +,*,-,==,zero,one
 import PolynomialRings: iszero
 
@@ -28,17 +28,24 @@ struct NamedPolynomial{P<:Polynomial, Names}
 end
 
 polynomialtype(::Type{NamedPolynomial{P,Names}}) where P <: Polynomial where Names = P
+names(::Type{NamedPolynomial{P,Names}}) where P <: Polynomial where Names = Names
 
 
 # -----------------------------------------------------------------------------
 #
-# Promoting scalars to polynomials
+# Promotions
 #
 # -----------------------------------------------------------------------------
 
-promote_rule(::Type{NP}, ::Type{C}) where NP <: NamedPolynomial{P, Names} where P <: Polynomial where {C,Names} = NamedPolynomial{promote_type(P, C), Names}
+function promote_rule(::Type{NP}, ::Type{C}) where NP <: NamedPolynomial{P, Names} where P <: Polynomial where {C,Names}
+    rule_for_P = typejoin( promote_rule(P,C), promote_rule(C,P) )
+    if rule_for_P === Union{}
+        return rule_for_P
+    else
+        return NamedPolynomial{rule_for_P, Names}
+    end
+end
 
-convert(::Type{NP}, a::C) where NP <: NamedPolynomial{P, Names} where P <: Polynomial where {C,Names} = NP(convert(promote_type(P,C), a))
 
 # -----------------------------------------------------------------------------
 #
@@ -54,6 +61,8 @@ iszero(a::NamedPolynomial) = iszero(a.p)
 zero(::Type{NP}) where NP <: NamedPolynomial = NP(zero(polynomialtype(NP)))
 one(::Type{NP})  where NP <: NamedPolynomial = NP( one(polynomialtype(NP)))
 
+basering(::Type{NP}) where NP <: NamedPolynomial = basering(polynomialtype(NP))
+
 # -----------------------------------------------------------------------------
 #
 # Constructing polynomial_rings
@@ -67,12 +76,14 @@ function polynomial_ring(basering::Type, symbols::Symbol...)
     return NP, map(g->NP(g), gens)
 end
 
-function generic_coefficients(::Type{NP}, name::Symbol) where NP <: NamedPolynomial
-    P = polynomialtype(NP)
+function formal_coefficients(::Type{NP}, name::Symbol) where NP <: NamedPolynomial
     C = Polynomial{Vector{Term{VectorMonomial{SparseVector{Int,Int}}, Int}}, :deglex}
-    NP2 = NamedPolynomial{C, name}
+    CC = NamedPolynomial{C, name}
 
-    return lazymap(g->NP2(g)⊗one(P), generators(C))
+    PP = base_extend(NP, CC)
+
+
+    return lazymap(g->PP(CC(g)), generators(C))
 end
 
 # -----------------------------------------------------------------------------

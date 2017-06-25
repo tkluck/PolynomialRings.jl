@@ -30,6 +30,7 @@ iszero(a::P) where P <: Polynomial = length(terms(a)) == 0
 function +(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
 
     T = Term{M, promote_type(C1,C2)}
+    P = Polynomial{Vector{T},Order}
     res = Vector{T}(length(a.terms) + length(b.terms))
     n = 0
 
@@ -65,12 +66,13 @@ function +(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
     end
 
     resize!(res, n)
-    return Polynomial(res)
+    return P(res)
 end
 
 function -(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
 
     T = Term{M, promote_type(C1,C2)}
+    P = Polynomial{Vector{T},Order}
     res = Vector{T}(length(a.terms) + length(b.terms))
     n = 0
 
@@ -106,7 +108,7 @@ function -(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
     end
 
     resize!(res, n)
-    return Polynomial(res)
+    return P(res)
 end
 
 # -----------------------------------------------------------------------------

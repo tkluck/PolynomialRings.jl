@@ -1,9 +1,11 @@
 module Conversions
 
-import PolynomialRings.NamedPolynomials: NamedPolynomial
-import PolynomialRings.Polynomials: Polynomial, termtype, monomialtype
-import PolynomialRings.Terms: Term
+import PolynomialRings.NamedPolynomials: NamedPolynomial, polynomialtype
+import PolynomialRings.Polynomials: Polynomial, termtype, monomialtype, basering, terms
+import PolynomialRings.Terms: Term, monomial, coefficient
 import PolynomialRings.Monomials: AbstractMonomial
+
+_P = Union{Polynomial, NamedPolynomial}
 
 # -----------------------------------------------------------------------------
 #
@@ -12,17 +14,61 @@ import PolynomialRings.Monomials: AbstractMonomial
 # -----------------------------------------------------------------------------
 import Base: promote_rule, convert
 import Base: +,*,-,==
-import PolynomialRings: iszero, ⊗
+import PolynomialRings: iszero, ⊗, base_extend
 
 # -----------------------------------------------------------------------------
 #
-# Promoting scalars to polynomials
+# Promoting coefficients to polynomials
 #
 # -----------------------------------------------------------------------------
 
-promote_rule(::Type{P}, ::Type{C2}) where P <: Polynomial{V,O} where V <: AbstractVector{T} where T <: Term{M,C1} where {M,O,C1,C2} = Polynomial{Vector{Term{M, promote_type(C1,C2)}}, O}
+promote_rule(::Type{Polynomial{V,O}}, ::Type{C}) where V <: AbstractVector{T} where T <: Term{M,C} where {O,M,C} = Polynomial{V,O}
 
-convert(::Type{P}, a::C2) where P <: Polynomial{V,O} where V <: AbstractVector{T} where T <: Term{M,C1} where {M,O,C1,C2} = iszero(a) ? zero(promote_type(P, C2)) : promote_type(P, C2)([termtype(P)(a)])
+function convert(::Type{P}, a::C) where P<:Polynomial{V,O} where V <: AbstractVector{T} where T <: Term{M,C} where {O,M,C}
+    if iszero(a)
+        return zero(P)
+    else
+        return P([T(one(M),a)])
+    end
+end
+
+function convert(::Type{NP}, a::C) where {NP<:NamedPolynomial,C<:Number}
+    NE = base_extend(NP,C)
+    NE( convert(polynomialtype(NP), a) )
+end
+
+# -----------------------------------------------------------------------------
+#
+# Base extension
+#
+# -----------------------------------------------------------------------------
+base_extend(::Type{Term{M,C1}}, ::Type{C2}) where {M,C1,C2} = Term{M, base_extend(C1,C2)}
+base_extend(::Type{Polynomial{V,O}}, ::Type{C}) where V<:AbstractVector{T} where {O,T,C} = Polynomial{Vector{base_extend(T,C)}, O}
+base_extend(::Type{NamedPolynomial{P,Names}}, ::Type{C}) where {P<:Polynomial,Names,C} = NamedPolynomial{base_extend(P,C),Names}
+
+function base_extend(p::P, ::Type{C}) where P<:Polynomial where C
+    PP = base_extend(P, C)
+    CC = basering(PP)
+    return PP([ Term(monomial(t), CC(coefficient(t))) for t in terms(p) ])
+end
+
+# -----------------------------------------------------------------------------
+#
+# Promoting numbers to polynomials (possibly using base extension)
+#
+# -----------------------------------------------------------------------------
+promote_rule(::Type{P}, ::Type{C}) where {P <: Polynomial, C<:Number} = base_extend(P,C)
+convert(::Type{P}, a::C) where {P <: Polynomial, C<:Number} = (PP = base_extend(P,C); PP(basering(PP)(a)))
+
+# resolve ambiguity between C a coefficient and C a number
+promote_rule(::Type{Polynomial{V,O}}, ::Type{C}) where V <: AbstractVector{T} where T <: Term{M,C} where {O,M,C<:Number} = Polynomial{V,O}
+function convert(::Type{P}, a::C) where P<:Polynomial{V,O} where V <: AbstractVector{T} where T <: Term{M,C} where {O,M,C<:Number}
+    if iszero(a)
+        return zero(P)
+    else
+        return P([T(one(M),a)])
+    end
+end
 
 # -----------------------------------------------------------------------------
 #
@@ -30,9 +76,9 @@ convert(::Type{P}, a::C2) where P <: Polynomial{V,O} where V <: AbstractVector{T
 #
 # -----------------------------------------------------------------------------
 
-promote_rule(::Type{T}, ::Type{C2}) where T <: Term{M,C1} where {M,C1,C2} = Term{M, promote_type(C1,C2)}
+promote_rule(::Type{T}, ::Type{C}) where T <: Term where C<:Number = base_extend(T,C)
 
-convert(::Type{T}, a::C2) where T <: Term{M,C1} where {M,C1,C2} = T(one(M), promote_type(C1,C2)(a))
+convert(::Type{T}, a::C) where T <: Term{M} where M where C<:Number = base_extend(T,C)(one(M), a)
 
 # -----------------------------------------------------------------------------
 #
@@ -55,7 +101,6 @@ convert(::Type{P}, a::T) where P <: Polynomial{<:AbstractArray{T}} where T <: Te
 # a version of polynomials with named variables.)
 #
 # -----------------------------------------------------------------------------
-_P = Union{Polynomial, NamedPolynomial}
 +(a::P1,b::P2) where {P1<:_P,P2<:_P} = +(promote(a,b)...)
 *(a::P1,b::P2) where {P1<:_P,P2<:_P} = *(promote(a,b)...)
 -(a::P1,b::P2) where {P1<:_P,P2<:_P} = -(promote(a,b)...)
@@ -75,16 +120,22 @@ _P = Union{Polynomial, NamedPolynomial}
 # Polynomials with polynomial coefficients
 #
 # -----------------------------------------------------------------------------
-*(a::P1, b::P2) where P1 <: Polynomial{V,O} where V <: AbstractVector{T} where T <: Term{M, P2} where P2 <: Polynomial where {O,M} = a * Polynomial([Term(one(M), b)])
-*(a::P1, b::P2) where P2 <: Polynomial{V,O} where V <: AbstractVector{T} where T <: Term{M, P1} where P1 <: Polynomial where {O,M} = Polynomial([Term(one(M), a)])* b
-
 """
     ⊗(a::Polynomial, b::Polynomial)
 
 Construct a polynomial with polynomial coefficients, by promoting a with the type of the coefficients of b.
 """
 
-⊗(a::P1, b::P2) where P1 <: Polynomial where P2 <: Polynomial = Polynomial([Term(one(monomialtype(P1)), a)]) * b
+function ⊗(a::P1, b::P2) where P1 <: Polynomial where P2 <: Polynomial
+    P = P1⊗P2
+    assert(basering(P) === P1)
+    l = P(a)
+    r = base_extend(b, P1)
+    assert(typeof(l) === typeof(r))
+    l * r
+end
+
+⊗(::Type{P1}, ::Type{P2}) where P1 <: _P where P2 <: Polynomial{<:AbstractVector{T}} where T = base_extend(P2, P1)
 
 
 end

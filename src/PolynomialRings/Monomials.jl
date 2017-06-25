@@ -129,7 +129,10 @@ exptype(::Type{VectorMonomial{V}}) where V = eltype(V)
 getindex(m::VectorMonomial, i::Integer) = i <= length(m.e) ? m.e[i] : zero(exptype(m))
 
 # the empty vector corresponds to all exponents equal to zero
-one(::Type{VectorMonomial{V}}) where V = V()
+one(::Type{VectorMonomial{V}}) where V = VectorMonomial{V}( V() )
+# special case for sparsevectors; for some reason, SparseVector{Int,Int}() does not give
+# an empty vector.
+one(::Type{VectorMonomial{V}}) where V <: SparseVector{A,B} where {A,B} = VectorMonomial{V}( sparsevec(B[],A[]) )
 
 generators(::Type{VectorMonomial{V}}) where V = Channel(ctype=VectorMonomial{V}) do ch
     for j in 1:typemax(Int)
