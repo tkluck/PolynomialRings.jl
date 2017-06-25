@@ -30,6 +30,7 @@ end
 terms(p::Polynomial) = p.terms
 
 termtype(::Type{Polynomial{A, Order}}) where {A,Order} = eltype(A)
+monomialorder(::Type{Polynomial{A, Order}}) where {A,Order} = Order
 basering(::Type{P}) where P <: Polynomial = basering(termtype(P))
 monomialtype(::Type{P}) where P <: Polynomial = monomialtype(termtype(P))
 

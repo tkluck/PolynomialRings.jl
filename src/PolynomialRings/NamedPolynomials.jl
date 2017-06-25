@@ -1,7 +1,7 @@
 module NamedPolynomials
 
 import PolynomialRings: generators, ⊗, base_extend
-import PolynomialRings.Polynomials: Polynomial
+import PolynomialRings.Polynomials: Polynomial, monomialorder
 import PolynomialRings.Constructors: free_generators
 import PolynomialRings.Polynomials: Polynomial, terms, termtype
 import PolynomialRings.Terms: Term, basering, monomial, coefficient
@@ -138,7 +138,9 @@ function convert(::Type{NP1}, a::NP2) where NP1 <: NamedPolynomial{P1, Names1} w
     f = t->termtype(P1)( _convert_monomial(Names1, Names2, monomial(t)), coefficient(t) )
     # there used to be map(f, terms(a.p)) here, but type inference makes that an
     # Array{Any}. That's why we explicitly write termtype(P1)[ .... ] .
-    NP1(P1(termtype(P1)[f(t) for t in terms(a.p)]))
+    converted_terms = termtype(P1)[f(t) for t in terms(a.p)]
+    sort!(converted_terms, lt=(a,b)->isless(monomial(a),monomial(b),Val{monomialorder(P1)}))
+    NP1(P1(converted_terms))
 end
 
 end
