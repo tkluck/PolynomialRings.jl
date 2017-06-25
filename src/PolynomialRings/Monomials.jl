@@ -34,7 +34,7 @@ abstract type AbstractMonomial end
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: getindex, gcd, lcm, one, *, enumerate
+import Base: getindex, gcd, lcm, one, *, enumerate, ==
 import PolynomialRings: generators
 
 
@@ -133,6 +133,11 @@ one(::Type{VectorMonomial{V}}) where V = VectorMonomial{V}( V() )
 # special case for sparsevectors; for some reason, SparseVector{Int,Int}() does not give
 # an empty vector.
 one(::Type{VectorMonomial{V}}) where V <: SparseVector{A,B} where {A,B} = VectorMonomial{V}( sparsevec(B[],A[]) )
+
+#
+# workaround: for some reason, comparison does't fall through the struct
+# for VectorMonomial (???)
+==(a::M,b::M) where M<:VectorMonomial = a.e == b.e
 
 generators(::Type{VectorMonomial{V}}) where V = Channel(ctype=VectorMonomial{V}) do ch
     for j in 1:typemax(Int)

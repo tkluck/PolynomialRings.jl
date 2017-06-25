@@ -54,6 +54,7 @@ end
 # -----------------------------------------------------------------------------
 +(a::NP,b::NP) where NP <: NamedPolynomial = NP(a.p+b.p)
 -(a::NP,b::NP) where NP <: NamedPolynomial = NP(a.p-b.p)
+-(a::NP)       where NP <: NamedPolynomial = NP(-a.p)
 *(a::NP,b::NP) where NP <: NamedPolynomial = NP(a.p*b.p)
 
 ==(a::NP,b::NP) where NP <: NamedPolynomial = a.p==b.p
