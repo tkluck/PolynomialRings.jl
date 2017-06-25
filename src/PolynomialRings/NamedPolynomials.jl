@@ -133,7 +133,9 @@ end
 
 function convert(::Type{NP1}, a::NP2) where NP1 <: NamedPolynomial{P1, Names1} where NP2 <: NamedPolynomial{P2, Names2} where {P1<:Polynomial,P2<:Polynomial,Names1<:Tuple,Names2<:Tuple}
     f = t->termtype(P1)( _convert_monomial(Names1, Names2, monomial(t)), coefficient(t) )
-    NP1(P1(map(f, terms(a.p))))
+    # there used to be map(f, terms(a.p)) here, but type inference makes that an
+    # Array{Any}. That's why we explicitly write termtype(P1)[ .... ] .
+    NP1(P1(termtype(P1)[f(t) for t in terms(a.p)]))
 end
 
 end
