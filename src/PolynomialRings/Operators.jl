@@ -54,8 +54,8 @@ function +(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
             state_b = next_state_b
         else
             coeff = coefficient_a + coefficient_b
-            if coeff != 0
-                @inbounds res[n+=1] = Term(exponent_a, coeff)
+            if !iszero(coeff)
+                @inbounds res[n+=1] = T(exponent_a, coeff)
             end
             state_b = next_state_b
             state_a = next_state_a
@@ -100,7 +100,7 @@ function -(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
             state_b = next_state_b
         else
             coeff = coefficient_a - coefficient_b
-            if coeff != 0
+            if !iszero(coeff)
                 @inbounds res[n+=1] = Term(exponent_a, coeff)
             end
             state_b = next_state_b
@@ -185,7 +185,7 @@ function *(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
             end
         end
         resize!(summands, n)
-        filter!(m -> coefficient(m) != 0, summands)
+        filter!(t -> !iszero(t), summands)
     end
     return PP(summands)
 end
