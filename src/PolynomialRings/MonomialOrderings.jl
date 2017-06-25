@@ -1,7 +1,7 @@
 module MonomialOrderings
 
 import Base: isless
-import PolynomialRings.Monomials: AbstractMonomial, total_degree, num_variables
+import PolynomialRings.Monomials: AbstractMonomial, VectorMonomial, total_degree, num_variables
 
 function isless(a::M,b::M,::Type{Val{:degrevlex}}) where M <: AbstractMonomial
 
@@ -32,5 +32,20 @@ function isless(a::M,b::M,::Type{Val{:deglex}}) where M <: AbstractMonomial
         return total_degree(a) < total_degree(b)
     end
 end
+
+function isless(a::VectorMonomial{V},b::VectorMonomial{V},::Type{Val{:deglex}}) where V <: AbstractSparseVector
+
+    if total_degree(a) == total_degree(b)
+        for i in sort(unique([find(a.e); find(b.e)]))
+            if a[i] != b[i]
+                return a[i] < b[i]
+            end
+        end
+        return false
+    else
+        return total_degree(a) < total_degree(b)
+    end
+end
+
 
 end
