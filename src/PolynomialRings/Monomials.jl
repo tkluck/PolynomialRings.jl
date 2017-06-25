@@ -179,5 +179,17 @@ end
 
 total_degree(a::VectorMonomial{V}) where V <: SparseVector = sum(nonzeros(a.e))
 
+function *(a::M, b::M) where M <: VectorMonomial{V} where V<:SparseVector
+    if length(a.e) >= length(b.e)
+        res = copy(a.e)
+        res[find(b.e)] += nonzeros(b.e)
+        return M(res)
+    else
+        res = copy(b.e)
+        res[find(a.e)] += nonzeros(a.e)
+        return M(res)
+    end
+end
+
 
 end
