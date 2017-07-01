@@ -73,8 +73,9 @@ basering(::Type{NP}) where NP <: NamedPolynomial = basering(polynomialtype(NP))
 # -----------------------------------------------------------------------------
 function polynomial_ring(basering::Type, symbols::Symbol...)
     Names = Tuple{symbols...}
-    gens = free_generators(length(symbols))
-    NP = NamedPolynomial{eltype(gens), Names}
+    P = Polynomial{Vector{Term{TupleMonomial{length(symbols),Int}, basering}}, :degrevlex}
+    gens = generators(P)
+    NP = NamedPolynomial{P, Names}
 
     return NP, map(g->NP(g), gens)
 end
