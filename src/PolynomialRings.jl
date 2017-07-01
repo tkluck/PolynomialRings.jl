@@ -29,8 +29,9 @@ export TupleMonomial, Term, Polynomial, NamedPolynomial, generators, free_genera
 # TODO: needs a better place
 import .NamedPolynomials: polynomialtype
 import .Polynomials: termtype, basering, monomialtype
-monomial(::Type{P}, e::T) where P<:Polynomial where T<:Tuple = P([termtype(P)(monomialtype(P)(e, sum(e)),one(basering(P)))])
-monomial(::Type{NP}, e::T) where NP<:NamedPolynomial where T<:Tuple = NP(monomial(polynomialtype(NP), e))
-export monomial
+construct_monomial(::Type{P}, e::T) where P<:Polynomial where T<:Tuple = P([termtype(P)(monomialtype(P)(e, sum(e)),one(basering(P)))])
+construct_monomial(::Type{P}, e::T) where P<:Polynomial where T<:AbstractArray = P([termtype(P)(monomialtype(P)(ntuple(i->e[i], length(e)), sum(e)),one(basering(P)))])
+construct_monomial(::Type{NP}, e::T) where NP<:NamedPolynomial where T = NP(construct_monomial(polynomialtype(NP), e))
+export construct_monomial
 
 end # module
