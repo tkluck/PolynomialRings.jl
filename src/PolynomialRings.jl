@@ -2,6 +2,8 @@ module PolynomialRings
 
 generators(x) = throw(AssertionError("Not implemented"))
 ⊗(x) = throw(AssertionError("Not implemented"))
+to_dense_monomials(n,x) = throw(AssertionError("Not implemented"))
+max_variable_index(x) = throw(AssertionError("Not implemented"))
 base_extend(::Type{A}, ::Type{B}) where {A,B} = promote_type(A,B)
 iszero(x) = x == 0
 
@@ -16,6 +18,7 @@ include("PolynomialRings/Operators.jl")
 include("PolynomialRings/Constructors.jl")
 include("PolynomialRings/NamedPolynomials.jl")
 include("PolynomialRings/Conversions.jl")
+include("PolynomialRings/Arrays.jl")
 include("PolynomialRings/Display.jl")
 
 import .Monomials: TupleMonomial, VectorMonomial

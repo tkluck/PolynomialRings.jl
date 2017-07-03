@@ -15,7 +15,7 @@ import PolynomialRings.Util: lazymap
 # -----------------------------------------------------------------------------
 import Base: promote_rule, convert, promote_type
 import Base: +,*,-,==,zero,one
-import PolynomialRings: iszero
+import PolynomialRings: iszero, to_dense_monomials, max_variable_index
 
 
 """
@@ -65,6 +65,15 @@ one(::Type{NP})  where NP <: NamedPolynomial = NP( one(polynomialtype(NP)))
 one(a::NamedPolynomial) = one(typeof(a))
 
 basering(::Type{NP}) where NP <: NamedPolynomial = basering(polynomialtype(NP))
+
+function to_dense_monomials(n,a::NamedPolynomial)
+    p = to_dense_monomials(n, a.p)
+    s = names(typeof(a))::Symbol
+    new_names = [Symbol("$s$i") for i=1:n]
+    NamedPolynomial{typeof(p),Tuple{new_names...}}(p)
+end
+
+max_variable_index(a::NamedPolynomial) = max_variable_index(a.p)
 
 # -----------------------------------------------------------------------------
 #

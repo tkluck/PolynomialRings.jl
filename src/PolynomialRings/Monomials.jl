@@ -35,7 +35,7 @@ abstract type AbstractMonomial end
 #
 # -----------------------------------------------------------------------------
 import Base: getindex, gcd, lcm, one, *, enumerate, ==
-import PolynomialRings: generators
+import PolynomialRings: generators, to_dense_monomials, max_variable_index
 
 
 # -----------------------------------------------------------------------------
@@ -200,6 +200,17 @@ function *(a::M, b::M) where M <: VectorMonomial{V} where V<:SparseVector
         return M(res)
     end
 end
+
+# -----------------------------------------------------------------------------
+#
+# Conversion from Vector to tuple (sparse to dense)
+#
+# -----------------------------------------------------------------------------
+
+max_variable_index(m::TupleMonomial{N}) where N = N
+max_variable_index(m::VectorMonomial{V}) where V = length(m.e)
+
+to_dense_monomials(n::Integer, m::AbstractMonomial) = TupleMonomial(i->m[i], n)
 
 
 end

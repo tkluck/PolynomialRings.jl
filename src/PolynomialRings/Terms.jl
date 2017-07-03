@@ -21,7 +21,7 @@ end
 #
 # -----------------------------------------------------------------------------
 import Base: *, -, one, ==
-import PolynomialRings: generators, iszero
+import PolynomialRings: generators, iszero, to_dense_monomials, max_variable_index
 
 # -----------------------------------------------------------------------------
 #
@@ -49,6 +49,9 @@ import PolynomialRings.Util: lazymap
 generators(::Type{Term{M,C}}) where {M, C} = lazymap(g -> Term{M,C}(g, one(C)), generators(M))
 
 iszero(a::Term) = coefficient(a) == 0
+
+to_dense_monomials(n, a::Term) = Term( to_dense_monomials(n, monomial(a)), coefficient(a) )
+max_variable_index(a::Term) = max_variable_index(monomial(a))
 
 
 end
