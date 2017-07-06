@@ -1,13 +1,6 @@
 module PolynomialRings
 
-generators(x) = throw(AssertionError("Not implemented"))
-⊗(x) = throw(AssertionError("Not implemented"))
-to_dense_monomials(n,x) = throw(AssertionError("Not implemented"))
-max_variable_index(x) = throw(AssertionError("Not implemented"))
-base_extend(::Type{A}, ::Type{B}) where {A,B} = promote_type(A,B)
-iszero(x) = x == 0
-
-
+include("PolynomialRings/Methods.jl")
 include("PolynomialRings/Util.jl")
 
 include("PolynomialRings/Monomials.jl")

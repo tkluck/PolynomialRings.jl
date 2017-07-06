@@ -35,7 +35,7 @@ abstract type AbstractMonomial end
 #
 # -----------------------------------------------------------------------------
 import Base: getindex, gcd, lcm, one, *, enumerate, ==
-import PolynomialRings: generators, to_dense_monomials, max_variable_index
+import PolynomialRings: generators, to_dense_monomials, max_variable_index, deg
 
 
 # -----------------------------------------------------------------------------
@@ -211,6 +211,13 @@ max_variable_index(m::TupleMonomial{N}) where N = N
 max_variable_index(m::VectorMonomial{V}) where V = length(m.e)
 
 to_dense_monomials(n::Integer, m::AbstractMonomial) = TupleMonomial(i->m[i], n)
+
+# -----------------------------------------------------------------------------
+#
+# User-facing interface
+#
+# -----------------------------------------------------------------------------
+deg(m::AbstractMonomial) = total_degree(m)
 
 
 end

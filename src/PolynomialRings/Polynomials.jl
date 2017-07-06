@@ -1,8 +1,14 @@
 module Polynomials
 
 import PolynomialRings.Monomials: TupleMonomial
-import PolynomialRings.Terms: Term, basering, monomialtype
-import PolynomialRings: generators
+import PolynomialRings.Terms: Term
+
+# -----------------------------------------------------------------------------
+#
+# Imports for overloading
+#
+# -----------------------------------------------------------------------------
+import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering, monomialtype, deg
 
 # -----------------------------------------------------------------------------
 #
@@ -43,16 +49,11 @@ generators(::Type{P}) where P <: Polynomial = lazymap(
     g->P([g]), generators(termtype(P))
 )
 
-# -----------------------------------------------------------------------------
-#
-# Imports for overloading
-#
-# -----------------------------------------------------------------------------
-import PolynomialRings: to_dense_monomials, max_variable_index
 
 # TODO: take right integer type for TupleMonomial exponents
 to_dense_monomials(n, p::Polynomial) = Polynomial{Vector{Term{TupleMonomial{n,Int},basering(p)}},monomialorder(p)}([ to_dense_monomials(n, t) for t in terms(p) ])
 max_variable_index(p::Polynomial) = maximum(max_variable_index(t) for t in terms(p))
 
+deg(p::Polynomial) = deg(last(terms(p)))
 
 end
