@@ -31,8 +31,10 @@ variable names (for example `x` and `y`) part of the type specification, as
 opposed to part of the data structure.  We feel this is necessary for type
 stability. For example, the expression `(x+y)*x` has exponents of type
 `Tuple{Int,Int}`, whereas the expression `(x+y)*z` has exponents of type
-`Tuple{Int,Int,Int}`. Julia's compiler can only infer this information if the
-variable names are part of the type.
+`Tuple{Int,Int,Int}`. This is true even though *in both cases*, the arguments
+to `*` have exponents of type `Tuple{Int,Int}` and `Tuple{Int}` respectively.
+This means that the return type can only be inferred if the variable names are
+part of the type.
 
 In doing so, this is a nice exercise for Julia's type system. In practise, this
 seems to add non-negligably to compilation times, but not to run times.
