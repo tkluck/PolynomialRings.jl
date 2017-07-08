@@ -236,5 +236,8 @@ to_dense_monomials(n::Integer, m::AbstractMonomial) = _construct(TupleMonomial{n
 # -----------------------------------------------------------------------------
 deg(m::AbstractMonomial) = total_degree(m)
 
+(m::TupleMonomial)(args...)  = prod(args[i]^e for (i,e) in enumerate(m))
+(m::VectorMonomial)(args...) = prod(args[i]^e for (i,e) in enumerate(m))
+
 
 end

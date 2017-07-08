@@ -57,5 +57,15 @@ end
 
 expansion(p::NamedPolynomial, variables::Symbol...) = expansion(p, Tuple{variables...})
 
+function (p::NamedPolynomial)(; kwargs...)
+    vars = [k for (k,v) in kwargs]
+    values = [v for (k,v) in kwargs]
+    sum( w.p.terms[1](values...)*p for (w,p) in expansion(p, vars...) )
+end
+
+function (p::Array{NP})(; kwargs...) where NP <: NamedPolynomial
+    map(p_i -> p_i(;kwargs...), p)
+end
+
 
 end

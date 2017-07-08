@@ -72,4 +72,6 @@ function lcm_multipliers(a::T, b::T)::Tuple{T,T} where T<:Term
     return T(m_a, coefficient(b)), T(m_b, coefficient(a))
 end
 
+(t::Term)(args...) = coefficient(t) * monomial(t)(args...)
+
 end

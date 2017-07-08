@@ -35,6 +35,7 @@ using PolynomialRings
     @test x*y*z == x*z*y
     @test (x+z)*(x-z) == x^2 - z^2
 
+    # substitution
     @test (x^2+y^2)(x=1,y=2) == 5
     @test (x^2+y^2)(x=1) == 1+y^2
     @test [1+x; 1+y](x=1) == [2; 1+y]
