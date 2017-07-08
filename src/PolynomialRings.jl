@@ -24,7 +24,7 @@ import .NamedPolynomials: NamedPolynomial, polynomial_ring, formal_coefficients
 import .Groebner: red, groebner_basis
 
 export TupleMonomial, Term, Polynomial, NamedPolynomial, generators, free_generators, ⊗, polynomial_ring, formal_coefficients
-export red, groebner_basis
+export deg, red, groebner_basis
 
 # TODO: needs a better place
 import .NamedPolynomials: polynomialtype

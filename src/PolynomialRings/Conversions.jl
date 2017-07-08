@@ -13,7 +13,7 @@ _P = Union{Polynomial, NamedPolynomial}
 #
 # -----------------------------------------------------------------------------
 import Base: promote_rule, convert
-import Base: +,*,-,==
+import Base: +,*,-,==,/,//
 import PolynomialRings: ⊗, base_extend
 
 # -----------------------------------------------------------------------------
@@ -44,13 +44,25 @@ end
 # -----------------------------------------------------------------------------
 base_extend(::Type{Term{M,C1}}, ::Type{C2}) where {M,C1,C2} = Term{M, base_extend(C1,C2)}
 base_extend(::Type{Polynomial{V,O}}, ::Type{C}) where V<:AbstractVector{T} where {O,T,C} = Polynomial{Vector{base_extend(T,C)}, O}
-base_extend(::Type{NamedPolynomial{P,Names}}, ::Type{C}) where {P<:Polynomial,Names,C} = NamedPolynomial{base_extend(P,C),Names}
+base_extend(::Type{NamedPolynomial{P,Names}}, ::Type{C}) where {P,Names,C} = NamedPolynomial{base_extend(P,C),Names}
 
 function base_extend(p::P, ::Type{C}) where P<:Polynomial where C
     PP = base_extend(P, C)
     CC = basering(PP)
     return PP([ Term(monomial(t), CC(coefficient(t))) for t in terms(p) ])
 end
+
+# -----------------------------------------------------------------------------
+#
+# Operations (potentially) needing base extension
+#
+# -----------------------------------------------------------------------------
+/(a::T,b::Number)   where T <: Term = base_extend(T,    float(typeof(b)))(a.m, a.c/b)
+//(a::T,b::Number)  where T <: Term = base_extend(T, Rational{typeof(b)})(a.m, a.c//b)
+/(a::P,b::Number)   where P <: Polynomial = base_extend(P,   float(typeof(b)))([t/b  for t in terms(a)])
+//(a::P,b::Number)  where P <: Polynomial = base_extend(P,Rational{typeof(b)})([t//b for t in terms(a)])
+/(a::NP,b::Number)  where NP <: NamedPolynomial = base_extend(NP,   float(typeof(b)))(a.p/b)
+//(a::NP,b::Number) where NP <: NamedPolynomial = base_extend(NP,Rational{typeof(b)})(a.p//b)
 
 # -----------------------------------------------------------------------------
 #

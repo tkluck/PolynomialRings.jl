@@ -15,7 +15,7 @@ import PolynomialRings.Util: lazymap
 # -----------------------------------------------------------------------------
 import Base: promote_rule, convert, promote_type
 import Base: +,*,-,==,zero,one,divrem,iszero
-import PolynomialRings: to_dense_monomials, max_variable_index, leading_term, lcm_multipliers
+import PolynomialRings: to_dense_monomials, max_variable_index, leading_term, lcm_multipliers, deg
 
 
 _P = Union{Polynomial,Term,AbstractMonomial}
@@ -28,8 +28,8 @@ struct NamedPolynomial{P<:_P, Names}
     p::P
 end
 
-polynomialtype(::Type{NamedPolynomial{P,Names}}) where P <: Polynomial where Names = P
-names(::Type{NamedPolynomial{P,Names}}) where P <: Polynomial where Names = Names
+polynomialtype(::Type{NamedPolynomial{P,Names}}) where {P,Names} = P
+names(::Type{NamedPolynomial{P,Names}}) where {P,Names} = Names
 
 
 # -----------------------------------------------------------------------------
@@ -47,16 +47,18 @@ function promote_rule(::Type{NP}, ::Type{C}) where NP <: NamedPolynomial{P, Name
     end
 end
 
+(::Type{NP})(a::NP) where NP <: NamedPolynomial = a
 
 # -----------------------------------------------------------------------------
 #
 # Pass-through operations
 #
 # -----------------------------------------------------------------------------
-+(a::NP,b::NP) where NP <: NamedPolynomial = NP(a.p+b.p)
--(a::NP,b::NP) where NP <: NamedPolynomial = NP(a.p-b.p)
--(a::NP)       where NP <: NamedPolynomial = NP(-a.p)
-*(a::NP,b::NP) where NP <: NamedPolynomial = NP(a.p*b.p)
++(a::NP,b::NP)      where NP <: NamedPolynomial = NP(a.p+b.p)
++(a::NP)            where NP <: NamedPolynomial = NP(+a.p)
+-(a::NP,b::NP)      where NP <: NamedPolynomial = NP(a.p-b.p)
+-(a::NP)            where NP <: NamedPolynomial = NP(-a.p)
+*(a::NP,b::NP)      where NP <: NamedPolynomial = NP(a.p*b.p)
 divrem(a::NP,b::NP) where NP <: NamedPolynomial = ((q,r) = divrem(a.p, b.p); (NP(q), NP(r)))
 
 ==(a::NP,b::NP) where NP <: NamedPolynomial = a.p==b.p
@@ -81,6 +83,8 @@ max_variable_index(a::NamedPolynomial) = max_variable_index(a.p)
 leading_term(a::NamedPolynomial) = termtype(a)(leading_term(a.p))
 
 lcm_multipliers(a::NP, b::NP) where NP <: NamedPolynomial = ((m_a,m_b) = lcm_multipliers(a.p, b.p); (NP(m_a), NP(m_b)))
+
+deg(a::NP) where NP <: NamedPolynomial = deg(a.p)
 
 # -----------------------------------------------------------------------------
 #

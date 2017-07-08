@@ -19,13 +19,14 @@ import PolynomialRings: maybe_div
 #
 # -----------------------------------------------------------------------------
 zero(::Type{P}) where P <: Polynomial = P(termtype(P)[])
-zero(::P) where P <: Polynomial = zero(P)
+zero(::P)       where P <: Polynomial = zero(P)
 one(::Type{P})  where P <: Polynomial = P([one(termtype(P))])
-one(::P)  where P <: Polynomial = one(P)
+one(::P)        where P <: Polynomial = one(P)
 
-iszero(a::P) where P <: Polynomial = length(terms(a)) == 0
-==(a::P,b::P) where P <: Polynomial = a.terms == b.terms
--(a::P) where P <: Polynomial = P([-t for t in terms(a)])
+iszero(a::P)        where P <: Polynomial = length(terms(a)) == 0
+==(a::P,b::P)       where P <: Polynomial = a.terms == b.terms
++(a::P)             where P <: Polynomial = a
+-(a::P)             where P <: Polynomial = P([-t for t in terms(a)])
 
 # -----------------------------------------------------------------------------
 #
