@@ -128,7 +128,7 @@ julia> R,(x,) = polynomial_ring(Int, :x);
 julia> coeffs = formal_coefficients(R, :c);
 julia> c() = take!(coeffs);
 julia> [c()*x^2 + c()*x + c() , c()*x^2 + c()*x + c()]
-2-element Array{PolynomialRings.NamedPolynomials.NamedPolynomial{PolynomialRings.Polynomials.Polynomial{Array{PolynomialRings.Terms.Term{PolynomialRings.Monomials.TupleMonomial{1,Int64},PolynomialRings.NamedPolynomials.NamedPolynomial{PolynomialRings.Polynomials.Polynomial{Array{PolynomialRings.Terms.Term{PolynomialRings.Monomials.VectorMonomial{SparseVector{Int64,Int64}},Int64},1},:deglex},:c}},1},:degrevlex},Tuple{:x}},1}:
+2-element Array{(Polynomial over (Polynomial over Int64 in c0) in x),1}:
  1 c3 + 1 c2 x + 1 c1 x^2
  1 c6 + 1 c5 x + 1 c4 x^2
 ```
