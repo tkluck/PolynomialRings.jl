@@ -118,14 +118,15 @@ convert(::Type{P}, a::T) where P <: Polynomial{<:AbstractArray{T}} where T <: Te
 -(a::P1,b::P2) where {P1<:_P,P2<:_P} = -(promote(a,b)...)
 ==(a::P1,b::P2) where {P1<:_P,P2<:_P} = ==(promote(a,b)...)
 
-+(a::C,b::P) where P<:_P where C = +(promote(a,b)...)
-+(a::P,b::C) where P<:_P where C = +(promote(a,b)...)
-*(a::C,b::P) where P<:_P where C = *(promote(a,b)...)
-*(a::P,b::C) where P<:_P where C = *(promote(a,b)...)
--(a::C,b::P) where P<:_P where C = -(promote(a,b)...)
--(a::P,b::C) where P<:_P where C = -(promote(a,b)...)
-==(a::P,b::C) where P<:_P where C = ==(promote(a,b)...)
-==(a::C,b::P) where P<:_P where C = ==(promote(a,b)...)
+_C = Union{Number, AbstractMonomial, Term}
++(a::C,b::P) where P<:_P where C<:_C = +(promote(a,b)...)
++(a::P,b::C) where P<:_P where C<:_C = +(promote(a,b)...)
+*(a::C,b::P) where P<:_P where C<:_C = *(promote(a,b)...)
+*(a::P,b::C) where P<:_P where C<:_C = *(promote(a,b)...)
+-(a::C,b::P) where P<:_P where C<:_C = -(promote(a,b)...)
+-(a::P,b::C) where P<:_P where C<:_C = -(promote(a,b)...)
+==(a::P,b::C) where P<:_P where C<:_C = ==(promote(a,b)...)
+==(a::C,b::P) where P<:_P where C<:_C = ==(promote(a,b)...)
 
 # -----------------------------------------------------------------------------
 #

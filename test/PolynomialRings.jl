@@ -53,10 +53,11 @@ end
 
 @testset "Expansions" begin
 
-    import PolynomialRings: expansion
+    using PolynomialRings: expansion
+    R,(x,y,z) = polynomial_ring(Int, :x, :y, :z)
 
-    @test expansion(x*y*z + x*z + z^2, :z) == [(z, x*y + x), (z^2, 1)]
-
-    @test expansion([x*z 1; z+1 x], :z) == [(1, [0 1; 1 x]), (z, [x 0; 1 0])]
+    @test collect(expansion(x*y*z + x*z + z^2, :z)) == [(z, x*y + x), (z^2, 1)]
+    @test collect(expansion(x*y - x, :x, :y, :z)) == [(x,-1), (x*y, 1)]
+    @test collect(expansion([x*z 1; z+1 x], :z)) == [(1, [0 1; 1 x]), (z, [x 0; 1 0])]
 
 end

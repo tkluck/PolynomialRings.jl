@@ -3,6 +3,8 @@ module Arrays
 import PolynomialRings: to_dense_monomials, max_variable_index, to_dense_monomials
 import PolynomialRings.Polynomials: Polynomial
 import PolynomialRings.NamedPolynomials: NamedPolynomial
+import PolynomialRings.Expansions: expansion
+import Iterators: groupby
 
 _P = Union{Polynomial, NamedPolynomial}
 
@@ -18,6 +20,22 @@ import Base: *, det, transpose
 function to_dense_monomials(a::AbstractArray{NP}) where NP <: NamedPolynomial
     n = maximum(max_variable_index(a_i) for a_i in a)
     [ to_dense_monomials(n, a_i) for a_i in a]
+end
+
+function expansion(a::AbstractArray{NP}, args...) where NP <: NamedPolynomial
+    array_of_expansions = [ (w,p,i) for (i, a_i) in enumerate(a) for (w,p) in expansion(a_i, args...)]
+    sort!(array_of_expansions, lt=(x,y)->isless(x[1].p.terms[1].m,y[1].p.terms[1].m,Val{:degrevlex}))
+
+    res = []
+    for group in groupby(x -> x[1], array_of_expansions)
+        r = zeros(typeof(group[1][2]), size(a))
+        for (w,p,i) in group
+            r[i] = p
+        end
+        push!(res, (group[1][1], r))
+    end
+
+    return res
 end
 
 function det(m::M) where M <: AbstractMatrix{P} where P <: _P

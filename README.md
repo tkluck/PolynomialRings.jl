@@ -19,7 +19,7 @@ if (x+y)*(x-y) == x^2 - y^2
 end
 ```
 
-A few useful functions are `deg`, `red`, `groebner_basis`.
+A few useful functions are `deg`, `red`, `expansion`, `groebner_basis`.
 
 ## Relation to `MultiVariatePolynomials.jl`
 

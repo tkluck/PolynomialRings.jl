@@ -11,6 +11,7 @@ include("PolynomialRings/Operators.jl")
 include("PolynomialRings/Constructors.jl")
 include("PolynomialRings/NamedPolynomials.jl")
 include("PolynomialRings/Conversions.jl")
+include("PolynomialRings/Expansions.jl")
 include("PolynomialRings/Arrays.jl")
 include("PolynomialRings/Display.jl")
 include("PolynomialRings/Modules.jl")
@@ -21,10 +22,11 @@ import .Terms: Term
 import .Polynomials: Polynomial, generators
 import .Constructors: free_generators
 import .NamedPolynomials: NamedPolynomial, polynomial_ring, formal_coefficients
+import .Expansions: expansion
 import .Groebner: red, groebner_basis
 
 export TupleMonomial, Term, Polynomial, NamedPolynomial, generators, free_generators, ⊗, polynomial_ring, formal_coefficients
-export deg, red, groebner_basis
+export deg, red, groebner_basis, expansion
 
 # TODO: needs a better place
 import .NamedPolynomials: polynomialtype
