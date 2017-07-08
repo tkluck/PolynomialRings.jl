@@ -2,8 +2,8 @@ module Display
 
 import PolynomialRings.Polynomials: Polynomial, terms, basering
 import PolynomialRings.NamedPolynomials: NamedPolynomial, names
-import PolynomialRings.Terms: coefficient, monomial
-import PolynomialRings.Monomials: num_variables
+import PolynomialRings.Terms: Term, coefficient, monomial
+import PolynomialRings.Monomials: AbstractMonomial, num_variables
 import PolynomialRings: monomialtype, monomialorder
 
 import Base: show
@@ -52,9 +52,19 @@ end
 #
 # -----------------------------------------------------------------------------
 
-function show(io::IO, ::Type{NP}) where NP <: NamedPolynomial
+function show(io::IO, ::Type{NP}) where NP <: NamedPolynomial{P} where P <: Polynomial
     show_names = join([_varname(names(NP), i) for i in nfields(names(NP))], ",", " and ")
     print(io, "(Polynomial over $(basering(NP)) in $show_names)")
+end
+
+function show(io::IO, ::Type{NP}) where NP <: NamedPolynomial{P} where P <: Term
+    show_names = join([_varname(names(NP), i) for i in nfields(names(NP))], ",", " and ")
+    print(io, "(Term over $(basering(NP)) in $show_names)")
+end
+
+function show(io::IO, ::Type{NP}) where NP <: NamedPolynomial{P} where P <: AbstractMonomial
+    show_names = join([_varname(names(NP), i) for i in nfields(names(NP))], ",", " and ")
+    print(io, "(Monomial in $show_names)")
 end
 
 function show(io::IO, ::Type{P}) where P <: Polynomial
