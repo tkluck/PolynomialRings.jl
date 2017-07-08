@@ -9,6 +9,7 @@ import PolynomialRings.Terms: Term
 #
 # -----------------------------------------------------------------------------
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering, monomialtype, deg
+import PolynomialRings: leading_term, termtype, monomialorder, terms
 
 # -----------------------------------------------------------------------------
 #
@@ -41,9 +42,6 @@ monomialorder(::Type{Polynomial{A, Order}}) where {A,Order} = Order
 basering(::Type{P}) where P <: Polynomial = basering(termtype(P))
 monomialtype(::Type{P}) where P <: Polynomial = monomialtype(termtype(P))
 
-monomialorder(p::P) where P <: Polynomial = monomialorder(typeof(p))
-basering(p::P) where P <: Polynomial = basering(typeof(p))
-
 import PolynomialRings.Util: lazymap
 generators(::Type{P}) where P <: Polynomial = lazymap(
     g->P([g]), generators(termtype(P))
@@ -55,5 +53,7 @@ to_dense_monomials(n, p::Polynomial) = Polynomial{Vector{Term{TupleMonomial{n,In
 max_variable_index(p::Polynomial) = maximum(max_variable_index(t) for t in terms(p))
 
 deg(p::Polynomial) = deg(last(terms(p)))
+leading_term(p::Polynomial) = last(terms(p))
+
 
 end

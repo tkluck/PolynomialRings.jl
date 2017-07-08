@@ -20,8 +20,9 @@ end
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: *, -, one, ==
-import PolynomialRings: generators, iszero, to_dense_monomials, max_variable_index, deg, basering
+import Base: *, -, one, ==, iszero
+import PolynomialRings: generators, to_dense_monomials, max_variable_index, deg, basering
+import PolynomialRings: maybe_div, lcm_multipliers, monomialtype
 
 # -----------------------------------------------------------------------------
 #
@@ -55,5 +56,19 @@ max_variable_index(a::Term) = max_variable_index(monomial(a))
 
 deg(a::Term) = deg(monomial(a))
 
+
+function maybe_div(a::T, b::T)::Nullable{T} where T<:Term
+    maybe_q = maybe_div(monomial(a), monomial(b))
+    if isnull(maybe_q)
+        return nothing
+    else
+        return T(get(maybe_q), coefficient(a) // coefficient(b))
+    end
+end
+
+function lcm_multipliers(a::T, b::T)::Tuple{T,T} where T<:Term
+    m_a,m_b = lcm_multipliers(monomial(a), monomial(b))
+    return T(m_a, coefficient(b)), T(m_b, coefficient(a))
+end
 
 end

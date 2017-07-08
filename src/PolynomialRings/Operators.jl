@@ -1,5 +1,6 @@
 module Operators
 
+import PolynomialRings: leading_term
 import PolynomialRings.Monomials: AbstractMonomial
 import PolynomialRings.Terms: Term, monomial, coefficient
 import PolynomialRings.Polynomials: Polynomial, termtype, terms
@@ -9,8 +10,8 @@ import PolynomialRings.Polynomials: Polynomial, termtype, terms
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: zero, one, +, -, *, ==
-import PolynomialRings: iszero
+import Base: zero, one, +, -, *, ==, divrem, iszero
+import PolynomialRings: maybe_div
 
 # -----------------------------------------------------------------------------
 #
@@ -18,7 +19,10 @@ import PolynomialRings: iszero
 #
 # -----------------------------------------------------------------------------
 zero(::Type{P}) where P <: Polynomial = P(termtype(P)[])
+zero(::P) where P <: Polynomial = zero(P)
 one(::Type{P})  where P <: Polynomial = P([one(termtype(P))])
+one(::P)  where P <: Polynomial = one(P)
+
 iszero(a::P) where P <: Polynomial = length(terms(a)) == 0
 ==(a::P,b::P) where P <: Polynomial = a.terms == b.terms
 -(a::P) where P <: Polynomial = P([-t for t in terms(a)])
@@ -188,6 +192,41 @@ function *(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
         filter!(t -> !iszero(t), summands)
     end
     return PP(summands)
+end
+
+# -----------------------------------------------------------------------------
+#
+# long division
+#
+# -----------------------------------------------------------------------------
+function divrem(f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
+    if iszero(f)
+        return zero(g), f
+    end
+    if iszero(g)
+        throw(DivideError())
+    end
+    lt_g = leading_term(g)
+    for t in terms(f)
+        maybe_factor = maybe_div(t, lt_g)
+        if !isnull(maybe_factor)
+            factor = get(maybe_factor)
+            return typeof(f)([factor]), f - factor*g
+        end
+    end
+    return zero(g), f
+end
+
+# -----------------------------------------------------------------------------
+#
+# Use Term as a polynomial
+#
+# -----------------------------------------------------------------------------
+function *(a::T, b::P) where P<:Polynomial{V} where V<:AbstractVector{T} where T<:Term
+    P([ T(monomial(a) * monomial(t), coefficient(a) * coefficient(t)) for t in terms(b) ])
+end
+function *(a::P, b::T) where P<:Polynomial{V} where V<:AbstractVector{T} where T<:Term
+    P([ T(monomial(t) * monomial(b), coefficient(t) * coefficient(b)) for t in terms(a) ])
 end
 
 

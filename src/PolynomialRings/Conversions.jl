@@ -14,7 +14,7 @@ _P = Union{Polynomial, NamedPolynomial}
 # -----------------------------------------------------------------------------
 import Base: promote_rule, convert
 import Base: +,*,-,==
-import PolynomialRings: iszero, ⊗, base_extend
+import PolynomialRings: ⊗, base_extend
 
 # -----------------------------------------------------------------------------
 #
@@ -136,6 +136,15 @@ function ⊗(a::P1, b::P2) where P1 <: Polynomial where P2 <: Polynomial
 end
 
 ⊗(::Type{P1}, ::Type{P2}) where P1 <: _P where P2 <: Polynomial{<:AbstractVector{T}} where T = base_extend(P2, P1)
+
+# -----------------------------------------------------------------------------
+#
+# Use Term as a polynomial
+#
+# -----------------------------------------------------------------------------
+promote_rule(::Type{P}, ::Type{T}) where P <: Polynomial{V} where V <: AbstractVector{T} where T <: Term = P
+convert(::Type{P}, a::T) where P <: Polynomial{V} where V <: AbstractVector{T} where T <: Term = P([a])
+
 
 
 end

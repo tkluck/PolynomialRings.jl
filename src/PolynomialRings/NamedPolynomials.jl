@@ -1,9 +1,9 @@
 module NamedPolynomials
 
-import PolynomialRings: generators, ⊗, base_extend
+import PolynomialRings: generators, ⊗, base_extend, termtype, terms
 import PolynomialRings.Polynomials: Polynomial, monomialorder
 import PolynomialRings.Constructors: free_generators
-import PolynomialRings.Polynomials: Polynomial, terms, termtype
+import PolynomialRings.Polynomials: Polynomial
 import PolynomialRings.Terms: Term, basering, monomial, coefficient
 import PolynomialRings.Monomials: TupleMonomial, VectorMonomial, AbstractMonomial
 import PolynomialRings.Util: lazymap
@@ -14,16 +14,17 @@ import PolynomialRings.Util: lazymap
 #
 # -----------------------------------------------------------------------------
 import Base: promote_rule, convert, promote_type
-import Base: +,*,-,==,zero,one
-import PolynomialRings: iszero, to_dense_monomials, max_variable_index
+import Base: +,*,-,==,zero,one,divrem,iszero
+import PolynomialRings: to_dense_monomials, max_variable_index, leading_term, lcm_multipliers
 
 
+_P = Union{Polynomial,Term,AbstractMonomial}
 """
     NamedPolynomial{P<:Polynomial, Names}
 
 A type representing variable names + a storage format.
 """
-struct NamedPolynomial{P<:Polynomial, Names}
+struct NamedPolynomial{P<:_P, Names}
     p::P
 end
 
@@ -56,6 +57,7 @@ end
 -(a::NP,b::NP) where NP <: NamedPolynomial = NP(a.p-b.p)
 -(a::NP)       where NP <: NamedPolynomial = NP(-a.p)
 *(a::NP,b::NP) where NP <: NamedPolynomial = NP(a.p*b.p)
+divrem(a::NP,b::NP) where NP <: NamedPolynomial = ((q,r) = divrem(a.p, b.p); (NP(q), NP(r)))
 
 ==(a::NP,b::NP) where NP <: NamedPolynomial = a.p==b.p
 iszero(a::NamedPolynomial) = iszero(a.p)
@@ -65,6 +67,7 @@ one(::Type{NP})  where NP <: NamedPolynomial = NP( one(polynomialtype(NP)))
 one(a::NamedPolynomial) = one(typeof(a))
 
 basering(::Type{NP}) where NP <: NamedPolynomial = basering(polynomialtype(NP))
+termtype(::Type{NP}) where NP <: NamedPolynomial{P} where P <: Polynomial = NamedPolynomial{termtype(P), names(NP)}
 
 function to_dense_monomials(n,a::NamedPolynomial)
     p = to_dense_monomials(n, a.p)
@@ -74,6 +77,10 @@ function to_dense_monomials(n,a::NamedPolynomial)
 end
 
 max_variable_index(a::NamedPolynomial) = max_variable_index(a.p)
+
+leading_term(a::NamedPolynomial) = termtype(a)(leading_term(a.p))
+
+lcm_multipliers(a::NP, b::NP) where NP <: NamedPolynomial = ((m_a,m_b) = lcm_multipliers(a.p, b.p); (NP(m_a), NP(m_b)))
 
 # -----------------------------------------------------------------------------
 #
@@ -152,5 +159,20 @@ function convert(::Type{NP1}, a::NP2) where NP1 <: NamedPolynomial{P1, Names1} w
     sort!(converted_terms, lt=(a,b)->isless(monomial(a),monomial(b),Val{monomialorder(P1)}))
     NP1(P1(converted_terms))
 end
+
+
+# -----------------------------------------------------------------------------
+#
+# Use Term as a polynomial
+#
+# -----------------------------------------------------------------------------
+*(a::NamedPolynomial{T,Names}, b::NamedPolynomial{Polynomial{V, Order},Names}) where V <: AbstractVector{T} where T <: Term where {Names,Order} = typeof(b)( a.p * b.p )
+*(a::NamedPolynomial{Polynomial{V, Order},Names}, b::NamedPolynomial{T,Names}) where V <: AbstractVector{T} where T <: Term where {Names,Order} = typeof(a)( a.p * b.p )
+
++(a::NamedPolynomial{T,Names}, b::NamedPolynomial{Polynomial{V, Order},Names}) where V <: AbstractVector{T} where T <: Term where {Names,Order} = typeof(b)( a.p + b.p )
++(a::NamedPolynomial{Polynomial{V, Order},Names}, b::NamedPolynomial{T,Names}) where V <: AbstractVector{T} where T <: Term where {Names,Order} = typeof(a)( a.p + b.p )
+
+-(a::NamedPolynomial{T,Names}, b::NamedPolynomial{Polynomial{V, Order},Names}) where V <: AbstractVector{T} where T <: Term where {Names,Order} = typeof(b)( a.p - b.p )
+-(a::NamedPolynomial{Polynomial{V, Order},Names}, b::NamedPolynomial{T,Names}) where V <: AbstractVector{T} where T <: Term where {Names,Order} = typeof(a)( a.p - b.p )
 
 end
