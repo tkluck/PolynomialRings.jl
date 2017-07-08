@@ -71,4 +71,20 @@ number of variables and a sparse representation of the exponents.
 ### Speed
 
 For elementary operations, we aim to get within the typical factor 2 for julia-vs-C
-when compared to Singular.
+when compared to Singular. At this point, this library takes a middle ground between
+MultivariatePolynomials and Singular on at least one simple benchmark:
+
+    $ julia <<JULIA
+    using PolynomialRings; using MultivariatePolynomials; using Singular
+    @polyvar a b c
+    R,(d,e,f) = polynomial_ring(Int, :d, :e, :f)
+    S,g,h,i = Singular.SingularPolynomialRing(Singular.SingularZZ, ["g","h","i"])
+    (a+b+c)^4; (d+e+f)^4 #; (g+h+i)^4 # compile all julia code
+    @time (a+b+c)^200
+    @time (d+e+f)^200
+    @time (g+h+i)^200
+    JULIA
+     40.568423 seconds (83.07 M allocations: 5.159 GiB, 6.67% gc time)
+      4.803838 seconds (302 allocations: 1.032 GiB, 5.65% gc time)
+      0.879622 seconds (13.50 M allocations: 319.072 MiB, 2.00% gc time)
+
