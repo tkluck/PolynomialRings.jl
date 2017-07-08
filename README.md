@@ -37,7 +37,7 @@ This means that the return type can only be inferred if the variable names are
 part of the type.
 
 In doing so, this is a nice exercise for Julia's type system. In practise, this
-seems to add non-negligably to compilation times, but not to run times.
+seems to add non-negligibly to compilation times, but not to run times.
 
 ## Relation to `Singular.jl`
 
@@ -81,7 +81,7 @@ MultivariatePolynomials and Singular on at least one simple benchmark:
     @polyvar a b c
     R,(d,e,f) = polynomial_ring(Int, :d, :e, :f)
     S,g,h,i = Singular.SingularPolynomialRing(Singular.SingularZZ, ["g","h","i"])
-    (a+b+c)^4; (d+e+f)^4 #; (g+h+i)^4 # compile all julia code
+    (a+b+c)^4; (d+e+f)^4; (g+h+i)^4 # compile all julia code
     @time (a+b+c)^200
     @time (d+e+f)^200
     @time (g+h+i)^200
@@ -90,3 +90,5 @@ MultivariatePolynomials and Singular on at least one simple benchmark:
       4.803838 seconds (302 allocations: 1.032 GiB, 5.65% gc time)
       0.879622 seconds (13.50 M allocations: 319.072 MiB, 2.00% gc time)
 
+(Note: in this simple benchmark, both PolynomialRings and MultivariatePolynomials
+have `Int` coefficients, which severely overflow in this computation.)
