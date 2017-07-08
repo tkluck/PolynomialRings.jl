@@ -129,6 +129,11 @@ function syzygies{M <: AbstractModuleElement}(polynomials::AbstractVector{M})
     return flat_result
 end
 
+# note the double use of transpose; that's a workaround for some type-inference bug that I don't
+# quite understand. Without the workaround, map(NP, factors) results in a SparseVector{Any} which
+# is a recipe for disaster because there is no zero(Any).
+red(f::NP, G::AbstractVector{NP}) where NP<:NamedPolynomial = ((f_red,factors) = red(f.p, map(g->g.p,G)); (NP(f_red), map(NP,factors')'))
+
 groebner_basis(G::AbstractVector{NP}) where NP<:NamedPolynomial = ((res, tr) = groebner_basis(map(g->g.p,G)); (map(NP, res), map(NP, tr)))
 
 end
