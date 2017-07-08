@@ -92,3 +92,11 @@ MultivariatePolynomials and Singular on at least one simple benchmark:
 
 (Note: in this simple benchmark, both PolynomialRings and MultivariatePolynomials
 have `Int` coefficients, which severely overflow in this computation.)
+
+### Use elementary Julia types wherever possible
+
+For example, for any function operating on free finitely generated modules, the
+module elements should just be represented by `AbstractArray{<:Polynomial}` or
+`Dict{K,<:Polynomial}`. Polynomial coefficients can be any `Number`, any
+`Array` (for expansions in a module), or any `Matrix` (for a polynomial ring
+with matrix coefficients).
