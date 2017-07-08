@@ -22,7 +22,7 @@ end
 # -----------------------------------------------------------------------------
 import Base: *, +, -, one, ==, iszero
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, deg, basering
-import PolynomialRings: maybe_div, lcm_multipliers, monomialtype
+import PolynomialRings: maybe_div, lcm_multipliers, monomialtype, exptype
 
 # -----------------------------------------------------------------------------
 #
@@ -31,6 +31,7 @@ import PolynomialRings: maybe_div, lcm_multipliers, monomialtype
 # -----------------------------------------------------------------------------
 monomialtype(::Type{Term{M,C}}) where {M,C} = M
 basering(::Type{Term{M,C}}) where {M,C} = C
+exptype(::Type{T}) where T<:Term = exptype(monomialtype(T))
 
 # -----------------------------------------------------------------------------
 #

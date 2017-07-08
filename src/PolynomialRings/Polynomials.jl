@@ -9,7 +9,7 @@ import PolynomialRings.Terms: Term
 #
 # -----------------------------------------------------------------------------
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering, monomialtype, deg
-import PolynomialRings: leading_term, termtype, monomialorder, terms
+import PolynomialRings: leading_term, termtype, monomialorder, terms, exptype
 
 # -----------------------------------------------------------------------------
 #
@@ -38,6 +38,7 @@ end
 terms(p::Polynomial) = p.terms
 
 termtype(::Type{Polynomial{A, Order}}) where {A,Order} = eltype(A)
+exptype(::Type{P}) where P<:Polynomial = exptype(termtype(P))
 monomialorder(::Type{Polynomial{A, Order}}) where {A,Order} = Order
 basering(::Type{P}) where P <: Polynomial = basering(termtype(P))
 monomialtype(::Type{P}) where P <: Polynomial = monomialtype(termtype(P))
@@ -47,9 +48,7 @@ generators(::Type{P}) where P <: Polynomial = lazymap(
     g->P([g]), generators(termtype(P))
 )
 
-
-# TODO: take right integer type for TupleMonomial exponents
-to_dense_monomials(n, p::Polynomial) = Polynomial{Vector{Term{TupleMonomial{n,Int},basering(p)}},monomialorder(p)}([ to_dense_monomials(n, t) for t in terms(p) ])
+to_dense_monomials(n, p::Polynomial) = Polynomial{Vector{Term{TupleMonomial{n,exptype(p)},basering(p)}},monomialorder(p)}([ to_dense_monomials(n, t) for t in terms(p) ])
 max_variable_index(p::Polynomial) = maximum(max_variable_index(t) for t in terms(p))
 
 deg(p::Polynomial) = deg(last(terms(p)))

@@ -15,7 +15,7 @@ import PolynomialRings.Util: lazymap
 # -----------------------------------------------------------------------------
 import Base: promote_rule, convert, promote_type
 import Base: +,*,-,==,zero,one,divrem,iszero
-import PolynomialRings: to_dense_monomials, max_variable_index, leading_term, lcm_multipliers, deg
+import PolynomialRings: to_dense_monomials, max_variable_index, leading_term, lcm_multipliers, deg, exptype
 
 
 _P = Union{Polynomial,Term,AbstractMonomial}
@@ -70,6 +70,7 @@ one(a::NamedPolynomial) = one(typeof(a))
 
 basering(::Type{NP}) where NP <: NamedPolynomial = basering(polynomialtype(NP))
 termtype(::Type{NP}) where NP <: NamedPolynomial{P} where P <: Polynomial = NamedPolynomial{termtype(P), names(NP)}
+exptype(::Type{NP}) where NP <: NamedPolynomial = exptype(polynomialtype(NP))
 
 function to_dense_monomials(n,a::NamedPolynomial)
     p = to_dense_monomials(n, a.p)
@@ -108,7 +109,7 @@ function polynomial_ring(basering::Type, symbols::Symbol...)
     length(symbols)>0 || throw(ArgumentError("Need at least one variable name"))
 
     Names = Tuple{symbols...}
-    P = Polynomial{Vector{Term{TupleMonomial{length(symbols),Int}, basering}}, :degrevlex}
+    P = Polynomial{Vector{Term{TupleMonomial{length(symbols),Int16}, basering}}, :degrevlex}
     gens = generators(P)
     NP = NamedPolynomial{P, Names}
 
@@ -138,7 +139,7 @@ julia> [c()*x^2 + c()*x + c() , c()*x^2 + c()*x + c()]
 ```
 """
 function formal_coefficients(::Type{NP}, name::Symbol) where NP <: NamedPolynomial
-    C = Polynomial{Vector{Term{VectorMonomial{SparseVector{Int,Int}}, Int}}, :deglex}
+    C = Polynomial{Vector{Term{VectorMonomial{SparseVector{Int16,Int}}, Int}}, :deglex}
     CC = NamedPolynomial{C, name}
 
     PP = base_extend(NP, CC)
@@ -168,7 +169,7 @@ end
     converter = :( tuple() )
     for i in 1:nfields(T)
         # for every result field, add the constant 0 as an argument
-        push!(converter.args, 0)
+        push!(converter.args, :( zero(exptype(monomial)) ))
         for j in 1:nfields(U)
             if fieldtype(T, i) == fieldtype(U,j)
                 # HOWEVER, if it actually also exists in U, then replace the 0
@@ -189,7 +190,8 @@ function promote_rule(::Type{NP1}, ::Type{NP2}) where NP1 <: NamedPolynomial{P1,
     Names = Tuple{Symbols...}
     N = length(Symbols)
     C = promote_type(basering(P1), basering(P2))
-    return NamedPolynomial{Polynomial{Vector{Term{TupleMonomial{N,Int},C}}, :degrevlex}, Names}
+    I = promote_type(exptype(NP1), exptype(NP2))
+    return NamedPolynomial{Polynomial{Vector{Term{TupleMonomial{N,I},C}}, :degrevlex}, Names}
 end
 
 function convert(::Type{NP1}, a::NP2) where NP1 <: NamedPolynomial{P1, Names1} where NP2 <: NamedPolynomial{P2, Names2} where {P1<:Polynomial,P2<:Polynomial,Names1<:Tuple,Names2<:Tuple}

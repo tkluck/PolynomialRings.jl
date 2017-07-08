@@ -5,7 +5,7 @@ import PolynomialRings.NamedPolynomials: _lossy_convert_monomial, names, polynom
 import PolynomialRings.Polynomials: Polynomial, termtype, monomialtype, terms
 import PolynomialRings.Terms: Term, monomial, coefficient
 import PolynomialRings: basering
-import PolynomialRings.Monomials: AbstractMonomial, TupleMonomial
+import PolynomialRings.Monomials: AbstractMonomial, TupleMonomial, exptype
 
 import Iterators: groupby
 
@@ -31,9 +31,9 @@ function expansion(p::NP, variables::Type{T}) where NP <: NamedPolynomial where 
         M = length(remaining_vars)
 
         C = basering(NP)
-        # TODO: keep monomial exponent type
-        ExpansionType = NamedPolynomial{Polynomial{Vector{Term{TupleMonomial{N,Int},Int}},:degrevlex},NamesExpansion}
-        CoeffType = NamedPolynomial{Polynomial{Vector{Term{TupleMonomial{M,Int},C}},:degrevlex},NamesCoefficient}
+        ExpType = exptype(monomialtype(polynomialtype(NP)))
+        ExpansionType = NamedPolynomial{Polynomial{Vector{Term{TupleMonomial{N,ExpType},Int}},:degrevlex},NamesExpansion}
+        CoeffType = NamedPolynomial{Polynomial{Vector{Term{TupleMonomial{M,ExpType},C}},:degrevlex},NamesCoefficient}
         ResultType = Tuple{ExpansionType, CoeffType}
 
         f = t->_lossy_convert_monomial(NamesExpansion,   names(NP), monomial(t))

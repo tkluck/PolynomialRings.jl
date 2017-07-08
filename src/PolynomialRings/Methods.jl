@@ -16,11 +16,13 @@ basering(x::Type)      = throw(AssertionError("Not implemented: basering(::$(typ
 monomialtype(x::Type)  = throw(AssertionError("Not implemented: monomialtype(::$(typeof(x)))"))
 monomialorder(x::Type) = throw(AssertionError("Not implemented: monomialorder(::$(typeof(x)))"))
 termtype(x::Type)      = throw(AssertionError("Not implemented: termtype(::$(typeof(x)))"))
+exptype(x::Type)       = throw(AssertionError("Not implemented: exptype(::$(typeof(x)))"))
 
 basering(x)      = basering(typeof(x))
 monomialtype(x)  = monomialtype(typeof(x))
 monomialorder(x) = monomialorder(typeof(x))
 termtype(x)      = termtype(typeof(x))
+exptype(x)       = termtype(typeof(x))
 
 # -----------------------------------------------------------------------------
 #
