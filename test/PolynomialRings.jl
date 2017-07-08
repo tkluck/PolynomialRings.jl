@@ -3,7 +3,7 @@ using PolynomialRings
 
 @testset "PolynomialRings" begin
 
-    using PolynomialRings
+    using PolynomialRings: basering
 
     R,(x,y) = polynomial_ring(Rational{Int}, :x, :y)
     S,(z,) = polynomial_ring(Int, :z)
@@ -25,6 +25,10 @@ using PolynomialRings
     @test 1//2*z == z//2
     @test 2*z//2 == z
     @test 0.5*z == z/2
+    @test 2(z+0.5) == 2*z + 1
+    @test 2(z+1//2) == 2*z + 1
+    @test basering(z+1//2) == Rational{Int}
+    @test basering(z+0.5) == float(Int)
 
     # conversions between rings
     @test x*z == z*x
