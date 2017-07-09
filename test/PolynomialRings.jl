@@ -30,6 +30,7 @@ using PolynomialRings
     @test 2(z+1//2) == 2*z + 1
     @test basering(z+1//2) == Rational{Int}
     @test basering(z+0.5) == float(Int)
+    @test (x+im*y)*(x-im*y) == x^2 + y^2
 
     # conversions between rings
     @test x*z == z*x
