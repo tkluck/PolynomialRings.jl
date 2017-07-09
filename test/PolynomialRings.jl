@@ -52,6 +52,19 @@ using PolynomialRings
     @test deg((a^2+9)^39) == 2*39
     @test deg((a*b+9)^39) == 2*39
     @test deg((a*b*z+9)^39) == 3*39
+
+    # differentiation
+    dx(f) = diff(f, :x)
+    dy(f) = diff(f, :y)
+    @test dx(x^2) == 2*x
+    @test dy(x^2) == 0
+
+    euler(f) = x*dx(f) + y*dy(f)
+    ch = formal_coefficients(R, :c)
+    c() = take!(ch)
+    f = c()*x^5 + c()*x^4*y + c()*x^3*y^2 + c()*x^2*y^3 + c()*x*y^4 + c()*y^5
+    @test euler(f) == 5*f
+
 end
 
 @testset "Expansions" begin

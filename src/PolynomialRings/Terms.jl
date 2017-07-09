@@ -20,7 +20,7 @@ end
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: *, +, -, one, ==, iszero
+import Base: *, +, -, one, ==, iszero, diff
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, deg, basering
 import PolynomialRings: maybe_div, lcm_multipliers, monomialtype, exptype
 
@@ -76,5 +76,10 @@ function lcm_multipliers(a::T, b::T)::Tuple{T,T} where T<:Term
 end
 
 (t::Term)(args...) = coefficient(t) * monomial(t)(args...)
+
+function diff(t::T, i::Integer) where T <: Term
+    n,m = diff(monomial(t),i)
+    return T(m, n*coefficient(t))
+end
 
 end

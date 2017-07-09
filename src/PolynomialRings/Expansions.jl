@@ -67,5 +67,18 @@ function (p::Array{NP})(; kwargs...) where NP <: NamedPolynomial
     map(p_i -> p_i(;kwargs...), p)
 end
 
+import Base: diff
+
+function diff(p::NamedPolynomial, variable::Symbol)
+    T = names(typeof(p))
+
+    for i in 1:nfields(T)
+        if fieldtype(T,i) == variable
+            return typeof(p)(diff(p.p, i))
+        end
+    end
+    throw(ArgumentError("Variable $variable does not appear in $(typeof(p))"))
+end
+
 
 end

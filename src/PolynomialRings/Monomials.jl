@@ -34,7 +34,7 @@ abstract type AbstractMonomial end
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: getindex, gcd, lcm, one, *, enumerate, ==
+import Base: getindex, gcd, lcm, one, *, enumerate, ==, diff
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, deg
 import PolynomialRings: maybe_div, lcm_multipliers, exptype
 
@@ -74,6 +74,15 @@ function lcm_multipliers(a::M, b::M)::Tuple{M,M} where M <: AbstractMonomial
         _construct(M, i -> max(a[i], b[i]) - a[i], N),
         _construct(M, i -> max(a[i], b[i]) - b[i], N),
     )
+end
+
+function diff(a::M, i::Integer) where M <: AbstractMonomial
+    n = a[i]
+    if iszero(n)
+        return (n, one(M))
+    else
+        return (n, _construct(M, j -> (j==i ? a[j]-one(exptype(M)) : a[j]), num_variables(a)))
+    end
 end
 
 # -----------------------------------------------------------------------------

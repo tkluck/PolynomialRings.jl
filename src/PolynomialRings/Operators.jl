@@ -3,14 +3,14 @@ module Operators
 import PolynomialRings: leading_term
 import PolynomialRings.Monomials: AbstractMonomial
 import PolynomialRings.Terms: Term, monomial, coefficient
-import PolynomialRings.Polynomials: Polynomial, termtype, terms
+import PolynomialRings.Polynomials: Polynomial, termtype, terms, monomialorder
 
 # -----------------------------------------------------------------------------
 #
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: zero, one, +, -, *, ==, divrem, iszero
+import Base: zero, one, +, -, *, ==, divrem, iszero, diff
 import PolynomialRings: maybe_div
 
 # -----------------------------------------------------------------------------
@@ -216,6 +216,17 @@ function divrem(f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:Abst
         end
     end
     return zero(g), f
+end
+
+# -----------------------------------------------------------------------------
+#
+# differentation
+#
+# -----------------------------------------------------------------------------
+function diff(f::Polynomial, i::Integer)
+    new_terms = filter(t->!iszero(t), map(t->diff(t,i), terms(f)))
+    sort!(new_terms, lt=(a,b)->isless(monomial(a),monomial(b),Val{monomialorder(f)}))
+    return typeof(f)(new_terms)
 end
 
 # -----------------------------------------------------------------------------
