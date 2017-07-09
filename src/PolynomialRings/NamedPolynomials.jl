@@ -47,8 +47,6 @@ function promote_rule(::Type{NP}, ::Type{C}) where NP <: NamedPolynomial{P, Name
     end
 end
 
-(::Type{NP})(a::NP) where NP <: NamedPolynomial = a
-
 # -----------------------------------------------------------------------------
 #
 # Pass-through operations
@@ -116,6 +114,16 @@ function polynomial_ring(basering::Type, symbols::Symbol...)
     NP = NamedPolynomial{P, Names}
 
     return NP, map(g->NP(g), gens)
+end
+
+function convert(::Type{NP}, x::Symbol) where NP<:NamedPolynomial
+    T = names(NP)
+    for i in 1:nfields(T)
+        if fieldtype(T,i) == x
+            return NP(generators(polynomialtype(NP))[i])
+        end
+    end
+    throw(ArgumentError("Variable $x does not appear in $NP"))
 end
 
 """

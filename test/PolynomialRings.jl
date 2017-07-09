@@ -7,7 +7,7 @@ using PolynomialRings
 
     R,(x,y) = polynomial_ring(Rational{Int}, :x, :y)
     S,(z,) = polynomial_ring(Int, :z)
-    S,(a,b) = polynomial_ring(BigInt, :a, :b)
+    T,(a,b) = polynomial_ring(BigInt, :a, :b)
 
     # arithmetic
     @test x != 0
@@ -37,6 +37,9 @@ using PolynomialRings
     @test x*z == z*x
     @test x*y*z == x*z*y
     @test (x+z)*(x-z) == x^2 - z^2
+
+    @test convert(R,:x) == x
+    @test convert(S,:z) == z
 
     # substitution
     @test (x^2+y^2)(x=1,y=2) == 5
