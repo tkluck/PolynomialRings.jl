@@ -12,11 +12,11 @@ export generators, ⊗, to_dense_monomials, max_variable_index, base_extend
 # Type information
 #
 # -----------------------------------------------------------------------------
-basering(x::Type)      = throw(AssertionError("Not implemented: basering(::$(typeof(x)))"))
-monomialtype(x::Type)  = throw(AssertionError("Not implemented: monomialtype(::$(typeof(x)))"))
-monomialorder(x::Type) = throw(AssertionError("Not implemented: monomialorder(::$(typeof(x)))"))
-termtype(x::Type)      = throw(AssertionError("Not implemented: termtype(::$(typeof(x)))"))
-exptype(x::Type)       = throw(AssertionError("Not implemented: exptype(::$(typeof(x)))"))
+basering(x::Type)      = throw(AssertionError("Not implemented: basering(::Type{$x})"))
+monomialtype(x::Type)  = throw(AssertionError("Not implemented: monomialtype(::Type{$x})"))
+monomialorder(x::Type) = throw(AssertionError("Not implemented: monomialorder(::Type{$x})"))
+termtype(x::Type)      = throw(AssertionError("Not implemented: termtype(::Type{$x})"))
+exptype(x::Type)       = throw(AssertionError("Not implemented: exptype(::Type{$x})"))
 
 basering(x)      = basering(typeof(x))
 monomialtype(x)  = monomialtype(typeof(x))
