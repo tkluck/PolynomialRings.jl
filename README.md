@@ -36,12 +36,27 @@ to `*` have exponents of type `Tuple{Int,Int}` and `Tuple{Int}` respectively.
 This means that the return type can only be inferred if the variable names are
 part of the type.
 
-In doing so, this is a nice exercise for Julia's type system. In practise, this
+In doing so, this is a nice exercise for Julia's type system. In practice, this
 seems to add non-negligibly to compilation times, but not to run times.
 
 ## Relation to `Singular.jl`
 
 Eventually, we hope to be an easy-to-deploy alternative to Singular.jl.
+
+A pure Julia library will likely never match the brute computing power that
+Singular brings to the table. However, Julia's high-level constructs may allow
+the user to make certain routine optimizations with much more ease.
+
+As a speculative example, consider the following. In Julia, and invocation such
+as
+
+```julia
+@coefficient(f*g, x^10*y^10)
+```
+
+could conceivably notice that the first argument is a product. It could then
+only compute the requested coefficient of the product, skipping the computation
+whose result will be discarded.
 
 ## Maturity
 
@@ -74,7 +89,13 @@ take the expansion, need to be passed explicitly:
     julia> coefficient(x^3 + x^2*y + y, (0,1), :x, :y)
     1
 
-In order not to sacrifice convenience, we supply the following macro:
+At first glance, this may seem more cumbersome than usual. However, in a
+situation where one switches perspective regularly, the alternative is much
+harder to work with. This is because it is not obvious from the name of a
+variable `x` which parent object it belongs to.
+
+Moreover, in practice, this choice does not sacrifice convenience at all,
+because the following macro is provided:
 
     julia> @coefficient(x^2 + x^2*y + y, y)
     x^2 + 1
