@@ -53,22 +53,26 @@ end
 # -----------------------------------------------------------------------------
 
 function show(io::IO, ::Type{NP}) where NP <: NamedPolynomial{P} where P <: Polynomial
-    show_names = join([_varname(names(NP), i) for i in nfields(names(NP))], ",", " and ")
+    show_names = names(NP) isa Symbol ? "$(names(NP))_i" : join([_varname(names(NP), i) for i in 1:nfields(names(NP))], ",", " and ")
     print(io, "(Polynomial over $(basering(NP)) in $show_names)")
 end
 
 function show(io::IO, ::Type{NP}) where NP <: NamedPolynomial{P} where P <: Term
-    show_names = join([_varname(names(NP), i) for i in nfields(names(NP))], ",", " and ")
+    show_names = names(NP) isa Symbol ? "$(names(NP))_i" : join([_varname(names(NP), i) for i in 1:nfields(names(NP))], ",", " and ")
     print(io, "(Term over $(basering(NP)) in $show_names)")
 end
 
 function show(io::IO, ::Type{NP}) where NP <: NamedPolynomial{P} where P <: AbstractMonomial
-    show_names = join([_varname(names(NP), i) for i in nfields(names(NP))], ",", " and ")
+    show_names = names(NP) isa Symbol ? "$(names(NP))_i" : join([_varname(names(NP), i) for i in 1:nfields(names(NP))], ",", " and ")
     print(io, "(Monomial in $show_names)")
 end
 
 function show(io::IO, ::Type{P}) where P <: Polynomial
-    n = num_variables(monomialtype(P))
+    n = try
+        num_variables(monomialtype(P))
+    catch
+        "∞"
+    end
     print(io, "(Polynomial over $(basering(P)) in $n variables ($(monomialorder(P))))")
 end
 
