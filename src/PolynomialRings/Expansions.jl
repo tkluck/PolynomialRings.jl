@@ -10,6 +10,25 @@ import PolynomialRings.Monomials: AbstractMonomial, TupleMonomial, exptype
 import Iterators: groupby
 
 
+"""
+    expansion(f, symbol, [symbol...])
+
+Return a collection of (exponent_tuple, coefficient) tuples decomposing f
+into its consituent parts.
+
+In the REPL, you likely want to use the friendlier version `@expansion` instead.
+
+# Examples
+```jldoctest
+julia> R,(x,y) = polynomial_ring(Int, :x, :y);
+julia> collect(expansion(x^3 + y^2, :y))
+[((0,), 1 x^3), ((2,), 1)]
+julia> collect(expansion(x^3 + y^2, :x, :y))
+[((3,0), 1), ((0,2), 1)]
+```
+# See also
+`@expansion(...)`, `@coefficient` and `coefficient`
+"""
 function expansion(p::NP, variables::Type{T}) where NP <: NamedPolynomial where T <: Tuple
     all_vars = Symbol[fieldtype(names(NP),i) for i in 1:nfields(names(NP))]
     vars = Symbol[fieldtype(T,i) for i in 1:nfields(T)]
@@ -86,6 +105,27 @@ function diff(p::NamedPolynomial, variable::Symbol)
     throw(ArgumentError("Variable $variable does not appear in $(typeof(p))"))
 end
 
+"""
+    coefficient(f, exponent_tuple, symbol, [symbol...])
+
+Return a the coefficient of f at monomial. In the REPL, you likely want
+to use the friendlier version `@coefficient`.
+
+# Examples
+```jldoctest
+julia> R,(x,y) = polynomial_ring(Int, :x, :y);
+julia> coefficient(x^3*y + x, (1,), :x)
+1
+julia> coefficient(x^3*y + x, (3,), :x)
+1 y
+julia> coefficient(x^3*y + x, (3,0), :x, :y)
+0
+julia> coefficient(x^3*y + x, (3,1), :x, :y)
+1
+```
+# See also
+`@coefficient`, `expansion` and `@expansion`
+"""
 function coefficient(f::NamedPolynomial, t::Tuple, vars::Symbol...)
     for (w,p) in expansion(f, vars...)
         if w == t
@@ -119,6 +159,34 @@ function _parse_monomial_expression(expr)
     end
 end
 
+"""
+    @coefficient(f, monomial)
+
+Return a the coefficient of `f` at `monomial`.
+
+!!! note
+    `monomial` needs to be a literal monomial; it cannot be a variable containing a
+    monomial.  This macro has a rather naive parser that gets exponents and
+    variable names from `monomial`.
+
+    This is considered a feature (not a bug) because it is only as a literal
+    monomial that we can distinguish e.g. `x^4` from `x^4*y^0`.
+
+# Examples
+```jldoctest
+julia> R,(x,y) = polynomial_ring(Int, :x, :y);
+julia> @coefficient(x^3*y + x, x)
+1
+julia> @coefficient(x^3*y + x, x^3)
+1 y
+julia> @coefficient(x^3*y + x, x^3*y^0)
+0
+julia> @coefficient(x^3*y + x, x^3*y^1)
+1
+```
+# See also
+`coefficient`, `expansion` and `@expansion`
+"""
 macro coefficient(f, monomial)
     t,vars = _parse_monomial_expression(monomial)
     quote
@@ -126,6 +194,23 @@ macro coefficient(f, monomial)
     end
 end
 
+"""
+    @expansion(f, var, [var...])
+
+Return a collection of (monomial, coefficient) tuples decomposing f
+into its consituent parts.
+
+# Examples
+```jldoctest
+julia> R,(x,y) = polynomial_ring(Int, :x, :y);
+julia> collect(@expansion(x^3 + y^2, y))
+[(1, 1 x^3), (1 y^2, 1)]
+julia> collect(@expansion(x^3 + y^2, x, y))
+[(1 x^3, 1), (1 y^2, 1)]
+```
+# See also
+`expansion(...)`, `@coefficient` and `coefficient`
+"""
 macro expansion(f, symbols...)
     R,vars = polynomial_ring(Int, symbols...)
     quote

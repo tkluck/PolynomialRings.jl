@@ -35,3 +35,22 @@ leading_term(x)      = throw(AssertionError("Not implemented: leading_term(::$(t
 maybe_div(a,b)       = throw(AssertionError("Not implemented: maybe_div(::$(typeof(a)), ::$(typeof(b)))"))
 lcm_multipliers(a,b) = throw(AssertionError("Not implemented: lcm_multipliers(::$(typeof(a)), ::$(typeof(b)))"))
 
+"""
+    deg(f)
+
+Return the total degree of f.
+
+WARNING: currently, `deg` is oblivious to 'nested' polynomial rings. For example:
+
+```jldoctest
+julia> R, (x,) = polynomial_ring(Int,:x);
+julia> c1,c2 = formal_coefficients(R, :c);
+julia> deg(x^2)
+2
+julia> deg(c1*x^2)
+2
+julia> deg(@coefficient(c1*x^2, x^2))
+1
+```
+"""
+function deg end
