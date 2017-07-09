@@ -80,12 +80,20 @@ end
 
 @testset "Expansions" begin
 
-    using PolynomialRings: expansion, coefficient, @coefficient
+    using PolynomialRings: expansion, @expansion, coefficient, @coefficient
     R,(x,y,z) = polynomial_ring(Int, :x, :y, :z)
 
-    @test collect(expansion(x*y*z + x*z + z^2, :z)) == [(z, x*y + x), (z^2, 1)]
-    @test collect(expansion(x*y - x, :x, :y, :z)) == [(x,-1), (x*y, 1)]
-    @test collect(expansion([x*z 1; z+1 x], :z)) == [(1, [0 1; 1 x]), (z, [x 0; 1 0])]
+    @test collect(expansion(x*y*z + x*z + z^2, :z)) == [((1,), x*y + x), ((2,), 1)]
+    @test collect(expansion(x*y - x, :x, :y, :z)) == [((1,0,0),-1), ((1,1,0), 1)]
+    @test collect(expansion(x*y - x, :z, :x, :y)) == [((0,1,0),-1), ((0,1,1), 1)]
+    @test collect(expansion([x*z 1; z+1 x], :z)) == [((0,), [0 1; 1 x]), ((1,), [x 0; 1 0])]
+
+    # work-around for nested macros
+    lhs = collect(@expansion(x*y*z + x*z + z^2, z))
+    @test lhs == [(z, x*y + x), (z^2, 1)]
+
+    lhs = collect(@expansion(x*y - x, z, x, y))
+    @test lhs == [(x,-1), (x*y, 1)]
 
     @test coefficient(x^3 + x^2*y + y, (1,), :y) == x^2 + 1
     @test coefficient(x^3 + x^2*y + y, (0,1), :x, :y) == 1

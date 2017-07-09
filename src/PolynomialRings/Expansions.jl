@@ -1,7 +1,7 @@
 module Expansions
 
-import PolynomialRings.NamedPolynomials: NamedPolynomial
-import PolynomialRings.NamedPolynomials: _lossy_convert_monomial, names, polynomialtype
+import PolynomialRings.NamedPolynomials: NamedPolynomial, polynomial_ring
+import PolynomialRings.NamedPolynomials: _convert_monomial, _lossy_convert_monomial, names, polynomialtype
 import PolynomialRings.Polynomials: Polynomial, termtype, monomialtype, terms
 import PolynomialRings.Terms: Term, monomial, coefficient
 import PolynomialRings: basering
@@ -16,12 +16,19 @@ function expansion(p::NP, variables::Type{T}) where NP <: NamedPolynomial where 
     remaining_vars = [v for v in all_vars if !(v in vars)]
 
     if length(remaining_vars) == 0
-        ResultType = Tuple{NP, basering(NP)}
+        N = length(vars)
+        NamesExpansion = Tuple{vars...}
+        ExpType = exptype(monomialtype(polynomialtype(NP)))
+        ExpansionType = NTuple{N,ExpType}
+        ResultType = Tuple{ExpansionType, basering(NP)}
         P = polynomialtype(NP)
         one_ = one(basering(p))
+
+        f = t->_convert_monomial(NamesExpansion, names(NP), monomial(t))
+
         return Channel(ctype=ResultType) do ch
             for t in terms(p.p)
-                push!(ch, (NP(P([ termtype(P)(monomial(t), one_) ])), coefficient(t)))
+                push!(ch, (f(t).e, coefficient(t)))
             end
         end
     else
@@ -32,7 +39,7 @@ function expansion(p::NP, variables::Type{T}) where NP <: NamedPolynomial where 
 
         C = basering(NP)
         ExpType = exptype(monomialtype(polynomialtype(NP)))
-        ExpansionType = NamedPolynomial{Polynomial{Vector{Term{TupleMonomial{N,ExpType},Int}},:degrevlex},NamesExpansion}
+        ExpansionType = NTuple{N,ExpType}
         CoeffType = NamedPolynomial{Polynomial{Vector{Term{TupleMonomial{M,ExpType},C}},:degrevlex},NamesCoefficient}
         ResultType = Tuple{ExpansionType, CoeffType}
 
@@ -43,24 +50,23 @@ function expansion(p::NP, variables::Type{T}) where NP <: NamedPolynomial where 
             separated_terms = [(f(t), g(t), coefficient(t)) for t in terms(p.p)]
             sort!(separated_terms, lt=(a,b)->isless(a[1],b[1],Val{:degrevlex}))
             for term_group in groupby(x->x[1], separated_terms)
-                expand_term = Term(term_group[1][1], 1)
+                expand_exponents = term_group[1][1].e
                 coeff_terms = [Term(t[2], t[3]) for t in term_group]
                 sort!(coeff_terms, lt=(a,b)->isless(monomial(a),monomial(b),Val{:degrevlex}))
-                w = ExpansionType(polynomialtype(ExpansionType)([ expand_term ]))
                 p = CoeffType(polynomialtype(CoeffType)(coeff_terms))
 
-                push!(ch, (w, p))
+                push!(ch, (expand_exponents, p))
             end
         end
     end
 end
 
-expansion(p::NamedPolynomial, variables::Symbol...) = expansion(p, Tuple{variables...})
+@inline expansion(p::NamedPolynomial, variables::Symbol...) = expansion(p, Tuple{variables...})
 
 function (p::NamedPolynomial)(; kwargs...)
     vars = [k for (k,v) in kwargs]
     values = [v for (k,v) in kwargs]
-    sum( w.p.terms[1](values...)*p for (w,p) in expansion(p, vars...) )
+    sum( p * prod(v^k for (v,k) in zip(values,w)) for (w,p) in expansion(p, vars...) )
 end
 
 function (p::Array{NP})(; kwargs...) where NP <: NamedPolynomial
@@ -82,12 +88,18 @@ end
 
 function coefficient(f::NamedPolynomial, t::Tuple, vars::Symbol...)
     for (w,p) in expansion(f, vars...)
-        m =monomial(w.p.terms[1])
-        if all(m[i] == t_i for (i,t_i) in enumerate(t))
+        if w == t
             return p
         end
     end
     return zero(typeof(p))
+end
+
+function coefficient(f::NamedPolynomial, t::NamedPolynomial, vars::Symbol...)
+    ((w,p),) = expansion(t, vars...)
+    p == 1 || throw(ArgumentError("Cannot get a coefficient for $t when symbols are $vars"))
+
+    coefficient(f, w, vars...)
 end
 
 function _parse_monomial_expression(expr)
@@ -114,14 +126,14 @@ macro coefficient(f, monomial)
     end
 end
 
-function coefficient(f::NamedPolynomial, t::NamedPolynomial, vars::Symbol...)
-    ((w,p),) = expansion(t, vars...)
-    p == 1 || throw(ArgumentError("Cannot get a coefficient for $t when symbols are $vars"))
-
-    m = monomial(w.p.terms[1])
-    tt = ntuple(i -> m[i], length(vars))
-
-    coefficient(f, tt, vars...)
+macro expansion(f, symbols...)
+    R,vars = polynomial_ring(Int, symbols...)
+    quote
+        [
+            (prod(v^k for (v,k) in zip($vars,w)), p)
+            for (w,p) in expansion($(esc(f)), $symbols...)
+        ]
+    end
 end
 
 end

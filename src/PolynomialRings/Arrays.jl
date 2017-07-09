@@ -24,7 +24,7 @@ end
 
 function expansion(a::AbstractArray{NP}, args...) where NP <: NamedPolynomial
     array_of_expansions = [ (w,p,i) for (i, a_i) in enumerate(a) for (w,p) in expansion(a_i, args...)]
-    sort!(array_of_expansions, lt=(x,y)->isless(x[1].p.terms[1].m,y[1].p.terms[1].m,Val{:degrevlex}))
+    sort!(array_of_expansions, by=x->x[1])
 
     res = []
     for group in groupby(x -> x[1], array_of_expansions)
