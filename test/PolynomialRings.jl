@@ -20,6 +20,7 @@ using PolynomialRings
     @test x-x == 0
     @test -x == 0-x
     @test +x == x
+    @test x^1 == x
     @test (x+y)^9 == (x+y)^6 * (x+y)^3
 
     # Extension of scalars

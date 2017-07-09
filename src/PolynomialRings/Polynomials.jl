@@ -10,6 +10,7 @@ import PolynomialRings.Terms: Term
 # -----------------------------------------------------------------------------
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering, monomialtype, deg
 import PolynomialRings: leading_term, termtype, monomialorder, terms, exptype
+import Base: copy
 
 # -----------------------------------------------------------------------------
 #
@@ -54,5 +55,6 @@ max_variable_index(p::Polynomial) = maximum(max_variable_index(t) for t in terms
 deg(p::Polynomial) = deg(last(terms(p)))
 leading_term(p::Polynomial) = last(terms(p))
 
+copy(p::Polynomial) = typeof(p)(copy(p.terms))
 
 end

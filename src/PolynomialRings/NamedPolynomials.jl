@@ -14,7 +14,7 @@ import PolynomialRings.Util: lazymap
 #
 # -----------------------------------------------------------------------------
 import Base: promote_rule, convert, promote_type
-import Base: +,*,-,==,zero,one,divrem,iszero
+import Base: +,*,-,==,zero,one,divrem,iszero,copy
 import PolynomialRings: to_dense_monomials, max_variable_index, leading_term, lcm_multipliers, deg, exptype
 
 
@@ -86,6 +86,8 @@ leading_term(a::NamedPolynomial) = termtype(a)(leading_term(a.p))
 lcm_multipliers(a::NP, b::NP) where NP <: NamedPolynomial = ((m_a,m_b) = lcm_multipliers(a.p, b.p); (NP(m_a), NP(m_b)))
 
 deg(a::NP) where NP <: NamedPolynomial = deg(a.p)
+
+copy(a::NP) where NP <: NamedPolynomial = NP(copy(a.p))
 
 # -----------------------------------------------------------------------------
 #
