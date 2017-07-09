@@ -62,8 +62,12 @@ using PolynomialRings
     euler(f) = x*dx(f) + y*dy(f)
     ch = formal_coefficients(R, :c)
     c() = take!(ch)
-    f = c()*x^5 + c()*x^4*y + c()*x^3*y^2 + c()*x^2*y^3 + c()*x*y^4 + c()*y^5
+    h5() = c()*x^5 + c()*x^4*y + c()*x^3*y^2 + c()*x^2*y^3 + c()*x*y^4 + c()*y^5
+    f = h5()
     @test euler(f) == 5*f
+
+    g = [h5(); h5()]
+    @test euler(g) == 5*g
 
 end
 

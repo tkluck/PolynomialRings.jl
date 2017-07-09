@@ -14,7 +14,7 @@ _P = Union{Polynomial, NamedPolynomial}
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: *, det, transpose
+import Base: *, det, transpose, diff
 
 
 function to_dense_monomials(a::AbstractArray{NP}) where NP <: NamedPolynomial
@@ -63,5 +63,7 @@ end
 *(A::AbstractArray, B::_P) = broadcast(*, A, B)
 
 transpose(a::_P) = a
+
+diff(a::A, s::Symbol) where A <: AbstractArray{P} where P <: _P = broadcast(a_i->diff(a_i, s), a)
 
 end
