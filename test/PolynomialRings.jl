@@ -60,8 +60,11 @@ using PolynomialRings
     # differentiation
     dx(f) = diff(f, :x)
     dy(f) = diff(f, :y)
-    @test dx(x^2) == 2*x
+    @test dx(x^2) == 2x
     @test dy(x^2) == 0
+    dz(f) = diff(f, :z)
+    @test dz(z^2) == 2z
+    @test dz(S(1)) == 0
 
     euler(f) = x*dx(f) + y*dy(f)
     ch = formal_coefficients(R, :c)
