@@ -47,7 +47,7 @@ A pure Julia library will likely never match the brute computing power that
 Singular brings to the table. However, Julia's high-level constructs may allow
 the user to make certain routine optimizations with much more ease.
 
-As a speculative example, consider the following. In Julia, and invocation such
+As a speculative example, consider the following. In Julia, an invocation such
 as
 
 ```julia
