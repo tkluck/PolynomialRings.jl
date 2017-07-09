@@ -57,8 +57,32 @@ polynomial in five variables with coefficients in ℚ as a two-variable
 polynomial with coefficients in the ring of three-variable polynomials
 over ℚ.
 
-We intend to make this possible by providing 'relative' versions of functions
-such as `expansion()`, `leading_term()` and `deg()`.
+This makes the signature of some functions a bit different than usual.
+For example, a function call like
+
+    coefficient(x^3 + x^2*y + y, y)
+
+is ambiguous: should the result be `1` or `x^2+1`? Most other CAS base
+their decision on the parent object for the polynomial: these two results
+are what one gets if it is, respectively, `ℚ[x,y]` or `ℚ[x][y]`.
+
+We make a different choice: the variables relative to which one wants to
+take the expansion, need to be passed explicitly:
+
+    julia> coefficient(x^3 + x^2*y + y, (1,), :y)
+    x^2 + 1
+    julia> coefficient(x^3 + x^2*y + y, (0,1), :x, :y)
+    1
+
+In order not to sacrifice convenience, we supply the following macro:
+
+    julia> @coefficient(x^2 + x^2*y + y, y)
+    x^2 + 1
+    julia> @coefficient(x^2 + x^2*y + y, x^0 * y)
+    1
+
+We (intend to) have similar 'relative' versions of functions such as
+`expansion()`, `leading_term()` and `deg()`.
 
 ### User-friendly support for pools of indeterminate variables
 

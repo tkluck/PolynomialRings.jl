@@ -22,11 +22,11 @@ import .Terms: Term
 import .Polynomials: Polynomial, generators
 import .Constructors: free_generators
 import .NamedPolynomials: NamedPolynomial, polynomial_ring, formal_coefficients
-import .Expansions: expansion
+import .Expansions: expansion, coefficient, @coefficient
 import .Groebner: red, groebner_basis
 
 export TupleMonomial, Term, Polynomial, NamedPolynomial, generators, free_generators, ⊗, polynomial_ring, formal_coefficients
-export deg, red, groebner_basis, expansion
+export deg, red, groebner_basis, expansion, coefficient, @coefficient
 
 # TODO: needs a better place
 import .NamedPolynomials: polynomialtype

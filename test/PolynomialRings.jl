@@ -77,11 +77,21 @@ end
 
 @testset "Expansions" begin
 
-    using PolynomialRings: expansion
+    using PolynomialRings: expansion, coefficient, @coefficient
     R,(x,y,z) = polynomial_ring(Int, :x, :y, :z)
 
     @test collect(expansion(x*y*z + x*z + z^2, :z)) == [(z, x*y + x), (z^2, 1)]
     @test collect(expansion(x*y - x, :x, :y, :z)) == [(x,-1), (x*y, 1)]
     @test collect(expansion([x*z 1; z+1 x], :z)) == [(1, [0 1; 1 x]), (z, [x 0; 1 0])]
+
+    @test coefficient(x^3 + x^2*y + y, (1,), :y) == x^2 + 1
+    @test coefficient(x^3 + x^2*y + y, (0,1), :x, :y) == 1
+    @test coefficient(x^3 + x^2*y + y, (1,0), :y, :x) == 1
+
+    @test coefficient(x^3 + x^2*y + y, y, :y) == x^2 + 1
+    @test coefficient(x^3 + x^2*y + y, y, :x, :y) == 1
+
+    @test 1 == @coefficient(x^3 + x^2*y + y, x^0 * y)
+    @test x^2+1 == @coefficient(x^3 + x^2*y + y, y)
 
 end

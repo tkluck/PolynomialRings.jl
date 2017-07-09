@@ -80,5 +80,48 @@ function diff(p::NamedPolynomial, variable::Symbol)
     throw(ArgumentError("Variable $variable does not appear in $(typeof(p))"))
 end
 
+function coefficient(f::NamedPolynomial, t::Tuple, vars::Symbol...)
+    for (w,p) in expansion(f, vars...)
+        m =monomial(w.p.terms[1])
+        if all(m[i] == t_i for (i,t_i) in enumerate(t))
+            return p
+        end
+    end
+    return zero(typeof(p))
+end
+
+function _parse_monomial_expression(expr)
+    if expr isa Symbol
+        return (1,), (expr,)
+    elseif expr.head == :call && expr.args[1] == :^ && expr.args[2] isa Symbol
+        return (expr.args[3],), (expr.args[2],)
+    elseif expr.head == :call && expr.args[1] == :*
+        ts = Int[]
+        ss = Symbol[]
+        for e in expr.args[2:end]
+            ((t,),(s,)) =_parse_monomial_expression(e)
+            push!(ts, t)
+            push!(ss, s)
+        end
+        return ntuple(i->ts[i], length(ts)), ss
+    end
+end
+
+macro coefficient(f, monomial)
+    t,vars = _parse_monomial_expression(monomial)
+    quote
+        coefficient($(esc(f)), $t, $vars...)
+    end
+end
+
+function coefficient(f::NamedPolynomial, t::NamedPolynomial, vars::Symbol...)
+    ((w,p),) = expansion(t, vars...)
+    p == 1 || throw(ArgumentError("Cannot get a coefficient for $t when symbols are $vars"))
+
+    m = monomial(w.p.terms[1])
+    tt = ntuple(i -> m[i], length(vars))
+
+    coefficient(f, tt, vars...)
+end
 
 end
