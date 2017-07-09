@@ -139,13 +139,14 @@ julia> [c()*x^2 + c()*x + c() , c()*x^2 + c()*x + c()]
 ```
 """
 function formal_coefficients(::Type{NP}, name::Symbol) where NP <: NamedPolynomial
-    C = Polynomial{Vector{Term{VectorMonomial{SparseVector{Int16,Int}}, Int}}, :deglex}
-    CC = NamedPolynomial{C, name}
+    _C = Polynomial{Vector{Term{VectorMonomial{SparseVector{Int16,Int}}, Int}}, :deglex}
+    CC = NamedPolynomial{_C, name}
 
     PP = base_extend(NP, CC)
+    C = basering(PP)
+    P = polynomialtype(C)
 
-
-    return lazymap(g->PP(CC(g)), generators(C))
+    return lazymap(g->PP(C(g)), generators(P))
 end
 
 # -----------------------------------------------------------------------------
