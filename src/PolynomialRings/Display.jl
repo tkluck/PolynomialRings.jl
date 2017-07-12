@@ -22,7 +22,7 @@ end
 _varname(::Type{Names}, ix::Integer) where Names <: Tuple = repr(fieldtype(Names, ix))[2:end]
 _varname(s::Symbol, ix::Integer) = (var = repr(s)[2:end]; "$var$ix")
 
-function show(io::IO, np::NP) where NP <: NamedPolynomial{P, Names} where {P, Names}
+function show(io::IO, np::NP) where NP <: NamedPolynomial{P, Names} where P<:Polynomial where Names
     p = np.p
     frst = true
     if length(terms(p)) == 0
