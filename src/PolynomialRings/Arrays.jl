@@ -1,6 +1,7 @@
 module Arrays
 
 import PolynomialRings: to_dense_monomials, max_variable_index, to_dense_monomials
+import PolynomialRings.Terms: Term
 import PolynomialRings.Polynomials: Polynomial
 import PolynomialRings.NamedPolynomials: NamedPolynomial
 import PolynomialRings.Expansions: expansion
@@ -59,10 +60,13 @@ function det(m::M) where M <: AbstractMatrix{P} where P <: _P
     )
 end
 
-*(A::_P, B::AbstractArray) = broadcast(*, A, B)
-*(A::AbstractArray, B::_P) = broadcast(*, A, B)
+_PT = Union{Polynomial,Term,NamedPolynomial}
+*(A::_PT, B::AbstractArray) = broadcast(*, A, B)
+*(A::AbstractArray, B::_PT) = broadcast(*, A, B)
+*(A::_PT, B::RowVector) = RowVector(broadcast(*, A, transpose(B)))
+*(A::RowVector, B::_PT) = RowVector(broadcast(*, transpose(A), B))
 
-transpose(a::_P) = a
+transpose(a::_PT) = a
 
 diff(a::A, s::Symbol) where A <: AbstractArray{P} where P <: _P = broadcast(a_i->diff(a_i, s), a)
 

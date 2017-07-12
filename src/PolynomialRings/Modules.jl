@@ -1,9 +1,11 @@
 module Modules
 
 import PolynomialRings.Polynomials: Polynomial
+import PolynomialRings.NamedPolynomials: NamedPolynomial
 
 AbstractModuleElement{P<:Polynomial} = Union{P, AbstractArray{P}}
-modulebasering(::Type{A}) where A <: AbstractModuleElement{P} where P = P
+AbstractNamedModuleElement{NP<:NamedPolynomial} = Union{NP, AbstractArray{NP}}
+modulebasering(::Type{A}) where A <: AbstractModuleElement{P} where P<:Polynomial = P
 
 import PolynomialRings: leading_term, iszero
 import Base: divrem
@@ -17,7 +19,7 @@ function leading_term(x::AbstractArray{P}) where P<:Polynomial
     end
 end
 
-iszero(x::AbstractArray{P}) where P<:Polynomial = (i = find(x); i>0 ? iszero(x[i]) : true)
+iszero(x::AbstractArray{P}) where P<:Polynomial = (i = findfirst(x); i>0 ? iszero(x[i]) : true)
 
 function divrem(a::AbstractArray{P}, b::AbstractArray{P}) where P<:Polynomial
     i = findfirst(b)

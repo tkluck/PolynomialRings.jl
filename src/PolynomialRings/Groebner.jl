@@ -3,7 +3,7 @@ module Groebner
 import PolynomialRings: leading_term, lcm_multipliers
 import PolynomialRings.Polynomials: Polynomial
 import PolynomialRings.NamedPolynomials: NamedPolynomial
-import PolynomialRings.Modules: AbstractModuleElement, modulebasering
+import PolynomialRings.Modules: AbstractModuleElement, AbstractNamedModuleElement, modulebasering
 
 function red(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
     factors = transpose(spzeros(modulebasering(M), length(G)))
@@ -30,6 +30,11 @@ function red(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
     return f_red, factors
 end
 
+_leading_row(p::Polynomial) = 1
+_leading_row(a::AbstractArray) = findfirst(a)
+_leading_term(p::Polynomial) = leading_term(p)
+_leading_term(a::AbstractArray) = leading_term(a[_leading_row(a)])
+
 """
     basis, transformation = groebner_basis(polynomials)
 
@@ -45,7 +50,7 @@ function groebner_basis(polynomials::AbstractVector{M}) where M <: AbstractModul
     transformation =Vector{P}[ P[ i==nonzero_indices[j] ? 1 : 0 for i in eachindex(polynomials)] for j in eachindex(result)]
     if length(result)>=1 # work around compiler bug for empty iterator
         pairs_to_consider = [
-            (i,j) for i in eachindex(result) for j in eachindex(result) if i < j
+             (i,j) for i in eachindex(result) for j in eachindex(result) if i < j && _leading_row(polynomials[i]) == _leading_row(polynomials[j])
         ]
     else
         pairs_to_consider = Tuple{Int,Int}[]
@@ -56,8 +61,8 @@ function groebner_basis(polynomials::AbstractVector{M}) where M <: AbstractModul
         a = result[i]
         b = result[j]
 
-        lt_a = leading_term(a)
-        lt_b = leading_term(b)
+        lt_a = _leading_term(a)
+        lt_b = _leading_term(b)
 
         m_a, m_b = lcm_multipliers(lt_a, lt_b)
 
@@ -73,7 +78,8 @@ function groebner_basis(polynomials::AbstractVector{M}) where M <: AbstractModul
 
         if !iszero(S_red)
             new_j = length(result)+1
-            append!(pairs_to_consider, [(new_i, new_j) for new_i in eachindex(result)])
+            new_lr = _leading_row(S_red)
+            append!(pairs_to_consider, [(new_i, new_j) for new_i in eachindex(result) if _leading_row(result[new_i]) == new_lr])
             push!(result, S_red)
 
             nonzero_factors = find(factors)
@@ -92,12 +98,12 @@ function groebner_basis(polynomials::AbstractVector{M}) where M <: AbstractModul
 
 end
 
-function syzygies{M <: AbstractModuleElement}(polynomials::AbstractVector{M})
+function syzygies(polynomials::AbstractVector{M}) where M <: AbstractModuleElement
     pairs_to_consider = [
         (i,j) for i in eachindex(polynomials) for j in eachindex(polynomials) if i < j
     ]
 
-    result = Vector{RowVector{modulebasering(M)}}()
+    result = Vector{RowVector{modulebasering(M),SparseVector{modulebasering(M),Int}}}()
 
     for (i,j) in pairs_to_consider
         a = polynomials[i]
@@ -105,23 +111,21 @@ function syzygies{M <: AbstractModuleElement}(polynomials::AbstractVector{M})
         lt_a = leading_term(a)
         lt_b = leading_term(b)
 
-        maybe_multipliers = _maybe_lcm_multipliers(lt_a, lt_b)
-        if !isnull(maybe_multipliers)
-            m_a, m_b = get(maybe_multipliers)
-            S = m_a * a - m_b * b
+        m_a, m_b = lcm_multipliers(lt_a, lt_b)
+        S = m_a * a - m_b * b
 
-            (S_red, syzygy) = red(S, polynomials)
-            if !iszero(S_red)
-                throw(ArgumentError("syzygies(...) expects a Groebner basis, so S_red = $( S_red ) should be zero"))
-            end
-            syzygy[1,i] -= m_a
-            syzygy[1,j] += m_b
-
-            (syz_red, _) = red(syzygy, result)
-            if !iszero(syz_red)
-                push!(result, syz_red)
-            end
+        (S_red, syzygy) = red(S, polynomials)
+        if !iszero(S_red)
+            throw(ArgumentError("syzygies(...) expects a Groebner basis, so S_red = $( S_red ) should be zero"))
         end
+        syzygy[1,i] -= m_a
+        syzygy[1,j] += m_b
+
+        (syz_red, _) = red(syzygy, result)
+        if !iszero(syz_red)
+            push!(result, syz_red)
+        end
+        push!(result, syzygy)
     end
 
     flat_result = [ result[x][1,y] for x=eachindex(result), y=eachindex(polynomials) ]
@@ -134,6 +138,17 @@ end
 # is a recipe for disaster because there is no zero(Any).
 red(f::NP, G::AbstractVector{NP}) where NP<:NamedPolynomial = ((f_red,factors) = red(f.p, map(g->g.p,G)); (NP(f_red), map(NP,factors')'))
 
-groebner_basis(G::AbstractVector{NP}) where NP<:NamedPolynomial = ((res, tr) = groebner_basis(map(g->g.p,G)); (map(NP, res), map(NP, tr)))
+_unpack(p) = broadcast(g->g.p, p)
+_pack(::Type{NP}, a) where NP <: NamedPolynomial = broadcast(NP, a)
+
+function groebner_basis(G::AbstractVector{M}) where M<:AbstractNamedModuleElement{NP} where NP<:NamedPolynomial
+    res, tr = groebner_basis(map(_unpack,G))
+    map(g->_pack(NP,g), res), map(g->_pack(NP,g), tr)
+end
+
+function syzygies(G::AbstractVector{M}) where M<:AbstractNamedModuleElement{NP} where NP<:NamedPolynomial
+    res = syzygies(map(_unpack,G))
+    map(g->_pack(NP,g), res)
+end
 
 end
