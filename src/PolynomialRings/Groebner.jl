@@ -5,6 +5,24 @@ import PolynomialRings.Polynomials: Polynomial
 import PolynomialRings.NamedPolynomials: NamedPolynomial
 import PolynomialRings.Modules: AbstractModuleElement, AbstractNamedModuleElement, modulebasering
 
+"""
+    f_red, factors = red(f, G)
+
+Return the multivariate reduction of a polynomial `f` by a vector of
+polynomials `G`, together with  row vector of factors. By definition, this
+means that no leading term of a polynomial in `G` divides any monomial in
+`f`, and `f_red + factors * G == f`.
+
+# Examples
+In one variable, this is just the normal Euclidean algorithm:
+```jldoctest
+julia> R,(x,y) = polynomial_ring(Complex{Int}, :x, :y);
+julia> red(x^1 + 1, [x-im])
+(0, [x+im]')
+julia> red(x^2 + y^2 + 1, [x, y])
+(1, [x,y]')
+```
+"""
 function red(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
     factors = transpose(spzeros(modulebasering(M), length(G)))
     frst = true
