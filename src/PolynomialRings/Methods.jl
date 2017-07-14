@@ -22,7 +22,7 @@ basering(x)      = basering(typeof(x))
 monomialtype(x)  = monomialtype(typeof(x))
 monomialorder(x) = monomialorder(typeof(x))
 termtype(x)      = termtype(typeof(x))
-exptype(x)       = termtype(typeof(x))
+exptype(x)       = exptype(typeof(x))
 
 # -----------------------------------------------------------------------------
 #
