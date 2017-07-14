@@ -1,7 +1,8 @@
 module Groebner
 
-import PolynomialRings: leading_term, lcm_multipliers
+import PolynomialRings: leading_term, lcm_multipliers, deg
 import PolynomialRings.Polynomials: Polynomial
+import PolynomialRings.Terms: monomial
 import PolynomialRings.NamedPolynomials: NamedPolynomial
 import PolynomialRings.Modules: AbstractModuleElement, AbstractNamedModuleElement, modulebasering
 import PolynomialRings.Operators: leaddivrem
@@ -68,7 +69,7 @@ _leading_row(p::Polynomial) = 1
 _leading_row(a::AbstractArray) = findfirst(a)
 _leading_term(p::Polynomial) = leading_term(p)
 _leading_term(a::AbstractArray) = leading_term(a[_leading_row(a)])
-
+using DataStructures
 """
     basis, transformation = groebner_basis(polynomials)
 
@@ -82,16 +83,27 @@ function groebner_basis(polynomials::AbstractVector{M}) where M <: AbstractModul
     nonzero_indices = find(p->!iszero(p), polynomials)
     result = polynomials[nonzero_indices]
     transformation =Vector{P}[ P[ i==nonzero_indices[j] ? 1 : 0 for i in eachindex(polynomials)] for j in eachindex(result)]
-    if length(result)>=1 # work around compiler bug for empty iterator
-        pairs_to_consider = [
-             (i,j) for i in eachindex(result) for j in eachindex(result) if i < j && _leading_row(polynomials[i]) == _leading_row(polynomials[j])
-        ]
-    else
-        pairs_to_consider = Tuple{Int,Int}[]
+
+    pairs_to_consider = PriorityQueue(Tuple{Int,Int}, Int)
+    for j in eachindex(result)
+        for i in 1:(j-1)
+            a = result[i]
+            b = result[j]
+            if _leading_row(a) == _leading_row(b)
+                lt_a = _leading_term(a)
+                lt_b = _leading_term(b)
+                m_a, m_b = lcm_multipliers(lt_a, lt_b)
+
+                if monomial(m_a) != monomial(lt_b)
+                    degree = deg(m_a) + deg(lt_a)
+                    enqueue!(pairs_to_consider, (i,j), degree)
+                end
+            end
+        end
     end
 
     while length(pairs_to_consider) > 0
-        (i,j) = pop!(pairs_to_consider)
+        (i,j) = dequeue!(pairs_to_consider)
         a = result[i]
         b = result[j]
 
@@ -100,6 +112,10 @@ function groebner_basis(polynomials::AbstractVector{M}) where M <: AbstractModul
 
         m_a, m_b = lcm_multipliers(lt_a, lt_b)
 
+        if monomial(m_a) == monomial(lt_b)
+            continue
+        end
+
         S = m_a * a - m_b * b
 
         # potential speedup: wikipedia says that in all but the 'last steps'
@@ -107,15 +123,27 @@ function groebner_basis(polynomials::AbstractVector{M}) where M <: AbstractModul
         # that only does lead division
         (S_red, factors) = red(S, result)
 
-        factors[1, i] -= m_a
-        factors[1, j] += m_b
-
         if !iszero(S_red)
             new_j = length(result)+1
             new_lr = _leading_row(S_red)
-            append!(pairs_to_consider, [(new_i, new_j) for new_i in eachindex(result) if _leading_row(result[new_i]) == new_lr])
+            new_lt = _leading_term(S_red)
+            for new_i in eachindex(result)
+                new_a = result[new_i]
+                if _leading_row(new_a) == new_lr
+                    new_lt_a = _leading_term(new_a)
+                    new_m_a, new_m_b = lcm_multipliers(new_lt_a, new_lt)
+
+                    if monomial(new_m_a) != monomial(new_lt)
+                        degree = deg(new_m_a) + deg(new_lt_a)
+                        enqueue!(pairs_to_consider, (new_i,new_j), degree)
+                    end
+                end
+            end
+
             push!(result, S_red)
 
+            factors[1, i] -= m_a
+            factors[1, j] += m_b
             nonzero_factors = find(factors)
             tr = [ -sum(factors[x] * transformation[x][y] for x in nonzero_factors) for y in eachindex(polynomials) ]
             push!(transformation, tr)
