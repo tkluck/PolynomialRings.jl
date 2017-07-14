@@ -4,6 +4,7 @@ import PolynomialRings: leading_term, lcm_multipliers
 import PolynomialRings.Polynomials: Polynomial
 import PolynomialRings.NamedPolynomials: NamedPolynomial
 import PolynomialRings.Modules: AbstractModuleElement, AbstractNamedModuleElement, modulebasering
+import PolynomialRings.Operators: leaddivrem
 
 """
     f_red, factors = red(f, G)
@@ -29,6 +30,21 @@ function red(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
     more_loops = false
     f_red = f
     i = 1
+    while i<=length(G)
+        frst = false
+        more_loops = false
+        g = G[i]
+        q, f_red = leaddivrem(f_red, g)
+        if !iszero(q)
+            factors[1, i] += q
+            i = 1
+        else
+            i += 1
+        end
+        if iszero(f_red)
+            return f_red, factors
+        end
+    end
     while i<=length(G)
         frst = false
         more_loops = false

@@ -1,6 +1,7 @@
 module Modules
 
 import PolynomialRings.Polynomials: Polynomial
+import PolynomialRings.Operators: leaddivrem
 import PolynomialRings.NamedPolynomials: NamedPolynomial
 
 AbstractModuleElement{P<:Polynomial} = Union{P, AbstractArray{P}}
@@ -25,6 +26,16 @@ function divrem(a::AbstractArray{P}, b::AbstractArray{P}) where P<:Polynomial
     i = findfirst(b)
     if i>0
         (q,r) = divrem(a[i], b[i])
+        return q, a - q*b
+    else
+        return zero(P), a
+    end
+end
+
+function leaddivrem(a::AbstractArray{P}, b::AbstractArray{P}) where P<:Polynomial
+    i = findfirst(b)
+    if i>0
+        (q,r) = leaddivrem(a[i], b[i])
         return q, a - q*b
     else
         return zero(P), a

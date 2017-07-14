@@ -218,6 +218,23 @@ function divrem(f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:Abst
     return zero(g), f
 end
 
+function leaddivrem(f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
+    if iszero(f)
+        return zero(g), f
+    end
+    if iszero(g)
+        throw(DivideError())
+    end
+    lt_f = leading_term(f)
+    lt_g = leading_term(g)
+    maybe_factor = maybe_div(lt_f, lt_g)
+    if !isnull(maybe_factor)
+        factor = get(maybe_factor)
+        return typeof(f)([factor]), f - factor*g
+    end
+    return zero(g), f
+end
+
 # -----------------------------------------------------------------------------
 #
 # differentation
