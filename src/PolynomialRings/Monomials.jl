@@ -103,9 +103,15 @@ struct TupleMonomial{N, I} <: AbstractMonomial
     TupleMonomial{N,I}(e,deg) where I <: Integer where N = new(e,deg)
 end
 
-function _construct(::Type{TupleMonomial{N,I}}, f::Function, num_variables::Type{Val{N}}) where {N,I}
-    t = ntuple(f, Val{N})
-    TupleMonomial{N, eltype(t)}(t, sum(t))
+@generated function _construct(::Type{TupleMonomial{N,I}}, f::Function, num_variables::Type{Val{N}}) where {N,I}
+    result = :( tuple() )
+    for i in 1:N
+        push!(result.args, :( f($i) ))
+    end
+    return quote
+        t = $result
+        TupleMonomial{N, eltype(t)}(t, sum(t))
+    end
 end
 
 _construct(::Type{T}, f::Function, num_variables::Int) where T <: TupleMonomial= _construct(T, f, Val{num_variables})
@@ -114,7 +120,7 @@ TupleMonomial(e::NTuple{N,I}) where I <: Integer where N = TupleMonomial{N,I}(e,
 
 num_variables(::Type{TupleMonomial{N,I}}) where {N,I} = N
 exptype(::Type{TupleMonomial{N,I}}) where I <: Integer where N = I
-getindex(m::TupleMonomial, i::Integer) = m.e[i]
+@inline getindex(m::TupleMonomial, i::Integer) = m.e[i]
 
 one(::Type{T}) where T<:TupleMonomial = _construct(T, i->zero(exptype(T)), Val{num_variables(T)})
 
@@ -152,7 +158,7 @@ end
 
 num_variables(m::VectorMonomial) = length(m.e)
 exptype(::Type{VectorMonomial{V}}) where V = eltype(V)
-getindex(m::VectorMonomial, i::Integer) = i <= length(m.e) ? m.e[i] : zero(exptype(m))
+@inline getindex(m::VectorMonomial, i::Integer) = i <= length(m.e) ? m.e[i] : zero(exptype(m))
 
 # the empty vector corresponds to all exponents equal to zero
 one(::Type{VectorMonomial{V}}) where V = VectorMonomial{V}( V() )
@@ -191,6 +197,25 @@ end
 
 total_degree(a::TupleMonomial) = a.deg
 
+@generated function _div(a::M, b::M) where M <: TupleMonomial{N} where N
+    result = :( tuple() )
+    for i=1:N
+        push!(result.args, :( a[$i] - b[$i] ))
+    end
+    return quote
+        M($result, a.deg - b.deg)
+    end
+end
+
+function maybe_div(a::M, b::M)::Nullable{M} where M <: TupleMonomial{N} where N
+    if all(a[i] >= b[i] for i=1:N)
+        return _div(a,b)
+    else
+        return nothing
+    end
+end
+
+
 # -----------------------------------------------------------------------------
 #
 # VectorMonomial: overloads for speedup
@@ -225,6 +250,51 @@ function *(a::M, b::M) where M <: VectorMonomial{V} where V<:SparseVector
         res[find(a.e)] += nonzeros(a.e)
         return M(res)
     end
+end
+
+function maybe_div(a::M, b::M)::Nullable{M} where M <: VectorMonomial{V} where V<:Vector
+    if length(a.e) >= length(b.e)
+        res = copy(a.e)
+        res[find(b.e)] -= nonzeros(b.e)
+        if all(r>=0 for r in res)
+            return M(res)
+        else
+            return nothing
+        end
+    else
+        res = copy(b.e)
+        res[find(a.e)] -= nonzeros(a.e)
+        if all(r>=0 for r in res)
+            return M(res)
+        else
+            return nothing
+        end
+    end
+end
+
+import Base.SparseArrays: nonzeroinds
+function maybe_div(a::M, b::M)::Nullable{M} where M <: VectorMonomial{V} where V<:SparseVector
+    for (ib,exp) in zip(nonzeroinds(b.e), nonzeros(b.e))
+        if a[ib] < exp
+            return nothing
+        end
+    end
+    res = spzeros(exptype(M), max(num_variables(a), num_variables(b)))
+    ia = findfirst(a.e)
+    ib = findfirst(b.e)
+    while (i = min(ia, ib)) > 0
+        res[i] = a.e[i] - b.e[i]
+
+        ia = findnext(a.e,i+1)
+        ib = findnext(b.e,i+1)
+    end
+    if ia != 0
+        res[ia] = a.e[ia]
+        while (ia = findnext(a.e,ia+1))>0
+            res[ia] = a.e[ia]
+        end
+    end
+    return M(res)
 end
 
 # -----------------------------------------------------------------------------
