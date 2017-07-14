@@ -126,7 +126,10 @@ function groebner_basis(polynomials::AbstractVector{M}) where M <: AbstractModul
     #result = result[sorted]
     #transformation = transformation[sorted]
 
-    flat_tr = sparse([ transformation[x][y] for x=eachindex(result), y=eachindex(polynomials) ])
+    flat_tr = spzeros(P, length(result), length(polynomials))
+    for (i,x) in enumerate(transformation)
+        flat_tr[i,:] = x
+    end
 
     return result, flat_tr
 
