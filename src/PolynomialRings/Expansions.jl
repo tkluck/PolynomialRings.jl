@@ -9,6 +9,29 @@ import PolynomialRings.Monomials: AbstractMonomial, TupleMonomial, exptype
 
 import Iterators: groupby
 
+"""
+    monomialtype, coefficienttype = _expansion_types(R, Tuple{symbols...})
+"""
+function _expansion_types(::Type{NP}, ::Type{T}) where NP <: NamedPolynomial where T <: Tuple
+    all_vars = Symbol[fieldtype(names(NP),i) for i in 1:nfields(names(NP))]
+    vars = Symbol[fieldtype(T,i) for i in 1:nfields(T)]
+    remaining_vars = [v for v in all_vars if !(v in vars)]
+    N = length(vars)
+    M = length(remaining_vars)
+    NamesExpansion = Tuple{vars...}
+    ExpType = exptype(monomialtype(polynomialtype(NP)))
+    ExpansionType = NTuple{N,ExpType}
+    C = basering(NP)
+    if M == 0
+        CoeffType = C
+    else
+        NamesCoefficient = Tuple{remaining_vars...}
+        CoeffType = NamedPolynomial{Polynomial{Vector{Term{TupleMonomial{M,ExpType},C}},:degrevlex},NamesCoefficient}
+    end
+    return ExpansionType, CoeffType
+
+end
+
 
 """
     expansion(f, symbol, [symbol...])
@@ -132,7 +155,8 @@ function coefficient(f::NamedPolynomial, t::Tuple, vars::Symbol...)
             return p
         end
     end
-    return zero(typeof(p))
+    ExpansionType, CoeffType = _expansion_types(typeof(f), Tuple{vars...})
+    return zero(CoeffType)
 end
 
 function coefficient(f::NamedPolynomial, t::NamedPolynomial, vars::Symbol...)

@@ -122,6 +122,8 @@ end
 
         @test 1 == @coefficient(x^3 + x^2*y + y, x^0 * y)
         @test x^2+1 == @coefficient(x^3 + x^2*y + y, y)
+
+        @test 0 == @coefficient(x^3 + x^2*y + y, y^2)
     end
 
 end
