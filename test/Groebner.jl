@@ -23,6 +23,9 @@ using PolynomialRings.Groebner: red, groebner_basis, syzygies
     GG, tr= groebner_basis(G)
     @test length(GG) == 6
     @test [a for a in tr]*G == GG
+
+    GG= groebner_basis(G, Val{false})
+    @test length(GG) == 6
 end
 
 @testset "Syzygy" begin
