@@ -22,7 +22,7 @@ end
 # -----------------------------------------------------------------------------
 import Base: *, +, -, one, ==, iszero, diff
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, deg, basering
-import PolynomialRings: maybe_div, lcm_multipliers, monomialtype, exptype
+import PolynomialRings: maybe_div, lcm_multipliers, monomialtype, exptype, lcm_degree
 
 # -----------------------------------------------------------------------------
 #
@@ -81,5 +81,7 @@ function diff(t::T, i::Integer) where T <: Term
     n,m = diff(monomial(t),i)
     return T(m, n*coefficient(t))
 end
+
+lcm_degree(a::T, b::T) where T<:Term = lcm_degree(monomial(a), monomial(b))
 
 end

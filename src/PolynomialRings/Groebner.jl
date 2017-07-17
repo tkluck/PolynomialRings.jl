@@ -1,6 +1,6 @@
 module Groebner
 
-import PolynomialRings: leading_term, lcm_multipliers, deg
+import PolynomialRings: leading_term, lcm_multipliers, deg, lcm_degree
 import PolynomialRings.Polynomials: Polynomial
 import PolynomialRings.Terms: monomial
 import PolynomialRings.NamedPolynomials: NamedPolynomial
@@ -95,10 +95,9 @@ function groebner_basis(polynomials::AbstractVector{M}, ::Type{Val{with_transfor
             if _leading_row(a) == _leading_row(b)
                 lt_a = _leading_term(a)
                 lt_b = _leading_term(b)
-                m_a, m_b = lcm_multipliers(lt_a, lt_b)
+                degree = lcm_degree(lt_a, lt_b)
 
-                if monomial(m_a) != monomial(lt_b)
-                    degree = deg(m_a) + deg(lt_a)
+                if degree < deg(lt_a) + deg(lt_b)
                     if degree <= max_degree
                         enqueue!(pairs_to_consider, (i,j), degree)
                     end
@@ -136,10 +135,9 @@ function groebner_basis(polynomials::AbstractVector{M}, ::Type{Val{with_transfor
                 new_a = result[new_i]
                 if _leading_row(new_a) == new_lr
                     new_lt_a = _leading_term(new_a)
-                    new_m_a, new_m_b = lcm_multipliers(new_lt_a, new_lt)
+                    degree = lcm_degree(new_lt_a, new_lt)
 
-                    if monomial(new_m_a) != monomial(new_lt)
-                        degree = deg(new_m_a) + deg(new_lt_a)
+                    if degree < deg(new_lt_a) + deg(new_lt)
                         if degree <= max_degree
                             enqueue!(pairs_to_consider, (new_i,new_j), degree)
                         end

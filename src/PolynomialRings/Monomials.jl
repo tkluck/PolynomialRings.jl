@@ -36,7 +36,7 @@ abstract type AbstractMonomial end
 # -----------------------------------------------------------------------------
 import Base: getindex, gcd, lcm, one, *, enumerate, ==, diff
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, deg
-import PolynomialRings: maybe_div, lcm_multipliers, exptype
+import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree
 
 
 # -----------------------------------------------------------------------------
@@ -83,6 +83,11 @@ function diff(a::M, i::Integer) where M <: AbstractMonomial
     else
         return (n, _construct(M, j -> (j==i ? a[j]-one(exptype(M)) : a[j]), num_variables(a)))
     end
+end
+
+function lcm_degree(a::M, b::M) where M <: AbstractMonomial
+    N = max(num_variables(a), num_variables(b))
+    return sum(max(a[i],b[i]) for i=1:N)
 end
 
 # -----------------------------------------------------------------------------

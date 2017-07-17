@@ -34,6 +34,7 @@ terms(x)             = throw(AssertionError("Not implemented: terms(::$(typeof(x
 leading_term(x)      = throw(AssertionError("Not implemented: leading_term(::$(typeof(x)))"))
 maybe_div(a,b)       = throw(AssertionError("Not implemented: maybe_div(::$(typeof(a)), ::$(typeof(b)))"))
 lcm_multipliers(a,b) = throw(AssertionError("Not implemented: lcm_multipliers(::$(typeof(a)), ::$(typeof(b)))"))
+lcm_degree(a,b)      = throw(AssertionError("Not implemented: lcm_degree(::$(typeof(a)), ::$(typeof(b)))"))
 
 """
     deg(f)
