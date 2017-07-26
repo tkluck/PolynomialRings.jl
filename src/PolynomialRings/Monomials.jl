@@ -1,5 +1,7 @@
 module Monomials
 
+using Nulls
+
 """
     AbstractMonomial{Order}
 
@@ -60,11 +62,11 @@ end
 exptype(a::AbstractMonomial) = exptype(typeof(a))
 num_variables(a::A) where A <: AbstractMonomial = num_variables(A)
 
-function maybe_div(a::M, b::M)::Nullable{M} where M <: AbstractMonomial
+function maybe_div(a::M, b::M) where M <: AbstractMonomial
     if all(a[i] >= b[i] for i=1:max(num_variables(a), num_variables(b)))
         return _construct(M,i -> a[i] - b[i], max(num_variables(a), num_variables(b)))
     else
-        return nothing
+        return null
     end
 end
 
@@ -212,11 +214,11 @@ total_degree(a::TupleMonomial) = a.deg
     end
 end
 
-function maybe_div(a::M, b::M)::Nullable{M} where M <: TupleMonomial{N} where N
+function maybe_div(a::M, b::M) where M <: TupleMonomial{N} where N
     if all(a[i] >= b[i] for i=1:N)
         return _div(a,b)
     else
-        return nothing
+        return null
     end
 end
 
@@ -257,14 +259,14 @@ function *(a::M, b::M) where M <: VectorMonomial{V} where V<:SparseVector
     end
 end
 
-function maybe_div(a::M, b::M)::Nullable{M} where M <: VectorMonomial{V} where V<:Vector
+function maybe_div(a::M, b::M) where M <: VectorMonomial{V} where V<:Vector
     if length(a.e) >= length(b.e)
         res = copy(a.e)
         res[find(b.e)] -= nonzeros(b.e)
         if all(r>=0 for r in res)
             return M(res)
         else
-            return nothing
+            return null
         end
     else
         res = copy(b.e)
@@ -272,16 +274,16 @@ function maybe_div(a::M, b::M)::Nullable{M} where M <: VectorMonomial{V} where V
         if all(r>=0 for r in res)
             return M(res)
         else
-            return nothing
+            return null
         end
     end
 end
 
 import Base.SparseArrays: nonzeroinds
-function maybe_div(a::M, b::M)::Nullable{M} where M <: VectorMonomial{V} where V<:SparseVector
+function maybe_div(a::M, b::M) where M <: VectorMonomial{V} where V<:SparseVector
     for (ib,exp) in zip(nonzeroinds(b.e), nonzeros(b.e))
         if a[ib] < exp
-            return nothing
+            return null
         end
     end
     res = spzeros(exptype(M), max(num_variables(a), num_variables(b)))

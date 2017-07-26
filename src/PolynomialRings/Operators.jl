@@ -209,9 +209,8 @@ function divrem(f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:Abst
     end
     lt_g = leading_term(g)
     for t in terms(f)
-        maybe_factor = maybe_div(t, lt_g)
-        if !isnull(maybe_factor)
-            factor = get(maybe_factor)
+        factor = maybe_div(t, lt_g)
+        if !isnull(factor)
             return typeof(f)([factor]), f - factor*g
         end
     end
@@ -227,9 +226,8 @@ function leaddivrem(f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:
     end
     lt_f = leading_term(f)
     lt_g = leading_term(g)
-    maybe_factor = maybe_div(lt_f, lt_g)
-    if !isnull(maybe_factor)
-        factor = get(maybe_factor)
+    factor = maybe_div(lt_f, lt_g)
+    if !isnull(factor)
         return typeof(f)([factor]), f - factor*g
     end
     return zero(g), f
