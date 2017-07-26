@@ -63,7 +63,7 @@ deg(a::Term) = deg(monomial(a))
 
 function maybe_div(a::T, b::T)::Nullable{T} where T<:Term
     maybe_q = maybe_div(monomial(a), monomial(b))
-    if isnull(maybe_q)
+    if isnull(maybe_q) || iszero(coefficient(b))
         return nothing
     else
         return T(get(maybe_q), coefficient(a) // coefficient(b))
