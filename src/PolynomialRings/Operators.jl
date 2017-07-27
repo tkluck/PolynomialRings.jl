@@ -18,9 +18,15 @@ import PolynomialRings: maybe_div
 # zero, one, etc
 #
 # -----------------------------------------------------------------------------
-zero(::Type{P}) where P <: Polynomial = P(termtype(P)[])
+@generated function zero(::Type{P}) where P <: Polynomial
+    i = P(termtype(P)[])
+    quote $i end
+end
+@generated function one(::Type{P})  where P <: Polynomial
+    i = P([one(termtype(P))])
+    quote $i end
+end
 zero(::P)       where P <: Polynomial = zero(P)
-one(::Type{P})  where P <: Polynomial = P([one(termtype(P))])
 one(::P)        where P <: Polynomial = one(P)
 
 iszero(a::P)        where P <: Polynomial = length(terms(a)) == 0
