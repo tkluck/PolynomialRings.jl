@@ -41,8 +41,6 @@ iszero(a::P)        where P <: Polynomial = length(terms(a)) == 0
 # -----------------------------------------------------------------------------
 function +(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
 
-    assert(issorted(terms(a), lt=(a,b)->isless(monomial(a),monomial(b),Val{Order})))
-    assert(issorted(terms(b), lt=(a,b)->isless(monomial(a),monomial(b),Val{Order})))
 
     T = Term{M, promote_type(C1,C2)}
     P = Polynomial{Vector{T},Order}
@@ -81,14 +79,11 @@ function +(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
     end
 
     resize!(res, n)
-    assert(issorted(res, lt=(a,b)->isless(monomial(a),monomial(b),Val{Order})))
     return P(res)
 end
 
 function -(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
 
-    assert(issorted(terms(a), lt=(a,b)->isless(monomial(a),monomial(b),Val{Order})))
-    assert(issorted(terms(b), lt=(a,b)->isless(monomial(a),monomial(b),Val{Order})))
 
     T = Term{M, promote_type(C1,C2)}
     P = Polynomial{Vector{T},Order}
@@ -127,7 +122,6 @@ function -(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
     end
 
     resize!(res, n)
-    assert(issorted(res, lt=(a,b)->isless(monomial(a),monomial(b),Val{Order})))
     return P(res)
 end
 
@@ -141,8 +135,6 @@ import DataStructures: enqueue!, dequeue!, peek
 
 function *(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
 
-    assert(issorted(terms(a), lt=(a,b)->isless(monomial(a),monomial(b),Val{Order})))
-    assert(issorted(terms(b), lt=(a,b)->isless(monomial(a),monomial(b),Val{Order})))
 
     T = Term{M, promote_type(C1,C2)}
     PP = Polynomial{Vector{T}, Order}
@@ -179,8 +171,6 @@ function *(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
         end
     end
 
-    assert(k == length(summands))
-    assert(issorted(summands, lt=(a,b)->isless(monomial(a),monomial(b),Val{Order})))
 
     if length(summands) > 0
         last_exp = monomial(summands[1])
