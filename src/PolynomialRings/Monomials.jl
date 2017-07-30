@@ -17,7 +17,7 @@ by a number (e.g. the index in the array/tuple).
 Each concrete implementation should implement:
     m[i]
     num_variables(m)
-    M(i -> exponent, num_variables)
+    _construct(M, i -> exponent, num_variables)
     exptype(M)
 
 and optionally:
