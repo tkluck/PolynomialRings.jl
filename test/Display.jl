@@ -20,7 +20,7 @@ using PolynomialRings
 
         @test repr(polynomialtype(R)) == "(Polynomial over Rational{Int64} in 2 variables (degrevlex))"
         @test repr(polynomialtype(S)) == "(Polynomial over (Polynomial over Rational{Int64} in q_i) in 2 variables (degrevlex))"
-        @test repr(polynomialtype(basering(S))) == "(Polynomial over Rational{Int64} in ∞ variables (deglex))"
+        @test repr(polynomialtype(basering(S))) == "(Polynomial over Rational{Int64} in ∞ variables (degrevlex))"
         @test repr(polynomialtype(T)) == "(Polynomial over BigInt in 3 variables (degrevlex))"
 
         @test repr(termtype(R)) == "(Term over Rational{Int64} in x and y)"
