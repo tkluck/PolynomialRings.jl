@@ -19,7 +19,7 @@ function show(io::IO, p::P) where P <: Polynomial
     show(io, NamedPolynomial{P, DummyNames}(p))
 end
 
-_varname(n::NTuple{N, Symbol}, ix::Integer) where N = repr(n[ix])[2:end]
+_varname(::Type{Names}, ix::Integer) where Names <: Tuple = repr(fieldtype(Names, ix))[2:end]
 _varname(s::Symbol, ix::Integer) = (var = repr(s)[2:end]; "$var$ix")
 
 function show(io::IO, np::NP) where NP <: NamedPolynomial{P, Names} where P<:Polynomial where Names
@@ -53,17 +53,17 @@ end
 # -----------------------------------------------------------------------------
 
 function show(io::IO, ::Type{NP}) where NP <: NamedPolynomial{P} where P <: Polynomial
-    show_names = names(NP) isa Symbol ? "$(names(NP))_i" : join(names(NP), ",", " and ")
+    show_names = names(NP) isa Symbol ? "$(names(NP))_i" : join([_varname(names(NP), i) for i in 1:nfields(names(NP))], ",", " and ")
     print(io, "(Polynomial over $(basering(NP)) in $show_names)")
 end
 
 function show(io::IO, ::Type{NP}) where NP <: NamedPolynomial{P} where P <: Term
-    show_names = names(NP) isa Symbol ? "$(names(NP))_i" : join(names(NP), ",", " and ")
+    show_names = names(NP) isa Symbol ? "$(names(NP))_i" : join([_varname(names(NP), i) for i in 1:nfields(names(NP))], ",", " and ")
     print(io, "(Term over $(basering(NP)) in $show_names)")
 end
 
 function show(io::IO, ::Type{NP}) where NP <: NamedPolynomial{P} where P <: AbstractMonomial
-    show_names = names(NP) isa Symbol ? "$(names(NP))_i" : join(names(NP), ",", " and ")
+    show_names = names(NP) isa Symbol ? "$(names(NP))_i" : join([_varname(names(NP), i) for i in 1:nfields(names(NP))], ",", " and ")
     print(io, "(Monomial in $show_names)")
 end
 
