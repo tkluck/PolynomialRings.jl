@@ -74,7 +74,7 @@ function to_dense_monomials(n,a::NamedPolynomial)
     p = to_dense_monomials(n, a.p)
     s = names(typeof(a))::Symbol
     new_names = [Symbol("$s$i") for i=1:n]
-    NamedPolynomial{typeof(p),Tuple{new_names...}}(p)
+    NamedPolynomial{typeof(p),tuple(new_names...)}(p)
 end
 
 max_variable_index(a::NamedPolynomial) = max_variable_index(a.p)
@@ -108,18 +108,17 @@ julia> x*y + z
 function polynomial_ring(basering::Type, symbols::Symbol...)
     length(symbols)>0 || throw(ArgumentError("Need at least one variable name"))
 
-    Names = Tuple{symbols...}
     P = Polynomial{Vector{Term{TupleMonomial{length(symbols),Int16}, basering}}, :degrevlex}
     gens = generators(P)
-    NP = NamedPolynomial{P, Names}
+    NP = NamedPolynomial{P, symbols}
 
     return NP, map(g->NP(g), gens)
 end
 
 function convert(::Type{NP}, x::Symbol) where NP<:NamedPolynomial
     T = names(NP)
-    for i in 1:nfields(T)
-        if fieldtype(T,i) == x
+    for (i,s) in enumerate(T)
+        if s == x
             return NP(generators(polynomialtype(NP))[i])
         end
     end
@@ -164,26 +163,25 @@ end
 # Promotions for different variable name sets
 #
 # -----------------------------------------------------------------------------
-_fieldtypes{T <: Tuple}(t::Type{T}) = Symbol[fieldtype(T, i) for i in 1:nfields(T)]
 
-@generated function _convert_monomial(::Type{T}, ::Type{U}, monomial::AbstractMonomial) where T <: Tuple where U <: Tuple
-    for j in 1:nfields(U)
-        if !any(fieldtype(T,i) == fieldtype(U,j) for i in 1:nfields(T))
-            throw(ArgumentError("Cannot convert variables $U to variables $T"))
+@generated function _convert_monomial(::Type{Val{dest}}, ::Type{Val{src}}, monomial::AbstractMonomial) where dest where src
+    for s in src
+        if !(s in dest)
+            throw(ArgumentError("Cannot convert variables $src to variables $dest"))
         end
     end
-    :( _lossy_convert_monomial(T, U, monomial) )
+    :( _lossy_convert_monomial(Val{dest}, Val{src}, monomial) )
 end
 
-@generated function _lossy_convert_monomial(::Type{T}, ::Type{U}, monomial::AbstractMonomial) where T <: Tuple where U <: Tuple
+@generated function _lossy_convert_monomial(::Type{Val{dest}}, ::Type{Val{src}}, monomial::AbstractMonomial) where dest where src
     # create an expression that calls the tuple constructor. No arguments -- so far
     converter = :( tuple() )
-    for i in 1:nfields(T)
+    for d in dest
         # for every result field, add the constant 0 as an argument
         push!(converter.args, :( zero(exptype(monomial)) ))
-        for j in 1:nfields(U)
-            if fieldtype(T, i) == fieldtype(U,j)
-                # HOWEVER, if it actually also exists in U, then replace the 0
+        for (j,s) in enumerate(src)
+            if d == s
+                # HOWEVER, if it actually also exists in src, then replace the 0
                 # by reading from exponent_tuple
                 converter.args[end]= :( monomial[$j] )
                 break
@@ -193,20 +191,24 @@ end
     return :( TupleMonomial( $converter ) )
 end
 
-function promote_rule(::Type{NP1}, ::Type{NP2}) where NP1 <: NamedPolynomial{P1, Names1} where NP2 <: NamedPolynomial{P2, Names2} where {P1<:Polynomial,P2<:Polynomial,Names1<:Tuple,Names2<:Tuple}
+function promote_rule(::Type{NP1}, ::Type{NP2}) where NP1 <: NamedPolynomial{P1, Names1} where NP2 <: NamedPolynomial{P2, Names2} where {P1<:Polynomial,P2<:Polynomial,Names1,Names2}
+    if Names1 isa Symbol || Names2 isa Symbol
+        return Union{}
+    end
+
     AllNames = Set()
-    union!(AllNames, _fieldtypes(Names1))
-    union!(AllNames, _fieldtypes(Names2))
+    union!(AllNames, Names1)
+    union!(AllNames, Names2)
     Symbols = sort(collect(AllNames))
-    Names = Tuple{Symbols...}
+    Names = tuple(Symbols...)
     N = length(Symbols)
     C = promote_type(basering(P1), basering(P2))
     I = promote_type(exptype(NP1), exptype(NP2))
     return NamedPolynomial{Polynomial{Vector{Term{TupleMonomial{N,I},C}}, :degrevlex}, Names}
 end
 
-function convert(::Type{NP1}, a::NP2) where NP1 <: NamedPolynomial{P1, Names1} where NP2 <: NamedPolynomial{P2, Names2} where {P1<:Polynomial,P2<:Polynomial,Names1<:Tuple,Names2<:Tuple}
-    f = t->termtype(P1)( _convert_monomial(Names1, Names2, monomial(t)), coefficient(t) )
+function convert(::Type{NP1}, a::NP2) where NP1 <: NamedPolynomial{P1, Names1} where {P1,Names1} where NP2 <: NamedPolynomial{P2, Names2} where {P2,Names2}
+    f = t->termtype(P1)( _convert_monomial(Val{Names1}, Val{Names2}, monomial(t)), coefficient(t) )
     # there used to be map(f, terms(a.p)) here, but type inference makes that an
     # Array{Any}. That's why we explicitly write termtype(P1)[ .... ] .
     converted_terms = termtype(P1)[f(t) for t in terms(a.p)]
@@ -214,6 +216,7 @@ function convert(::Type{NP1}, a::NP2) where NP1 <: NamedPolynomial{P1, Names1} w
     NP1(P1(converted_terms))
 end
 
+convert(::Type{NP}, a::NP) where NP <: NamedPolynomial = a
 
 # -----------------------------------------------------------------------------
 #
