@@ -118,6 +118,7 @@ function groebner_basis(polynomials::AbstractVector{M}, ::Type{Val{with_transfor
 
 
     result_lock = ReadWriteLock{Threads.Mutex}()
+    log_lock = Threads.Mutex()
 
     loops = Threads.Atomic{Int}(0)
     tic()
@@ -225,7 +226,9 @@ function groebner_basis(polynomials::AbstractVector{M}, ::Type{Val{with_transfor
                 l = length(result)
                 k = length(pairs_to_consider)
                 read_unlock!(result_lock)
+                lock(log_lock)
                 info("After about $(old_value+1) loops: $l elements in basis; $k pairs left to consider.")
+                unlock(log_lock)
             end
         end
     end
