@@ -119,6 +119,9 @@ function groebner_basis(polynomials::AbstractVector{M}, ::Type{Val{with_transfor
 
     result_lock = ReadWriteLock{Threads.Mutex}()
 
+    loops = Threads.Atomic{Int}(0)
+    tic()
+    info("Running Groebner basis computation on $(Threads.nthreads()) threads")
     Threads.@threads for thread=1:Threads.nthreads() # run code on all threads
         while true
             write_lock!(result_lock)
@@ -216,12 +219,21 @@ function groebner_basis(polynomials::AbstractVector{M}, ::Type{Val{with_transfor
                 end
                 write_unlock!(result_lock)
             end
+            old_value = Threads.atomic_add!(loops, 1)
+            if old_value % 100 == 0
+                read_lock!(result_lock)
+                l = length(result)
+                k = length(pairs_to_consider)
+                read_unlock!(result_lock)
+                info("After about $(old_value+1) loops: $l elements in basis; $k pairs left to consider.")
+            end
         end
     end
 
     #sorted = sortperm(result, by=p->leading_term(p), rev=true)
     #result = result[sorted]
     #transformation = transformation[sorted]
+    info("Groebner basis computation took $(toq()) seconds")
 
     if with_transformation
         flat_tr = spzeros(P, length(result), length(polynomials))
@@ -293,5 +305,8 @@ function syzygies(G::AbstractVector{M}) where M<:AbstractNamedModuleElement{NP} 
     res = syzygies(map(_unpack,G))
     map(g->_pack(NP,g), res)
 end
+
+# FIXME: why doesn't this suppress info(...) output?
+logging(DevNull, current_module(), kind=:info)
 
 end
