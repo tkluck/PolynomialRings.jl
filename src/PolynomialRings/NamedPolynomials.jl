@@ -29,7 +29,9 @@ struct NamedPolynomial{P<:_P, Names}
 end
 
 polynomialtype(::Type{NamedPolynomial{P,Names}}) where {P,Names} = P
+polynomialtype(f::NamedPolynomial) = polynomialtype(typeof(f))
 names(::Type{NamedPolynomial{P,Names}}) where {P,Names} = Names
+names(f::NamedPolynomial) = names(typeof(f))
 
 
 # -----------------------------------------------------------------------------
@@ -69,6 +71,8 @@ one(a::NamedPolynomial) = one(typeof(a))
 basering(::Type{NP}) where NP <: NamedPolynomial = basering(polynomialtype(NP))
 termtype(::Type{NP}) where NP <: NamedPolynomial{P} where P <: Polynomial = NamedPolynomial{termtype(P), names(NP)}
 exptype(::Type{NP}) where NP <: NamedPolynomial = exptype(polynomialtype(NP))
+
+base_extend(f::NP, ::Type{C}) where NP <: NamedPolynomial where C = (pp = base_extend(f.p, C); NamedPolynomial{typeof(pp), names(f)}(pp))
 
 function to_dense_monomials(n,a::NamedPolynomial)
     p = to_dense_monomials(n, a.p)
