@@ -33,8 +33,7 @@ function convert(::Type{P}, a::C) where P<:Polynomial{V,O} where V <: AbstractVe
 end
 
 function convert(::Type{NP}, a::C) where {NP<:NamedPolynomial,C<:Number}
-    NE = base_extend(NP,C)
-    NE( convert(polynomialtype(NP), a) )
+    NP( convert(polynomialtype(NP), a) )
 end
 
 # -----------------------------------------------------------------------------
@@ -70,7 +69,7 @@ end
 #
 # -----------------------------------------------------------------------------
 promote_rule(::Type{P}, ::Type{C}) where {P <: Polynomial, C<:Number} = base_extend(P,C)
-convert(::Type{P}, a::C) where {P <: Polynomial, C<:Number} = (PP = base_extend(P,C); PP(basering(PP)(a)))
+convert(::Type{P}, a::C) where {P <: Polynomial, C<:Number} = P(basering(P)(a))
 
 # resolve ambiguity between C a coefficient and C a number
 promote_rule(::Type{Polynomial{V,O}}, ::Type{C}) where V <: AbstractVector{T} where T <: Term{M,C} where {O,M,C<:Number} = Polynomial{V,O}
