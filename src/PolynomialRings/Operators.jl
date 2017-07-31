@@ -258,7 +258,6 @@ function ^(f::Polynomial, n::Integer)
     E = exptype(f)
     I = typeof(n)
 
-    summands = T[]
     N = length(terms(f))
 
     # need BigInts to do the multinom computation, but we'll cast
@@ -266,13 +265,16 @@ function ^(f::Polynomial, n::Integer)
     bign = BigInt(n)
     i = BigInt[ [0 for _=1:(N-1)]; n]
 
+    summands = Vector{T}(Int( multinom(bign+N-1, N-1, bign) ))
+    s = 0
+
     while true
         # C(multinom(...)) may raise an InexactError when the coefficient is too big to fit;
         # this is intentional. The suggested fix is for the user to do
         #     base_extend(f, BigInt)^n
         new_coeff = C(multinom(bign, i...)) * prod(coefficient(f.terms[k])^I(i[k]) for k=1:N)
         new_monom = prod(monomial(f.terms[k])^E(i[k]) for k=1:N)
-        push!(summands, T(new_monom, new_coeff))
+        summands[s+=1] = T(new_monom, new_coeff)
         carry = 1
         for j = N-1:-1:1
             i[j] += carry
