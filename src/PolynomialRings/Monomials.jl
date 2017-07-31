@@ -36,7 +36,7 @@ abstract type AbstractMonomial end
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: getindex, gcd, lcm, one, *, enumerate, ==, diff
+import Base: getindex, gcd, lcm, one, *, ^, enumerate, ==, diff
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, deg
 import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree
 
@@ -48,6 +48,7 @@ import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree
 # -----------------------------------------------------------------------------
 
 *(a::M, b::M) where M <: AbstractMonomial = _construct(M,i -> a[i] + b[i], max(num_variables(a), num_variables(b)))
+^(a::M, n::Integer) where M <: AbstractMonomial = _construct(M,i -> a[i]*n, num_variables(a))
 
 total_degree(a::A) where A <: AbstractMonomial = sum( a[i] for i in 1:num_variables(a) )
 
@@ -113,7 +114,7 @@ end
 @generated function _construct(::Type{TupleMonomial{N,I}}, f::Function, num_variables::Type{Val{N}}) where {N,I}
     result = :( tuple() )
     for i in 1:N
-        push!(result.args, :( f($i) ))
+        push!(result.args, :( I(f($i)) ))
     end
     return quote
         t = $result
@@ -302,6 +303,10 @@ function maybe_div(a::M, b::M) where M <: VectorMonomial{V} where V<:SparseVecto
         end
     end
     return M(res)
+end
+
+function ^(a::M, n::Integer) where M <: VectorMonomial
+    return M(broadcast(*,a.e,n))
 end
 
 # -----------------------------------------------------------------------------

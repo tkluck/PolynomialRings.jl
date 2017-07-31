@@ -1,6 +1,6 @@
 module Operators
 
-import PolynomialRings: leading_term
+import PolynomialRings: leading_term, basering, exptype, base_extend
 import PolynomialRings.Monomials: AbstractMonomial
 import PolynomialRings.Terms: Term, monomial, coefficient
 import PolynomialRings.Polynomials: Polynomial, termtype, terms, monomialorder
@@ -10,7 +10,7 @@ import PolynomialRings.Polynomials: Polynomial, termtype, terms, monomialorder
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: zero, one, +, -, *, ==, divrem, iszero, diff
+import Base: zero, one, +, -, *, ==, divrem, iszero, diff, ^
 import PolynomialRings: maybe_div
 
 # -----------------------------------------------------------------------------
@@ -33,6 +33,30 @@ iszero(a::P)        where P <: Polynomial = length(terms(a)) == 0
 ==(a::P,b::P)       where P <: Polynomial = a.terms == b.terms
 +(a::P)             where P <: Polynomial = a
 -(a::P)             where P <: Polynomial = P([-t for t in terms(a)])
+
+# -----------------------------------------------------------------------------
+#
+# utility for operators
+#
+# -----------------------------------------------------------------------------
+function _collect_summands!(summands::AbstractVector{T}) where T <: Term
+    if length(summands) > 0
+        last_exp = monomial(summands[1])
+        n = 1
+        for j in 2:length(summands)
+            exponent, coef = monomial(summands[j]), coefficient(summands[j])
+            if exponent == last_exp
+                cur_coef = coefficient(summands[n])
+                @inbounds summands[n] = T(exponent, cur_coef + coef)
+            else
+                @inbounds summands[n+=1] = summands[j]
+                last_exp = exponent
+            end
+        end
+        resize!(summands, n)
+        filter!(t -> !iszero(t), summands)
+    end
+end
 
 # -----------------------------------------------------------------------------
 #
@@ -171,23 +195,8 @@ function *(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
         end
     end
 
+    _collect_summands!(summands)
 
-    if length(summands) > 0
-        last_exp = monomial(summands[1])
-        n = 1
-        for j in 2:length(summands)
-            exponent, coef = monomial(summands[j]), coefficient(summands[j])
-            if exponent == last_exp
-                cur_coef = coefficient(summands[n])
-                @inbounds summands[n] = Term(exponent, cur_coef + coef)
-            else
-                @inbounds summands[n+=1] = summands[j]
-                last_exp = exponent
-            end
-        end
-        resize!(summands, n)
-        filter!(t -> !iszero(t), summands)
-    end
     return PP(summands)
 end
 
@@ -227,6 +236,66 @@ function leaddivrem(f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:
         return typeof(f)([factor]), f - factor*g
     end
     return zero(g), f
+end
+
+# -----------------------------------------------------------------------------
+#
+# exponentiation
+#
+# -----------------------------------------------------------------------------
+multinom(n,k...) = (@assert(sum(k)==n); div( factorial(n),  prod(factorial(k_i) for k_i in k)) )
+
+function ^(f::Polynomial, n::Integer)
+    if n == 0
+        return one(f)
+    end
+    if n == 1
+        return f
+    end
+
+    T = termtype(f)
+    C = basering(f)
+    E = exptype(f)
+    I = typeof(n)
+
+    summands = T[]
+    N = length(terms(f))
+
+    # need BigInts to do the multinom computation, but we'll cast
+    # back to I = typeof(n) when we use it as an exponent
+    bign = BigInt(n)
+    i = BigInt[ [0 for _=1:(N-1)]; n]
+
+    while true
+        # C(multinom(...)) may raise an InexactError when the coefficient is too big to fit;
+        # this is intentional. The suggested fix is for the user to do
+        #     base_extend(f, BigInt)^n
+        new_coeff = C(multinom(bign, i...)) * prod(coefficient(f.terms[k])^I(i[k]) for k=1:N)
+        new_monom = prod(monomial(f.terms[k])^E(i[k]) for k=1:N)
+        push!(summands, T(new_monom, new_coeff))
+        carry = 1
+        for j = N-1:-1:1
+            i[j] += carry
+            i[N] -= carry
+            if i[N] < 0
+                carry = 1
+                i[N] += i[j]
+                i[j] = 0
+            else
+                carry = 0
+            end
+        end
+        if carry != 0
+            break
+        end
+    end
+
+    sort!(summands, lt=(a,b)->isless(monomial(a),monomial(b),Val{monomialorder(f)}))
+
+    _collect_summands!(summands)
+
+    return typeof(f)(summands)
+
 end
 
 # -----------------------------------------------------------------------------

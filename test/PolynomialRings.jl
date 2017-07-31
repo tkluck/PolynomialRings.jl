@@ -22,6 +22,8 @@ using PolynomialRings
         @test +x == x
         @test x^1 == x
         @test (x+y)^9 == (x+y)^6 * (x+y)^3
+        @test prod(x+y for _=1:20) == (x+y)^20
+        @test prod(x*y+y for _=1:20) == (x*y+y)^20
     end
 
     @testset "Extension of scalars" begin
