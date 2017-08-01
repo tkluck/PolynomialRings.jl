@@ -10,22 +10,20 @@ import PolynomialRings.Monomials: AbstractMonomial, TupleMonomial, exptype
 import Iterators: groupby
 
 """
-    monomialtype, coefficienttype = _expansion_types(R, Tuple{symbols...})
+    monomialtype, coefficienttype = _expansion_types(R, Val{tuple(symbols...)})
 """
-function _expansion_types(::Type{NP}, ::Type{T}) where NP <: NamedPolynomial where T <: Tuple
-    all_vars = Symbol[fieldtype(names(NP),i) for i in 1:nfields(names(NP))]
-    vars = Symbol[fieldtype(T,i) for i in 1:nfields(T)]
+function _expansion_types(::Type{NP}, ::Type{Val{vars}}) where NP <: NamedPolynomial where vars
+    all_vars = names(NP)
     remaining_vars = [v for v in all_vars if !(v in vars)]
     N = length(vars)
     M = length(remaining_vars)
-    NamesExpansion = Tuple{vars...}
     ExpType = exptype(monomialtype(polynomialtype(NP)))
     ExpansionType = NTuple{N,ExpType}
     C = basering(NP)
     if M == 0
         CoeffType = C
     else
-        NamesCoefficient = Tuple{remaining_vars...}
+        NamesCoefficient = tuple(remaining_vars...)
         CoeffType = NamedPolynomial{Polynomial{Vector{Term{TupleMonomial{M,ExpType},C}},:degrevlex},NamesCoefficient}
     end
     return ExpansionType, CoeffType
@@ -52,21 +50,20 @@ julia> collect(expansion(x^3 + y^2, :x, :y))
 # See also
 `@expansion(...)`, `@coefficient` and `coefficient`
 """
-function expansion(p::NP, variables::Type{T}) where NP <: NamedPolynomial where T <: Tuple
-    all_vars = Symbol[fieldtype(names(NP),i) for i in 1:nfields(names(NP))]
-    vars = Symbol[fieldtype(T,i) for i in 1:nfields(T)]
+function expansion(p::NP, variables::Type{Val{vars}}) where NP <: NamedPolynomial where vars
+    all_vars = names(NP)
     remaining_vars = [v for v in all_vars if !(v in vars)]
 
     if length(remaining_vars) == 0
         N = length(vars)
-        NamesExpansion = Tuple{vars...}
+        NamesExpansion = tuple(vars...)
         ExpType = exptype(monomialtype(polynomialtype(NP)))
         ExpansionType = NTuple{N,ExpType}
         ResultType = Tuple{ExpansionType, basering(NP)}
         P = polynomialtype(NP)
         one_ = one(basering(p))
 
-        f = t->_convert_monomial(NamesExpansion, names(NP), monomial(t))
+        f = t->_convert_monomial(Val{NamesExpansion}, Val{names(NP)}, monomial(t))
 
         return Channel(ctype=ResultType) do ch
             for t in terms(p.p)
@@ -74,8 +71,8 @@ function expansion(p::NP, variables::Type{T}) where NP <: NamedPolynomial where 
             end
         end
     else
-        NamesExpansion = Tuple{vars...}
-        NamesCoefficient = Tuple{remaining_vars...}
+        NamesExpansion = tuple(vars...)
+        NamesCoefficient = tuple(remaining_vars...)
         N = length(vars)
         M = length(remaining_vars)
 
@@ -85,8 +82,8 @@ function expansion(p::NP, variables::Type{T}) where NP <: NamedPolynomial where 
         CoeffType = NamedPolynomial{Polynomial{Vector{Term{TupleMonomial{M,ExpType},C}},:degrevlex},NamesCoefficient}
         ResultType = Tuple{ExpansionType, CoeffType}
 
-        f = t->_lossy_convert_monomial(NamesExpansion,   names(NP), monomial(t))
-        g = t->_lossy_convert_monomial(NamesCoefficient, names(NP), monomial(t))
+        f = t->_lossy_convert_monomial(Val{NamesExpansion},   Val{names(NP)}, monomial(t))
+        g = t->_lossy_convert_monomial(Val{NamesCoefficient}, Val{names(NP)}, monomial(t))
 
         return Channel(ctype=ResultType) do ch
             separated_terms = [(f(t), g(t), coefficient(t)) for t in terms(p.p)]
@@ -103,7 +100,7 @@ function expansion(p::NP, variables::Type{T}) where NP <: NamedPolynomial where 
     end
 end
 
-@inline expansion(p::NamedPolynomial, variables::Symbol...) = expansion(p, Tuple{variables...})
+@inline expansion(p::NamedPolynomial, variables::Symbol...) = expansion(p, Val{variables})
 
 function (p::NamedPolynomial)(; kwargs...)
     vars = [k for (k,v) in kwargs]
@@ -118,10 +115,8 @@ end
 import Base: diff
 
 function diff(p::NamedPolynomial, variable::Symbol)
-    T = names(typeof(p))
-
-    for i in 1:nfields(T)
-        if fieldtype(T,i) == variable
+    for (i,s) in enumerate(names(typeof(p)))
+        if s == variable
             return typeof(p)(diff(p.p, i))
         end
     end
@@ -155,7 +150,7 @@ function coefficient(f::NamedPolynomial, t::Tuple, vars::Symbol...)
             return p
         end
     end
-    ExpansionType, CoeffType = _expansion_types(typeof(f), Tuple{vars...})
+    ExpansionType, CoeffType = _expansion_types(typeof(f), Val{vars})
     return zero(CoeffType)
 end
 
