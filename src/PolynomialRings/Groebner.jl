@@ -29,12 +29,10 @@ julia> red(x^2 + y^2 + 1, [x, y])
 function leadred(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
     factors = transpose(spzeros(modulebasering(M), length(G)))
     frst = true
-    more_loops = false
     f_red = f
     i = 1
     while i<=length(G)
         frst = false
-        more_loops = false
         g = G[i]
         q, f_red = leaddivrem(f_red, g)
         if !iszero(q)
@@ -54,11 +52,9 @@ function red(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
     f_red, factors = leadred(f,G)
 
     frst = true
-    more_loops = false
     i=1
     while i<=length(G)
         frst = false
-        more_loops = false
         g = G[i]
         q, f_red = divrem(f_red, g)
         if !iszero(q)
