@@ -37,14 +37,18 @@ function isless(a::VectorMonomial{V},b::VectorMonomial{V},::Type{Val{:degrevlex}
     if total_degree(a) == total_degree(b)
         ia = findlast(a.e)
         ib = findlast(b.e)
-        while (i = min(ia, ib)) > 0
+        while ia != 0 && ib != 0
+            if ia != ib
+                return ia > ib
+            end
+            i = ia
             if a.e[i] != b.e[i]
                 return a.e[i] > b.e[i]
             end
             ia = findprev(a.e,i-1)
             ib = findprev(b.e,i-1)
         end
-        return ib != 0
+        return ib == 0 && ia != 0
     else
         return total_degree(a) < total_degree(b)
     end
@@ -54,14 +58,18 @@ function isless(a::VectorMonomial{V},b::VectorMonomial{V},::Type{Val{:deglex}}) 
     if total_degree(a) == total_degree(b)
         ia = findfirst(a.e)
         ib = findfirst(b.e)
-        while (i = min(ia, ib)) > 0
+        while ia !=0 && ib != 0
+            if ia != ib
+                return ia > ib
+            end
+            i = ia
             if a.e[i] != b.e[i]
                 return a.e[i] < b.e[i]
             end
             ia = findnext(a.e,i+1)
             ib = findnext(b.e,i+1)
         end
-        return ib != 0
+        return ia == 0 && ib != 0
     else
         return total_degree(a) < total_degree(b)
     end
