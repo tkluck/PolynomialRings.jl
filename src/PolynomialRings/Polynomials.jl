@@ -1,6 +1,7 @@
 module Polynomials
 
 import PolynomialRings.Monomials: TupleMonomial
+import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.Terms: Term
 
 # -----------------------------------------------------------------------------
@@ -11,6 +12,8 @@ import PolynomialRings.Terms: Term
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering, monomialtype, deg
 import PolynomialRings: leading_term, termtype, monomialorder, terms, exptype
 import Base: copy
+import Base.Order: lt
+import PolynomialRings.MonomialOrderings: MonomialOrder
 
 # -----------------------------------------------------------------------------
 #
@@ -40,7 +43,9 @@ terms(p::Polynomial) = p.terms
 
 termtype(::Type{Polynomial{A, Order}}) where {A,Order} = eltype(A)
 exptype(::Type{P}) where P<:Polynomial = exptype(termtype(P))
-monomialorder(::Type{Polynomial{A, Order}}) where {A,Order} = Order
+monomialorder(::Type{Polynomial{A, Order}}) where {A,Order} = MonomialOrder{Order}()
+monomialordersymbol(::Type{Polynomial{A, Order}}) where {A,Order} = Order
+monomialordersymbol(::Polynomial{A, Order}) where {A,Order} = Order
 basering(::Type{P}) where P <: Polynomial = basering(termtype(P))
 monomialtype(::Type{P}) where P <: Polynomial = monomialtype(termtype(P))
 
@@ -51,7 +56,7 @@ generators(::Type{P}) where P <: Polynomial = lazymap(
 
 function to_dense_monomials(n, p::Polynomial)
     T = Term{TupleMonomial{n,exptype(p)},basering(p)}
-    P = Polynomial{Vector{T},monomialorder(p)}
+    P = Polynomial{Vector{T},monomialordersymbol(p)}
     P(T[ to_dense_monomials(n, t) for t in terms(p) ])
 end
 
@@ -61,5 +66,7 @@ deg(p::Polynomial) = iszero(p) ? -1 : deg(last(terms(p)))
 leading_term(p::Polynomial) = last(terms(p))
 
 copy(p::Polynomial) = typeof(p)(copy(p.terms))
+
+lt(o::MonomialOrder, a::P,b::P) where P <: Polynomial = lt(o, monomial(leading_term(a)), monomial(leading_term(b)))
 
 end

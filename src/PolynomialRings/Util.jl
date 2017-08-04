@@ -1,11 +1,14 @@
 module Util
 
-type BoundedHeap{T, O} #O<:Base.Order.Ordering}
+type BoundedHeap{T, O<:Base.Order.Ordering}
     values::Vector{T}
     cur_length::Int
     max_length::Int
-    BoundedHeap{T, O}(max_length::Int) where {T, O} = new(resize!(T[], max_length+1), 0, max_length)
+    order::O
+    BoundedHeap{T, O}(max_length::Int, order::O) where {T, O} = new(resize!(T[], max_length+1), 0, max_length, order)
 end
+
+BoundedHeap(T::Type, max_length::Int, order::Base.Order.Ordering) = BoundedHeap{T, typeof(order)}(max_length, order)
 
 import DataStructures: percolate_down!, percolate_up!, enqueue!, dequeue!, peek
 
@@ -14,7 +17,7 @@ function enqueue!(x::BoundedHeap{T, O}, v::T) where {T,O}
     if(x.cur_length < x.max_length)
         x.cur_length +=1
     end
-    percolate_up!(x.values, x.cur_length, O)
+    percolate_up!(x.values, x.cur_length, x.order)
 end
 
 function dequeue!(x::BoundedHeap{T, O})::T where {T,O}
@@ -24,7 +27,7 @@ function dequeue!(x::BoundedHeap{T, O})::T where {T,O}
     v = x.values[1]
     x.values[1] = x.values[x.cur_length]
     x.cur_length -= 1
-    percolate_down!(x.values, 1, O, x.cur_length)
+    percolate_down!(x.values, 1, x.order, x.cur_length)
 end
 
 function peek(x::BoundedHeap{T,O})::T where {T,O}

@@ -4,6 +4,7 @@ import PolynomialRings.Polynomials: Polynomial, terms, basering
 import PolynomialRings.NamedPolynomials: NamedPolynomial, names
 import PolynomialRings.Terms: Term, coefficient, monomial
 import PolynomialRings.Monomials: AbstractMonomial, num_variables
+import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings: monomialtype, monomialorder
 
 import Base: show
@@ -51,6 +52,10 @@ end
 # Display of types
 #
 # -----------------------------------------------------------------------------
+
+function show(io::IO, ::MO) where MO <: MonomialOrder{Name} where Name
+    print(io, Name)
+end
 
 function show(io::IO, ::Type{NP}) where NP <: NamedPolynomial{P} where P <: Polynomial
     show_names = names(NP) isa Symbol ? "$(names(NP))_i" : join(names(NP), ",", " and ")

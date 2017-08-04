@@ -217,7 +217,7 @@ function convert(::Type{NP1}, a::NP2) where NP1 <: NamedPolynomial{P1, Names1} w
     # there used to be map(f, terms(a.p)) here, but type inference makes that an
     # Array{Any}. That's why we explicitly write termtype(P1)[ .... ] .
     converted_terms = termtype(P1)[f(t) for t in terms(a.p)]
-    sort!(converted_terms, lt=(a,b)->isless(monomial(a),monomial(b),Val{monomialorder(P1)}))
+    sort!(converted_terms, order=monomialorder(P1))
     NP1(P1(converted_terms))
 end
 

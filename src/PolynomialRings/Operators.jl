@@ -2,6 +2,7 @@ module Operators
 
 import PolynomialRings: leading_term, basering, exptype, base_extend
 import PolynomialRings.Monomials: AbstractMonomial
+import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.Terms: Term, monomial, coefficient
 import PolynomialRings.Polynomials: Polynomial, termtype, terms, monomialorder
 
@@ -79,10 +80,10 @@ function +(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
         exponent_a, coefficient_a = monomial(term_a), coefficient(term_a)
         exponent_b, coefficient_b = monomial(term_b), coefficient(term_b)
 
-        if isless(exponent_a, exponent_b, Val{Order})
+        if Base.Order.lt(MonomialOrder{Order}(), exponent_a, exponent_b)
             @inbounds res[n+=1] = term_a
             state_a = next_state_a
-        elseif isless(exponent_b, exponent_a, Val{Order})
+        elseif Base.Order.lt(MonomialOrder{Order}(), exponent_b, exponent_a)
             @inbounds res[n+=1] = term_b
             state_b = next_state_b
         else
@@ -122,10 +123,10 @@ function -(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
         exponent_a, coefficient_a = monomial(term_a), coefficient(term_a)
         exponent_b, coefficient_b = monomial(term_b), coefficient(term_b)
 
-        if isless(exponent_a, exponent_b, Val{Order})
+        if Base.Order.lt(MonomialOrder{Order}(), exponent_a, exponent_b)
             @inbounds res[n+=1] = term_a
             state_a = next_state_a
-        elseif isless(exponent_b, exponent_a, Val{Order})
+        elseif Base.Order.lt(MonomialOrder{Order}(), exponent_b, exponent_a)
             @inbounds res[n+=1] = -term_b
             state_b = next_state_b
         else
@@ -175,8 +176,8 @@ function *(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
 
     # using a bounded queue not to drop items when it gets too big, but to allocate it
     # once to its maximal theoretical size and never reallocate.
-    lt = Base.Order.Lt( (a,b) -> isless(monomial(a[3]),monomial(b[3]),Val{Order}) )
-    minimal_corners = BoundedHeap{Tuple{Int, Int, T}, lt}(min(length(terms(a)), length(terms(b))))
+    order = Base.Order.Lt((a,b)->Base.Order.lt(MonomialOrder{Order}(), a[3], b[3]))
+    minimal_corners = BoundedHeap(Tuple{Int,Int,T}, min(length(terms(a)), length(terms(b))), order)
     @inbounds t = terms(a)[1] * terms(b)[1]
     enqueue!(minimal_corners, (1,1,t))
     @inbounds while length(minimal_corners)>0
@@ -292,7 +293,7 @@ function ^(f::Polynomial, n::Integer)
         end
     end
 
-    sort!(summands, lt=(a,b)->isless(monomial(a),monomial(b),Val{monomialorder(f)}))
+    sort!(summands, order=monomialorder(f))
 
     _collect_summands!(summands)
 
@@ -307,7 +308,7 @@ end
 # -----------------------------------------------------------------------------
 function diff(f::Polynomial, i::Integer)
     new_terms = filter(t->!iszero(t), map(t->diff(t,i), terms(f)))
-    sort!(new_terms, lt=(a,b)->isless(monomial(a),monomial(b),Val{monomialorder(f)}))
+    sort!(new_terms, order=monomialorder(f))
     return typeof(f)(new_terms)
 end
 

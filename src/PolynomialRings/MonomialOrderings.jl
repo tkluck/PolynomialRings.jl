@@ -1,9 +1,12 @@
 module MonomialOrderings
 
-import Base: isless
+import Base.Order: Ordering, lt
+
 import PolynomialRings.Monomials: AbstractMonomial, VectorMonomial, total_degree, num_variables
 
-function isless(a::M,b::M,::Type{Val{:degrevlex}}) where M <: AbstractMonomial
+type MonomialOrder{Name} <: Ordering end
+
+function lt(::MonomialOrder{:degrevlex}, a::M,b::M) where M <: AbstractMonomial
 
     if total_degree(a) == total_degree(b)
         i = max(num_variables(a), num_variables(b))
@@ -19,7 +22,7 @@ function isless(a::M,b::M,::Type{Val{:degrevlex}}) where M <: AbstractMonomial
     end
 end
 
-function isless(a::M,b::M,::Type{Val{:deglex}}) where M <: AbstractMonomial
+function lt(::MonomialOrder{:deglex}, a::M,b::M) where M <: AbstractMonomial
 
     if total_degree(a) == total_degree(b)
         for i in 1:max(num_variables(a), num_variables(b))
@@ -33,7 +36,7 @@ function isless(a::M,b::M,::Type{Val{:deglex}}) where M <: AbstractMonomial
     end
 end
 
-function isless(a::VectorMonomial{V},b::VectorMonomial{V},::Type{Val{:degrevlex}}) where V <: AbstractSparseVector
+function lt(::MonomialOrder{:degrevlex}, a::VectorMonomial{V},b::VectorMonomial{V}) where V <: AbstractSparseVector
     if total_degree(a) == total_degree(b)
         ia = findlast(a.e)
         ib = findlast(b.e)
@@ -54,7 +57,7 @@ function isless(a::VectorMonomial{V},b::VectorMonomial{V},::Type{Val{:degrevlex}
     end
 end
 
-function isless(a::VectorMonomial{V},b::VectorMonomial{V},::Type{Val{:deglex}}) where V <: AbstractSparseVector
+function lt(::MonomialOrder{:deglex},a::VectorMonomial{V},b::VectorMonomial{V}) where V <: AbstractSparseVector
     if total_degree(a) == total_degree(b)
         ia = findfirst(a.e)
         ib = findfirst(b.e)

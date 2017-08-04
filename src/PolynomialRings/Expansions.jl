@@ -6,6 +6,7 @@ import PolynomialRings.Polynomials: Polynomial, termtype, monomialtype, terms
 import PolynomialRings.Terms: Term, monomial, coefficient
 import PolynomialRings: basering
 import PolynomialRings.Monomials: AbstractMonomial, TupleMonomial, exptype
+import PolynomialRings.MonomialOrderings: MonomialOrder
 
 import Iterators: groupby
 
@@ -87,11 +88,11 @@ function expansion(p::NP, variables::Type{Val{vars}}) where NP <: NamedPolynomia
 
         return Channel(ctype=ResultType) do ch
             separated_terms = [(f(t), g(t), coefficient(t)) for t in terms(p.p)]
-            sort!(separated_terms, lt=(a,b)->isless(a[1],b[1],Val{:degrevlex}))
+            sort!(separated_terms, lt=(a,b)->Base.Order.lt(MonomialOrder{:degrevlex}(),a[1],b[1]))
             for term_group in groupby(x->x[1], separated_terms)
                 expand_exponents = term_group[1][1].e
                 coeff_terms = [Term(t[2], t[3]) for t in term_group]
-                sort!(coeff_terms, lt=(a,b)->isless(monomial(a),monomial(b),Val{:degrevlex}))
+                sort!(coeff_terms, order=MonomialOrder{:degrevlex}())
                 p = CoeffType(polynomialtype(CoeffType)(coeff_terms))
 
                 push!(ch, (expand_exponents, p))
