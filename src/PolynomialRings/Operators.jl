@@ -55,7 +55,7 @@ function _collect_summands!(summands::AbstractVector{T}) where T <: Term
             end
         end
         resize!(summands, n)
-        filter!(t -> !iszero(t), summands)
+        filter!(!iszero, summands)
     end
 end
 
@@ -307,7 +307,7 @@ end
 #
 # -----------------------------------------------------------------------------
 function diff(f::Polynomial, i::Integer)
-    new_terms = filter(t->!iszero(t), map(t->diff(t,i), terms(f)))
+    new_terms = filter(!iszero, map(t->diff(t,i), terms(f)))
     sort!(new_terms, order=monomialorder(f))
     return typeof(f)(new_terms)
 end
