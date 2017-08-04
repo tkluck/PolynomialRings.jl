@@ -244,7 +244,7 @@ end
 # exponentiation
 #
 # -----------------------------------------------------------------------------
-multinom(n,k...) = (@assert(sum(k)==n); div( factorial(n),  prod(factorial(k_i) for k_i in k)) )
+multinom(n,k...) = (@assert(sum(k)==n); div( factorial(n),  prod(factorial, k)) )
 
 function ^(f::Polynomial, n::Integer)
     if n == 0
