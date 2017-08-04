@@ -11,11 +11,9 @@ import PolynomialRings.Util: ReadWriteLock, read_lock!, write_lock!, read_unlock
 
 function leadred(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
     factors = transpose(spzeros(modulebasering(M), length(G)))
-    frst = true
     f_red = f
     i = 1
     while i<=length(G)
-        frst = false
         g = G[i]
         q, f_red = leaddivrem(f_red, g)
         if !iszero(q)
@@ -52,10 +50,8 @@ julia> red(x^2 + y^2 + 1, [x, y])
 function red(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
     f_red, factors = leadred(f,G)
 
-    frst = true
     i=1
     while i<=length(G)
-        frst = false
         g = G[i]
         q, f_red = divrem(f_red, g)
         if !iszero(q)
