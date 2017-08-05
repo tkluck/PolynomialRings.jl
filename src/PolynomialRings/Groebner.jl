@@ -202,8 +202,6 @@ function groebner_basis(polynomials::AbstractVector{M}, ::Type{Val{with_transfor
     log_lock = Threads.Mutex()
 
     loops = Threads.Atomic{Int}(0)
-    tic()
-    info("Running Groebner basis computation on $(Threads.nthreads()) threads")
     Threads.@threads for thread=1:Threads.nthreads() # run code on all threads
         while true
             write_lock!(result_lock)
@@ -320,13 +318,13 @@ function groebner_basis(polynomials::AbstractVector{M}, ::Type{Val{with_transfor
                 write_unlock!(result_lock)
             end
             old_value = Threads.atomic_add!(loops, 1)
-            if old_value % 100 == 0
+            if old_value % 100 == 99
                 read_lock!(result_lock)
                 l = length(result)
                 k = length(pairs_to_consider)
                 read_unlock!(result_lock)
                 lock(log_lock)
-                info("After about $(old_value+1) loops: $l elements in basis; $k pairs left to consider.")
+                info("Groebner: After about $(old_value+1) loops: $l elements in basis; $k pairs left to consider.")
                 unlock(log_lock)
             end
         end
@@ -335,7 +333,6 @@ function groebner_basis(polynomials::AbstractVector{M}, ::Type{Val{with_transfor
     #sorted = sortperm(result, by=p->leading_term(p), rev=true)
     #result = result[sorted]
     #transformation = transformation[sorted]
-    info("Groebner basis computation took $(toq()) seconds")
 
     if with_transformation
         flat_tr = spzeros(P, length(result), length(polynomials))
