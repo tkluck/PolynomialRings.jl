@@ -34,4 +34,26 @@ function lt(::MonomialOrder{:deglex}, a::M,b::M) where M <: AbstractMonomial
     end
 end
 
+# This method is mostly for supporting leading monomials of elements of a free
+# f.g. module which is a tuple (index, monomial). That's in use in Groebner,
+# and maybe this implementation detail should move there.
+function lt(m::MonomialOrder, a::T, b::T) where T <: Tuple
+    for i = 1:nfields(T)
+        if fieldtype(T,i) <: AbstractMonomial
+            if lt(m, a[i], b[i])
+                return true
+            elseif lt(m, b[i], a[i])
+                return false
+            end
+        else
+            if isless(a[i], b[i])
+                return true
+            elseif isless(b[i], a[i])
+                return false
+            end
+        end
+    end
+    return false
+end
+
 end

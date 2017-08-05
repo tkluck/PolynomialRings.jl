@@ -1,7 +1,7 @@
 module Groebner
 
 import PolynomialRings: leading_term, lcm_multipliers, deg, lcm_degree
-import PolynomialRings.Polynomials: Polynomial
+import PolynomialRings.Polynomials: Polynomial, monomialorder, terms
 import PolynomialRings.Terms: monomial
 import PolynomialRings.NamedPolynomials: NamedPolynomial
 import PolynomialRings.Modules: AbstractModuleElement, AbstractNamedModuleElement, modulebasering
@@ -68,10 +68,93 @@ function red(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
     return f_red, factors
 end
 
+# a few functions to be able to write the same algorithm for
+# computations in a free f.g. module and in a polynomial ring.
+# In this context, a 'monomial' is either a monomial (polynomial ring)
+# or a tuple of (index, monomial) (free f.g. module).
 _leading_row(p::Polynomial) = 1
 _leading_row(a::AbstractArray) = findfirst(a)
+_monomials(p::Polynomial) = (monomial(t) for t in terms(p))
+_monomials(a::AbstractArray) = ((i,monomial(t)) for i in find(a) for t in terms(a[i]))
 _leading_term(p::Polynomial) = leading_term(p)
 _leading_term(a::AbstractArray) = leading_term(a[_leading_row(a)])
+_leading_monomial(p::Polynomial) = monomial(leading_term(p))
+_leading_monomial(a::AbstractArray) = (i = findfirst(a); (i, _leading_monomial(a[i])))
+
+import PolynomialRings.Monomials: AbstractMonomial, exptype, nzindices, _construct
+
+function _divisors_foreach(f::Function, a::M) where M <: AbstractMonomial
+    e = zeros(exptype(M), last(nzindices(a)))
+
+    if length(nzindices(a)) == 0
+        return
+    end
+
+    nonzeros = find(a.e)
+
+    while true
+        carry = 1
+        for j = 1:length(nonzeros)
+            if (e[nonzeros[j]] += carry) > a[nonzeros[j]]
+                e[nonzeros[j]] = 0
+                carry = 1
+            else
+                carry = 0
+            end
+        end
+        if carry == 1
+            break
+        end
+        m = _construct(M, i->e[i], nonzeros, sum(e[nonzeros]))::M
+        if !f(m)
+            break
+        end
+    end
+end
+
+_divisors_foreach(f::Function, a::Tuple{Int,M}) where M <: AbstractMonomial = _divisors_foreach(m->f((a[1],m)), a[2])
+
+function _grb_leadred(f::M, G::AbstractVector{M}, G_lm) where M <: AbstractModuleElement
+    f_red = f
+    more_loops = true
+    while !iszero(f_red) && more_loops
+        more_loops = false
+        _divisors_foreach(_leading_monomial(f_red)) do d
+            range = searchsorted(G_lm, d, order=monomialorder(modulebasering(M)))
+            if length(range) > 0
+                i = first(range)
+                (_, f_red) = leaddivrem(f_red, G[i])
+                more_loops = true
+                return false # break
+            end
+            return true # continue
+        end
+    end
+    return f_red
+end
+
+function _grb_red(f::M, G::AbstractVector{M}, G_lm) where M <: AbstractModuleElement
+    f_red = _grb_leadred(f, G, G_lm)
+
+    more_loops = true
+    while !iszero(f_red) && more_loops
+        more_loops = false
+        for m in _monomials(f_red)
+            _divisors_foreach(m) do d
+                range = searchsorted(G_lm, d, order=monomialorder(modulebasering(M)))
+                if length(range) > 0
+                    i = first(range)
+                    (_ignored, f_red) = divrem(f_red, G[i])
+                    more_loops = true
+                    return false # break
+                end
+                return true # continue
+            end
+        end
+    end
+    return f_red
+end
+
 using DataStructures
 """
     basis, transformation = groebner_basis(polynomials)
@@ -85,10 +168,15 @@ function groebner_basis(polynomials::AbstractVector{M}, ::Type{Val{with_transfor
     P = modulebasering(M)
     nonzero_indices = find(!iszero, polynomials)
     result = polynomials[nonzero_indices]
+    result_lm = map(_leading_monomial, result)
 
     if with_transformation
         transformation =Vector{P}[ P[ i==nonzero_indices[j] ? 1 : 0 for i in eachindex(polynomials)] for j in eachindex(result)]
+        sort_order = 1:length(result)
+    else
+        sort_order = sortperm(result_lm, order=monomialorder(P))
     end
+
 
     pairs_to_consider = PriorityQueue(Tuple{Int,Int}, Int)
     for j in eachindex(result)
@@ -146,9 +234,14 @@ function groebner_basis(polynomials::AbstractVector{M}, ::Type{Val{with_transfor
             # (whichever those may be), we can get away with a version of red
             # that only does lead division
             read_lock!(result_lock)
-            snapshot = result[1:end]
+            snapshot = result[sort_order]
+            snapshot_lm = result_lm[sort_order]
             read_unlock!(result_lock)
-            (S_red, factors) = red(S, snapshot)
+            if with_transformation
+                (S_red, factors) = red(S, snapshot)
+            else
+                S_red = _grb_red(S, snapshot, snapshot_lm)
+            end
 
             if !iszero(S_red)
                 write_lock!(result_lock)
@@ -165,23 +258,29 @@ function groebner_basis(polynomials::AbstractVector{M}, ::Type{Val{with_transfor
                 # basically restart the computation. It is hoped that this is
                 # either relatively rare, or is a brief computation.
 
-                second_snapshot = result[length(snapshot)+1:end]
-
-                (S_red, remaining_factors) = red(S_red, second_snapshot)
+                new_elements_since_snapshot = result[length(snapshot)+1:end]
+                (_, remaining_factors) = red(S_red, new_elements_since_snapshot)
                 while !iszero(remaining_factors)
                     # case 2b: new snapshot and new computation
-                    snapshot = result[1:end]
+                    snapshot = result[sort_order]
+                    snapshot_lm = result_lm[sort_order]
 
                     write_unlock!(result_lock)
-                    (S_red, new_factors) = red(S_red, snapshot)
-                    factors = new_factors + [factors remaining_factors]
+                    if with_transformation
+                        (S_red, new_factors) = red(S_red, snapshot)
+                        factors = new_factors + [factors zeros(remaining_factors)]
+                    else
+                        S_red = _grb_red(S_red, snapshot, snapshot_lm)
+                    end
                     write_lock!(result_lock)
 
-                    second_snapshot = result[length(snapshot)+1:end]
-                    (S_red, remaining_factors) = red(S_red, second_snapshot)
+                    new_elements_since_snapshot = result[length(snapshot)+1:end]
+                    (_, remaining_factors) = red(S_red, new_elements_since_snapshot)
                 end
                 # case 2a
-                factors = [factors remaining_factors]
+                if with_transformation
+                    factors = [factors remaining_factors]
+                end
 
                 if !iszero(S_red)
                     new_j = length(result)+1
@@ -201,7 +300,9 @@ function groebner_basis(polynomials::AbstractVector{M}, ::Type{Val{with_transfor
                         end
                     end
 
+                    S_red_lm = _leading_monomial(S_red)
                     push!(result, S_red)
+                    push!(result_lm, S_red_lm)
 
                     if with_transformation
                         factors[1, i] -= m_a
@@ -209,6 +310,11 @@ function groebner_basis(polynomials::AbstractVector{M}, ::Type{Val{with_transfor
                         nonzero_factors = find(factors)
                         tr = [ -sum(factors[x] * transformation[x][y] for x in nonzero_factors) for y in eachindex(polynomials) ]
                         push!(transformation, tr)
+
+                        sort_order = 1:new_j
+                    else
+                        sorted_ix = searchsortedfirst(@view(result_lm[sort_order]), S_red_lm, order=monomialorder(P))
+                        insert!(sort_order, sorted_ix, new_j)
                     end
                 end
                 write_unlock!(result_lock)
