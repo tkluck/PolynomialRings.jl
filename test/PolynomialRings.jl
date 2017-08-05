@@ -126,6 +126,11 @@ end
         @test x^2+1 == @coefficient(x^3 + x^2*y + y, y)
 
         @test 0 == @coefficient(x^3 + x^2*y + y, y^2)
+
+        @test 1 + y == constant_coefficient(x^3*y + x + y + 1, :x)
+        @test 1     == constant_coefficient(x^3*y + x + y + 1, :x, :y)
+        @test 1 + y == @constant_coefficient(x^3*y + x + y + 1, x)
+        @test 1     == @constant_coefficient(x^3*y + x + y + 1, x, y)
     end
 
 end
