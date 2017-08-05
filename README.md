@@ -122,18 +122,21 @@ julia-vs-C when compared to Singular. At this point, this library has
 comparable performance to Singular on at least one simple benchmark:
 
     $ julia <<JULIA
-    using PolynomialRings; using MultivariatePolynomials; using Singular
-    @polyvar a b c
+    using PolynomialRings; using Singular
     R,(d,e,f) = polynomial_ring(BigInt, :d, :e, :f)
     S,g,h,i = Singular.SingularPolynomialRing(Singular.SingularZZ, ["g","h","i"])
-    (a+b+c)^4; (d+e+f)^4; (g+h+i)^4 # compile all julia code
-    @time (a+b+c)^200
+    (d+e+f)^4; (g+h+i)^4 # compile all julia code
     @time (d+e+f)^200
     @time (g+h+i)^200
+    prod(d+e+f for _=1:5); prod(g+h+i for _=1:5) # compile all julia code
+    @time prod(d+e+f for _=1:200)
+    @time prod(g+h+i for _=1:200)
     JULIA
-     40.568423 seconds (83.07 M allocations: 5.159 GiB, 6.67% gc time)
       0.151427 seconds (1.51 M allocations: 40.430 MiB, 20.68% gc time)
       0.879622 seconds (13.50 M allocations: 319.072 MiB, 2.00% gc time)
+      1.584750 seconds (31.07 M allocations: 896.958 MiB, 29.18% gc time)
+      1.030947 seconds (14.87 M allocations: 373.402 MiB, 1.99% gc time)
+
 
 Note: the Singular code has some non-trivial Julia-overhead (as can be seen
 from the allocations), so this comparison isn't quite fair.
