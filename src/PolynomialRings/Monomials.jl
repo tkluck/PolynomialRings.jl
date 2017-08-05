@@ -196,6 +196,7 @@ generators(::Type{TupleMonomial{N, I}}) where {N, I} = [
 
 nzindices(a::TupleMonomial{N,I}) where {N,I} = 1:N
 @inline index_union(::T, ::T) where T<:TupleMonomial{N,I} where {N,I} = 1:N
+@inline rev_index_union(::T, ::T) where T<:TupleMonomial{N,I} where {N,I} = N:-1:1
 
 # -----------------------------------------------------------------------------
 #
