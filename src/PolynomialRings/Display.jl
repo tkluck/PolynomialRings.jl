@@ -57,22 +57,23 @@ function show(io::IO, ::MO) where MO <: MonomialOrder{Name} where Name
     print(io, Name)
 end
 
-function show(io::IO, ::Type{NP}) where NP <: NamedPolynomial{P} where P <: Polynomial
+function show(io::IO, ::Type{NP}) where NP <: NamedPolynomial{P,Names} where P <: Polynomial where Names
     show_names = names(NP) isa Symbol ? "$(names(NP))_i" : join(names(NP), ",", " and ")
     print(io, "(Polynomial over $(basering(NP)) in $show_names)")
 end
 
-function show(io::IO, ::Type{NP}) where NP <: NamedPolynomial{P} where P <: Term
+function show(io::IO, ::Type{NP}) where NP <: NamedPolynomial{P,Names} where P <: Term where Names
     show_names = names(NP) isa Symbol ? "$(names(NP))_i" : join(names(NP), ",", " and ")
     print(io, "(Term over $(basering(NP)) in $show_names)")
 end
 
-function show(io::IO, ::Type{NP}) where NP <: NamedPolynomial{P} where P <: AbstractMonomial
+function show(io::IO, ::Type{NP}) where NP <: NamedPolynomial{P,Names} where P <: AbstractMonomial where Names
     show_names = names(NP) isa Symbol ? "$(names(NP))_i" : join(names(NP), ",", " and ")
     print(io, "(Monomial in $show_names)")
 end
 
-function show(io::IO, ::Type{P}) where P <: Polynomial
+function show(io::IO, ::Type{Polynomial{A,Order}}) where {A,Order}
+    P = Polynomial{A,Order}
     n = monomialtype(P) <: TupleMonomial ?  num_variables(monomialtype(P)) : "∞"
     print(io, "(Polynomial over ",basering(P), " in ", n," variables (", monomialorder(P), "))")
 end

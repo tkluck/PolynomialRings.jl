@@ -23,6 +23,9 @@ using PolynomialRings
         @test repr(polynomialtype(T)) == "(Polynomial over BigInt in 3 variables (degrevlex))"
 
         @test repr(termtype(R)) == "(Term over Rational{BigInt} in x and y)"
+
+        # test that this does not throw an error
+        @test repr(methods(^)) isa String
     end
 
     @testset "Polynomials" begin
