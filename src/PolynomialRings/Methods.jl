@@ -7,19 +7,12 @@ function max_variable_index end
 # Type information
 #
 # -----------------------------------------------------------------------------
-generators(x::Type)    = throw(AssertionError("Not implemented: generators(::Type{$x})"))
-basering(x::Type)      = throw(AssertionError("Not implemented: basering(::Type{$x})"))
-monomialtype(x::Type)  = throw(AssertionError("Not implemented: monomialtype(::Type{$x})"))
-monomialorder(x::Type) = throw(AssertionError("Not implemented: monomialorder(::Type{$x})"))
-termtype(x::Type)      = throw(AssertionError("Not implemented: termtype(::Type{$x})"))
-exptype(x::Type)       = throw(AssertionError("Not implemented: exptype(::Type{$x})"))
-
-generators(x)    = generators(typeof(x))
-basering(x)      = basering(typeof(x))
-monomialtype(x)  = monomialtype(typeof(x))
-monomialorder(x) = monomialorder(typeof(x))
-termtype(x)      = termtype(typeof(x))
-exptype(x)       = exptype(typeof(x))
+function generators end
+function basering end
+function monomialtype end
+function monomialorder end
+function termtype end
+function exptype end
 
 base_extend(::Type{A}, ::Type{B}) where {A,B} = promote_type(A,B)
 

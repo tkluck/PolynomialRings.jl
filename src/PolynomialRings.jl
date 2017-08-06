@@ -35,4 +35,14 @@ construct_monomial(::Type{P}, e::T) where P<:Polynomial where T<:AbstractArray =
 construct_monomial(::Type{NP}, e::T) where NP<:NamedPolynomial where T = NP(construct_monomial(polynomialtype(NP), e))
 export construct_monomial
 
+import .Monomials: AbstractMonomial
+const _P = Union{NamedPolynomial,Polynomial,Term,AbstractMonomial}
+generators(x::_P)    = generators(typeof(x))
+basering(x::_P)      = basering(typeof(x))
+monomialtype(x::_P)  = monomialtype(typeof(x))
+monomialorder(x::_P) = monomialorder(typeof(x))
+termtype(x::_P)      = termtype(typeof(x))
+exptype(x::_P)       = exptype(typeof(x))
+
+
 end # module
