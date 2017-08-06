@@ -91,8 +91,9 @@ using PolynomialRings
 
     end
 
-
-
+    @testset "constructors" begin
+        @test @polynomial(x^10 - y^10) == x^10 - y^10
+    end
 end
 
 @testset "Expansions" begin
