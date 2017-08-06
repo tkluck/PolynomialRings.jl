@@ -3,7 +3,7 @@ module Display
 import PolynomialRings.Polynomials: Polynomial, terms, basering
 import PolynomialRings.NamedPolynomials: NamedPolynomial, names
 import PolynomialRings.Terms: Term, coefficient, monomial
-import PolynomialRings.Monomials: AbstractMonomial, num_variables
+import PolynomialRings.Monomials: AbstractMonomial, TupleMonomial, num_variables
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings: monomialtype, monomialorder
 
@@ -73,12 +73,8 @@ function show(io::IO, ::Type{NP}) where NP <: NamedPolynomial{P} where P <: Abst
 end
 
 function show(io::IO, ::Type{P}) where P <: Polynomial
-    n = try
-        num_variables(monomialtype(P))
-    catch
-        "∞"
-    end
-    print(io, "(Polynomial over $(basering(P)) in $n variables ($(monomialorder(P))))")
+    n = monomialtype(P) <: TupleMonomial ?  num_variables(monomialtype(P)) : "∞"
+    print(io, "(Polynomial over ",basering(P), " in ", n," variables (", monomialorder(P), "))")
 end
 
 end
