@@ -1,6 +1,7 @@
 module Expansions
 
-import PolynomialRings.NamedPolynomials: NamedPolynomial, polynomial_ring
+import PolynomialRings.NamedPolynomials: NamedPolynomial
+import PolynomialRings.Constructors: polynomial_ring
 import PolynomialRings.NamedPolynomials: _convert_monomial, _lossy_convert_monomial, names, polynomialtype
 import PolynomialRings.Polynomials: Polynomial, termtype, monomialtype, terms
 import PolynomialRings.Terms: Term, monomial, coefficient

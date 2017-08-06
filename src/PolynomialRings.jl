@@ -8,8 +8,8 @@ include("PolynomialRings/MonomialOrderings.jl")
 include("PolynomialRings/Terms.jl")
 include("PolynomialRings/Polynomials.jl")
 include("PolynomialRings/Operators.jl")
-include("PolynomialRings/Constructors.jl")
 include("PolynomialRings/NamedPolynomials.jl")
+include("PolynomialRings/Constructors.jl")
 include("PolynomialRings/Conversions.jl")
 include("PolynomialRings/Expansions.jl")
 include("PolynomialRings/Arrays.jl")
@@ -20,12 +20,12 @@ include("PolynomialRings/Groebner.jl")
 import .Monomials: TupleMonomial, VectorMonomial
 import .Terms: Term
 import .Polynomials: Polynomial, generators
-import .Constructors: free_generators
-import .NamedPolynomials: NamedPolynomial, polynomial_ring, formal_coefficients
+import .NamedPolynomials: NamedPolynomial
+import .Constructors: polynomial_ring, formal_coefficients
 import .Expansions: expansion, @expansion, coefficient, @coefficient, constant_coefficient, @constant_coefficient
 import .Groebner: red, groebner_basis
 
-export TupleMonomial, Term, Polynomial, NamedPolynomial, generators, free_generators, ⊗, polynomial_ring, formal_coefficients
+export TupleMonomial, Term, Polynomial, NamedPolynomial, generators, ⊗, polynomial_ring, formal_coefficients
 export deg, red, groebner_basis, expansion, @expansion, coefficient, @coefficient, constant_coefficient, @constant_coefficient
 
 # TODO: needs a better place
