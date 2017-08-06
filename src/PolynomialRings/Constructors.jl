@@ -72,7 +72,7 @@ Formal coefficients means that these are generators for a polynomial ring
 `C` with an unbounded number of variables, and this polynomial ring is used
 (through base extension) as the coefficients for `R`.
 
-In other words, the channel yields `c_i⊗ 1` for generators `c_i ∈ C` and `1 ∈ R`.
+In other words, the channel yields `c_i⊗ 1` for `1 ∈ R` and generators `c_i ∈ C`.
 
 # Examples
 ```jldoctest
