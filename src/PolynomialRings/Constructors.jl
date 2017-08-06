@@ -16,26 +16,37 @@ import Base: convert
 
 # -----------------------------------------------------------------------------
 #
-# Constructing polynomial_rings
+# Constructing polynomial rings
 #
 # -----------------------------------------------------------------------------
 """
-    polynomial_ring(basering::Type, symbols::Symbol...)
+    polynomial_ring(symbols::Symbol...; basering=Rational{BigInt}, exptype=Int16, monomialorder=:degrevlex)
 
 Create a type for the polynomial ring over `basering` in variables with names
 specified by `symbols`, and return the type and a tuple of these variables.
 
+The `exptype` parameter defines the integer type for the exponents.
+
+The `monomialorder` defines an order for the monomials for .e.g Groebner basis computations;
+it also defines the internal sort order. Built-in values are `:degrevlex`
+and `:deglex`. This function will accept any symbol, though, and you can
+define your own monomial order by implementing
+
+    Base.Order.lt(::MonomialOrder{:myorder}, a::M, b::M) where M <: AbstractMonomial
+
+See `PolynomialRings.MonomialOrderings` for examples.
+
 # Examples
 ```jldoctest
-julia> R,(x,y,z) = polynomial_ring(Int, :x, :y, :z)
+julia> R,(x,y,z) = polynomial_ring(:x, :y, :z)
 julia> x*y + z
 1 z + 1 x y
 ```
 """
-function polynomial_ring(basering::Type, symbols::Symbol...)
+function polynomial_ring(symbols::Symbol...; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex)
     length(symbols)>0 || throw(ArgumentError("Need at least one variable name"))
 
-    P = Polynomial{Vector{Term{TupleMonomial{length(symbols),Int16}, basering}}, :degrevlex}
+    P = Polynomial{Vector{Term{TupleMonomial{length(symbols),exptype}, basering}}, monomialorder}
     gens = generators(P)
     NP = NamedPolynomial{P, symbols}
 
@@ -65,7 +76,7 @@ In other words, the channel yields `c_i⊗ 1` for generators `c_i ∈ C` and `1 
 
 # Examples
 ```jldoctest
-julia> R,(x,) = polynomial_ring(Int, :x);
+julia> R = @ring ℤ[x];
 julia> coeffs = formal_coefficients(R, :c);
 julia> c() = take!(coeffs);
 julia> [c()*x^2 + c()*x + c() , c()*x^2 + c()*x + c()]
@@ -83,6 +94,58 @@ function formal_coefficients(::Type{NP}, name::Symbol) where NP <: NamedPolynomi
     P = polynomialtype(C)
 
     return lazymap(g->PP(C(g)), generators(P))
+end
+
+_baserings = Dict(
+    :ℚ => Rational{BigInt},
+    :ℤ => BigInt,
+    :ℝ => Float64,
+    :ℂ => Complex{Float64},
+)
+
+"""
+    @ring ℚ[x,y]
+
+Define and return the specified polynomial ring, and bind the variable names to its generators.
+
+Currently, the supported rings are: ℚ (`Rational{BigInt}`), ℤ (`BigInt`), ℝ (`Float64`) and
+ℂ (`Complex{Float64}`).
+
+If you need different coefficient rings, or need to specify a non-default monomial order or
+exponent integer type, use `polynomial_ring` instead.
+
+# Examples
+```jldoctest
+julia> using PolynomialRings
+julia> @ring ℚ[x,y];
+julia> x^3 + y
+1 y + 1 x^3
+```
+
+# See also
+`polynomial_ring`
+
+"""
+macro ring(definition)
+    if(definition.head != :ref)
+        throw(ArgumentError("@ring can only be used with a polynomial ring expression"))
+    end
+
+    basering = _baserings[definition.args[1]]
+    variables = definition.args[2:end]
+
+    variables_lvalue = :(())
+    append!(variables_lvalue.args, variables)
+
+    if all(v isa Symbol for v in variables)
+        return quote
+            R,vars = polynomial_ring($variables..., basering=$basering)
+            ($(esc(variables_lvalue))) = vars
+            R
+        end
+    elseif length(variables) == 1 && variables.head == :...
+        @assert(false) # not implemented yet
+    end
 end
 
 

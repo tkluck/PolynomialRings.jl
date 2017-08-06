@@ -5,9 +5,9 @@ using PolynomialRings
 
     using PolynomialRings: basering
 
-    R,(x,y) = polynomial_ring(Rational{Int}, :x, :y)
-    S,(z,) = polynomial_ring(Int, :z)
-    T,(a,b) = polynomial_ring(BigInt, :a, :b)
+    R = @ring ℚ[x,y]
+    S,(z,) = polynomial_ring(:z, basering=Int)
+    T = @ring ℤ[a,b]
 
     @testset "Arithmetic" begin
         @test x != 0
@@ -98,7 +98,7 @@ end
 @testset "Expansions" begin
 
     using PolynomialRings: expansion, @expansion, coefficient, @coefficient
-    R,(x,y,z) = polynomial_ring(Int, :x, :y, :z)
+    R,(x,y,z) = polynomial_ring(:x, :y, :z, basering=Int)
 
     @testset "expansion()" begin
         @test collect(expansion(x*y*z + x*z + z^2, :z)) == [((1,), x*y + x), ((2,), 1)]

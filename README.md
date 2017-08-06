@@ -12,7 +12,7 @@ A library for arithmetic and algebra with multi-variable polynomials.
 
 ```julia
 using PolynomialRings
-R,(x,y) = polynomial_ring(Int, :x, :y)
+R = @ring ℚ[x,y]
 
 if (x+y)*(x-y) == x^2 - y^2
     println("Seems to work")
@@ -123,7 +123,7 @@ comparable performance to Singular on at least one simple benchmark:
 
     $ julia <<JULIA
     using PolynomialRings; using Singular
-    R,(d,e,f) = polynomial_ring(BigInt, :d, :e, :f)
+    R = @ring ℤ[d,e,f]
     S,g,h,i = Singular.SingularPolynomialRing(Singular.SingularZZ, ["g","h","i"])
     (d+e+f)^4; (g+h+i)^4 # compile all julia code
     @time (d+e+f)^200

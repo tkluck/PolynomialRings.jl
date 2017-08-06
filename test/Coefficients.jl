@@ -2,7 +2,7 @@ using Base.Test
 using PolynomialRings: polynomial_ring, expansion
 
 @testset "Coefficients" begin
-    S,(z,) = polynomial_ring(Int, :z)
+    S,(z,) = polynomial_ring(:z, basering=Int)
     T,(w,) = polynomial_ring(eye(typeof(z),2), :w)
 
     @test [z 0; 0 z]*w == w*[z 0; 0 z]

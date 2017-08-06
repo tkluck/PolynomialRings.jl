@@ -36,7 +36,7 @@ Return the total degree of f.
 WARNING: currently, `deg` is oblivious to 'nested' polynomial rings. For example:
 
 ```jldoctest
-julia> R, (x,) = polynomial_ring(Int,:x);
+julia> R = @ring ℤ[x];
 julia> c1,c2 = formal_coefficients(R, :c);
 julia> deg(x^2)
 2

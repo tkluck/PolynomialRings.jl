@@ -40,7 +40,7 @@ means that no leading term of a polynomial in `G` divides any monomial in
 # Examples
 In one variable, this is just the normal Euclidean algorithm:
 ```jldoctest
-julia> R,(x,y) = polynomial_ring(Complex{Int}, :x, :y);
+julia> R,(x,y) = polynomial_ring(:x, :y, basering=Complex{Int});
 julia> red(x^1 + 1, [x-im])
 (0, [x+im]')
 julia> red(x^2 + y^2 + 1, [x, y])

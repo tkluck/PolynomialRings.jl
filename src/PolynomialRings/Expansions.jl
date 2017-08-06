@@ -43,7 +43,7 @@ In the REPL, you likely want to use the friendlier version `@expansion` instead.
 
 # Examples
 ```jldoctest
-julia> R,(x,y) = polynomial_ring(Int, :x, :y);
+julia> R = @ring ℤ[x,y];
 julia> collect(expansion(x^3 + y^2, :y))
 [((0,), 1 x^3), ((2,), 1)]
 julia> collect(expansion(x^3 + y^2, :x, :y))
@@ -133,7 +133,7 @@ to use the friendlier version `@coefficient`.
 
 # Examples
 ```jldoctest
-julia> R,(x,y) = polynomial_ring(Int, :x, :y);
+julia> R = @ring ℤ[x,y];
 julia> coefficient(x^3*y + x, (1,), :x)
 1
 julia> coefficient(x^3*y + x, (3,), :x)
@@ -173,7 +173,7 @@ Return the constant coefficient of `f` as a function of `vars`.
 
 # Examples
 ```jldoctest
-julia> R,(x,y) = polynomial_ring(Int, :x, :y);
+julia> R = @ring ℤ[x,y];
 julia> constant_coefficient(x^3*y + x + y + 1, :x)
 1 + 1 y
 julia> constant_coefficient(x^3*y + x + y + 1, :x, :y)
@@ -218,7 +218,7 @@ Return a the coefficient of `f` at `monomial`.
 
 # Examples
 ```jldoctest
-julia> R,(x,y) = polynomial_ring(Int, :x, :y);
+julia> R = @ring ℤ[x,y];
 julia> @coefficient(x^3*y + x, x)
 1
 julia> @coefficient(x^3*y + x, x^3)
@@ -249,7 +249,7 @@ Return the constant coefficient of `f` as a function of `vars`.
 
 # Examples
 ```jldoctest
-julia> R,(x,y) = polynomial_ring(Int, :x, :y);
+julia> R = @ring ℤ[x,y];
 julia> @constant_coefficient(x^3*y + x + y + 1, x)
 1 + 1 y
 julia> @constant_coefficient(x^3*y + x + y + 1, x, y)
@@ -272,7 +272,7 @@ into its consituent parts.
 
 # Examples
 ```jldoctest
-julia> R,(x,y) = polynomial_ring(Int, :x, :y);
+julia> R = @ring ℤ[x,y];
 julia> collect(@expansion(x^3 + y^2, y))
 [(1, 1 x^3), (1 y^2, 1)]
 julia> collect(@expansion(x^3 + y^2, x, y))
@@ -282,7 +282,7 @@ julia> collect(@expansion(x^3 + y^2, x, y))
 `expansion(...)`, `@coefficient` and `coefficient`
 """
 macro expansion(f, symbols...)
-    R,vars = polynomial_ring(Int, symbols...)
+    R,vars = polynomial_ring(symbols..., basering=Int)
     quote
         [
             (prod(v^k for (v,k) in zip($vars,w)), p)

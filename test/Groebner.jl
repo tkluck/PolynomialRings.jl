@@ -4,7 +4,7 @@ using PolynomialRings.Groebner: red, groebner_basis, syzygies
 
 @testset "Groebner" begin
 
-    R,(x,y) = polynomial_ring(Rational{Int}, :x, :y)
+    R = @ring ℚ[x,y]
 
     @test red(x^2, [x]) == (0, [x]')
 
@@ -30,7 +30,7 @@ end
 
 @testset "Syzygy" begin
 
-    R,(x,y) = polynomial_ring(Rational{Int}, :x, :y)
+    R = @ring ℚ[x,y]
 
     G = [x^5, x^2 + y, x*y + y^2]
     GG, tr = groebner_basis(G)
