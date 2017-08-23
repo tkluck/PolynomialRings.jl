@@ -1,5 +1,5 @@
 using Base.Test
-using PolynomialRings: polynomial_ring
+using PolynomialRings
 using PolynomialRings.Groebner: red, groebner_basis, syzygies
 
 @testset "Groebner" begin
