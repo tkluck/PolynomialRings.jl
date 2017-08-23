@@ -318,7 +318,7 @@ function groebner_basis(polynomials::AbstractVector{M}, ::Type{Val{with_transfor
                 write_unlock!(result_lock)
             end
             old_value = Threads.atomic_add!(loops, 1)
-            if old_value % 100 == 99
+            if old_value % 1000 == 999
                 read_lock!(result_lock)
                 l = length(result)
                 k = length(pairs_to_consider)
