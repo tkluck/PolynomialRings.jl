@@ -92,6 +92,9 @@ using PolynomialRings
     end
 
     @testset "constructors" begin
+        @test @polynomial(x) == x
+        @test @polynomial(y) == y
+        @test @polynomial(x^2) == x^2
         @test @polynomial(x^10 - y^10) == x^10 - y^10
     end
 end

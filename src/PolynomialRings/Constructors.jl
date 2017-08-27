@@ -181,11 +181,11 @@ julia> @polynomial x^3 + x^2*y + x*y^2 + y^3
 """
 macro polynomial(expr)
     symbols = Symbol[]
-    _visit_symbols(s->(push!(symbols,s);s), expr)
+    expr = _visit_symbols(s->(push!(symbols,s);s), expr)
 
     R,vars=polynomial_ring(symbols..., basering=Int)
 
-    _visit_symbols(s->convert(R,s), expr)
+    expr = _visit_symbols(s->convert(R,s), expr)
     expr
 end
 
