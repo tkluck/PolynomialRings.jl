@@ -152,8 +152,12 @@ function _visit_symbols(f::Function, ex)
     if ex isa Symbol
         return f(ex)
     elseif ex isa Expr && ex.head == :call
-        for i in 2:length(ex.args)
-            ex.args[i] = _visit_symbols(f, ex.args[i])
+        if ex.args[1] == :^
+            ex.args[2] = _visit_symbols(f, ex.args[2])
+        else
+            for i in 2:length(ex.args)
+                ex.args[i] = _visit_symbols(f, ex.args[i])
+            end
         end
         return ex
     else
@@ -176,6 +180,28 @@ julia> @polynomial x^3 + x^2*y + x*y^2 + y^3
 1 y^3 + 1 x y^2 + 1 x^2 y + 1 x^3
 ```
 
+!!! note
+    In general, you cannot use variables from outside the macro expression;
+    all symbols are interpreted as variables. For example:
+
+        d = 4
+        @polynomial d*x
+
+    will give a polynomial in two variables, `d` and `x`.
+
+    As a special exception, exponents are not interpreted, so
+
+        @polynomial(x^d) == @polynomial(x)^d
+
+    Unfortunately/confusingly, together, this gives
+
+        @polynomial(d*x^(d-1))
+
+    will have `d-1` interpreting `d` as an outer variable, and `d*x` is
+    a monomial.
+
+    This behaviour may (should?) change.
+
 # See also
 `@ring`, `polynomial_ring`, `convert(R, symbol)`
 """
@@ -186,7 +212,7 @@ macro polynomial(expr)
     R,vars=polynomial_ring(symbols..., basering=Int)
 
     expr = _visit_symbols(s->convert(R,s), expr)
-    expr
+    esc(expr)
 end
 
 end

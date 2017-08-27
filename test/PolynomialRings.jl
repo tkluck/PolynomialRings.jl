@@ -96,6 +96,9 @@ using PolynomialRings
         @test @polynomial(y) == y
         @test @polynomial(x^2) == x^2
         @test @polynomial(x^10 - y^10) == x^10 - y^10
+
+        d = 4
+        @test @polynomial(x^d + y^d) == x^d + y^d
     end
 end
 
