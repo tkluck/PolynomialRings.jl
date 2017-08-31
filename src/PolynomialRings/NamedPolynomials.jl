@@ -148,6 +148,7 @@ function convert(::Type{NP1}, a::NP2) where NP1 <: NamedPolynomial{P1, Names1} w
     NP1(P1(converted_terms))
 end
 
+(::Type{NP})(a::NP) where NP <: NamedPolynomial = a
 convert(::Type{NP}, a::NP) where NP <: NamedPolynomial = a
 
 # -----------------------------------------------------------------------------

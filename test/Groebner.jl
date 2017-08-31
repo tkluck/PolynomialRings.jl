@@ -10,6 +10,8 @@ using PolynomialRings.Groebner: red, groebner_basis, syzygies
 
     @test red(x + y, [x]) == (y, [1]')
 
+    @test red(1, [x]) == (1, [0]')
+
     f, G = (x^23 + y -x*43, [x^3*y^4, x^7])
     f_red, factors = red(f,G)
     @test f == f_red + (factors * G)

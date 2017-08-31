@@ -15,6 +15,14 @@ _P = Union{Polynomial, NamedPolynomial}
 import Base: promote_rule, convert
 import Base: +,*,-,==,/,//
 import PolynomialRings: ⊗, base_extend
+import PolynomialRings.Groebner: red
+
+# -----------------------------------------------------------------------------
+#
+# No-op promotions
+#
+# -----------------------------------------------------------------------------
+convert(::Type{P}, x::P) where P <: _P = x
 
 # -----------------------------------------------------------------------------
 #
@@ -158,5 +166,18 @@ promote_rule(::Type{P}, ::Type{T}) where P <: Polynomial{V} where V <: AbstractV
 convert(::Type{P}, a::T) where P <: Polynomial{V} where V <: AbstractVector{T} where T <: Term = P([a])
 
 
+# -----------------------------------------------------------------------------
+#
+# Promotions for more complicated functions
+#
+# -----------------------------------------------------------------------------
+function red(a::S,b::AbstractVector{T}) where {S,T}
+    U = typejoin(promote_rule(S,T), promote_rule(T,S))
+    if U === Union{}
+        throw(TypeError())
+    else
+        return red(U(a), map(U,b))
+    end
+end
 
 end

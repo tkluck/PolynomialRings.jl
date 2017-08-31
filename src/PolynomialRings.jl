@@ -10,12 +10,12 @@ include("PolynomialRings/Polynomials.jl")
 include("PolynomialRings/Operators.jl")
 include("PolynomialRings/NamedPolynomials.jl")
 include("PolynomialRings/Constructors.jl")
-include("PolynomialRings/Conversions.jl")
 include("PolynomialRings/Expansions.jl")
 include("PolynomialRings/Arrays.jl")
 include("PolynomialRings/Display.jl")
 include("PolynomialRings/Modules.jl")
 include("PolynomialRings/Groebner.jl")
+include("PolynomialRings/Conversions.jl")
 
 import .Monomials: TupleMonomial, VectorMonomial
 import .Terms: Term
