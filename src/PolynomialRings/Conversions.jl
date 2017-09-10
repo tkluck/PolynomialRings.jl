@@ -4,6 +4,7 @@ import PolynomialRings.NamedPolynomials: NamedPolynomial, polynomialtype
 import PolynomialRings.Polynomials: Polynomial, termtype, monomialtype, basering, terms
 import PolynomialRings.Terms: Term, monomial, coefficient
 import PolynomialRings.Monomials: AbstractMonomial
+import PolynomialRings: fraction_field, base_extend
 
 _P = Union{Polynomial, NamedPolynomial}
 
@@ -58,6 +59,9 @@ function base_extend(p::P, ::Type{C}) where P<:Polynomial where C
     CC = basering(PP)
     return PP([ Term(monomial(t), CC(coefficient(t))) for t in terms(p) ])
 end
+
+base_extend(p::P)      where P <: Union{Term,Polynomial,NamedPolynomial} = base_extend(p, fraction_field(basering(p)))
+base_extend(::Type{P}) where P <: Union{Term,Polynomial,NamedPolynomial} = base_extend(P, fraction_field(basering(P)))
 
 # -----------------------------------------------------------------------------
 #

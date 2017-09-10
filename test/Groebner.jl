@@ -4,7 +4,7 @@ using PolynomialRings.Groebner: red, groebner_basis, syzygies
 
 @testset "Groebner" begin
 
-    R = @ring ℚ[x,y]
+    R = @ring ℤ[x,y]
 
     @test red(x^2, [x]) == (0, [x]')
 
