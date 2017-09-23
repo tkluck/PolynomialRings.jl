@@ -100,6 +100,15 @@ using PolynomialRings
         d = 4
         @test @polynomial(x^d + y^d) == x^d + y^d
     end
+
+    using PolynomialRings.Modules: modulebasering
+
+    @testset "base extension" begin
+        @ring ℤ[x,y]
+        @test basering( base_extend(x,BigInt) ) == BigInt
+        @test modulebasering( base_extend([x, 0, y])) == @ring(ℚ[x,y])
+        @test base_extend(x, Float64) == 1.0 * x
+    end
 end
 
 @testset "Expansions" begin

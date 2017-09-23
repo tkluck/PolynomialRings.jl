@@ -57,7 +57,8 @@ base_extend(::Type{NamedPolynomial{P,Names}}, ::Type{C}) where {P,Names,C} = Nam
 function base_extend(p::P, ::Type{C}) where P<:Polynomial where C
     PP = base_extend(P, C)
     CC = basering(PP)
-    return PP([ Term(monomial(t), CC(coefficient(t))) for t in terms(p) ])
+    T  = Term{monomialtype(P), CC}
+    return PP(T[ T(monomial(t), CC(coefficient(t))) for t in terms(p) ])
 end
 
 base_extend(p::P)      where P <: Union{Term,Polynomial,NamedPolynomial} = base_extend(p, fraction_field(basering(p)))

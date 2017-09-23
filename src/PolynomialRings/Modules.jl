@@ -7,6 +7,9 @@ import PolynomialRings.NamedPolynomials: NamedPolynomial
 AbstractModuleElement{P<:Polynomial} = Union{P, AbstractArray{P}}
 AbstractNamedModuleElement{NP<:NamedPolynomial} = Union{NP, AbstractArray{NP}}
 modulebasering(::Type{A}) where A <: AbstractModuleElement{P} where P<:Polynomial = P
+modulebasering(::A)       where A <: AbstractModuleElement{P} where P<:Polynomial = modulebasering(A)
+modulebasering(::Type{A}) where A <: AbstractNamedModuleElement{P} where P<:NamedPolynomial = P
+modulebasering(::A)       where A <: AbstractNamedModuleElement{P} where P<:NamedPolynomial = modulebasering(A)
 
 _P = Union{Polynomial,NamedPolynomial}
 
