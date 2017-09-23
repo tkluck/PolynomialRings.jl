@@ -41,4 +41,11 @@ end
 
     @test iszero(K * GG)
 
+    G = [[x^5-y,x^4],[x^3+y,y^3]]
+    GG, tr= groebner_basis(G)
+
+    K = syzygies(GG)
+
+    @test iszero(K * GG)
+
 end

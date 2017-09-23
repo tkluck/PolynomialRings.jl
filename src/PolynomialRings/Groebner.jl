@@ -342,7 +342,8 @@ end
 
 function syzygies(polynomials::AbstractVector{M}) where M <: AbstractModuleElement
     pairs_to_consider = [
-        (i,j) for i in eachindex(polynomials) for j in eachindex(polynomials) if i < j
+        (i,j) for i in eachindex(polynomials) for j in eachindex(polynomials)
+        if i < j && _leading_row(polynomials[i]) == _leading_row(polynomials[j])
     ]
 
     result = Vector{RowVector{modulebasering(M),SparseVector{modulebasering(M),Int}}}()
@@ -350,8 +351,8 @@ function syzygies(polynomials::AbstractVector{M}) where M <: AbstractModuleEleme
     for (i,j) in pairs_to_consider
         a = polynomials[i]
         b = polynomials[j]
-        lt_a = leading_term(a)
-        lt_b = leading_term(b)
+        lt_a = _leading_term(a)
+        lt_b = _leading_term(b)
 
         m_a, m_b = lcm_multipliers(lt_a, lt_b)
         S = m_a * a - m_b * b
