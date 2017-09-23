@@ -375,13 +375,15 @@ function syzygies(polynomials::AbstractVector{M}) where M <: AbstractModuleEleme
     return flat_result
 end
 
-# note the double use of transpose; that's a workaround for some type-inference bug that I don't
-# quite understand. Without the workaround, map(NP, factors) results in a SparseVector{Any} which
-# is a recipe for disaster because there is no zero(Any).
-red(f::NP, G::AbstractVector{NP}) where NP<:NamedPolynomial = ((f_red,factors) = red(f.p, map(g->g.p,G)); (NP(f_red), map(NP,factors')'))
+_unpack(p::NamedPolynomial) = p.p
+_unpack(p::AbstractArray{NP}) where NP <: NamedPolynomial = broadcast(_unpack, p)
+_pack(::Type{NP}, a::P) where NP <: NamedPolynomial where P <: Polynomial = NP(a)
+_pack(::Type{NP}, a::AbstractArray{P}) where NP <: NamedPolynomial where P <: Polynomial = broadcast(g->_pack(NP,g), a)
 
-_unpack(p) = broadcast(g->g.p, p)
-_pack(::Type{NP}, a) where NP <: NamedPolynomial = broadcast(NP, a)
+function red(f::M, G::AbstractVector{M}) where M<:AbstractNamedModuleElement{NP} where NP<:NamedPolynomial
+    f_red, factors = red(_unpack(f), map(_unpack,G))
+    _pack(NP,f_red), map(g->_pack(NP,g),factors)
+end
 
 function groebner_basis(G::AbstractVector{M}, ::Type{Val{true}}; kwds...) where M<:AbstractNamedModuleElement{NP} where NP<:NamedPolynomial
     res, tr = groebner_basis(map(_unpack,G), Val{true}; kwds...)
