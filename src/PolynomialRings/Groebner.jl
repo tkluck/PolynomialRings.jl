@@ -368,7 +368,6 @@ function syzygies(polynomials::AbstractVector{M}) where M <: AbstractModuleEleme
         if !iszero(syz_red)
             push!(result, syz_red)
         end
-        push!(result, syzygy)
     end
 
     flat_result = [ result[x][1,y] for x=eachindex(result), y=eachindex(polynomials) ]
