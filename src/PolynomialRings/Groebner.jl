@@ -189,11 +189,8 @@ function groebner_basis(polynomials::AbstractVector{M}, ::Type{Val{with_transfor
                 lt_a = _leading_term(a)
                 lt_b = _leading_term(b)
                 degree = lcm_degree(lt_a, lt_b)
-
-                if degree < deg(lt_a) + deg(lt_b)
-                    if degree <= max_degree
-                        enqueue!(pairs_to_consider, (i,j), degree)
-                    end
+                if degree <= max_degree
+                    enqueue!(pairs_to_consider, (i,j), degree)
                 end
             end
         end
@@ -223,10 +220,6 @@ function groebner_basis(polynomials::AbstractVector{M}, ::Type{Val{with_transfor
             lt_b = _leading_term(b)
 
             m_a, m_b = lcm_multipliers(lt_a, lt_b)
-
-            if monomial(m_a) == monomial(lt_b)
-                continue
-            end
 
             S = m_a * a - m_b * b
 
