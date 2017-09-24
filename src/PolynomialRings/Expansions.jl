@@ -209,6 +209,32 @@ function constant_coefficient(f::NamedPolynomial, vars::Symbol...)
     return coefficient(f, ntuple(i->0, length(vars)), vars...)
 end
 
+"""
+    linear_coefficients(f, vars...)
+
+Return the linear coefficients of `f` as a function of `vars`.
+
+!!! note
+    `vars` need to be symbols; e.g. they cannot be the polynomial `x`.
+
+# Examples
+```jldoctest
+julia> R = @ring ℤ[x,y];
+julia> linear_coefficients(x^3*y + x + y + 1, :x)
+[1]
+julia> linear_coefficients(x^3*y + x + y + 1, :x, :y)
+[1,x^3+1]
+```
+# See also
+`@constant_coefficient`, `@coefficient`, and `@expansion`
+"""
+function linear_coefficients(f::NamedPolynomial, vars::Symbol...)
+    return [
+        coefficient(f, ntuple(i->(i==j)?1:0, length(vars)), vars...)
+        for j = 1:length(vars)
+    ]
+end
+
 function _parse_monomial_expression(expr)
     if expr isa Symbol
         return (1,), (expr,)
@@ -284,6 +310,32 @@ julia> @constant_coefficient(x^3*y + x + y + 1, x, y)
 macro constant_coefficient(f, vars...)
     quote
         constant_coefficient($(esc(f)), $vars...)
+    end
+end
+
+"""
+    @linear_coefficient(f, vars...)
+    linear_coefficients(f, vars...)
+
+Return the linear coefficients of `f` as a function of `vars`.
+
+!!! note
+    `vars` need to be symbols; e.g. they cannot be the polynomial `x`.
+
+# Examples
+```jldoctest
+julia> R = @ring ℤ[x,y];
+julia> @linear_coefficients(x^3*y + x + y + 1, x)
+[1]
+julia> @linear_coefficients(x^3*y + x + y + 1, x, y)
+[1,x^3+1]
+```
+# See also
+`@constant_coefficient`, `@coefficient`, and `@expansion`
+"""
+macro linear_coefficients(f, vars...)
+    quote
+        linear_coefficients($(esc(f)), $vars...)
     end
 end
 

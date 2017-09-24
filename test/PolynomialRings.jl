@@ -156,6 +156,13 @@ end
         @test 1     == constant_coefficient(x^3*y + x + y + 1, :x, :y)
         @test 1 + y == @constant_coefficient(x^3*y + x + y + 1, x)
         @test 1     == @constant_coefficient(x^3*y + x + y + 1, x, y)
+
+        @test linear_coefficients(x+y+1, :x, :y) == [1,1]
+        @test linear_coefficients(x^2+y^2+x-y+1, :x, :y) == [1,-1]
+        @test linear_coefficients(x^2+y^2+x-y+1, :y, :x) == [-1,1]
+        @test @linear_coefficients(x+y+1, x, y) == [1,1]
+        @test @linear_coefficients(x^2+y^2+x-y+1, x, y) == [1,-1]
+        @test @linear_coefficients(x^2+y^2+x-y+1, y, x) == [-1,1]
     end
 
 end
