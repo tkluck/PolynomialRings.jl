@@ -24,9 +24,11 @@ import .NamedPolynomials: NamedPolynomial
 import .Constructors: polynomial_ring, formal_coefficients, @ring, @polynomial
 import .Expansions: expansion, @expansion, coefficient, @coefficient, constant_coefficient, @constant_coefficient, coefficients, @coefficients
 import .Groebner: red, groebner_basis
+import .Arrays: flat_coefficients, @flat_coefficients
 
 export TupleMonomial, Term, Polynomial, NamedPolynomial, generators, ⊗, polynomial_ring, formal_coefficients
 export deg, red, groebner_basis, expansion, @expansion, coefficient, @coefficient, constant_coefficient, @constant_coefficient, coefficients, @coefficients, @ring, @polynomial
+export flat_coefficients, @flat_coefficients
 
 # TODO: needs a better place
 import .NamedPolynomials: polynomialtype

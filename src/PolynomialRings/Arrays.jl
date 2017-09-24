@@ -43,6 +43,50 @@ function coefficients(a::AbstractArray{NP}, args...) where NP <: NamedPolynomial
     return [c for (p,c) in expansion(a, args...)]
 end
 
+"""
+    flat_coefficients(a, symbol, [symbol...])
+
+Return the *polynomial* coefficients of the *matrix* coefficients of `a`, when
+those matrix coefficients are regarded as polynomials in the given variables.
+
+# Examples
+```jldoctest
+julia> R = @ring ℤ[x,y];
+julia> collect(flat_coefficients([x^3 + y^2; y^5], :y))
+[1 x^3, 1, 1]
+julia> collect(flat_coefficients([x^3 + y^2, y^5], :x, :y))
+[1, 1, 1]
+```
+# See also
+`@coefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
+"""
+function flat_coefficients(a::AbstractArray{NP}, args...) where NP <: NamedPolynomial
+    return vcat([coefficients(a_i, args...) for a_i in a]...)
+end
+
+"""
+    @flat_coefficients(a, var, [var...])
+
+Return the *polynomial* coefficients of the *matrix* coefficients of `a`, when
+those matrix coefficients are regarded as polynomials in the given variables.
+
+# Examples
+```jldoctest
+julia> R = @ring ℤ[x,y];
+julia> collect(flat_coefficients([x^3 + y^2; y^5], :y))
+[1 x^3, 1, 1]
+julia> collect(flat_coefficients([x^3 + y^2, y^5], :x, :y))
+[1, 1, 1]
+```
+# See also
+`flat_coefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
+"""
+macro flat_coefficients(a, symbols...)
+    quote
+        flat_coefficients($(esc(a)), $symbols...)
+    end
+end
+
 function det(m::M) where M <: AbstractMatrix{P} where P <: _P
     n,k = size(m)
     n == k || throw(ArgumentError("Cannot compute determinant of an $n x $k matrix"))
