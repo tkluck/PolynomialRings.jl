@@ -4,7 +4,7 @@ import PolynomialRings: to_dense_monomials, max_variable_index, to_dense_monomia
 import PolynomialRings.Terms: Term
 import PolynomialRings.Polynomials: Polynomial
 import PolynomialRings.NamedPolynomials: NamedPolynomial
-import PolynomialRings.Expansions: expansion
+import PolynomialRings.Expansions: expansion, coefficients
 import Iterators: groupby
 
 _P = Union{Polynomial, NamedPolynomial}
@@ -37,6 +37,10 @@ function expansion(a::AbstractArray{NP}, args...) where NP <: NamedPolynomial
     end
 
     return res
+end
+
+function coefficients(a::AbstractArray{NP}, args...) where NP <: NamedPolynomial
+    return [c for (p,c) in expansion(a, args...)]
 end
 
 function det(m::M) where M <: AbstractMatrix{P} where P <: _P

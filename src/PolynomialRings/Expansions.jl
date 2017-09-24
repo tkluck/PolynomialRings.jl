@@ -102,7 +102,30 @@ function expansion(p::NP, variables::Type{Val{vars}}) where NP <: NamedPolynomia
     end
 end
 
+"""
+    coefficients(f, symbol, [symbol...])
+
+Return the coefficients of `f` when expanded as a polynomial in the given
+variables.
+
+# Examples
+```jldoctest
+julia> R = @ring ℤ[x,y];
+julia> collect(coefficients(x^3 + y^2, :y))
+[1 x^3, 1]
+julia> collect(coefficients(x^3 + y^2, :x, :y))
+[1, 1]
+```
+# See also
+`@coefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
+"""
+function coefficients(p::NP, variables::Type{Val{vars}}) where NP <: NamedPolynomial where vars
+    return [c for (p,c) in expansion(p, Val{vars})]
+end
+
 @inline expansion(p::NamedPolynomial, variables::Symbol...) = expansion(p, Val{variables})
+@inline coefficients(p::NamedPolynomial, variables::Symbol...) = coefficients(p, Val{variables})
+
 
 function (p::NamedPolynomial)(; kwargs...)
     vars = [k for (k,v) in kwargs]
@@ -288,6 +311,33 @@ macro expansion(f, symbols...)
             (prod(v^k for (v,k) in zip($vars,w)), p)
             for (w,p) in expansion($(esc(f)), $symbols...)
         ]
+    end
+end
+
+"""
+    @coefficients(f, vars...)
+
+Return the coefficients of `f` when expanded as a polynomial in the given
+variables.
+
+!!! note
+    `vars` need to be literal variable names; it cannot be a variable containing
+    it.
+
+# Examples
+```jldoctest
+julia> R = @ring ℤ[x,y];
+julia> collect(@coefficients(x^3 + y^2, y))
+[1 x^3, 1]
+julia> collect(@coefficients(x^3 + y^2, x, y))
+[1, 1]
+```
+# See also
+`coefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
+"""
+macro coefficients(f, symbols...)
+    quote
+        coefficients($(esc(f)), $symbols...)
     end
 end
 
