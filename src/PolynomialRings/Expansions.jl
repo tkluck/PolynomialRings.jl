@@ -130,6 +130,13 @@ end
 function (p::NamedPolynomial)(; kwargs...)
     vars = [k for (k,v) in kwargs]
     values = [v for (k,v) in kwargs]
+
+    ExpansionType, CoeffType = _expansion_types(typeof(p), Val{tuple(vars...)})
+    ReturnType = promote_type(eltype(values), CoeffType)
+    if iszero(p)
+        return zero(ReturnType)
+    end
+    # TODO: type stability even in corner cases
     sum( p * prod(v^k for (v,k) in zip(values,w)) for (w,p) in expansion(p, vars...) )
 end
 

@@ -51,6 +51,9 @@ using PolynomialRings
         @test (x^2+y^2)(x=1) == 1+y^2
         @test [1+x; 1+y](x=1) == [2; 1+y]
         @test [1+x; 1+y](x=1, y=2) == [2; 3]
+
+        @test zero(x)(x=1) == 0
+        @test one(x)(x=1) == 1
     end
 
     @testset "zero comparison in Base" begin
@@ -117,6 +120,8 @@ end
     R,(x,y,z) = polynomial_ring(:x, :y, :z, basering=Int)
 
     @testset "expansion()" begin
+        @test collect(expansion(zero(z), :z)) == []
+
         @test collect(expansion(x*y*z + x*z + z^2, :z)) == [((1,), x*y + x), ((2,), 1)]
         @test collect(expansion(x*y - x, :x, :y, :z)) == [((1,0,0),-1), ((1,1,0), 1)]
         @test collect(expansion(x*y - x, :z, :x, :y)) == [((0,1,0),-1), ((0,1,1), 1)]
