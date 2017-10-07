@@ -1,11 +1,10 @@
 module Display
 
+import PolynomialRings: namestype, variablesymbols
 import PolynomialRings.Polynomials: Polynomial, terms, basering
-import PolynomialRings.NamedPolynomials: NamedPolynomial, names
 import PolynomialRings.Terms: Term, coefficient, monomial
-import PolynomialRings.Monomials: AbstractMonomial, TupleMonomial, num_variables
+import PolynomialRings.VariableNames: Named, Numbered
 import PolynomialRings.MonomialOrderings: MonomialOrder
-import PolynomialRings: monomialtype, monomialorder
 
 import Base: show
 
@@ -15,19 +14,10 @@ import Base: show
 #
 # -----------------------------------------------------------------------------
 
-function show(io::IO, p::P) where P <: Polynomial
-    DummyNames = :x
-    show(io, NamedPolynomial{P, DummyNames}(p))
-end
-
-_varname(n::NTuple{N, Symbol}, ix::Integer) where N = repr(n[ix])[2:end]
-_varname(s::Symbol, ix::Integer) = (var = repr(s)[2:end]; "$var$ix")
-
-function show(io::IO, np::NP) where NP <: NamedPolynomial{P, Names} where P<:Polynomial where Names
-    p = np.p
+function show(io::IO, p::Polynomial)
     frst = true
     if length(terms(p)) == 0
-        print(io, zero(basering(P)))
+        print(io, zero(basering(p)))
     end
     for t in terms(p)
         if !frst
@@ -36,12 +26,11 @@ function show(io::IO, np::NP) where NP <: NamedPolynomial{P, Names} where P<:Pol
             frst = false
         end
         print(io, coefficient(t))
-        for (ix, i) in enumerate(monomial(t))
-            varname = _varname(Names, ix)
+        for ((ix, i), symbol) in zip( enumerate(monomial(t)), variablesymbols(typeof(p)) )
             if i == 1
-                print(io, " $varname")
+                print(io, " $symbol")
             elseif i > 1
-                print(io, " $varname^$i")
+                print(io, " $symbol^$i")
             end
         end
     end
@@ -57,25 +46,22 @@ function show(io::IO, ::MO) where MO <: MonomialOrder{Name} where Name
     print(io, Name)
 end
 
-function show(io::IO, ::Type{NP}) where NP <: NamedPolynomial{P,Names} where P <: Polynomial where Names
-    show_names = names(NP) isa Symbol ? "$(names(NP))_i" : join(names(NP), ",", " and ")
-    print(io, "(Polynomial over $(basering(NP)) in $show_names)")
+function show(io::IO, ::Type{Named{Names}}) where Names
+    print(io, join(Names, ",", " and "))
 end
 
-function show(io::IO, ::Type{NP}) where NP <: NamedPolynomial{P,Names} where P <: Term where Names
-    show_names = names(NP) isa Symbol ? "$(names(NP))_i" : join(names(NP), ",", " and ")
-    print(io, "(Term over $(basering(NP)) in $show_names)")
-end
-
-function show(io::IO, ::Type{NP}) where NP <: NamedPolynomial{P,Names} where P <: AbstractMonomial where Names
-    show_names = names(NP) isa Symbol ? "$(names(NP))_i" : join(names(NP), ",", " and ")
-    print(io, "(Monomial in $show_names)")
+function show(io::IO, ::Type{Numbered{Name}}) where Name
+    print(io, "$(Name)_i")
 end
 
 function show(io::IO, ::Type{Polynomial{A,Order}}) where {A,Order}
-    P = Polynomial{A,Order}
-    n = monomialtype(P) <: TupleMonomial ?  num_variables(monomialtype(P)) : "∞"
-    print(io, "(Polynomial over ",basering(P), " in ", n," variables (", monomialorder(P), "))")
+    T = eltype(A)
+    print(io, "(Polynomial over $(basering(T)) in $(namestype(T)) ($Order))")
 end
+
+function show(io::IO, ::Type{Term{M,C}}) where {M,C}
+    print(io, "(Term over $C in $(namestype(M)))")
+end
+
 
 end

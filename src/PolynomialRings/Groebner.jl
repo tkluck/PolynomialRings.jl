@@ -3,8 +3,7 @@ module Groebner
 import PolynomialRings: leading_term, lcm_multipliers, deg, lcm_degree, fraction_field, basering, base_extend
 import PolynomialRings.Polynomials: Polynomial, monomialorder, terms
 import PolynomialRings.Terms: monomial
-import PolynomialRings.NamedPolynomials: NamedPolynomial
-import PolynomialRings.Modules: AbstractModuleElement, AbstractNamedModuleElement, modulebasering
+import PolynomialRings.Modules: AbstractModuleElement, modulebasering
 import PolynomialRings.Operators: leaddivrem
 
 import PolynomialRings.Util: ReadWriteLock, read_lock!, write_lock!, read_unlock!, write_unlock!
@@ -375,32 +374,7 @@ function syzygies(polynomials::AbstractVector{M}) where M <: AbstractModuleEleme
     return flat_result
 end
 
-_unpack(p::NamedPolynomial) = p.p
-_unpack(p::AbstractArray{NP}) where NP <: NamedPolynomial = broadcast(_unpack, p)
-_pack(::Type{NP}, a::P) where NP <: NamedPolynomial where P <: Polynomial = NP(a)
-_pack(::Type{NP}, a::AbstractArray{P}) where NP <: NamedPolynomial where P <: Polynomial = broadcast(g->_pack(NP,g), a)
-
-function red(f::M, G::AbstractVector{M}) where M<:AbstractNamedModuleElement{NP} where NP<:NamedPolynomial
-    f_red, factors = red(_unpack(f), map(_unpack,G))
-    _pack(NP,f_red), map(g->_pack(NP,g),factors)
-end
-
-function groebner_basis(G::AbstractVector{M}, ::Type{Val{true}}; kwds...) where M<:AbstractNamedModuleElement{NP} where NP<:NamedPolynomial
-    res, tr = groebner_basis(map(_unpack,G), Val{true}; kwds...)
-    map(g->_pack(base_extend(NP),g), res), map(g->_pack(base_extend(NP),g), tr)
-end
-
-function groebner_basis(G::AbstractVector{M}, ::Type{Val{false}}; kwds...) where M<:AbstractNamedModuleElement{NP} where NP<:NamedPolynomial
-    res = groebner_basis(map(_unpack,G), Val{false}; kwds...)
-    map(g->_pack(base_extend(NP),g), res)
-end
-
 groebner_basis(G; kwds...) = groebner_basis(G, Val{true}, kwds...)
-
-function syzygies(G::AbstractVector{M}) where M<:AbstractNamedModuleElement{NP} where NP<:NamedPolynomial
-    res = syzygies(map(_unpack,G))
-    map(g->_pack(NP,g), res)
-end
 
 # FIXME: why doesn't this suppress info(...) output?
 logging(DevNull, current_module(), kind=:info)

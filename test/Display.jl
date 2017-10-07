@@ -4,7 +4,7 @@ using PolynomialRings
 @testset "Display" begin
 
     using PolynomialRings
-    using PolynomialRings: basering, polynomialtype, termtype
+    using PolynomialRings: basering, termtype
 
     R = @ring ℚ[x,y]
     q, = formal_coefficients(R, :q)
@@ -13,14 +13,9 @@ using PolynomialRings
     r, = formal_coefficients(T, :r)
 
     @testset "Types" begin
-        @test repr(R) == "(Polynomial over Rational{BigInt} in x and y)"
-        @test repr(S) == "(Polynomial over (Polynomial over Rational{BigInt} in q_i) in x and y)"
-        @test repr(T) == "(Polynomial over BigInt in a,b and c)"
-
-        @test repr(polynomialtype(R)) == "(Polynomial over Rational{BigInt} in 2 variables (degrevlex))"
-        @test repr(polynomialtype(S)) == "(Polynomial over (Polynomial over Rational{BigInt} in q_i) in 2 variables (degrevlex))"
-        @test repr(polynomialtype(basering(S))) == "(Polynomial over Rational{BigInt} in ∞ variables (degrevlex))"
-        @test repr(polynomialtype(T)) == "(Polynomial over BigInt in 3 variables (degrevlex))"
+        @test repr(R) == "(Polynomial over Rational{BigInt} in x and y (degrevlex))"
+        @test repr(S) == "(Polynomial over (Polynomial over Rational{BigInt} in q_i (degrevlex)) in x and y (degrevlex))"
+        @test repr(T) == "(Polynomial over BigInt in a,b and c (degrevlex))"
 
         @test repr(termtype(R)) == "(Term over Rational{BigInt} in x and y)"
 

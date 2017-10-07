@@ -1,32 +1,32 @@
 module Expansions
 
-import PolynomialRings.NamedPolynomials: NamedPolynomial
 import PolynomialRings.Constructors: polynomial_ring
-import PolynomialRings.NamedPolynomials: _convert_monomial, _lossy_convert_monomial, names, polynomialtype
+import PolynomialRings.NamedPolynomials: _convert_monomial, _lossy_convert_monomial
 import PolynomialRings.Polynomials: Polynomial, termtype, monomialtype, terms
 import PolynomialRings.Terms: Term, monomial, coefficient
-import PolynomialRings: basering
+import PolynomialRings: basering, namestype, variablesymbols
 import PolynomialRings.Monomials: AbstractMonomial, TupleMonomial, exptype
+import PolynomialRings.VariableNames: Named
 import PolynomialRings.MonomialOrderings: MonomialOrder
 
 import Iterators: groupby
 
 """
-    monomialtype, coefficienttype = _expansion_types(R, Val{tuple(symbols...)})
+    monomialtype, coefficienttype = _expansion_types(R, Named{tuple(symbols...)})
 """
-function _expansion_types(::Type{NP}, ::Type{Val{vars}}) where NP <: NamedPolynomial where vars
-    all_vars = names(NP)
+function _expansion_types(::Type{P}, ::Type{Named{vars}}) where P <: Polynomial where vars
+    all_vars = variablesymbols(P)
     remaining_vars = [v for v in all_vars if !(v in vars)]
     N = length(vars)
     M = length(remaining_vars)
-    ExpType = exptype(monomialtype(polynomialtype(NP)))
+    ExpType = exptype(P)
     ExpansionType = NTuple{N,ExpType}
-    C = basering(NP)
+    C = basering(P)
     if M == 0
         CoeffType = C
     else
-        NamesCoefficient = tuple(remaining_vars...)
-        CoeffType = NamedPolynomial{Polynomial{Vector{Term{TupleMonomial{M,ExpType},C}},:degrevlex},NamesCoefficient}
+        NamesCoefficient = Named{tuple(remaining_vars...)}
+        CoeffType = Polynomial{Vector{Term{TupleMonomial{M,ExpType,NamesCoefficient},C}},:degrevlex}
     end
     return ExpansionType, CoeffType
 
@@ -52,49 +52,48 @@ julia> collect(expansion(x^3 + y^2, :x, :y))
 # See also
 `@expansion(...)`, `@coefficient` and `coefficient`
 """
-function expansion(p::NP, variables::Type{Val{vars}}) where NP <: NamedPolynomial where vars
-    all_vars = names(NP)
+function expansion(p::P, variables::Type{Named{vars}}) where P <: Polynomial where vars
+    all_vars = variablesymbols(P)
     remaining_vars = [v for v in all_vars if !(v in vars)]
 
     if length(remaining_vars) == 0
         N = length(vars)
-        NamesExpansion = tuple(vars...)
-        ExpType = exptype(monomialtype(polynomialtype(NP)))
+        NamesExpansion = Named{tuple(vars...)}
+        ExpType = exptype(P)
         ExpansionType = NTuple{N,ExpType}
-        ResultType = Tuple{ExpansionType, basering(NP)}
-        P = polynomialtype(NP)
+        ResultType = Tuple{ExpansionType, basering(P)}
         one_ = one(basering(p))
 
-        f = t->_convert_monomial(Val{NamesExpansion}, Val{names(NP)}, monomial(t))
+        f = t->_convert_monomial(NamesExpansion, namestype(P), monomial(t))
 
         return Channel(ctype=ResultType) do ch
-            for t in terms(p.p)
+            for t in terms(p)
                 push!(ch, (f(t).e, coefficient(t)))
             end
         end
     else
-        NamesExpansion = tuple(vars...)
-        NamesCoefficient = tuple(remaining_vars...)
+        NamesExpansion = Named{tuple(vars...)}
+        NamesCoefficient = Named{tuple(remaining_vars...)}
         N = length(vars)
         M = length(remaining_vars)
 
-        C = basering(NP)
-        ExpType = exptype(monomialtype(polynomialtype(NP)))
+        C = basering(P)
+        ExpType = exptype(P)
         ExpansionType = NTuple{N,ExpType}
-        CoeffType = NamedPolynomial{Polynomial{Vector{Term{TupleMonomial{M,ExpType},C}},:degrevlex},NamesCoefficient}
+        CoeffType = Polynomial{Vector{Term{TupleMonomial{M,ExpType,NamesCoefficient},C}},:degrevlex}
         ResultType = Tuple{ExpansionType, CoeffType}
 
-        f = t->_lossy_convert_monomial(Val{NamesExpansion},   Val{names(NP)}, monomial(t))
-        g = t->_lossy_convert_monomial(Val{NamesCoefficient}, Val{names(NP)}, monomial(t))
+        f = t->_lossy_convert_monomial(NamesExpansion,   namestype(P), monomial(t))
+        g = t->_lossy_convert_monomial(NamesCoefficient, namestype(P), monomial(t))
 
         return Channel(ctype=ResultType) do ch
-            separated_terms = [(f(t), g(t), coefficient(t)) for t in terms(p.p)]
+            separated_terms = [(f(t), g(t), coefficient(t)) for t in terms(p)]
             sort!(separated_terms, lt=(a,b)->Base.Order.lt(MonomialOrder{:degrevlex}(),a[1],b[1]))
             for term_group in groupby(x->x[1], separated_terms)
                 expand_exponents = term_group[1][1].e
                 coeff_terms = [Term(t[2], t[3]) for t in term_group]
                 sort!(coeff_terms, order=MonomialOrder{:degrevlex}())
-                p = CoeffType(polynomialtype(CoeffType)(coeff_terms))
+                p = CoeffType(coeff_terms)
 
                 push!(ch, (expand_exponents, p))
             end
@@ -119,19 +118,25 @@ julia> collect(coefficients(x^3 + y^2, :x, :y))
 # See also
 `@coefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
 """
-function coefficients(p::NP, variables::Type{Val{vars}}) where NP <: NamedPolynomial where vars
-    return [c for (p,c) in expansion(p, Val{vars})]
+function coefficients(p::P, variables::Type{Named{vars}}) where P <: Polynomial where vars
+    return [c for (p,c) in expansion(p, Named{vars})]
 end
 
-@inline expansion(p::NamedPolynomial, variables::Symbol...) = expansion(p, Val{variables})
-@inline coefficients(p::NamedPolynomial, variables::Symbol...) = coefficients(p, Val{variables})
+@inline expansion(p::Polynomial, variables::Symbol...) = expansion(p, Named{variables})
+@inline coefficients(p::Polynomial, variables::Symbol...) = coefficients(p, Named{variables})
 
 
-function (p::NamedPolynomial)(; kwargs...)
+"""
+    f(var1=...,var2=...)
+
+Substitute variables with Numbers
+
+"""
+function (p::Polynomial)(; kwargs...)
     vars = [k for (k,v) in kwargs]
     values = [v for (k,v) in kwargs]
 
-    ExpansionType, CoeffType = _expansion_types(typeof(p), Val{tuple(vars...)})
+    ExpansionType, CoeffType = _expansion_types(typeof(p), Named{tuple(vars...)})
     ReturnType = promote_type(eltype(values), CoeffType)
     if iszero(p)
         return zero(ReturnType)
@@ -140,16 +145,16 @@ function (p::NamedPolynomial)(; kwargs...)
     sum( p * prod(v^k for (v,k) in zip(values,w)) for (w,p) in expansion(p, vars...) )
 end
 
-function (p::Array{NP})(; kwargs...) where NP <: NamedPolynomial
+function (p::Array{P})(; kwargs...) where P <: Polynomial
     map(p_i -> p_i(;kwargs...), p)
 end
 
 import Base: diff
 
-function diff(p::NamedPolynomial, variable::Symbol)
-    for (i,s) in enumerate(names(typeof(p)))
+function diff(p::Polynomial, variable::Symbol)
+    for (i,s) in enumerate(variablesymbols(typeof(p)))
         if s == variable
-            return typeof(p)(diff(p.p, i))
+            return diff(p, i)
         end
     end
     throw(ArgumentError("Variable $variable does not appear in $(typeof(p))"))
@@ -176,17 +181,17 @@ julia> coefficient(x^3*y + x, (3,1), :x, :y)
 # See also
 `@coefficient`, `expansion` and `@expansion`
 """
-function coefficient(f::NamedPolynomial, t::Tuple, vars::Symbol...)
+function coefficient(f::Polynomial, t::Tuple, vars::Symbol...)
     for (w,p) in expansion(f, vars...)
         if w == t
             return p
         end
     end
-    ExpansionType, CoeffType = _expansion_types(typeof(f), Val{vars})
+    ExpansionType, CoeffType = _expansion_types(typeof(f), Named{vars})
     return zero(CoeffType)
 end
 
-function coefficient(f::NamedPolynomial, t::NamedPolynomial, vars::Symbol...)
+function coefficient(f::Polynomial, t::Polynomial, vars::Symbol...)
     ((w,p),) = expansion(t, vars...)
     p == 1 || throw(ArgumentError("Cannot get a coefficient for $t when symbols are $vars"))
 
@@ -212,7 +217,7 @@ julia> constant_coefficient(x^3*y + x + y + 1, :x, :y)
 # See also
 `@constant_coefficient`, `@coefficient`, and `@expansion`
 """
-function constant_coefficient(f::NamedPolynomial, vars::Symbol...)
+function constant_coefficient(f::Polynomial, vars::Symbol...)
     return coefficient(f, ntuple(i->0, length(vars)), vars...)
 end
 
@@ -235,7 +240,7 @@ julia> linear_coefficients(x^3*y + x + y + 1, :x, :y)
 # See also
 `@constant_coefficient`, `@coefficient`, and `@expansion`
 """
-function linear_coefficients(f::NamedPolynomial, vars::Symbol...)
+function linear_coefficients(f::Polynomial, vars::Symbol...)
     return [
         coefficient(f, ntuple(i->(i==j)?1:0, length(vars)), vars...)
         for j = 1:length(vars)

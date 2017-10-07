@@ -13,6 +13,8 @@ function monomialtype end
 function monomialorder end
 function termtype end
 function exptype end
+function namestype end
+function variablesymbols end
 
 base_extend(::Type{A}, ::Type{B}) where {A,B} = promote_type(A,B)
 

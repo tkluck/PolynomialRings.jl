@@ -67,7 +67,8 @@ end
 function +(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
 
 
-    T = Term{M, promote_type(C1,C2)}
+    C = promote_type(C1,C2)
+    T = Term{M, C}
     P = Polynomial{Vector{T},Order}
     res = Vector{T}(length(a.terms) + length(b.terms))
     n = 0
@@ -97,10 +98,10 @@ function +(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
     end
 
     for t in Iterators.rest(terms(a), state_a)
-        @inbounds res[n+=1] = t
+        @inbounds res[n+=1] = base_extend(t, C)
     end
     for t in Iterators.rest(terms(b), state_b)
-        @inbounds res[n+=1] = t
+        @inbounds res[n+=1] = base_extend(t, C)
     end
 
     resize!(res, n)
@@ -110,7 +111,8 @@ end
 function -(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
 
 
-    T = Term{M, promote_type(C1,C2)}
+    C = promote_type(C1,C2)
+    T = Term{M, C}
     P = Polynomial{Vector{T},Order}
     res = Vector{T}(length(a.terms) + length(b.terms))
     n = 0
@@ -140,10 +142,10 @@ function -(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
     end
 
     for t in Iterators.rest(terms(a), state_a)
-        @inbounds res[n+=1] = t
+        @inbounds res[n+=1] = base_extend(t, C)
     end
     for t in Iterators.rest(terms(b), state_b)
-        @inbounds res[n+=1] = -t
+        @inbounds res[n+=1] = -base_extend(t, C)
     end
 
     resize!(res, n)
@@ -161,7 +163,8 @@ import DataStructures: enqueue!, dequeue!, peek
 function *(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
 
 
-    T = Term{M, promote_type(C1,C2)}
+    C = promote_type(C1, C2)
+    T = Term{M, C}
     PP = Polynomial{Vector{T}, Order}
 
     if iszero(a) || iszero(b)
@@ -183,7 +186,7 @@ function *(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
     @inbounds while length(minimal_corners)>0
         row, col, t = peek(minimal_corners)
         dequeue!(minimal_corners)
-        summands[k+=1] = t
+        summands[k+=1] = base_extend(t, C)
         row_indices[row] = col
         col_indices[col] = row
         if row < length(terms(a)) && row_indices[row+1] == col - 1

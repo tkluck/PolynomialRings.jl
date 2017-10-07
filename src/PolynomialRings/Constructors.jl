@@ -1,10 +1,10 @@
 module Constructors
 
-import PolynomialRings: generators, base_extend
+import PolynomialRings: generators, base_extend, variablesymbols, ⊗
 import PolynomialRings.Polynomials: Polynomial
-import PolynomialRings.NamedPolynomials: NamedPolynomial, names, polynomialtype
 import PolynomialRings.Terms: Term, basering
 import PolynomialRings.Monomials: TupleMonomial, VectorMonomial
+import PolynomialRings.VariableNames: Named, Numbered
 import PolynomialRings.Util: lazymap
 
 # -----------------------------------------------------------------------------
@@ -46,21 +46,17 @@ julia> x*y + z
 function polynomial_ring(symbols::Symbol...; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex)
     length(symbols)>0 || throw(ArgumentError("Need at least one variable name"))
 
-    P = Polynomial{Vector{Term{TupleMonomial{length(symbols),exptype}, basering}}, monomialorder}
-    gens = generators(P)
-    NP = NamedPolynomial{P, symbols}
-
-    return NP, map(g->NP(g), gens)
+    P = Polynomial{Vector{Term{TupleMonomial{length(symbols),exptype, Named{symbols}}, basering}}, monomialorder}
+    return P, generators(P)
 end
 
-function convert(::Type{NP}, x::Symbol) where NP<:NamedPolynomial
-    T = names(NP)
-    for (i,s) in enumerate(T)
+function convert(::Type{P}, x::Symbol) where P<:Polynomial
+    for (g,s) in zip(generators(P), variablesymbols(P))
         if s == x
-            return NP(generators(polynomialtype(NP))[i])
+            return g
         end
     end
-    throw(ArgumentError("Variable $x does not appear in $NP"))
+    throw(ArgumentError("Variable $x does not appear in $P"))
 end
 
 """
@@ -85,15 +81,9 @@ julia> [c()*x^2 + c()*x + c() , c()*x^2 + c()*x + c()]
  1 c6 + 1 c5 x + 1 c4 x^2
 ```
 """
-function formal_coefficients(::Type{NP}, name::Symbol) where NP <: NamedPolynomial
-    _C = Polynomial{Vector{Term{VectorMonomial{SparseVector{Int16,Int}}, Int}}, :degrevlex}
-    CC = NamedPolynomial{_C, name}
-
-    PP = base_extend(NP, CC)
-    C = basering(PP)
-    P = polynomialtype(C)
-
-    return lazymap(g->PP(C(g)), generators(P))
+function formal_coefficients(::Type{P}, name::Symbol) where P <: Polynomial
+    CP = Polynomial{Vector{Term{VectorMonomial{SparseVector{Int16,Int}, Numbered{name}}, Int}}, :degrevlex}
+    return lazymap(g->g⊗one(P), generators(CP))
 end
 
 _baserings = Dict(

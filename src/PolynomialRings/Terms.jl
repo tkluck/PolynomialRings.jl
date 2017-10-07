@@ -24,7 +24,7 @@ end
 # -----------------------------------------------------------------------------
 import Base: *, ^, +, -, one, ==, iszero, diff
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, deg, basering
-import PolynomialRings: maybe_div, lcm_multipliers, monomialtype, exptype, lcm_degree
+import PolynomialRings: maybe_div, lcm_multipliers, monomialtype, exptype, lcm_degree, namestype
 import Base.Order: lt
 import PolynomialRings.MonomialOrderings: MonomialOrder
 
@@ -36,6 +36,7 @@ import PolynomialRings.MonomialOrderings: MonomialOrder
 monomialtype(::Type{Term{M,C}}) where {M,C} = M
 basering(::Type{Term{M,C}}) where {M,C} = C
 exptype(::Type{T}) where T<:Term = exptype(monomialtype(T))
+namestype(::Type{T}) where T<:Term = namestype(monomialtype(T))
 
 # -----------------------------------------------------------------------------
 #

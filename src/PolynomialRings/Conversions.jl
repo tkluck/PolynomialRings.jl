@@ -1,12 +1,9 @@
 module Conversions
 
-import PolynomialRings.NamedPolynomials: NamedPolynomial, polynomialtype
 import PolynomialRings.Polynomials: Polynomial, termtype, monomialtype, basering, terms
 import PolynomialRings.Terms: Term, monomial, coefficient
 import PolynomialRings.Monomials: AbstractMonomial
-import PolynomialRings: fraction_field, base_extend
-
-_P = Union{Polynomial, NamedPolynomial}
+import PolynomialRings: fraction_field, base_extend, namestype
 
 # -----------------------------------------------------------------------------
 #
@@ -23,7 +20,8 @@ import PolynomialRings.Groebner: red
 # No-op promotions
 #
 # -----------------------------------------------------------------------------
-convert(::Type{P}, x::P) where P <: _P = x
+(::Type{P})(a::P) where P <: Polynomial = a
+convert(::Type{P}, x::P) where P <: Polynomial = x
 
 # -----------------------------------------------------------------------------
 #
@@ -33,16 +31,12 @@ convert(::Type{P}, x::P) where P <: _P = x
 
 promote_rule(::Type{Polynomial{V,O}}, ::Type{C}) where V <: AbstractVector{T} where T <: Term{M,C} where {O,M,C} = Polynomial{V,O}
 
-function convert(::Type{P}, a::C) where P<:Polynomial{V,O} where V <: AbstractVector{T} where T <: Term{M,C} where {O,M,C}
+function convert(::Type{P}, a::C) where P<:Polynomial{V} where V <: AbstractVector{T} where T <: Term{M,C} where {M,C}
     if iszero(a)
         return zero(P)
     else
         return P([T(one(M),a)])
     end
-end
-
-function convert(::Type{NP}, a::C) where {NP<:NamedPolynomial,C<:Number}
-    NP( convert(polynomialtype(NP), a) )
 end
 
 # -----------------------------------------------------------------------------
@@ -52,17 +46,21 @@ end
 # -----------------------------------------------------------------------------
 base_extend(::Type{Term{M,C1}}, ::Type{C2}) where {M,C1,C2} = Term{M, base_extend(C1,C2)}
 base_extend(::Type{Polynomial{V,O}}, ::Type{C}) where V<:AbstractVector{T} where {O,T,C} = Polynomial{Vector{base_extend(T,C)}, O}
-base_extend(::Type{NamedPolynomial{P,Names}}, ::Type{C}) where {P,Names,C} = NamedPolynomial{base_extend(P,C),Names}
+
+function base_extend(t::T, ::Type{C}) where T<:Term where C
+    TT = base_extend(T, C)
+    CC = basering(TT)
+    return TT(monomial(t), CC(coefficient(t)))
+end
 
 function base_extend(p::P, ::Type{C}) where P<:Polynomial where C
     PP = base_extend(P, C)
-    CC = basering(PP)
-    T  = Term{monomialtype(P), CC}
-    return PP(T[ T(monomial(t), CC(coefficient(t))) for t in terms(p) ])
+    T = termtype(PP)
+    return PP(T[ base_extend(t, C) for t in terms(p) ])
 end
 
-base_extend(p::P)      where P <: Union{Term,Polynomial,NamedPolynomial} = base_extend(p, fraction_field(basering(p)))
-base_extend(::Type{P}) where P <: Union{Term,Polynomial,NamedPolynomial} = base_extend(P, fraction_field(basering(P)))
+base_extend(p::P)      where P <: Union{Term,Polynomial} = base_extend(p, fraction_field(basering(p)))
+base_extend(::Type{P}) where P <: Union{Term,Polynomial} = base_extend(P, fraction_field(basering(P)))
 
 # -----------------------------------------------------------------------------
 #
@@ -73,8 +71,6 @@ base_extend(::Type{P}) where P <: Union{Term,Polynomial,NamedPolynomial} = base_
 //(a::T,b::Number)  where T <: Term = base_extend(T, Rational{typeof(b)})(a.m, a.c//b)
 /(a::P,b::Number)   where P <: Polynomial = base_extend(P,   float(typeof(b)))([t/b  for t in terms(a)])
 //(a::P,b::Number)  where P <: Polynomial = base_extend(P,Rational{typeof(b)})([t//b for t in terms(a)])
-/(a::NP,b::Number)  where NP <: NamedPolynomial = base_extend(NP,   float(typeof(b)))(a.p/b)
-//(a::NP,b::Number) where NP <: NamedPolynomial = base_extend(NP,Rational{typeof(b)})(a.p//b)
 
 # -----------------------------------------------------------------------------
 #
@@ -125,20 +121,20 @@ convert(::Type{P}, a::T) where P <: Polynomial{<:AbstractArray{T}} where T <: Te
 # a version of polynomials with named variables.)
 #
 # -----------------------------------------------------------------------------
-+(a::P1,b::P2) where {P1<:_P,P2<:_P} = +(promote(a,b)...)
-*(a::P1,b::P2) where {P1<:_P,P2<:_P} = *(promote(a,b)...)
--(a::P1,b::P2) where {P1<:_P,P2<:_P} = -(promote(a,b)...)
-==(a::P1,b::P2) where {P1<:_P,P2<:_P} = ==(promote(a,b)...)
++(a::P1,b::P2) where {P1<:Polynomial,P2<:Polynomial} = +(promote(a,b)...)
+*(a::P1,b::P2) where {P1<:Polynomial,P2<:Polynomial} = *(promote(a,b)...)
+-(a::P1,b::P2) where {P1<:Polynomial,P2<:Polynomial} = -(promote(a,b)...)
+==(a::P1,b::P2) where {P1<:Polynomial,P2<:Polynomial} = ==(promote(a,b)...)
 
 _C = Union{Number, AbstractMonomial, Term}
-+(a::C,b::P) where P<:_P where C<:_C = +(promote(a,b)...)
-+(a::P,b::C) where P<:_P where C<:_C = +(promote(a,b)...)
-*(a::C,b::P) where P<:_P where C<:_C = *(promote(a,b)...)
-*(a::P,b::C) where P<:_P where C<:_C = *(promote(a,b)...)
--(a::C,b::P) where P<:_P where C<:_C = -(promote(a,b)...)
--(a::P,b::C) where P<:_P where C<:_C = -(promote(a,b)...)
-==(a::P,b::C) where P<:_P where C<:_C = ==(promote(a,b)...)
-==(a::C,b::P) where P<:_P where C<:_C = ==(promote(a,b)...)
++(a::C,b::P) where P<:Polynomial where C<:_C = +(promote(a,b)...)
++(a::P,b::C) where P<:Polynomial where C<:_C = +(promote(a,b)...)
+*(a::C,b::P) where P<:Polynomial where C<:_C = *(promote(a,b)...)
+*(a::P,b::C) where P<:Polynomial where C<:_C = *(promote(a,b)...)
+-(a::C,b::P) where P<:Polynomial where C<:_C = -(promote(a,b)...)
+-(a::P,b::C) where P<:Polynomial where C<:_C = -(promote(a,b)...)
+==(a::P,b::C) where P<:Polynomial where C<:_C = ==(promote(a,b)...)
+==(a::C,b::P) where P<:Polynomial where C<:_C = ==(promote(a,b)...)
 
 # -----------------------------------------------------------------------------
 #
@@ -153,14 +149,40 @@ Construct a polynomial with polynomial coefficients, by promoting a with the typ
 
 function ⊗(a::P1, b::P2) where P1 <: Polynomial where P2 <: Polynomial
     P = P1⊗P2
-    assert(basering(P) === P1)
-    l = P(a)
+    @assert basering(P) === base_extend(P1, basering(P2))
+    l = P(base_extend(a, basering(P2)))
     r = base_extend(b, P1)
-    assert(typeof(l) === typeof(r))
+    @assert typeof(l) === typeof(r)
     l * r
 end
 
-⊗(::Type{P1}, ::Type{P2}) where P1 <: _P where P2 <: Polynomial{<:AbstractVector{T}} where T = base_extend(P2, P1)
+⊗(::Type{P1}, ::Type{P2}) where P1 <: Polynomial where P2 <: Polynomial{<:AbstractVector{T}} where T = base_extend(P2, P1)
+
+# -----------------------------------------------------------------------------
+#
+# Polynomials with polynomial coefficients: resolve ambiguities
+#
+# -----------------------------------------------------------------------------
+
+# Resolve ambiguity with the convert method that takes are of canonical mappings
+# between polynomial rings
+function convert(::Type{P}, a::C) where P<:Polynomial{V} where V <: AbstractVector{T} where T <: Term{M,C} where {M,C<:Polynomial}
+    if iszero(a)
+        return zero(P)
+    else
+        return P([T(one(M),a)])
+    end
+end
+
+# Don't duplicate variable names as a result of base_extend
+function base_extend(::Type{Term{M,C1}}, ::Type{C2}) where {M,C1,C2<:Polynomial}
+    if namestype(C2) == namestype(M)
+        Term{M, base_extend(C1,basering(C2))}
+    else
+        Term{M, base_extend(C1,C2)}
+    end
+end
+
 
 # -----------------------------------------------------------------------------
 #

@@ -10,7 +10,7 @@ import PolynomialRings.Terms: Term
 #
 # -----------------------------------------------------------------------------
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering, monomialtype, deg
-import PolynomialRings: leading_term, termtype, monomialorder, terms, exptype
+import PolynomialRings: leading_term, termtype, monomialorder, terms, exptype, namestype
 import Base: copy
 import Base.Order: lt
 import PolynomialRings.MonomialOrderings: MonomialOrder
@@ -43,6 +43,7 @@ terms(p::Polynomial) = p.terms
 
 termtype(::Type{Polynomial{A, Order}}) where {A,Order} = eltype(A)
 exptype(::Type{P}) where P<:Polynomial = exptype(termtype(P))
+namestype(::Type{P}) where P<:Polynomial = namestype(termtype(P))
 monomialorder(::Type{Polynomial{A, Order}}) where {A,Order} = MonomialOrder{Order}()
 monomialordersymbol(::Type{Polynomial{A, Order}}) where {A,Order} = Order
 monomialordersymbol(::Polynomial{A, Order}) where {A,Order} = Order

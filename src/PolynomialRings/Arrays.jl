@@ -3,12 +3,8 @@ module Arrays
 import PolynomialRings: to_dense_monomials, max_variable_index, to_dense_monomials
 import PolynomialRings.Terms: Term
 import PolynomialRings.Polynomials: Polynomial
-import PolynomialRings.NamedPolynomials: NamedPolynomial
 import PolynomialRings.Expansions: expansion, coefficients
 import Iterators: groupby
-
-_P = Union{Polynomial, NamedPolynomial}
-
 
 # -----------------------------------------------------------------------------
 #
@@ -18,12 +14,12 @@ _P = Union{Polynomial, NamedPolynomial}
 import Base: *, det, transpose, diff
 
 
-function to_dense_monomials(a::AbstractArray{NP}) where NP <: NamedPolynomial
+function to_dense_monomials(a::AbstractArray{P}) where P <: Polynomial
     n = maximum(max_variable_index(a_i) for a_i in a)
     [ to_dense_monomials(n, a_i) for a_i in a]
 end
 
-function expansion(a::AbstractArray{NP}, args...) where NP <: NamedPolynomial
+function expansion(a::AbstractArray{P}, args...) where P <: Polynomial
     array_of_expansions = [ (w,p,i) for (i, a_i) in enumerate(a) for (w,p) in expansion(a_i, args...)]
     sort!(array_of_expansions, by=x->x[1])
 
@@ -39,7 +35,7 @@ function expansion(a::AbstractArray{NP}, args...) where NP <: NamedPolynomial
     return res
 end
 
-function coefficients(a::AbstractArray{NP}, args...) where NP <: NamedPolynomial
+function coefficients(a::AbstractArray{P}, args...) where P <: Polynomial
     return [c for (p,c) in expansion(a, args...)]
 end
 
@@ -60,7 +56,7 @@ julia> collect(flat_coefficients([x^3 + y^2, y^5], :x, :y))
 # See also
 `@coefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
 """
-function flat_coefficients(a::AbstractArray{NP}, args...) where NP <: NamedPolynomial
+function flat_coefficients(a::AbstractArray{P}, args...) where P <: Polynomial
     return vcat([coefficients(a_i, args...) for a_i in a]...)
 end
 
@@ -87,7 +83,7 @@ macro flat_coefficients(a, symbols...)
     end
 end
 
-function det(m::M) where M <: AbstractMatrix{P} where P <: _P
+function det(m::M) where M <: AbstractMatrix{P} where P <: Polynomial
     n,k = size(m)
     n == k || throw(ArgumentError("Cannot compute determinant of an $n x $k matrix"))
 
@@ -108,7 +104,7 @@ function det(m::M) where M <: AbstractMatrix{P} where P <: _P
     )
 end
 
-_PT = Union{Polynomial,Term,NamedPolynomial}
+_PT = Union{Polynomial,Term}
 *(A::_PT, B::AbstractArray) = broadcast(*, A, B)
 *(A::AbstractArray, B::_PT) = broadcast(*, A, B)
 *(A::_PT, B::RowVector) = RowVector(broadcast(*, A, transpose(B)))
@@ -116,6 +112,6 @@ _PT = Union{Polynomial,Term,NamedPolynomial}
 
 transpose(a::_PT) = a
 
-diff(a::A, s::Symbol) where A <: AbstractArray{P} where P <: _P = broadcast(a_i->diff(a_i, s), a)
+diff(a::A, s::Symbol) where A <: AbstractArray{P} where P <: Polynomial = broadcast(a_i->diff(a_i, s), a)
 
 end
