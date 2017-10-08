@@ -89,8 +89,8 @@ end
 _baserings = Dict(
     :ℚ => Rational{BigInt},
     :ℤ => BigInt,
-    :ℝ => Float64,
-    :ℂ => Complex{Float64},
+    :ℝ => BigFloat,
+    :ℂ => Complex{BigFloat},
 )
 
 """
@@ -121,8 +121,10 @@ macro ring(definition)
         throw(ArgumentError("@ring can only be used with a polynomial ring expression"))
     end
 
-    basering = _baserings[definition.args[1]]
+    basering_spec = definition.args[1]
     variables = definition.args[2:end]
+
+    basering = get(_baserings, basering_spec, basering_spec)
 
     variables_lvalue = :(())
     append!(variables_lvalue.args, variables)
