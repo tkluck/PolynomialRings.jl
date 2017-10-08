@@ -179,7 +179,7 @@ function groebner_basis(polynomials::AbstractVector{M}, ::Type{Val{with_transfor
     end
 
 
-    pairs_to_consider = PriorityQueue(Tuple{Int,Int}, Int)
+    pairs_to_consider = PriorityQueue{Tuple{Int,Int}, Int}()
     for j in eachindex(result)
         for i in 1:(j-1)
             a = result[i]
