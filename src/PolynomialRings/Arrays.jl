@@ -1,6 +1,6 @@
 module Arrays
 
-import PolynomialRings: to_dense_monomials, max_variable_index, to_dense_monomials
+import PolynomialRings: to_dense_monomials, max_variable_index
 import PolynomialRings.Terms: Term
 import PolynomialRings.Polynomials: Polynomial
 import PolynomialRings.Expansions: expansion, coefficients

@@ -56,9 +56,8 @@ generators(::Type{P}) where P <: Polynomial = lazymap(
 )
 
 function to_dense_monomials(n, p::Polynomial)
-    T = Term{TupleMonomial{n,exptype(p)},basering(p)}
-    P = Polynomial{Vector{T},monomialordersymbol(p)}
-    P(T[ to_dense_monomials(n, t) for t in terms(p) ])
+    A = [ to_dense_monomials(n, t) for t in terms(p) ]
+    return Polynomial{typeof(A), monomialordersymbol(p)}(A)
 end
 
 max_variable_index(p::Polynomial) = maximum(max_variable_index(t) for t in terms(p))

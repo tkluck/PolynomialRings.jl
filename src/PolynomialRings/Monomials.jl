@@ -282,7 +282,10 @@ nzindices(a::VectorMonomial{V,Nm}) where {V <: SparseVector,Nm} = nonzeroinds(a.
 max_variable_index(m::TupleMonomial{N}) where N = N
 max_variable_index(m::VectorMonomial{V,Nm}) where {V,Nm} = length(m.e)
 
-to_dense_monomials(n::Integer, m::AbstractMonomial) = _construct(TupleMonomial{n,exptype(m)}, i->m[i], 1:n)
+import PolynomialRings: variablesymbols
+import PolynomialRings.VariableNames: Named, Numbered
+_densenames(n::Integer, ::Type{Numbered{Name}}) where Name = (g = variablesymbols(Numbered{Name}); Named{ tuple([take!(g) for _ = 1:n]...) })
+to_dense_monomials(n::Integer, m::AbstractMonomial) = _construct(TupleMonomial{n,exptype(m),_densenames(n, namestype(m))}, i->m[i], 1:n)
 
 # -----------------------------------------------------------------------------
 #

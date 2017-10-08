@@ -92,6 +92,13 @@ using PolynomialRings
         g = [h5(); h5()]
         @test euler(g) == 5*g
 
+        @ring ℤ[d1,d2,d3]
+        dd1,dd2,dd3 = formal_coefficients(R, :d)
+        ((_,ddd1),) = expansion(dd1, variablesymbols(R)...)
+        ((_,ddd2),) = expansion(dd2, variablesymbols(R)...)
+        ((_,ddd3),) = expansion(dd3, variablesymbols(R)...)
+        @test to_dense_monomials([ddd1, ddd2, ddd3]) == [d1,d2,d3]
+
     end
 
     @testset "constructors" begin
