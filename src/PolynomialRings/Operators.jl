@@ -247,7 +247,16 @@ end
 # exponentiation
 #
 # -----------------------------------------------------------------------------
-multinom(n,k...) = (@assert(sum(k)==n); div( factorial(n),  prod(factorial, k)) )
+function multinomial(n,k...)
+    @assert sum(k) == n
+
+    i = 1
+    for k_i in k
+        i *= binomial(n,k_i)
+        n -= k_i
+    end
+    i
+end
 
 function ^(f::Polynomial, n::Integer)
     if n == 0
@@ -269,14 +278,14 @@ function ^(f::Polynomial, n::Integer)
     bign = BigInt(n)
     i = BigInt[ [0 for _=1:(N-1)]; n]
 
-    summands = Vector{T}(Int( multinom(bign+N-1, N-1, bign) ))
+    summands = Vector{T}(Int( multinomial(bign+N-1, N-1, bign) ))
     s = 0
 
     while true
-        # C(multinom(...)) may raise an InexactError when the coefficient is too big to fit;
+        # C(multinomial(...)) may raise an InexactError when the coefficient is too big to fit;
         # this is intentional. The suggested fix is for the user to do
         #     base_extend(f, BigInt)^n
-        new_coeff = C(multinom(bign, i...)) * prod(coefficient(f.terms[k])^I(i[k]) for k=1:N)
+        new_coeff = C(multinomial(bign, i...)) * prod(coefficient(f.terms[k])^I(i[k]) for k=1:N)
         new_monom = prod(monomial(f.terms[k])^E(i[k]) for k=1:N)
         summands[s+=1] = T(new_monom, new_coeff)
         carry = 1
