@@ -124,7 +124,7 @@ macro ring(definition)
     basering_spec = definition.args[1]
     variables = definition.args[2:end]
 
-    basering = get(_baserings, basering_spec, basering_spec)
+    basering = get(_baserings, basering_spec, esc(basering_spec))
 
     variables_lvalue = :(())
     append!(variables_lvalue.args, variables)

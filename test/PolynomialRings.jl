@@ -109,6 +109,13 @@ using PolynomialRings
 
         d = 4
         @test @polynomial(x^d + y^d) == x^d + y^d
+
+        @test @ring(ℤ[x]) === polynomial_ring(:x, basering=BigInt)[1]
+        @test @ring(Int[x]) === polynomial_ring(:x, basering=Int)[1]
+
+        # proper escaping of variables inside the macro
+        BaseRing = Int
+        @test @ring(BaseRing[x]) === polynomial_ring(:x, basering=BaseRing)[1]
     end
 
     using PolynomialRings.Modules: modulebasering
