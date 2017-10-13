@@ -1,6 +1,6 @@
 module NamedPolynomials
 
-import PolynomialRings: termtype, terms, namestype, variablesymbols, exptype
+import PolynomialRings: termtype, terms, namestype, variablesymbols, exptype, monomialtype
 import PolynomialRings.Polynomials: Polynomial, monomialorder
 import PolynomialRings.Terms: Term, basering, monomial, coefficient
 import PolynomialRings.Monomials: TupleMonomial, AbstractMonomial
@@ -19,16 +19,20 @@ import Base: promote_rule, convert
 #
 # -----------------------------------------------------------------------------
 
-@generated function _convert_monomial(::Type{Named{dest}}, ::Type{Named{src}}, monomial::AbstractMonomial) where dest where src
+@generated function _convert_monomial(::Type{M}, monomial::AbstractMonomial) where M
+    src = variablesymbols(monomial)
+    dest = variablesymbols(M)
     for s in src
         if !(s in dest)
             throw(ArgumentError("Cannot convert variables $src to variables $dest"))
         end
     end
-    :( _lossy_convert_monomial(Named{dest}, Named{src}, monomial) )
+    :( _lossy_convert_monomial(M, monomial) )
 end
 
-@generated function _lossy_convert_monomial(::Type{Named{dest}}, ::Type{Named{src}}, monomial::AbstractMonomial) where dest where src
+@generated function _lossy_convert_monomial(::Type{M}, monomial::AbstractMonomial) where M
+    src = variablesymbols(monomial)
+    dest = variablesymbols(M)
     # create an expression that calls the tuple constructor. No arguments -- so far
     converter = :( tuple() )
     degree = :( +(0) )
@@ -45,8 +49,7 @@ end
             end
         end
     end
-    T = TupleMonomial{length(dest), exptype(monomial), Named{dest}}
-    return :( $T($converter, $degree ) )
+    return :( M($converter, $degree ) )
 end
 
 function promote_rule(::Type{P1}, ::Type{P2}) where P1 <: Polynomial where P2 <: Polynomial
@@ -71,7 +74,7 @@ function promote_rule(::Type{P1}, ::Type{P2}) where P1 <: Polynomial where P2 <:
 end
 
 function convert(::Type{P1}, a::P2) where P1 <: Polynomial where P2 <: Polynomial
-    f = t->termtype(P1)( _convert_monomial(namestype(P1), namestype(P2), monomial(t)), coefficient(t) )
+    f = t->termtype(P1)( _convert_monomial(monomialtype(P1), monomial(t)), coefficient(t) )
     # there used to be map(f, terms(a)) here, but type inference makes that an
     # Array{Any}. That's why we explicitly write termtype(P1)[ .... ] .
     converted_terms = termtype(P1)[f(t) for t in terms(a)]

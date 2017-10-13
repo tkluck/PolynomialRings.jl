@@ -58,13 +58,13 @@ function expansion(p::P, variables::Type{Named{vars}}) where P <: Polynomial whe
 
     if length(remaining_vars) == 0
         N = length(vars)
-        NamesExpansion = Named{tuple(vars...)}
         ExpType = exptype(P)
+        MonomialType = TupleMonomial{N,ExpType,Named{tuple(vars...)}}
         ExpansionType = NTuple{N,ExpType}
         ResultType = Tuple{ExpansionType, basering(P)}
         one_ = one(basering(p))
 
-        f = t->_convert_monomial(NamesExpansion, namestype(P), monomial(t))
+        f = t->_convert_monomial(MonomialType, monomial(t))
 
         return Channel(ctype=ResultType) do ch
             for t in terms(p)
@@ -72,19 +72,19 @@ function expansion(p::P, variables::Type{Named{vars}}) where P <: Polynomial whe
             end
         end
     else
-        NamesExpansion = Named{tuple(vars...)}
-        NamesCoefficient = Named{tuple(remaining_vars...)}
+        ExpType = exptype(P)
+        MonomialExpansion = TupleMonomial{length(vars),ExpType,Named{tuple(vars...)}}
+        MonomialCoefficient = TupleMonomial{length(remaining_vars),ExpType,Named{tuple(remaining_vars...)}}
         N = length(vars)
         M = length(remaining_vars)
 
         C = basering(P)
-        ExpType = exptype(P)
         ExpansionType = NTuple{N,ExpType}
-        CoeffType = Polynomial{Vector{Term{TupleMonomial{M,ExpType,NamesCoefficient},C}},:degrevlex}
+        CoeffType = Polynomial{Vector{Term{MonomialCoefficient,C}},:degrevlex}
         ResultType = Tuple{ExpansionType, CoeffType}
 
-        f = t->_lossy_convert_monomial(NamesExpansion,   namestype(P), monomial(t))
-        g = t->_lossy_convert_monomial(NamesCoefficient, namestype(P), monomial(t))
+        f = t->_lossy_convert_monomial(MonomialExpansion,   monomial(t))
+        g = t->_lossy_convert_monomial(MonomialCoefficient, monomial(t))
 
         return Channel(ctype=ResultType) do ch
             separated_terms = [(f(t), g(t), coefficient(t)) for t in terms(p)]
