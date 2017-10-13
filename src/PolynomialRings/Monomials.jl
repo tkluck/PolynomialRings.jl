@@ -3,7 +3,7 @@ module Monomials
 using Nulls
 
 """
-    AbstractMonomial{Order}
+    AbstractMonomial{Nm}
 
 The abstract base type for multi-variate monomials.
 
@@ -14,7 +14,8 @@ array.
 The variables may or may not have names at this abstraction level; they can
 always be identified by a number (e.g. the index in the array/tuple) but the type
 may choose to support having a symbolic name for each as well. In the former case,
-namestype(::Type{M}) returns Numbered; otherwise, it returns Named{Names}.
+namestype(::Type{M}) returns Numbered; otherwise, it returns Named{Names}. This
+is also the value of Nm.
 
 Each concrete implementation should implement:
     m[i]
@@ -32,7 +33,7 @@ and optionally:
 
 These latter function have fallbacks in terms of the functions above.
 """
-abstract type AbstractMonomial end
+abstract type AbstractMonomial{Nm} end
 
 # -----------------------------------------------------------------------------
 #
@@ -169,7 +170,7 @@ end
 An implementation of AbstractMonomial that stores exponents as a tuple
 of integers. This is a dense representation.
 """
-struct TupleMonomial{N, I, Nm} <: AbstractMonomial
+struct TupleMonomial{N, I, Nm} <: AbstractMonomial{Nm}
     e::NTuple{N, I}
     deg::I
     TupleMonomial{N,I,Nm}(e,deg) where I <: Integer where {N,Nm} = new(e,deg)
@@ -217,7 +218,7 @@ This representation is intended for the case when the number of variables
 is unbounded. In particular, the indexing operation `m[i]` returns `0` when `i`
 is out-of-bounds, instead of throwing an exception.
 """
-struct VectorMonomial{V,Nm} <: AbstractMonomial
+struct VectorMonomial{V,Nm} <: AbstractMonomial{Nm}
     e::V
     VectorMonomial{V,Nm}(e) where V<: AbstractVector{<:Integer} where Nm = new(e)
 end

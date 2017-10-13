@@ -184,4 +184,16 @@ end
         @test @linear_coefficients(x^2+y^2+x-y+1, y, x) == [-1,1]
     end
 
+    @testset "Nested types" begin
+        R = @ring ℤ[x]
+        S = @ring ℤ[y]
+        T = @ring S[x]
+
+        @test S⊗R == T
+
+        @test @coefficient(x⊗y, x) == y
+        @test @coefficient(x⊗y, y) == x
+        @test @coefficient(x⊗y, x*y) == 1
+    end
+
 end

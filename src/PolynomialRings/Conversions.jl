@@ -110,15 +110,20 @@ promote_rule(::Type{P}, ::Type{T}) where P <: Polynomial{<:AbstractArray{T}} whe
 
 convert(::Type{P}, a::T) where P <: Polynomial{<:AbstractArray{T}} where T <: Term = iszero(a) ? zero(P) : P([a])
 
+
+# -----------------------------------------------------------------------------
+#
+# Promoting monomials to polynomials
+#
+# -----------------------------------------------------------------------------
+
+promote_rule(::Type{P}, ::Type{M}) where P <: Polynomial{<:AbstractArray{T}} where T <: Term{M,C} where {M<:AbstractMonomial,C} = P
+#
+convert(::Type{P}, a::M) where P <: Polynomial{<:AbstractArray{T}} where T <: Term{M,C} where {M<:AbstractMonomial,C} = P([T(a,one(C))])
+
 # -----------------------------------------------------------------------------
 #
 # Implicit typecasts (like what we'd get if Polynomial <: Number)
-#
-# TODO: certain exclusions for ambigious situations where we have a
-# Polynomial with polynomial coefficients on one side, but not the
-# other. In that case, should the 'bare' polynomial f be regarded as
-# f⊗1 or 1⊗f ? (I'd rather not make a choice, but wait until I implement
-# a version of polynomials with named variables.)
 #
 # -----------------------------------------------------------------------------
 +(a::P1,b::P2) where {P1<:Polynomial,P2<:Polynomial} = +(promote(a,b)...)
@@ -164,7 +169,7 @@ end
 #
 # -----------------------------------------------------------------------------
 
-# Resolve ambiguity with the convert method that takes are of canonical mappings
+# Resolve ambiguity with the convert method that takes care of canonical mappings
 # between polynomial rings
 function convert(::Type{P}, a::C) where P<:Polynomial{V} where V <: AbstractVector{T} where T <: Term{M,C} where {M,C<:Polynomial}
     if iszero(a)

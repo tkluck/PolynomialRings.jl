@@ -8,30 +8,56 @@ import PolynomialRings: basering, namestype, variablesymbols
 import PolynomialRings.Monomials: AbstractMonomial, TupleMonomial, exptype
 import PolynomialRings.VariableNames: Named
 import PolynomialRings.MonomialOrderings: MonomialOrder
+import PolynomialRings.Util: lazymap
 
 import Iterators: groupby
+
+NamedPolynomial = Polynomial{<:AbstractVector{<:Term{<:AbstractMonomial{<:Named},C}}} where C
+
+type One end
+import Base: *, one, promote_rule
+one(::Type{One}) = One()
+*(::Type{One}, x) = x
+*(x, ::Type{One}) = x
+_expansion_types(::Type{N}, ::Type) where N = (One, N)
+promote_rule(::Type{One}, x::Type) = x
+_lossy_convert_monomial(::Type{M}, ::One) where M<:AbstractMonomial = one(M)
+_convert_monomial(::Type{M}, ::One) where M<:AbstractMonomial = one(M)
 
 """
     monomialtype, coefficienttype = _expansion_types(R, Named{tuple(symbols...)})
 """
-function _expansion_types(::Type{P}, ::Type{Named{vars}}) where P <: Polynomial where vars
-    all_vars = variablesymbols(P)
-    remaining_vars = [v for v in all_vars if !(v in vars)]
+function _expansion_types(::Type{P}, ::Type{Named{vars}}) where P <: NamedPolynomial where vars
+    available_vars = variablesymbols(P)
+    unspecified_vars = tuple(setdiff(available_vars, vars)...)
+    unknown_vars = tuple(setdiff(vars, available_vars)...)
+
+    CoeffMonomialType, CoeffCoeffType = _expansion_types(basering(P), Named{unknown_vars})
+
     N = length(vars)
-    M = length(remaining_vars)
+    M = length(unspecified_vars)
     ExpType = exptype(P)
-    ExpansionType = NTuple{N,ExpType}
-    C = basering(P)
+    MonomialType = TupleMonomial{N,ExpType,Named{vars}}
     if M == 0
-        CoeffType = C
+        CoeffType = CoeffCoeffType
     else
-        NamesCoefficient = Named{tuple(remaining_vars...)}
-        CoeffType = Polynomial{Vector{Term{TupleMonomial{M,ExpType,NamesCoefficient},C}},:degrevlex}
+        CoeffType = promote_type(
+            CoeffCoeffType,
+            Polynomial{Vector{Term{TupleMonomial{M,ExpType,Named{unspecified_vars}},One}},:degrevlex},
+        )
     end
-    return ExpansionType, CoeffType
+    return MonomialType, CoeffType
 
 end
 
+type TrivialIter{X}
+    item::X
+end
+import Base: start, done, next
+start(::TrivialIter) = false
+done(::TrivialIter, state) = state
+next(t::TrivialIter, state) = (t.item, true)
+_expansion(p, ::Type) = TrivialIter((One(), p))
 
 """
     expansion(f, symbol, [symbol...])
@@ -52,50 +78,48 @@ julia> collect(expansion(x^3 + y^2, :x, :y))
 # See also
 `@expansion(...)`, `@coefficient` and `coefficient`
 """
-function expansion(p::P, variables::Type{Named{vars}}) where P <: Polynomial where vars
-    all_vars = variablesymbols(P)
-    remaining_vars = [v for v in all_vars if !(v in vars)]
+expansion(args...) = lazymap(_expansion(args...)) do item
+    w,c = item
+    return w.e,c
+end
 
-    if length(remaining_vars) == 0
-        N = length(vars)
-        ExpType = exptype(P)
-        MonomialType = TupleMonomial{N,ExpType,Named{tuple(vars...)}}
-        ExpansionType = NTuple{N,ExpType}
-        ResultType = Tuple{ExpansionType, basering(P)}
-        one_ = one(basering(p))
 
-        f = t->_convert_monomial(MonomialType, monomial(t))
+function _expansion(p::P, ::Type{Named{vars}}) where P <: NamedPolynomial where vars
+    available_vars = variablesymbols(P)
+    unspecified_vars = tuple(setdiff(available_vars, vars)...)
+    unknown_vars = tuple(setdiff(vars, available_vars)...)
 
+    MonomialType, CoeffType = _expansion_types(P, Named{vars})
+    ResultType = Tuple{MonomialType, CoeffType}
+    f(m) = _lossy_convert_monomial(MonomialType, m)
+
+    if length(unspecified_vars) == 0
         return Channel(ctype=ResultType) do ch
             for t in terms(p)
-                push!(ch, (f(t).e, coefficient(t)))
+                outer_monomial = monomial(t)
+                for (inner_monomial,c) in _expansion(coefficient(t), Named{unknown_vars})
+                    push!(ch, (f(inner_monomial)*f(outer_monomial), c))
+                end
             end
         end
     else
         ExpType = exptype(P)
-        MonomialExpansion = TupleMonomial{length(vars),ExpType,Named{tuple(vars...)}}
-        MonomialCoefficient = TupleMonomial{length(remaining_vars),ExpType,Named{tuple(remaining_vars...)}}
-        N = length(vars)
-        M = length(remaining_vars)
-
-        C = basering(P)
-        ExpansionType = NTuple{N,ExpType}
-        CoeffType = Polynomial{Vector{Term{MonomialCoefficient,C}},:degrevlex}
-        ResultType = Tuple{ExpansionType, CoeffType}
-
-        f = t->_lossy_convert_monomial(MonomialExpansion,   monomial(t))
-        g = t->_lossy_convert_monomial(MonomialCoefficient, monomial(t))
+        UnspecifiedMonomial = TupleMonomial{length(unspecified_vars),ExpType,Named{unspecified_vars}}
+        g(m) = _lossy_convert_monomial(monomialtype(CoeffType), m)
+        h(m) = _convert_monomial(MonomialType, m)
 
         return Channel(ctype=ResultType) do ch
-            separated_terms = [(f(t), g(t), coefficient(t)) for t in terms(p)]
+            iszero(p) && return
+            separated_terms = [
+                (f(monomial(t))*h(inner_monomial), CoeffType(g(monomial(t))) * c)
+                for t in terms(p)
+                for (inner_monomial,c) in _expansion(coefficient(t), Named{unknown_vars})
+            ]
             sort!(separated_terms, lt=(a,b)->Base.Order.lt(MonomialOrder{:degrevlex}(),a[1],b[1]))
             for term_group in groupby(x->x[1], separated_terms)
-                expand_exponents = term_group[1][1].e
-                coeff_terms = [Term(t[2], t[3]) for t in term_group]
-                sort!(coeff_terms, order=MonomialOrder{:degrevlex}())
-                p = CoeffType(coeff_terms)
-
-                push!(ch, (expand_exponents, p))
+                m = term_group[1][1]
+                p = sum(t[2] for t in term_group)
+                push!(ch, (m, p))
             end
         end
     end

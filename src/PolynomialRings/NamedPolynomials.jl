@@ -53,11 +53,7 @@ end
 end
 
 function promote_rule(::Type{P1}, ::Type{P2}) where P1 <: Polynomial where P2 <: Polynomial
-    if basering(P1) <: Polynomial && namestype(basering(P1)) === namestype(P2)
-        return P1
-    elseif basering(P2) <: Polynomial && namestype(basering(P2)) === namestype(P1)
-        return P2
-    elseif namestype(P1) <: Named && namestype(P2) <: Named
+    if namestype(P1) <: Named && namestype(P2) <: Named
         AllNames = Set()
         union!(AllNames, variablesymbols(P1))
         union!(AllNames, variablesymbols(P2))
