@@ -52,11 +52,15 @@ end
     return :( M($converter, $degree ) )
 end
 
+NamedPolynomial = Polynomial{<:AbstractVector{<:Term{<:AbstractMonomial{<:Named},C}}} where C
+_allnames(x::Type) = []
+_allnames(::Type{P}) where P<:NamedPolynomial = union(_allnames(basering(P)), variablesymbols(P))
+
 function promote_rule(::Type{P1}, ::Type{P2}) where P1 <: Polynomial where P2 <: Polynomial
     if namestype(P1) <: Named && namestype(P2) <: Named
         AllNames = Set()
-        union!(AllNames, variablesymbols(P1))
-        union!(AllNames, variablesymbols(P2))
+        union!(AllNames, _allnames(P1))
+        union!(AllNames, _allnames(P2))
         Symbols = sort(collect(AllNames))
         Names = tuple(Symbols...)
         N = length(Symbols)
@@ -69,13 +73,16 @@ function promote_rule(::Type{P1}, ::Type{P2}) where P1 <: Polynomial where P2 <:
     end
 end
 
-function convert(::Type{P1}, a::P2) where P1 <: Polynomial where P2 <: Polynomial
-    f = t->termtype(P1)( _convert_monomial(monomialtype(P1), monomial(t)), coefficient(t) )
+using PolynomialRings
+
+function convert(::Type{P1}, a::P2) where P1 <: NamedPolynomial where P2 <: Polynomial
+    T = termtype(P1)
     # there used to be map(f, terms(a)) here, but type inference makes that an
     # Array{Any}. That's why we explicitly write termtype(P1)[ .... ] .
-    converted_terms = termtype(P1)[f(t) for t in terms(a)]
+    converted_terms = T[ T(m,c) for (m,c) in PolynomialRings.Expansions._expansion(a, namestype(P1)) ]
     sort!(converted_terms, order=monomialorder(P1))
     P1(converted_terms)
 end
 
+convert(::Type{P}, a::P) where P <: NamedPolynomial = a
 end

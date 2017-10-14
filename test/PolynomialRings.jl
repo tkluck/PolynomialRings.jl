@@ -194,6 +194,8 @@ end
         @test @coefficient(x⊗y, x) == y
         @test @coefficient(x⊗y, y) == x
         @test @coefficient(x⊗y, x*y) == 1
+
+        @test x⊗y == x*y
     end
 
 end

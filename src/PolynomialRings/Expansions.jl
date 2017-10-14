@@ -15,13 +15,14 @@ import Iterators: groupby
 NamedPolynomial = Polynomial{<:AbstractVector{<:Term{<:AbstractMonomial{<:Named},C}}} where C
 
 type One end
-import Base: *, one, promote_rule
+import Base: *, one, promote_rule, convert
 one(::Type{One}) = One()
 *(::Type{One}, x) = x
 *(x, ::Type{One}) = x
 _expansion_types(::Type{N}, ::Type) where N = (One, N)
 promote_rule(::Type{One}, x::Type) = x
 _lossy_convert_monomial(::Type{M}, ::One) where M<:AbstractMonomial = one(M)
+convert(::Type{M}, ::One) where M<:AbstractMonomial = one(M)
 _convert_monomial(::Type{M}, ::One) where M<:AbstractMonomial = one(M)
 
 """
@@ -53,11 +54,12 @@ end
 type TrivialIter{X}
     item::X
 end
-import Base: start, done, next
+import Base: start, done, next, length
 start(::TrivialIter) = false
 done(::TrivialIter, state) = state
 next(t::TrivialIter, state) = (t.item, true)
-_expansion(p, ::Type) = TrivialIter((One(), p))
+length(::TrivialIter) = 1
+_expansion(p, T::Type) = ((M,C) = _expansion_types(typeof(p), T); TrivialIter((one(M), p)))
 
 """
     expansion(f, symbol, [symbol...])
