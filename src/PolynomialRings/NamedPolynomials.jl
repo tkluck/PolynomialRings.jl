@@ -55,6 +55,10 @@ end
 NamedPolynomial = Polynomial{<:AbstractVector{<:Term{<:AbstractMonomial{<:Named},C}}} where C
 _allnames(x::Type) = []
 _allnames(::Type{P}) where P<:NamedPolynomial = union(_allnames(basering(P)), variablesymbols(P))
+_coeff(x::Type) = x
+_coeff(::Type{P}) where P<:NamedPolynomial = _coeff(basering(P))
+_exptype(x::Type) = Union{}
+_exptype(::Type{P}) where P<:NamedPolynomial = promote_type(exptype(P), _exptype(basering(P)))
 
 function promote_rule(::Type{P1}, ::Type{P2}) where P1 <: Polynomial where P2 <: Polynomial
     if namestype(P1) <: Named && namestype(P2) <: Named
@@ -64,8 +68,8 @@ function promote_rule(::Type{P1}, ::Type{P2}) where P1 <: Polynomial where P2 <:
         Symbols = sort(collect(AllNames))
         Names = tuple(Symbols...)
         N = length(Symbols)
-        C = promote_type(basering(P1), basering(P2))
-        I = promote_type(exptype(P1), exptype(P2))
+        C = promote_type(_coeff(P1), _coeff(P2))
+        I = promote_type(_exptype(P1), _exptype(P2))
 
         return Polynomial{Vector{Term{TupleMonomial{N, I, Named{Names}}, C}}, :degrevlex}
     else

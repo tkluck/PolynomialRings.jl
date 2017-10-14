@@ -124,7 +124,11 @@ macro ring(definition)
     basering_spec = definition.args[1]
     variables = definition.args[2:end]
 
-    basering = get(_baserings, basering_spec, esc(basering_spec))
+    if basering_spec isa Expr
+        basering = esc( macroexpand(:(@ring $basering_spec)) )
+    else
+        basering = get(_baserings, basering_spec, esc(basering_spec))
+    end
 
     variables_lvalue = :(())
     append!(variables_lvalue.args, variables)
