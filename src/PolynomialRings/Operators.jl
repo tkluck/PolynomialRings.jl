@@ -82,10 +82,10 @@ function +(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
         exponent_b, coefficient_b = monomial(term_b), coefficient(term_b)
 
         if Base.Order.lt(MonomialOrder{Order}(), exponent_a, exponent_b)
-            @inbounds res[n+=1] = term_a
+            @inbounds res[n+=1] = T(exponent_a, coefficient_a)
             state_a = next_state_a
         elseif Base.Order.lt(MonomialOrder{Order}(), exponent_b, exponent_a)
-            @inbounds res[n+=1] = term_b
+            @inbounds res[n+=1] = T(exponent_b, coefficient_b)
             state_b = next_state_b
         else
             coeff = coefficient_a + coefficient_b
@@ -126,10 +126,10 @@ function -(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
         exponent_b, coefficient_b = monomial(term_b), coefficient(term_b)
 
         if Base.Order.lt(MonomialOrder{Order}(), exponent_a, exponent_b)
-            @inbounds res[n+=1] = term_a
+            @inbounds res[n+=1] = T(exponent_a, coefficient_a)
             state_a = next_state_a
         elseif Base.Order.lt(MonomialOrder{Order}(), exponent_b, exponent_a)
-            @inbounds res[n+=1] = -term_b
+            @inbounds res[n+=1] = -T(exponent_b, coefficient_b)
             state_b = next_state_b
         else
             coeff = coefficient_a - coefficient_b
