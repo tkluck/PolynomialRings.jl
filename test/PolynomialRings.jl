@@ -190,7 +190,7 @@ end
     end
 
     @testset "Nested types" begin
-        @testset "Though tensor" begin
+        @testset "Through tensor" begin
             R = @ring ℤ[x]
             S = @ring ℤ[y]
 
