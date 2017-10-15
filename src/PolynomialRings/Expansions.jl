@@ -442,21 +442,44 @@ end
 """
     @expansion(f, var, [var...])
 
-Return a collection of (monomial, coefficient) tuples decomposing f
+Return a collection of (exponent tuple, coefficient) tuples decomposing f
 into its consituent parts.
 
 # Examples
 ```jldoctest
 julia> R = @ring ℤ[x,y];
 julia> collect(@expansion(x^3 + y^2, y))
-[(1, 1 x^3), (1 y^2, 1)]
+[((0,), 1 x^3), ((2,), 1)]
 julia> collect(@expansion(x^3 + y^2, x, y))
+[((3,0), 1), ((0,2), 1)]
+```
+# See also
+`@expand`, `expansion(...)`, `@coefficient` and `coefficient`
+"""
+
+macro expansion(f, symbols...)
+    quote
+        expansion($(esc(f)), $symbols...)
+    end
+end
+"""
+    @expand(f, var, [var...])
+
+Return a collection of (monomial, coefficient) tuples decomposing f
+into its consituent parts.
+
+# Examples
+```jldoctest
+julia> R = @ring ℤ[x,y];
+julia> collect(@expand(x^3 + y^2, y))
+[(1, 1 x^3), (1 y^2, 1)]
+julia> collect(@expand(x^3 + y^2, x, y))
 [(1 x^3, 1), (1 y^2, 1)]
 ```
 # See also
 `expansion(...)`, `@coefficient` and `coefficient`
 """
-macro expansion(f, symbols...)
+macro expand(f, symbols...)
     R,vars = polynomial_ring(symbols..., basering=Int)
     quote
         [

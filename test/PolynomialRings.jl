@@ -130,7 +130,7 @@ end
 
 @testset "Expansions" begin
 
-    using PolynomialRings: expansion, @expansion, coefficient, @coefficient
+    using PolynomialRings: expansion, @expand, coefficient, @coefficient
     R,(x,y,z) = polynomial_ring(:x, :y, :z, basering=Int)
 
     @testset "expansion()" begin
@@ -151,10 +151,10 @@ end
         @test collect(flat_coefficients([x*z 1; z+1 x], :z)) == [x, 1, 1, 1, x]
 
         # work-around for nested macros
-        lhs = collect(@expansion(x*y*z + x*z + z^2, z))
+        lhs = collect(@expand(x*y*z + x*z + z^2, z))
         @test lhs == [(z, x*y + x), (z^2, 1)]
 
-        lhs = collect(@expansion(x*y - x, z, x, y))
+        lhs = collect(@expand(x*y - x, z, x, y))
         @test lhs == [(x,-1), (x*y, 1)]
     end
 
