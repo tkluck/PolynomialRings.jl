@@ -276,7 +276,8 @@ function ^(f::Polynomial, n::Integer)
     # need BigInts to do the multinom computation, but we'll cast
     # back to I = typeof(n) when we use it as an exponent
     bign = BigInt(n)
-    i = BigInt[ [0 for _=1:(N-1)]; n]
+    i = zeros(BigInt, N)
+    i[N] = bign
 
     summands = Vector{T}(Int( multinomial(bign+N-1, N-1, bign) ))
     s = 0
