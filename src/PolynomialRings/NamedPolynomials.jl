@@ -91,8 +91,8 @@ using PolynomialRings
 
 function convert(::Type{P1}, a::P2) where P1 <: NamedPolynomial where P2 <: Polynomial
     T = termtype(P1)
-    # there used to be map(f, terms(a)) here, but type inference makes that an
-    # Array{Any}. That's why we explicitly write termtype(P1)[ .... ] .
+    # Without the leading T[ ... ], type inference makes this an Array{Any}, so
+    # it can't be omitted.
     converted_terms = T[ T(m,c) for (m,c) in PolynomialRings.Expansions._expansion(a, namestype(P1)) ]
     sort!(converted_terms, order=monomialorder(P1))
     P1(converted_terms)
