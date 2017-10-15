@@ -174,8 +174,8 @@ julia> collect(coefficients(x^3 + y^2, :x, :y))
 # See also
 `@coefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
 """
-function coefficients(p::P, variables::Type{Named{vars}}) where P <: Polynomial where vars
-    return [c for (p,c) in expansion(p, Named{vars})]
+function coefficients(p::P, variables) where P <: Polynomial
+    return [c for (p,c) in expansion(p, variables)]
 end
 
 @inline expansion(p::Polynomial, variables::Symbol...) = expansion(p, Named{variables})
@@ -433,9 +433,10 @@ julia> @linear_coefficients(x^3*y + x + y + 1, x, y)
 # See also
 `@constant_coefficient`, `@coefficient`, and `@expansion`
 """
-macro linear_coefficients(f, vars...)
+macro linear_coefficients(f, symbols...)
+    expansion_expr = _expansion_expr(symbols)
     quote
-        linear_coefficients($(esc(f)), $vars...)
+        linear_coefficients($(esc(f)), $expansion_expr)
     end
 end
 
@@ -458,8 +459,9 @@ julia> collect(@expansion(x^3 + y^2, x, y))
 """
 
 macro expansion(f, symbols...)
+    expansion_expr = _expansion_expr(symbols)
     quote
-        expansion($(esc(f)), $symbols...)
+        expansion($(esc(f)), $expansion_expr)
     end
 end
 """
@@ -480,11 +482,12 @@ julia> collect(@expand(x^3 + y^2, x, y))
 `expansion(...)`, `@coefficient` and `coefficient`
 """
 macro expand(f, symbols...)
+    expansion_expr = _expansion_expr(symbols)
     R,vars = polynomial_ring(symbols..., basering=Int)
     quote
         [
             (prod(v^k for (v,k) in zip($vars,w)), p)
-            for (w,p) in expansion($(esc(f)), $symbols...)
+            for (w,p) in expansion($(esc(f)), $expansion_expr)
         ]
     end
 end
@@ -511,8 +514,9 @@ julia> collect(@coefficients(x^3 + y^2, x, y))
 `coefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
 """
 macro coefficients(f, symbols...)
+    expansion_expr = _expansion_expr(symbols)
     quote
-        coefficients($(esc(f)), $symbols...)
+        coefficients($(esc(f)), $expansion_expr)
     end
 end
 

@@ -158,6 +158,12 @@ end
         @test lhs == [(x,-1), (x*y, 1)]
     end
 
+    c1,c2,c3 = formal_coefficients(R, :c)
+    @testset "numbered variables" begin
+        @test [1] == @coefficients c1*c2*c3 c[]
+        @test [1,-1] == @coefficients c1-c1*c2*c3 c[]
+    end
+
     @testset "coefficient()" begin
         @test coefficient(x^3 + x^2*y + y, (1,), :y) == x^2 + 1
         @test coefficient(x^3 + x^2*y + y, (0,1), :x, :y) == 1
