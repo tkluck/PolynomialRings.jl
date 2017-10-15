@@ -9,18 +9,14 @@ import PolynomialRings.Monomials: AbstractMonomial, TupleMonomial, exptype
 import PolynomialRings.VariableNames: Named
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.Util: lazymap
+import PolynomialRings.Constants: One
 
 import Iterators: groupby
 
-type One end
-import Base: *, one, promote_rule, convert
-one(::Type{One}) = One()
-*(::Type{One}, x) = x
-*(x, ::Type{One}) = x
+import Base: promote_rule, convert
+
 _expansion_types(::Type{N}, ::Type) where N = (One, N)
-promote_rule(::Type{One}, x::Type) = x
 _lossy_convert_monomial(::Type{M}, ::One) where M<:AbstractMonomial = one(M)
-convert(::Type{M}, ::One) where M<:AbstractMonomial = one(M)
 
 """
     monomialtype, coefficienttype = _expansion_types(R, Named{tuple(symbols...)})
