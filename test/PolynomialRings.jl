@@ -182,6 +182,8 @@ end
         @test @linear_coefficients(x+y+1, x, y) == [1,1]
         @test @linear_coefficients(x^2+y^2+x-y+1, x, y) == [1,-1]
         @test @linear_coefficients(x^2+y^2+x-y+1, y, x) == [-1,1]
+
+        @test [0,1] == @linear_coefficients(y + y^2, x, y)
     end
 
     @testset "Nested types" begin

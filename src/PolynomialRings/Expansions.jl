@@ -180,6 +180,8 @@ end
 
 @inline expansion(p::Polynomial, variables::Symbol...) = expansion(p, Named{variables})
 @inline coefficients(p::Polynomial, variables::Symbol...) = coefficients(p, Named{variables})
+@inline linear_coefficients(p::Polynomial, variables::Symbol...) = linear_coefficients(p, Named{variables})
+@inline coefficient(p::Polynomial, exponent_tuple::Tuple, variables::Symbol...) = coefficient(p, exponent_tuple, Named{variables})
 
 
 """
@@ -237,17 +239,17 @@ julia> coefficient(x^3*y + x, (3,1), :x, :y)
 # See also
 `@coefficient`, `expansion` and `@expansion`
 """
-function coefficient(f::Polynomial, t::Tuple, vars::Symbol...)
+function coefficient(f::Polynomial, t::Tuple, vars...)
     for (w,p) in expansion(f, vars...)
         if w == t
             return p
         end
     end
-    ExpansionType, CoeffType = _expansion_types(typeof(f), Named{vars})
+    ExpansionType, CoeffType = _expansion_types(typeof(f), vars...)
     return zero(CoeffType)
 end
 
-function coefficient(f::Polynomial, t::Polynomial, vars::Symbol...)
+function coefficient(f::Polynomial, t::Polynomial, vars...)
     ((w,p),) = expansion(t, vars...)
     p == 1 || throw(ArgumentError("Cannot get a coefficient for $t when symbols are $vars"))
 
@@ -273,8 +275,14 @@ julia> constant_coefficient(x^3*y + x + y + 1, :x, :y)
 # See also
 `@constant_coefficient`, `@coefficient`, and `@expansion`
 """
-function constant_coefficient(f::Polynomial, vars::Symbol...)
-    return coefficient(f, ntuple(i->0, length(vars)), vars...)
+function constant_coefficient(f::Polynomial, vars...)
+    for (w,p) in expansion(f, vars...)
+        if sum(w) == 0
+            return p
+        end
+    end
+    ExpansionType, CoeffType = _expansion_types(typeof(f), vars...)
+    return zero(CoeffType)
 end
 
 """
@@ -296,12 +304,29 @@ julia> linear_coefficients(x^3*y + x + y + 1, :x, :y)
 # See also
 `@constant_coefficient`, `@coefficient`, and `@expansion`
 """
-function linear_coefficients(f::Polynomial, vars::Symbol...)
-    return [
-        coefficient(f, ntuple(i->(i==j)?1:0, length(vars)), vars...)
-        for j = 1:length(vars)
+function linear_coefficients(f::Polynomial, vars...)
+    ExpansionType, CoeffType = _expansion_types(typeof(f), vars...)
+    terms = [
+        (w,p)
+        for (w,p) in expansion(f, vars...)
+        if sum(w) == 1
     ]
+    l = maximum(length, w for (w,p) in terms)
+    res = spzeros(CoeffType, l)
+    for (w,p) in terms
+        res[findfirst(w)] = p
+    end
+    return res
 end
+
+# -----------------------------------------------------------------------------
+#
+# Helper functions for some of the macros below
+#
+# -----------------------------------------------------------------------------
+
+_expansion_expr(vars::NTuple{N,Symbol}) where N = Named{vars}
+_expansion_expr(vars::Tuple{Expr}) = (v = vars[1]; @assert(v.head == :ref && length(v.args) == 1); Numbered{v.args[1]})
 
 function _parse_monomial_expression(expr)
     if expr isa Symbol
@@ -319,6 +344,12 @@ function _parse_monomial_expression(expr)
         return ntuple(i->ts[i], length(ts)), ss
     end
 end
+
+# -----------------------------------------------------------------------------
+#
+# Wrapper macros for some of the functions above
+#
+# -----------------------------------------------------------------------------
 
 """
     @coefficient(f, monomial)
@@ -375,9 +406,10 @@ julia> @constant_coefficient(x^3*y + x + y + 1, x, y)
 # See also
 `constant_coefficient`, `@coefficient`, and `@expansion`
 """
-macro constant_coefficient(f, vars...)
+macro constant_coefficient(f, symbols...)
+    expansion_expr = _expansion_expr(symbols)
     quote
-        constant_coefficient($(esc(f)), $vars...)
+        constant_coefficient($(esc(f)), $expansion_expr)
     end
 end
 

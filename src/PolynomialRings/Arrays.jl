@@ -3,7 +3,7 @@ module Arrays
 import PolynomialRings: to_dense_monomials, max_variable_index
 import PolynomialRings.Terms: Term
 import PolynomialRings.Polynomials: Polynomial
-import PolynomialRings.Expansions: expansion, coefficients
+import PolynomialRings.Expansions: expansion, coefficients, _expansion_expr
 import Iterators: groupby
 
 # -----------------------------------------------------------------------------
@@ -78,8 +78,9 @@ julia> collect(flat_coefficients([x^3 + y^2, y^5], :x, :y))
 `flat_coefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
 """
 macro flat_coefficients(a, symbols...)
+    expansion_expr = _expansion_expr(symbols)
     quote
-        flat_coefficients($(esc(a)), $symbols...)
+        flat_coefficients($(esc(a)), $expansion_expr)
     end
 end
 
