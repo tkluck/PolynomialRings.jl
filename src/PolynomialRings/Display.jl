@@ -15,7 +15,7 @@ import Base: show
 # -----------------------------------------------------------------------------
 
 _variable(::Type{Named{Names}}, ix)   where Names = String(Names[ix])
-_variable(::Type{Numbered{Name}}, ix) where Name  = "$Name$ix"
+_variable(::Type{Numbered{Name}}, ix) where Name  = "$Name[$ix]"
 
 function show(io::IO, p::Polynomial)
     frst = true
@@ -55,7 +55,7 @@ function show(io::IO, ::Type{Named{Names}}) where Names
 end
 
 function show(io::IO, ::Type{Numbered{Name}}) where Name
-    print(io, "$(Name)_i")
+    print(io, "$(Name)[]")
 end
 
 function show(io::IO, ::Type{Polynomial{A,Order}}) where {A,Order}
