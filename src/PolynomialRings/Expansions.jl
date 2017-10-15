@@ -6,7 +6,7 @@ import PolynomialRings.Polynomials: Polynomial, termtype, monomialtype, terms
 import PolynomialRings.Terms: Term, monomial, coefficient
 import PolynomialRings: basering, namestype, variablesymbols
 import PolynomialRings.Monomials: AbstractMonomial, TupleMonomial, exptype
-import PolynomialRings.VariableNames: Named
+import PolynomialRings.VariableNames: Named, Numbered
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.Util: lazymap, TrivialIter
 import PolynomialRings.Constants: One
@@ -108,6 +108,51 @@ function _expansion(p::P, ::Type{Named{vars}}) where P <: NamedPolynomial where 
                 p = sum(t[2] for t in term_group)
                 push!(ch, (m, p))
             end
+        end
+    end
+end
+
+function _expansion_types(::Type{P}, ::Type{Numbered{name}}) where P <: Polynomial where name
+    @assert namestype(P) == Numbered{name}
+
+    return (monomialtype(P), basering(P))
+end
+
+function _expansion(p::P, ::Type{Numbered{name}}) where P <: Polynomial where name
+    @assert namestype(p) == Numbered{name}
+
+    return Channel() do ch
+        for t in terms(p)
+            push!(ch, (monomial(t), coefficient(t)))
+        end
+    end
+
+end
+
+function _expansion_types(::Type{P}, ::Type{Numbered{name}}) where P <: NamedPolynomial where name
+
+    CoeffMonomialType, CoeffCoeffType = _expansion_types(basering(P), Numbered{name})
+
+    PP,_ = polynomial_ring(variablesymbols(P)..., basering=CoeffCoeffType)
+
+    return (CoeffMonomialType, PP)
+end
+
+function _expansion(p::P, ::Type{Numbered{name}}) where P <: NamedPolynomial where name
+
+    MonomialType, CoeffType = _expansion_types(P, Numbered{name})
+
+    return Channel() do ch
+        separated_terms = [
+            (inner_monomial,c*CoeffType(monomial(t)))
+            for t in terms(p)
+            for (inner_monomial,c) in _expansion(coefficient(t), Numbered{name})
+        ]
+        sort!(separated_terms, lt=(a,b)->Base.Order.lt(MonomialOrder{:degrevlex}(),a[1],b[1]))
+        for term_group in groupby(x->x[1], separated_terms)
+            m = term_group[1][1]
+            p = sum(t[2] for t in term_group)
+            push!(ch, (m, p))
         end
     end
 end
