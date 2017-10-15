@@ -163,6 +163,8 @@ end
         @test [1] == @coefficients c1*c2*c3 c[]
         @test [1,-1] == @coefficients c1-c1*c2*c3 c[]
 
+        @test [0,1,-1] == @linear_coefficients c2-c3 c[]
+
         @test (c1*c2*c3 + 3*c3)(c = i->i) == 15
     end
 
