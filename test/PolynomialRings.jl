@@ -162,6 +162,8 @@ end
     @testset "numbered variables" begin
         @test [1] == @coefficients c1*c2*c3 c[]
         @test [1,-1] == @coefficients c1-c1*c2*c3 c[]
+
+        @test (c1*c2*c3 + 3*c3)(c = i->i) == 15
     end
 
     @testset "coefficient()" begin

@@ -205,6 +205,26 @@ end
 @inline coefficient(p::Polynomial, exponent_tuple::Tuple, variables::Symbol...) = coefficient(p, exponent_tuple, Named{variables})
 
 
+function _substitute(p::Polynomial, ::Type{Named{Names}}, values) where Names
+    ExpansionType, CoeffType = _expansion_types(typeof(p), Named{Names})
+    ReturnType = promote_type(eltype(values), CoeffType)
+    if iszero(p)
+        return zero(ReturnType)
+    end
+    # TODO: type stability even in corner cases
+    sum( p * prod(v^k for (v,k) in zip(values,w)) for (w,p) in expansion(p, Named{Names}) )
+end
+
+function _substitute(p::Polynomial, ::Type{Numbered{Name}}, values) where Name
+    ExpansionType, CoeffType = _expansion_types(typeof(p), Numbered{Name})
+    ReturnType = promote_type(typeof(values(1)), CoeffType)
+    if iszero(p)
+        return zero(ReturnType)
+    end
+    # TODO: type stability even in corner cases
+    sum( p * prod(values(i)^k for (i,k) in enumerate(w)) for (w,p) in expansion(p, Numbered{Name}) )
+end
+
 """
     f(var1=...,var2=...)
 
@@ -212,16 +232,17 @@ Substitute variables with Numbers
 
 """
 function (p::Polynomial)(; kwargs...)
-    vars = [k for (k,v) in kwargs]
+    vars = Symbol[k for (k,v) in kwargs]
     values = [v for (k,v) in kwargs]
 
-    ExpansionType, CoeffType = _expansion_types(typeof(p), Named{tuple(vars...)})
-    ReturnType = promote_type(eltype(values), CoeffType)
-    if iszero(p)
-        return zero(ReturnType)
+    if !any(v isa Function for v in values)
+        return _substitute(p, Named{tuple(vars...)}, values)
+    elseif length(kwargs) == 1 && values[1] isa Function
+        return _substitute(p, Numbered{vars[1]}, values[1])
+    else
+        throw(ArgumentError("Don't know how to substitute $kwargs"))
     end
-    # TODO: type stability even in corner cases
-    sum( p * prod(v^k for (v,k) in zip(values,w)) for (w,p) in expansion(p, vars...) )
+
 end
 
 function (p::Array{P})(; kwargs...) where P <: Polynomial
