@@ -1,7 +1,7 @@
 module Expansions
 
 import PolynomialRings.Constructors: polynomial_ring
-import PolynomialRings.NamedPolynomials: _convert_monomial, _lossy_convert_monomial
+import PolynomialRings.NamedPolynomials: NamedPolynomial, _lossy_convert_monomial
 import PolynomialRings.Polynomials: Polynomial, termtype, monomialtype, terms
 import PolynomialRings.Terms: Term, monomial, coefficient
 import PolynomialRings: basering, namestype, variablesymbols
@@ -12,8 +12,6 @@ import PolynomialRings.Util: lazymap
 
 import Iterators: groupby
 
-NamedPolynomial = Polynomial{<:AbstractVector{<:Term{<:AbstractMonomial{<:Named},C}}} where C
-
 type One end
 import Base: *, one, promote_rule, convert
 one(::Type{One}) = One()
@@ -23,7 +21,6 @@ _expansion_types(::Type{N}, ::Type) where N = (One, N)
 promote_rule(::Type{One}, x::Type) = x
 _lossy_convert_monomial(::Type{M}, ::One) where M<:AbstractMonomial = one(M)
 convert(::Type{M}, ::One) where M<:AbstractMonomial = one(M)
-_convert_monomial(::Type{M}, ::One) where M<:AbstractMonomial = one(M)
 
 """
     monomialtype, coefficienttype = _expansion_types(R, Named{tuple(symbols...)})
@@ -108,7 +105,7 @@ function _expansion(p::P, ::Type{Named{vars}}) where P <: NamedPolynomial where 
         ExpType = exptype(P)
         UnspecifiedMonomial = TupleMonomial{length(unspecified_vars),ExpType,Named{unspecified_vars}}
         g(m) = _lossy_convert_monomial(monomialtype(CoeffType), m)
-        h(m) = _convert_monomial(MonomialType, m)
+        h(m) = convert(MonomialType, m)
 
         return Channel(ctype=ResultType) do ch
             iszero(p) && return

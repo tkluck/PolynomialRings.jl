@@ -15,11 +15,22 @@ import Base: promote_rule, convert
 
 # -----------------------------------------------------------------------------
 #
+# Type definitions
+#
+# -----------------------------------------------------------------------------
+
+NamedMonomial = AbstractMonomial{<:Named}
+NamedPolynomial = Polynomial{<:AbstractVector{<:Term{<:NamedMonomial,C}}} where C
+
+# -----------------------------------------------------------------------------
+#
 # Promotions for different variable name sets
 #
 # -----------------------------------------------------------------------------
 
-@generated function _convert_monomial(::Type{M}, monomial::AbstractMonomial) where M
+convert(::Type{M}, monomial::M) where M<:NamedMonomial = monomial
+
+@generated function convert(::Type{M}, monomial::AbstractMonomial) where M<:NamedMonomial
     src = variablesymbols(monomial)
     dest = variablesymbols(M)
     for s in src
@@ -52,7 +63,6 @@ end
     return :( M($converter, $degree ) )
 end
 
-NamedPolynomial = Polynomial{<:AbstractVector{<:Term{<:AbstractMonomial{<:Named},C}}} where C
 _allnames(x::Type) = []
 _allnames(::Type{P}) where P<:NamedPolynomial = union(_allnames(basering(P)), variablesymbols(P))
 _coeff(x::Type) = x
