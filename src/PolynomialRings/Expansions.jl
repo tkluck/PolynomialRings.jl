@@ -13,7 +13,18 @@ import PolynomialRings.Constants: One
 
 import Iterators: groupby
 
+# -----------------------------------------------------------------------------
+#
+# Imports for overloading
+#
+# -----------------------------------------------------------------------------
 import Base: promote_rule, convert
+
+# -----------------------------------------------------------------------------
+#
+# Expansions: named variables
+#
+# -----------------------------------------------------------------------------
 
 _expansion_types(::Type{N}, ::Type) where N = (One, N)
 _lossy_convert_monomial(::Type{M}, ::One) where M<:AbstractMonomial = one(M)
@@ -112,6 +123,11 @@ function _expansion(p::P, ::Type{Named{vars}}) where P <: NamedPolynomial where 
     end
 end
 
+# -----------------------------------------------------------------------------
+#
+# Expansions: numbered variables
+#
+# -----------------------------------------------------------------------------
 function _expansion_types(::Type{P}, ::Type{Numbered{name}}) where P <: Polynomial where name
     @assert namestype(P) == Numbered{name}
 
@@ -157,6 +173,11 @@ function _expansion(p::P, ::Type{Numbered{name}}) where P <: NamedPolynomial whe
     end
 end
 
+# -----------------------------------------------------------------------------
+#
+# Functions based on expansions: coefficients(), variable substitution, etc.
+#
+# -----------------------------------------------------------------------------
 """
     coefficients(f, symbol, [symbol...])
 
