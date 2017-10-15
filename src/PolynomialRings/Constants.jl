@@ -50,5 +50,9 @@ convert(::Type{N}, ::MinusOne) where N <: _N = -one(N)
 zero(::Type{C}) where C <: Constant = Zero()
 one(::Type{C})  where C <: Constant = One()
 
+# fix one particular ambiguity
+
+promote_rule(::Type{P}, ::Type{C}) where {P<:Polynomial,C<:Constant} = P
+
 
 end

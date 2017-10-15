@@ -4,7 +4,7 @@ import PolynomialRings: termtype, terms, namestype, variablesymbols, exptype, mo
 import PolynomialRings.Polynomials: Polynomial, monomialorder
 import PolynomialRings.Terms: Term, basering, monomial, coefficient
 import PolynomialRings.Monomials: TupleMonomial, AbstractMonomial
-import PolynomialRings.VariableNames: Named
+import PolynomialRings.VariableNames: Named, Numbered
 
 # -----------------------------------------------------------------------------
 #
@@ -19,8 +19,10 @@ import Base: promote_rule, convert
 #
 # -----------------------------------------------------------------------------
 
-NamedMonomial = AbstractMonomial{<:Named}
-NamedPolynomial = Polynomial{<:AbstractVector{<:Term{<:NamedMonomial,C}}} where C
+NamedMonomial    = AbstractMonomial{<:Named}
+NumberedMonomial = AbstractMonomial{<:Numbered}
+NamedPolynomial    = Polynomial{<:AbstractVector{<:Term{<:NamedMonomial,   C}}} where C
+NumberedPolynomial = Polynomial{<:AbstractVector{<:Term{<:NumberedMonomial,C}}} where C
 
 # -----------------------------------------------------------------------------
 #
@@ -85,6 +87,10 @@ function promote_rule(::Type{P1}, ::Type{P2}) where P1 <: Polynomial where P2 <:
     else
         return Union{}
     end
+end
+
+function promote_rule(::Type{P1}, ::Type{P2}) where P1 <: NamedPolynomial where P2 <: NumberedPolynomial
+    return P2 ⊗ P1
 end
 
 using PolynomialRings
