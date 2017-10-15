@@ -348,12 +348,13 @@ julia> linear_coefficients(x^3*y + x + y + 1, :x, :y)
 """
 function linear_coefficients(f::Polynomial, vars...)
     ExpansionType, CoeffType = _expansion_types(typeof(f), vars...)
+    iszero(f) && return spzeros(CoeffType, 0)
     terms = [
         (w,p)
         for (w,p) in expansion(f, vars...)
         if sum(w) == 1
     ]
-    l = maximum(length, w for (w,p) in terms)
+    l = length(terms)>0 ? maximum(length, w for (w,p) in terms) : 0
     res = spzeros(CoeffType, l)
     for (w,p) in terms
         res[findfirst(w)] = p
