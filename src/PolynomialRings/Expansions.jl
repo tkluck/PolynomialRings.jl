@@ -8,7 +8,7 @@ import PolynomialRings: basering, namestype, variablesymbols
 import PolynomialRings.Monomials: AbstractMonomial, TupleMonomial, exptype
 import PolynomialRings.VariableNames: Named
 import PolynomialRings.MonomialOrderings: MonomialOrder
-import PolynomialRings.Util: lazymap
+import PolynomialRings.Util: lazymap, TrivialIter
 import PolynomialRings.Constants: One
 
 import Iterators: groupby
@@ -44,14 +44,6 @@ function _expansion_types(::Type{P}, ::Type{Named{vars}}) where P <: NamedPolyno
 
 end
 
-type TrivialIter{X}
-    item::X
-end
-import Base: start, done, next, length
-start(::TrivialIter) = false
-done(::TrivialIter, state) = state
-next(t::TrivialIter, state) = (t.item, true)
-length(::TrivialIter) = 1
 _expansion(p, T::Type) = ((M,C) = _expansion_types(typeof(p), T); TrivialIter((one(M), p)))
 
 """

@@ -126,6 +126,19 @@ function write_unlock!(l::ReadWriteLock)
 end
 
 
+# -----------------------------------------------------------------------------
+#
+# One-element iterator
+#
+# -----------------------------------------------------------------------------
+type TrivialIter{X}
+    item::X
+end
+import Base: start, done, next, length
+start(::TrivialIter) = false
+done(::TrivialIter, state) = state
+next(t::TrivialIter, state) = (t.item, true)
+length(::TrivialIter) = 1
 
 
 end
