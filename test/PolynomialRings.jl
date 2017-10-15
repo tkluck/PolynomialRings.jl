@@ -99,6 +99,11 @@ using PolynomialRings
         ((_,ddd3),) = expansion(dd3, variablesymbols(R)...)
         @test to_dense_monomials([ddd1, ddd2, ddd3]) == [d1,d2,d3]
 
+        e1,e2,e3 = formal_coefficients(R, :e)
+        @test repr(e1) == "1//1 e1"
+        @test repr(e2) == "1//1 e2"
+        @test repr(e3) == "1//1 e3"
+
     end
 
     @testset "constructors" begin

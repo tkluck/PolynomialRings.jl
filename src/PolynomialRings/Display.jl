@@ -1,6 +1,6 @@
 module Display
 
-import PolynomialRings: namestype, variablesymbols
+import PolynomialRings: namestype
 import PolynomialRings.Polynomials: Polynomial, terms, basering
 import PolynomialRings.Terms: Term, coefficient, monomial
 import PolynomialRings.VariableNames: Named, Numbered
@@ -14,6 +14,9 @@ import Base: show
 #
 # -----------------------------------------------------------------------------
 
+_variable(::Type{Named{Names}}, ix)   where Names = String(Names[ix])
+_variable(::Type{Numbered{Name}}, ix) where Name  = "$Name$ix"
+
 function show(io::IO, p::Polynomial)
     frst = true
     if length(terms(p)) == 0
@@ -26,7 +29,8 @@ function show(io::IO, p::Polynomial)
             frst = false
         end
         print(io, coefficient(t))
-        for ((ix, i), symbol) in zip( enumerate(monomial(t)), variablesymbols(typeof(p)) )
+        for (ix, i) in enumerate(monomial(t))
+            symbol = _variable(namestype(p), ix)
             if i == 1
                 print(io, " $symbol")
             elseif i > 1
