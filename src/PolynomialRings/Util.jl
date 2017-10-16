@@ -131,7 +131,7 @@ end
 # One-element iterator
 #
 # -----------------------------------------------------------------------------
-type TrivialIter{X}
+struct TrivialIter{X}
     item::X
 end
 import Base: start, done, next, length
