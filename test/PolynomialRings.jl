@@ -28,6 +28,7 @@ using PolynomialRings
 
     @testset "Extension of scalars" begin
         @test 1//2*z == z//2
+        @test z//(2//1) == z//2
         @test 2*z//2 == z
         @test 0.5*z == z/2
         @test 2(z+0.5) == 2*z + 1

@@ -68,9 +68,9 @@ base_extend(::Type{P}) where P <: Union{Term,Polynomial} = base_extend(P, fracti
 #
 # -----------------------------------------------------------------------------
 /(a::T,b::Number)   where T <: Term = base_extend(T,    float(typeof(b)))(a.m, a.c/b)
-//(a::T,b::Number)  where T <: Term = base_extend(T, Rational{typeof(b)})(a.m, a.c//b)
+//(a::T,b::Number)  where T <: Term = base_extend(T, fraction_field(typeof(b)))(a.m, a.c//b)
 /(a::P,b::Number)   where P <: Polynomial = base_extend(P,   float(typeof(b)))([t/b  for t in terms(a)])
-//(a::P,b::Number)  where P <: Polynomial = base_extend(P,Rational{typeof(b)})([t//b for t in terms(a)])
+//(a::P,b::Number)  where P <: Polynomial = base_extend(P,fraction_field(typeof(b)))([t//b for t in terms(a)])
 
 # -----------------------------------------------------------------------------
 #
