@@ -51,6 +51,9 @@ function _expansion_types(::Type{P}, ::Type{Named{vars}}) where P <: NamedPolyno
             Polynomial{Vector{Term{TupleMonomial{M,ExpType,Named{unspecified_vars}},One}},:degrevlex},
         )
     end
+    if !isleaftype(CoeffType)
+        throw(ArgumentError("Cannot expand $P in variables $(Named{vars}); would result in $CoeffType"))
+    end
     return MonomialType, CoeffType
 
 end
@@ -208,6 +211,9 @@ end
 function _substitute(p::Polynomial, ::Type{Named{Names}}, values) where Names
     ExpansionType, CoeffType = _expansion_types(typeof(p), Named{Names})
     ReturnType = promote_type(eltype(values), CoeffType)
+    if !isleaftype(ReturnType)
+        throw(ArgumentError("Cannot substitute $(eltype(values)) for $(Named{Names}) into $p; result no more specific than $ReturnType"))
+    end
     if iszero(p)
         return zero(ReturnType)
     end
@@ -218,6 +224,9 @@ end
 function _substitute(p::Polynomial, ::Type{Numbered{Name}}, values) where Name
     ExpansionType, CoeffType = _expansion_types(typeof(p), Numbered{Name})
     ReturnType = promote_type(typeof(values(1)), CoeffType)
+    if !isleaftype(ReturnType)
+        throw(ArgumentError("Cannot substitute $(typeof(values(1))) for $(Numbered{Name}) into $p; result no more specific than $ReturnType"))
+    end
     if iszero(p)
         return zero(ReturnType)
     end
