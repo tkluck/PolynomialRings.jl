@@ -1,6 +1,6 @@
 module NamedPolynomials
 
-import PolynomialRings: termtype, terms, namestype, variablesymbols, exptype, monomialtype
+import PolynomialRings: termtype, terms, namestype, variablesymbols, exptype, monomialtype, allvariablesymbols
 import PolynomialRings.Polynomials: Polynomial, monomialorder
 import PolynomialRings.Terms: Term, basering, monomial, coefficient
 import PolynomialRings.Monomials: TupleMonomial, AbstractMonomial
@@ -65,8 +65,6 @@ end
     return :( M($converter, $degree ) )
 end
 
-_allnames(x::Type) = []
-_allnames(::Type{P}) where P<:NamedPolynomial = union(_allnames(basering(P)), variablesymbols(P))
 _coeff(x::Type) = x
 _coeff(::Type{P}) where P<:NamedPolynomial = _coeff(basering(P))
 _exptype(x::Type) = Union{}
@@ -75,8 +73,8 @@ _exptype(::Type{P}) where P<:NamedPolynomial = promote_type(exptype(P), _exptype
 function promote_rule(::Type{P1}, ::Type{P2}) where P1 <: Polynomial where P2 <: Polynomial
     if namestype(P1) <: Named && namestype(P2) <: Named
         AllNames = Set()
-        union!(AllNames, _allnames(P1))
-        union!(AllNames, _allnames(P2))
+        union!(AllNames, allvariablesymbols(P1))
+        union!(AllNames, allvariablesymbols(P2))
         Symbols = sort(collect(AllNames))
         Names = tuple(Symbols...)
         N = length(Symbols)

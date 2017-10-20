@@ -222,6 +222,11 @@ end
             @test S⊗R == T == U
             @test U != V
         end
+        @testset "Variable duplication" begin
+            @test_throws ArgumentError @ring ℚ[x,x]
+            @test_throws ArgumentError @ring ℚ[x][x]
+            @test_throws ArgumentError @ring ℚ[x][y][x]
+        end
     end
 
 end

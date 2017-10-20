@@ -11,6 +11,7 @@ import PolynomialRings.Terms: Term
 # -----------------------------------------------------------------------------
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering, monomialtype, deg
 import PolynomialRings: leading_term, termtype, monomialorder, terms, exptype, namestype
+import PolynomialRings: variablesymbols, allvariablesymbols
 import Base: copy
 import Base.Order: lt
 import PolynomialRings.MonomialOrderings: MonomialOrder
@@ -49,6 +50,7 @@ monomialordersymbol(::Type{Polynomial{A, Order}}) where {A,Order} = Order
 monomialordersymbol(::Polynomial{A, Order}) where {A,Order} = Order
 basering(::Type{P}) where P <: Polynomial = basering(termtype(P))
 monomialtype(::Type{P}) where P <: Polynomial = monomialtype(termtype(P))
+allvariablesymbols(::Type{P}) where P <: Polynomial = union(allvariablesymbols(basering(P)), variablesymbols(P))
 
 import PolynomialRings.Util: lazymap
 generators(::Type{P}) where P <: Polynomial = lazymap(

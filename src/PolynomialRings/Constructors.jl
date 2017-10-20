@@ -1,6 +1,6 @@
 module Constructors
 
-import PolynomialRings: generators, base_extend, variablesymbols, ⊗
+import PolynomialRings: generators, base_extend, variablesymbols, allvariablesymbols, ⊗
 import PolynomialRings.Polynomials: Polynomial
 import PolynomialRings.Terms: Term, basering
 import PolynomialRings.Monomials: TupleMonomial, VectorMonomial
@@ -45,6 +45,9 @@ julia> x*y + z
 """
 function polynomial_ring(symbols::Symbol...; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex)
     length(symbols)>0 || throw(ArgumentError("Need at least one variable name"))
+    if any(s in allvariablesymbols(basering) for s in symbols) || !allunique(symbols)
+        throw(ArgumentError("Duplicated symbols when extending $basering by $(Named{symbols})"))
+    end
 
     P = Polynomial{Vector{Term{TupleMonomial{length(symbols),exptype, Named{symbols}}, basering}}, monomialorder}
     return P, generators(P)
