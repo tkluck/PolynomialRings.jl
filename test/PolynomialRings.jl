@@ -221,6 +221,8 @@ end
 
             @test S⊗R == T == U
             @test U != V
+
+            @test U(x+y) == V(x+y)
         end
         @testset "Variable duplication" begin
             @test_throws ArgumentError @ring ℚ[x,x]
