@@ -65,6 +65,9 @@ end
     return :( M($converter, $degree ) )
 end
 
+_allpolynomialvars(x::Type) = Set()
+_allpolynomialvars(x::Type{P}) where P<:NamedPolynomial = union(variablesymbols(P), _allpolynomialvars(basering(P)))
+_allothervars(x::Type) = setdiff(allvariablesymbols(x), _allpolynomialvars(x))
 _coeff(x::Type) = x
 _coeff(::Type{P}) where P<:NamedPolynomial = _coeff(basering(P))
 _exptype(x::Type) = Union{}
@@ -73,9 +76,11 @@ _exptype(::Type{P}) where P<:NamedPolynomial = promote_type(exptype(P), _exptype
 function promote_rule(::Type{P1}, ::Type{P2}) where P1 <: Polynomial where P2 <: Polynomial
     if namestype(P1) <: Named && namestype(P2) <: Named
         AllNames = Set()
-        union!(AllNames, allvariablesymbols(P1))
-        union!(AllNames, allvariablesymbols(P2))
-        Symbols = sort(collect(AllNames))
+        free_variables = union(
+                               setdiff(_allpolynomialvars(P1), _allothervars(P2)),
+                               setdiff(_allpolynomialvars(P2), _allothervars(P1)),
+                              )
+        Symbols = sort(collect(free_variables))
         Names = tuple(Symbols...)
         N = length(Symbols)
         C = promote_type(_coeff(P1), _coeff(P2))
