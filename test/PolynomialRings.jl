@@ -1,6 +1,10 @@
 using Base.Test
 using PolynomialRings
 
+type Foo end
+import Base: one
+one(Foo) = Foo()
+
 @testset "PolynomialRings" begin
 
     using PolynomialRings: basering
@@ -230,5 +234,11 @@ end
             @test_throws ArgumentError @ring ℚ[x][y][x]
         end
     end
+
+    @testset "New types" begin
+        R = @ring Foo[x]
+        @test one(R) == one(R)
+    end
+
 
 end
