@@ -67,6 +67,9 @@ function red(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
     return f_red, factors
 end
 
+import Base: rem
+rem(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement = red(f,G)[1]
+
 # a few functions to be able to write the same algorithm for
 # computations in a free f.g. module and in a polynomial ring.
 # In this context, a 'monomial' is either a monomial (polynomial ring)
