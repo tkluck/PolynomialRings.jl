@@ -2,6 +2,7 @@ module PolynomialRings
 
 include("PolynomialRings/Methods.jl")
 include("PolynomialRings/Util.jl")
+include("PolynomialRings/Backends.jl")
 
 include("PolynomialRings/VariableNames.jl")
 include("PolynomialRings/Monomials.jl")
