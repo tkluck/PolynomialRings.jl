@@ -80,6 +80,8 @@ one(Foo) = Foo()
     @testset "differentiation" begin
         @test dx(x^2) == 2x
         @test dy(x^2) == 0
+        @test dx(zero(x)) == 0
+        @test dy(zero(x)) == 0
         dz(f) = diff(f, :z)
         @test dz(z^2) == 2z
         @test dz(S(1)) == 0

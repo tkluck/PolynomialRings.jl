@@ -314,6 +314,7 @@ end
 #
 # -----------------------------------------------------------------------------
 function diff(f::Polynomial, i::Integer)
+    iszero(f) && return zero(f)
     new_terms = filter(!iszero, map(t->diff(t,i), terms(f)))
     sort!(new_terms, order=monomialorder(f))
     return typeof(f)(new_terms)
