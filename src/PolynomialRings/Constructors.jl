@@ -101,8 +101,8 @@ _baserings = Dict(
 
 Define and return the specified polynomial ring, and bind the variable names to its generators.
 
-Currently, the supported rings are: ℚ (`Rational{BigInt}`), ℤ (`BigInt`), ℝ (`Float64`) and
-ℂ (`Complex{Float64}`).
+Currently, the supported rings are: ℚ (`Rational{BigInt}`), ℤ (`BigInt`), ℝ (`BigFloat`) and
+ℂ (`Complex{BigFloat}`).
 
 If you need different coefficient rings, or need to specify a non-default monomial order or
 exponent integer type, use `polynomial_ring` instead.
