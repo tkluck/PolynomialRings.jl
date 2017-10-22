@@ -19,19 +19,34 @@ _variable(::Type{Named{Names}}, ix)   where Names = String(Names[ix])
 _variable(::Type{Numbered{Name}}, ix) where Name  = "$Name[$ix]"
 
 function show(io::IO, m::AbstractMonomial)
+    factors = String[]
     for (ix, i) in enumerate(m)
         symbol = _variable(namestype(m), ix)
         if i == 1
-            print(io, " $symbol")
+            push!(factors, "$symbol")
         elseif i > 1
-            print(io, " $symbol^$i")
+            push!(factors, "$symbol^$i")
         end
     end
+    join(io, factors, " ")
 end
 
 function show(io::IO, t::Term)
-    print(io, coefficient(t))
-    print(io, monomial(t))
+    coeff = coefficient(t)
+    monom = monomial(t)
+    factors = String[]
+    if monom == one(monom) || coeff != one(coeff)
+        coeff_repr = "$(coefficient(t))"
+        if (contains(coeff_repr, " + ") || contains(coeff_repr, " - ")) && monomial(t) != one(monomial(t))
+            push!(factors, "($coeff_repr)")
+        else
+            push!(factors, coeff_repr)
+        end
+    end
+    if monom != one(monom)
+        push!(factors, "$monom")
+    end
+    join(io, factors, " ")
 end
 
 function show(io::IO, p::Polynomial)

@@ -24,16 +24,19 @@ using PolynomialRings
     end
 
     @testset "Polynomials" begin
-        @test repr(a) == "1 a"
-        @test repr(a+b) == "1 b + 1 a"
+        @test repr(a) == "a"
+        @test repr(r) == "r[1]"
+        @test repr(a+b) == "b + a"
         @test repr(2a) == "2 a"
-        @test repr(r*a) == "1 r[1] a"
-        @test repr(r*a + a) == "1 + 1 r[1] a" # not a very pretty representation (for now)
+        @test repr(r*a) == "r[1] a"
+        @test repr(r*a + a) == "(1 + r[1]) a"
+        @test repr(2r*a + a) == "(1 + 2 r[1]) a"
 
         e1,e2,e3 = formal_coefficients(R, :e)
-        @test repr(e1) == "1//1 e[1]"
-        @test repr(e2) == "1//1 e[2]"
-        @test repr(e3) == "1//1 e[3]"
+        @test repr(e1) == "e[1]"
+        @test repr(e2) == "e[2]"
+        @test repr(e3) == "e[3]"
+        @test repr(2*e3) == "2//1 e[3]"
 
     end
 

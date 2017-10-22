@@ -114,6 +114,7 @@ end
 @inline _construct(::Type{M}, f, nzindices) where M <: AbstractMonomial = _construct(M, f, nzindices, mapreduce(f, +, zero(exptype(M)), nzindices))
 
 one(::Type{M}) where M <: AbstractMonomial = _construct(M, i->0, 1:0)
+one(::M) where M <: AbstractMonomial = one(M)
 
 *(a::M, b::M) where M <: AbstractMonomial = _construct(M,i -> a[i] + b[i], index_union(a,b), total_degree(a) + total_degree(b))
 ^(a::M, n::Integer) where M <: AbstractMonomial = _construct(M,i -> a[i]*n, nzindices(a), total_degree(a)*n)
