@@ -67,16 +67,23 @@ function show(io::IO, ::MO) where MO <: MonomialOrder{Name} where Name
 end
 
 function show(io::IO, ::Type{Named{Names}}) where Names
-    print(io, join(Names, ",", " and "))
+    join(io, Names, ",")
 end
 
 function show(io::IO, ::Type{Numbered{Name}}) where Name
     print(io, "$(Name)[]")
 end
 
+# keep in sync with Constructors.jl
+_repr(::Type{BigInt}) = :ℤ
+_repr(::Type{Rational{BigInt}}) = :ℚ
+_repr(::Type{BigFloat}) = :ℝ
+_repr(::Type{Complex{BigFloat}}) = :ℂ
+_repr(x) = x
+
 function show(io::IO, ::Type{Polynomial{A,Order}}) where {A,Order}
     T = eltype(A)
-    print(io, "(Polynomial over $(basering(T)) in $(namestype(T)) ($Order))")
+    print(io, "$(_repr(basering(T)))[$(namestype(T))]")
 end
 
 function show(io::IO, ::Type{Term{M,C}}) where {M,C}

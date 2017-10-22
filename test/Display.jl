@@ -11,13 +11,15 @@ using PolynomialRings
     S = typeof(q)
     T = @ring ℤ[a,b,c]
     r, = formal_coefficients(T, :r)
+    U = @ring Int[ε]
 
     @testset "Types" begin
-        @test repr(R) == "(Polynomial over Rational{BigInt} in x and y (degrevlex))"
-        @test repr(S) == "(Polynomial over (Polynomial over Rational{BigInt} in q[] (degrevlex)) in x and y (degrevlex))"
-        @test repr(T) == "(Polynomial over BigInt in a,b and c (degrevlex))"
+        @test repr(R) == "ℚ[x,y]"
+        @test repr(S) == "ℚ[q[]][x,y]"
+        @test repr(T) == "ℤ[a,b,c]"
+        @test repr(U) == "Int64[ε]"
 
-        @test repr(termtype(R)) == "(Term over Rational{BigInt} in x and y)"
+        @test repr(termtype(R)) == "(Term over Rational{BigInt} in x,y)"
 
         # test that this does not throw an error
         @test repr(methods(^)) isa String
