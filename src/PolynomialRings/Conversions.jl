@@ -13,7 +13,7 @@ import PolynomialRings: fraction_field, base_extend, namestype
 import Base: promote_rule, convert
 import Base: +,*,-,==,/,//
 import PolynomialRings: ⊗, base_extend
-import PolynomialRings.Groebner: red
+import Base: divrem
 
 # -----------------------------------------------------------------------------
 #
@@ -203,12 +203,12 @@ convert(::Type{P}, a::T) where P <: Polynomial{V} where V <: AbstractVector{T} w
 # Promotions for more complicated functions
 #
 # -----------------------------------------------------------------------------
-function red(a::S,b::AbstractVector{T}) where {S,T}
+function divrem(a::S,b::AbstractVector{T}) where {S<:Number,T<:Polynomial}
     U = typejoin(promote_rule(S,T), promote_rule(T,S))
     if U === Union{}
         throw(TypeError())
     else
-        return red(U(a), map(U,b))
+        return divrem(U(a), map(U,b))
     end
 end
 

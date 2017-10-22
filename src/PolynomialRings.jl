@@ -24,12 +24,13 @@ import .Terms: Term
 import .Polynomials: Polynomial, generators
 import .Constructors: polynomial_ring, formal_coefficients, @ring, @polynomial
 import .Expansions: expansion, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, coefficients, @coefficients, linear_coefficients, @linear_coefficients
-import .Groebner: red, groebner_basis
+import .Groebner: groebner_basis, groebner_transformation, syzygies
 import .Arrays: flat_coefficients, @flat_coefficients
 
 export TupleMonomial, Term, Polynomial, generators, ⊗, polynomial_ring, formal_coefficients, variablesymbols
-export deg, red, groebner_basis, expansion, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, coefficients, @coefficients, linear_coefficients, @linear_coefficients, @ring, @polynomial
+export deg, expansion, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, coefficients, @coefficients, linear_coefficients, @linear_coefficients, @ring, @polynomial
 export flat_coefficients, @flat_coefficients
+export groebner_basis, groebner_transformation, syzygies
 
 # TODO: needs a better place
 construct_monomial(::Type{P}, e::T) where P<:Polynomial where T<:Tuple = P([termtype(P)(monomialtype(P)(e, sum(e)),one(basering(P)))])

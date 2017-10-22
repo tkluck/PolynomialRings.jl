@@ -8,7 +8,11 @@ import PolynomialRings.Operators: leaddivrem
 
 import PolynomialRings.Util: ReadWriteLock, read_lock!, write_lock!, read_unlock!, write_unlock!
 
-function leadred(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
+
+# impors for overloading
+import Base: div, rem, divrem
+
+function leaddivrem(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
     factors = transpose(spzeros(modulebasering(M), length(G)))
     f_red = f
     i = 1
@@ -22,14 +26,14 @@ function leadred(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
             i += 1
         end
         if iszero(f_red)
-            return f_red, factors
+            return factors, f_red
         end
     end
-    return f_red, factors
+    return factors, f_red
 end
 
 """
-    f_red, factors = red(f, G)
+    factors, f_red = divrem(f, G)
 
 Return the multivariate reduction of a polynomial `f` by a vector of
 polynomials `G`, together with  row vector of factors. By definition, this
@@ -46,8 +50,8 @@ julia> red(x^2 + y^2 + 1, [x, y])
 (1, [x,y]')
 ```
 """
-function red(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
-    f_red, factors = leadred(f,G)
+function divrem(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
+    factors, f_red = leaddivrem(f,G)
 
     i=1
     while i<=length(G)
@@ -60,15 +64,15 @@ function red(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
             i += 1
         end
         if iszero(f_red)
-            return f_red, factors
+            return factors, f_red
         end
     end
 
-    return f_red, factors
+    return factors, f_red
 end
 
-import Base: rem
-rem(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement = red(f,G)[1]
+div(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement = divrem(f,G)[1]
+rem(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement = divrem(f,G)[2]
 
 # a few functions to be able to write the same algorithm for
 # computations in a free f.g. module and in a polynomial ring.
@@ -233,7 +237,7 @@ function groebner_basis(polynomials::AbstractVector{M}, ::Type{Val{with_transfor
             snapshot_lm = result_lm[sort_order]
             read_unlock!(result_lock)
             if with_transformation
-                (S_red, factors) = red(S, snapshot)
+                (factors, S_red) = divrem(S, snapshot)
             else
                 S_red = _grb_red(S, snapshot, snapshot_lm)
             end
@@ -254,7 +258,7 @@ function groebner_basis(polynomials::AbstractVector{M}, ::Type{Val{with_transfor
                 # either relatively rare, or is a brief computation.
 
                 new_elements_since_snapshot = result[length(snapshot)+1:end]
-                (_, remaining_factors) = red(S_red, new_elements_since_snapshot)
+                remaining_factors = div(S_red, new_elements_since_snapshot)
                 while !iszero(remaining_factors)
                     # case 2b: new snapshot and new computation
                     snapshot = result[sort_order]
@@ -262,7 +266,7 @@ function groebner_basis(polynomials::AbstractVector{M}, ::Type{Val{with_transfor
 
                     write_unlock!(result_lock)
                     if with_transformation
-                        (S_red, new_factors) = red(S_red, snapshot)
+                        (new_factors, S_red) = divrem(S_red, snapshot)
                         factors = new_factors + [factors zeros(remaining_factors)]
                     else
                         S_red = _grb_red(S_red, snapshot, snapshot_lm)
@@ -270,7 +274,7 @@ function groebner_basis(polynomials::AbstractVector{M}, ::Type{Val{with_transfor
                     write_lock!(result_lock)
 
                     new_elements_since_snapshot = result[length(snapshot)+1:end]
-                    (_, remaining_factors) = red(S_red, new_elements_since_snapshot)
+                    remaining_factors = div(S_red, new_elements_since_snapshot)
                 end
                 # case 2a
                 if with_transformation
@@ -359,14 +363,14 @@ function syzygies(polynomials::AbstractVector{M}) where M <: AbstractModuleEleme
         m_a, m_b = lcm_multipliers(lt_a, lt_b)
         S = m_a * a - m_b * b
 
-        (S_red, syzygy) = red(S, polynomials)
+        (syzygy, S_red) = divrem(S, polynomials)
         if !iszero(S_red)
             throw(ArgumentError("syzygies(...) expects a Groebner basis, so S_red = $( S_red ) should be zero"))
         end
         syzygy[1,i] -= m_a
         syzygy[1,j] += m_b
 
-        (syz_red, _) = red(syzygy, result)
+        syz_red = rem(syzygy, result)
         if !iszero(syz_red)
             push!(result, syz_red)
         end
@@ -377,7 +381,8 @@ function syzygies(polynomials::AbstractVector{M}) where M <: AbstractModuleEleme
     return flat_result
 end
 
-groebner_basis(G; kwds...) = groebner_basis(G, Val{true}, kwds...)
+groebner_transformation(G; kwds...) = groebner_basis(G, Val{true}, kwds...)
+groebner_basis(G; kwds...) = groebner_basis(G, Val{false}, kwds...)
 
 # FIXME: why doesn't this suppress info(...) output?
 logging(DevNull, current_module(), kind=:info)
