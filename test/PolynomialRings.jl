@@ -1,7 +1,7 @@
 using Base.Test
 using PolynomialRings
 
-type Foo end
+struct Foo end
 import Base: one
 one(Foo) = Foo()
 

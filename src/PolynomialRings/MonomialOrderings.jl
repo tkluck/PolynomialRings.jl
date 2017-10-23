@@ -4,7 +4,7 @@ import Base.Order: Ordering, lt
 
 import PolynomialRings.Monomials: AbstractMonomial, VectorMonomial, total_degree, index_union, rev_index_union
 
-type MonomialOrder{Name} <: Ordering end
+struct MonomialOrder{Name} <: Ordering end
 
 function lt(::MonomialOrder{:degrevlex}, a::M,b::M) where M <: AbstractMonomial
 

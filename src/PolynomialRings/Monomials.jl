@@ -50,7 +50,7 @@ import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namesty
 #
 # -----------------------------------------------------------------------------
 import Base: start, done, next, last, findlast
-type IndexUnion{I,J,lt}
+struct IndexUnion{I,J,lt}
     left::I
     right::J
 end
@@ -194,7 +194,7 @@ exptype(::Type{TupleMonomial{N,I,Nm}}) where I <: Integer where {N,Nm} = I
 @inline getindex(m::TupleMonomial, i::Integer) = m.e[i]
 
 generators(::Type{TupleMonomial{N, I, Nm}}) where {N, I, Nm} = [
-    _construct(TupleMonomial{N, I, Nm}, i->i==j?one(I):zero(I), 1:N)
+    _construct(TupleMonomial{N, I, Nm}, i->i==j ? one(I) : zero(I), 1:N)
     for j in 1:N
 ]
 

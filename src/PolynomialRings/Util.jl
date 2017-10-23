@@ -1,6 +1,6 @@
 module Util
 
-type BoundedHeap{T, O<:Base.Order.Ordering}
+mutable struct BoundedHeap{T, O<:Base.Order.Ordering}
     values::Vector{T}
     cur_length::Int
     max_length::Int
@@ -49,7 +49,7 @@ lazymap(f::Function, c::C) where C<:Channel = Channel() do ch
 end
 
 import Base: findnext
-function findnext{S <: SparseVector}(v::S, i::Int)
+function findnext(v::SparseVector, i::Int)
     n = searchsortedfirst(v.nzind, i)
     if n > length(v.nzind)
         return 0
@@ -88,7 +88,7 @@ end
 
 using Base.Threads: lock, unlock
 
-type ReadWriteLock{L}
+mutable struct ReadWriteLock{L}
     readers::Int
     read_lock::L
     write_lock::L

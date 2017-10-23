@@ -10,9 +10,9 @@ using PolynomialRings.Polynomials: Polynomial
 
 abstract type Constant <: Number end
 
-type One <: Constant end
-type Zero <: Constant end
-type MinusOne <: Constant end
+struct One <: Constant end
+struct Zero <: Constant end
+struct MinusOne <: Constant end
 
 _N = Union{Number,AbstractMonomial,Term,Polynomial}
 
