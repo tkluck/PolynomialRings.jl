@@ -11,7 +11,7 @@ using PolynomialRings
     S = typeof(q)
     T = @ring ℤ[a,b,c]
     r, = formal_coefficients(T, :r)
-    U = @ring Int[ε]
+    U = @ring Int64[ε]
 
     @testset "Types" begin
         @test repr(R) == "ℚ[x,y]"
