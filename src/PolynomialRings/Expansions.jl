@@ -254,10 +254,6 @@ function (p::Polynomial)(; kwargs...)
 
 end
 
-function (p::Array{P})(; kwargs...) where P <: Polynomial
-    map(p_i -> p_i(;kwargs...), p)
-end
-
 import Base: diff
 
 function diff(p::Polynomial, variable::Symbol)

@@ -242,5 +242,16 @@ end
         @test one(R) == one(R)
     end
 
+    @testset "Arrays" begin
+        R = @ring ℚ[x,y]
+        @test [[0 1], [1 0]] == @coefficients [x y] x y
+        @test [1 2] == [x y](x=1,y=2)
+        @test [1 1] == @coefficient [x^2+y^2 x^2+1] x^2
+        @test [1 1] == @coefficient [x^2+y^2 x^2+1] x^2
+        @test [0 1] == @constant_coefficient [x^2+y^2 x^2+1] x y
+        @test [y^2 1] == @constant_coefficient [x^2+y^2 x^2+1] x
+        @test [[1 0], [0 0]] == @linear_coefficients [x+y^2 x^2+1] x y
+        @test [[0 0], [1 0]] == @linear_coefficients [x+y^2 x^2+1] y x
+    end
 
 end
