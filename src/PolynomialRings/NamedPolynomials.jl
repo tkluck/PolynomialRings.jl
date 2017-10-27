@@ -103,6 +103,10 @@ function convert(::Type{P1}, a::P2) where P1 <: NamedPolynomial where P2 <: Poly
     # Without the leading T[ ... ], type inference makes this an Array{Any}, so
     # it can't be omitted.
     converted_terms = T[ T(m,c) for (m,c) in PolynomialRings.Expansions._expansion(a, namestype(P1)) ]
+    # zero may happen if conversion to the basering is lossy; e.g. mapping ℚ[α]
+    # to the number field ℚ[α]/Ideal(α^2-2)
+    # TODO: needs testing as soon as number fields are part of this package.
+    filter!(!iszero, converted_terms)
     sort!(converted_terms, order=monomialorder(P1))
     P1(converted_terms)
 end
