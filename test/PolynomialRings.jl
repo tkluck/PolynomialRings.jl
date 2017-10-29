@@ -139,6 +139,7 @@ end
 
     using PolynomialRings: expansion, @expand, coefficient, @coefficient
     R,(x,y,z) = polynomial_ring(:x, :y, :z, basering=Int)
+    @ring ℚ[ε]
 
     @testset "expansion()" begin
         @test collect(expansion(zero(z), :z)) == []
@@ -198,9 +199,13 @@ end
         @test linear_coefficients(x+y+1, :x, :y) == [1,1]
         @test linear_coefficients(x^2+y^2+x-y+1, :x, :y) == [1,-1]
         @test linear_coefficients(x^2+y^2+x-y+1, :y, :x) == [-1,1]
+        @test linear_coefficients(x^2+y^2+x-y+1, :y, :z, :x) == [-1,0,1]
         @test @linear_coefficients(x+y+1, x, y) == [1,1]
         @test @linear_coefficients(x^2+y^2+x-y+1, x, y) == [1,-1]
         @test @linear_coefficients(x^2+y^2+x-y+1, y, x) == [-1,1]
+        @test @linear_coefficients(x^2+y^2+x-y+1, y, z, x) == [-1,0,1]
+
+        @test [0] == @linear_coefficients(ε^2, ε)
 
         @test [0,1] == @linear_coefficients(y + y^2, x, y)
     end
@@ -252,6 +257,7 @@ end
         @test [y^2 1] == @constant_coefficient [x^2+y^2 x^2+1] x
         @test [[1 0], [0 0]] == @linear_coefficients [x+y^2 x^2+1] x y
         @test [[0 0], [1 0]] == @linear_coefficients [x+y^2 x^2+1] y x
+        @test [[0 0]] == @linear_coefficients [ε^2  ε^3] ε
     end
 
 end

@@ -162,6 +162,7 @@ function _expansion(p::P, ::Type{Numbered{name}}) where P <: NamedPolynomial whe
     MonomialType, CoeffType = _expansion_types(P, Numbered{name})
 
     return Channel() do ch
+        iszero(p) && return
         separated_terms = [
             (inner_monomial,c*CoeffType(monomial(t)))
             for t in terms(p)
@@ -351,19 +352,34 @@ julia> linear_coefficients(x^3*y + x + y + 1, :x, :y)
 # See also
 `@constant_coefficient`, `@coefficient`, and `@expansion`
 """
-function linear_coefficients(f::Polynomial, vars...)
-    ExpansionType, CoeffType = _expansion_types(typeof(f), vars...)
-    iszero(f) && return spzeros(CoeffType, 0)
-    terms = [
-        (w,p)
-        for (w,p) in expansion(f, vars...)
+function linear_coefficients(f::Polynomial, ::Type{Named{Names}}) where Names
+    ExpansionType, CoeffType = _expansion_types(typeof(f), Named{Names})
+
+    res = spzeros(CoeffType, length(Names))
+    for (w, p) in expansion(f, Named{Names})
         if sum(w) == 1
-    ]
-    l = length(terms)>0 ? maximum(length, w for (w,p) in terms) : 0
-    res = spzeros(CoeffType, l)
-    for (w,p) in terms
-        res[findfirst(w)] = p
+            res[findfirst(w)] = p
+        end
     end
+
+    return res
+end
+
+function linear_coefficients(f::Polynomial, ::Type{Numbered{Name}}) where Name
+    ExpansionType, CoeffType = _expansion_types(typeof(f), Numbered{Name})
+
+    res = spzeros(CoeffType, 0)
+    for (w, p) in expansion(f, Numbered{Name})
+        if sum(w) == 1
+            ix = findfirst(w)
+            newlength = max(ix, length(res))
+            # there is no resize!() because SparseVector is an
+            # immutable struct
+            res = SparseVector(newlength, res.nzind, res.nzval)
+            res[ix] = p
+        end
+    end
+
     return res
 end
 
