@@ -59,7 +59,11 @@ function convert(::Type{P}, x::Symbol) where P<:Polynomial
             return g
         end
     end
-    throw(ArgumentError("Variable $x does not appear in $P"))
+    try
+        return P(convert(basering(P), x))
+    catch
+        throw(ArgumentError("Variable $x does not appear in $P"))
+    end
 end
 
 """
@@ -89,14 +93,7 @@ function formal_coefficients(::Type{P}, name::Symbol) where P <: Polynomial
     return lazymap(g->g⊗one(P), generators(CP))
 end
 
-_baserings = Dict(
-    :ℚ => Rational{BigInt},
-    :ℤ => BigInt,
-    :ℝ => BigFloat,
-    :ℂ => Complex{BigFloat},
-)
-
-function _parse_ring_definition(definition)
+function _variables_in_ring_definition(definition)
     if(definition.head != :ref)
         throw(ArgumentError("@ring can only be used with a polynomial ring expression"))
     end
@@ -105,13 +102,18 @@ function _parse_ring_definition(definition)
     variables = definition.args[2:end]
 
     if basering_spec isa Expr
-        basering = esc( macroexpand(:(@ring $basering_spec)) )
+        return union(variables, _variables_in_ring_definition(basering_spec))
     else
-        basering = get(_baserings, basering_spec, esc(basering_spec))
+        return variables
     end
-
-    return basering, variables
 end
+
+_baserings = Dict(
+    :ℚ => Rational{BigInt},
+    :ℤ => BigInt,
+    :ℝ => BigFloat,
+    :ℂ => Complex{BigFloat},
+)
 
 """
     @ring! ℚ[x,y]
@@ -140,18 +142,13 @@ julia> x^3 + y
 
 """
 macro ring!(definition)
-    basering, variables = _parse_ring_definition(definition)
+    variables = _variables_in_ring_definition(definition)
     variables_lvalue = :(())
     append!(variables_lvalue.args, variables)
-
-    if all(v isa Symbol for v in variables)
-        return quote
-            R,vars = polynomial_ring($variables..., basering=$basering)
-            ($(esc(variables_lvalue))) = vars
-            R
-        end
-    elseif length(variables) == 1 && variables.head == :...
-        @assert(false) # not implemented yet
+    return quote
+        R = $(esc( macroexpand(:(@ring $definition)) ))
+        ($(esc(variables_lvalue))) = map(R, $variables)
+        R
     end
 end
 
@@ -181,7 +178,18 @@ julia> @ring ℚ[x,y]
 
 """
 macro ring(definition)
-    basering, variables = _parse_ring_definition(definition)
+    if(definition.head != :ref)
+        throw(ArgumentError("@ring can only be used with a polynomial ring expression"))
+    end
+
+    basering_spec = definition.args[1]
+    variables = definition.args[2:end]
+
+    if basering_spec isa Expr
+        basering = esc( macroexpand(:(@ring $basering_spec)) )
+    else
+        basering = get(_baserings, basering_spec, esc(basering_spec))
+    end
 
     if all(v isa Symbol for v in variables)
         return quote
@@ -193,6 +201,7 @@ macro ring(definition)
     end
 end
 
+# helper function for below
 function _visit_symbols(f::Function, ex)
     if ex isa Symbol
         return f(ex)

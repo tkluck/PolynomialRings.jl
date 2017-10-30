@@ -240,6 +240,15 @@ end
             @test U != V
 
             @test U(x+y) == V(x+y)
+
+            @test typeof(U(:y)) == typeof(U(:x))
+
+            # test which variables get injected by @ring!
+            A = @ring ℤ[a]
+            B = @ring! A[b]
+            @test B == @ring ℤ[a][b]
+            @test typeof(b) == B
+            @test_throws UndefVarError typeof(a)
         end
         @testset "Variable duplication" begin
             @test_throws ArgumentError @ring ℚ[x,x]
