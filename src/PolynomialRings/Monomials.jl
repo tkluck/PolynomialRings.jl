@@ -41,7 +41,7 @@ abstract type AbstractMonomial{Nm} end
 #
 # -----------------------------------------------------------------------------
 import Base: getindex, gcd, lcm, one, *, ^, enumerate, ==, diff
-import PolynomialRings: generators, to_dense_monomials, max_variable_index, deg
+import PolynomialRings: generators, to_dense_monomials, max_variable_index
 import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namestype
 
 # -----------------------------------------------------------------------------
@@ -294,8 +294,6 @@ to_dense_monomials(n::Integer, m::AbstractMonomial) = _construct(TupleMonomial{n
 # User-facing interface
 #
 # -----------------------------------------------------------------------------
-deg(m::AbstractMonomial) = total_degree(m)
-
 (m::TupleMonomial)(args...)  = prod(args[i]^e for (i,e) in enumerate(m))
 (m::VectorMonomial)(args...) = prod(args[i]^e for (i,e) in enumerate(m))
 

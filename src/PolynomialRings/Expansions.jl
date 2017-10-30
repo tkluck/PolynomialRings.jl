@@ -384,6 +384,25 @@ function linear_coefficients(f::Polynomial, ::Type{Numbered{Name}}) where Name
     return res
 end
 
+"""
+    deg(f, vars...)
+
+Return the total degree of `f` when regarded as a polynomial in `vars`.
+
+```jldoctest
+julia> R = @ring ℤ[x,y];
+julia> deg(x^2, :x)
+2
+julia> deg(x^2, :x, :y)
+2
+julia> deg(x^2, :y)
+0
+```
+"""
+function deg(f::Polynomial, args...)
+    return maximum(sum(w) for (w,p) in expansion(f, args...))
+end
+
 # -----------------------------------------------------------------------------
 #
 # Helper functions for some of the macros below
@@ -582,6 +601,34 @@ macro coefficients(f, symbols...)
     expansion_expr = _expansion_expr(symbols)
     quote
         coefficients($(esc(f)), $expansion_expr)
+    end
+end
+
+"""
+    @deg(f, vars...)
+
+Return the total degree of `f` when expanded as a polynomial in the given
+variables.
+
+!!! note
+    `vars` need to be literal variable names; it cannot be a variable containing
+    it.
+
+# Examples
+```jldoctest
+julia> R = @ring! ℤ[x,y];
+julia> @deg x^2 + x*y - 1 x
+2
+julia> @deg x^2 + x*y - 1 y
+1
+```
+# See also
+`deg`, `@expansion`
+"""
+macro deg(f, symbols...)
+    expansion_expr = _expansion_expr(symbols)
+    quote
+        deg($(esc(f)), $expansion_expr)
     end
 end
 

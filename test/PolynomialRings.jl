@@ -68,9 +68,11 @@ one(Foo) = Foo()
     end
 
     @testset "degrees" begin
-        @test deg((a^2+9)^39) == 2*39
-        @test deg((a*b+9)^39) == 2*39
-        @test deg((a*b*z+9)^39) == 3*39
+        @test deg((a^2+9)^39, :a) == 2*39
+        @test deg((a*b+9)^39, :a) == 39
+        @test deg((a*b+9)^39, :a, :b) == 2*39
+        @test deg((a*b*z+9)^39, :a, :b) == 2*39
+        @test deg((a*b*z+9)^39, :a, :b, :z) == 3*39
     end
 
     dx(f) = diff(f, :x)

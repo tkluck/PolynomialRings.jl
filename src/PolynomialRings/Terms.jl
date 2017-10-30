@@ -23,7 +23,7 @@ end
 #
 # -----------------------------------------------------------------------------
 import Base: *, ^, +, -, one, ==, iszero, diff
-import PolynomialRings: generators, to_dense_monomials, max_variable_index, deg, basering
+import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering
 import PolynomialRings: maybe_div, lcm_multipliers, monomialtype, exptype, lcm_degree, namestype
 import Base.Order: lt
 import PolynomialRings.MonomialOrderings: MonomialOrder
@@ -64,8 +64,6 @@ iszero(a::Term) = coefficient(a) == 0
 
 to_dense_monomials(n, a::Term) = Term( to_dense_monomials(n, monomial(a)), coefficient(a) )
 max_variable_index(a::Term) = max_variable_index(monomial(a))
-
-deg(a::Term) = deg(monomial(a))
 
 function maybe_div(a::T, b::T) where T<:Term
     q = maybe_div(monomial(a), monomial(b))

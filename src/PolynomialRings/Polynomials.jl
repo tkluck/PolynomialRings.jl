@@ -9,7 +9,7 @@ import PolynomialRings.Terms: Term
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering, monomialtype, deg
+import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering, monomialtype
 import PolynomialRings: leading_term, termtype, monomialorder, terms, exptype, namestype
 import PolynomialRings: variablesymbols, allvariablesymbols
 import Base: copy
@@ -64,7 +64,6 @@ end
 
 max_variable_index(p::Polynomial) = maximum(max_variable_index(t) for t in terms(p))
 
-deg(p::Polynomial) = iszero(p) ? -1 : deg(last(terms(p)))
 leading_term(p::Polynomial) = last(terms(p))
 
 copy(p::Polynomial) = typeof(p)(copy(p.terms))

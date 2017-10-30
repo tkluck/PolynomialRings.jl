@@ -31,25 +31,6 @@ allvariablesymbols(::Type) = Set()
 # Polynomial/term/monomial operations
 #
 # -----------------------------------------------------------------------------
-"""
-    deg(f)
-
-Return the total degree of f.
-
-WARNING: currently, `deg` is oblivious to 'nested' polynomial rings. For example:
-
-```jldoctest
-julia> R = @ring ℤ[x];
-julia> c1,c2 = formal_coefficients(R, :c);
-julia> deg(x^2)
-2
-julia> deg(c1*x^2)
-2
-julia> deg(@coefficient(c1*x^2, x^2))
-1
-```
-"""
-function deg end
 function terms end
 function leading_term end
 function maybe_div end

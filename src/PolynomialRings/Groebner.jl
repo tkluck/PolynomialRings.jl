@@ -1,6 +1,6 @@
 module Groebner
 
-import PolynomialRings: leading_term, lcm_multipliers, deg, lcm_degree, fraction_field, basering, base_extend
+import PolynomialRings: leading_term, lcm_multipliers, lcm_degree, fraction_field, basering, base_extend
 import PolynomialRings.Polynomials: Polynomial, monomialorder, terms
 import PolynomialRings.Terms: monomial
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering

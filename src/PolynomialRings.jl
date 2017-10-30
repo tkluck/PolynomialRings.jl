@@ -24,12 +24,13 @@ import .Monomials: TupleMonomial, VectorMonomial
 import .Terms: Term
 import .Polynomials: Polynomial, generators
 import .Constructors: polynomial_ring, formal_coefficients, @ring, @ring!, @polynomial
-import .Expansions: expansion, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, coefficients, @coefficients, linear_coefficients, @linear_coefficients
+import .Expansions: expansion, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, coefficients, @coefficients, linear_coefficients, @linear_coefficients, deg, @deg
 import .Groebner: groebner_basis, groebner_transformation, syzygies
 import .Arrays: flat_coefficients, @flat_coefficients
 
 export TupleMonomial, Term, Polynomial, generators, ⊗, polynomial_ring, formal_coefficients, variablesymbols
-export deg, expansion, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, coefficients, @coefficients, linear_coefficients, @linear_coefficients, @ring, @ring!, @polynomial
+export expansion, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, coefficients, @coefficients, linear_coefficients, @linear_coefficients, @ring, @ring!, @polynomial
+export deg, @deg
 export flat_coefficients, @flat_coefficients
 export groebner_basis, groebner_transformation, syzygies
 
