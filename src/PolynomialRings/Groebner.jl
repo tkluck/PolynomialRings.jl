@@ -283,11 +283,8 @@ function buchberger(polynomials::AbstractVector{M}, ::Type{Val{with_transformati
                         if _leading_row(new_a) == new_lr
                             new_lt_a = _leading_term(new_a)
                             degree = lcm_degree(new_lt_a, new_lt)
-
-                            if degree < deg(new_lt_a) + deg(new_lt)
-                                if degree <= max_degree
-                                    enqueue!(pairs_to_consider, (new_i,new_j), degree)
-                                end
+                            if degree <= max_degree
+                                enqueue!(pairs_to_consider, (new_i,new_j), degree)
                             end
                         end
                     end
