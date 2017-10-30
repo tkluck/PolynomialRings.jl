@@ -208,6 +208,7 @@ end
 @inline linear_coefficients(p::Polynomial, variables::Symbol...) = linear_coefficients(p, Named{variables})
 @inline coefficient(p::Polynomial, exponent_tuple::Tuple, variables::Symbol...) = coefficient(p, exponent_tuple, Named{variables})
 
+@inline _expansion_types(t::Type, variables::Symbol...) = _expansion_types(t, Named{variables})
 
 function _substitute(p::Polynomial, ::Type{Named{Names}}, values) where Names
     ExpansionType, CoeffType = _expansion_types(typeof(p), Named{Names})

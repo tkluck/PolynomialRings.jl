@@ -6,7 +6,7 @@ import PolynomialRings: to_dense_monomials, max_variable_index
 import PolynomialRings.Terms: Term
 import PolynomialRings.Polynomials: Polynomial
 import Iterators: groupby
-import PolynomialRings.Expansions: _expansion_expr
+import PolynomialRings.Expansions: _expansion_expr, _expansion_types
 
 # -----------------------------------------------------------------------------
 #
@@ -49,9 +49,10 @@ _joint_iteration(iters, elm, groupby, value) = Channel() do ch
 end
 
 function expansion(a::AbstractArray{P}, args...) where P <: Polynomial
+    MonomialType, CoeffType =_expansion_types(P, args...)
     # needs collect even though I was hoping to do this lazily. A channel
     # can't deal with holding onto the state for a few iterations
-    return _joint_iteration(map(a_i->collect(expansion(a_i, args...)), a), P, i->i[1], i->i[2])
+    return _joint_iteration(map(a_i->collect(expansion(a_i, args...)), a), CoeffType, i->i[1], i->i[2])
 end
 
 function coefficients(a::AbstractArray{P}, args...) where P <: Polynomial
@@ -71,7 +72,8 @@ function constant_coefficient(a::AbstractArray{P}, args...) where P <: Polynomia
 end
 
 function linear_coefficients(a::AbstractArray{P}, args...) where P <: Polynomial
-    return map(i->i[2], _joint_iteration(map(a_i->linear_coefficients(a_i, args...), a), P, i->1, identity))
+    MonomialType, CoeffType =_expansion_types(P, args...)
+    return map(i->i[2], _joint_iteration(map(a_i->linear_coefficients(a_i, args...), a), CoeffType, i->1, identity))
 end
 
 """

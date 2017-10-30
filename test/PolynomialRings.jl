@@ -208,6 +208,10 @@ end
         @test [0] == @linear_coefficients(ε^2, ε)
 
         @test [0,1] == @linear_coefficients(y + y^2, x, y)
+        @test eltype(@linear_coefficients(y + y^2, x, y, z)) == Int
+        @test eltype(@linear_coefficients(y + y^2, x, y)) == @ring(Int[z])
+        @test eltype(@linear_coefficients(y + y^2, x)) == @ring(Int[y,z])
+        @test eltype(@linear_coefficients(y + y^2, y)) == @ring(Int[x,z])
     end
 
     @testset "Nested types" begin
@@ -258,6 +262,10 @@ end
         @test [[1 0], [0 0]] == @linear_coefficients [x+y^2 x^2+1] x y
         @test [[0 0], [1 0]] == @linear_coefficients [x+y^2 x^2+1] y x
         @test [[0 0]] == @linear_coefficients [ε^2  ε^3] ε
+
+        @test eltype(eltype(@linear_coefficients([x+y, -x-y], x, y))) == Rational{BigInt}
+        @test eltype(eltype(@linear_coefficients([x+y, -x-y], x))) == @ring(ℚ[y])
+        @test eltype(eltype(@linear_coefficients([x+y, -x-y], y))) == @ring(ℚ[x])
     end
 
 end
