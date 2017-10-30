@@ -75,7 +75,7 @@ In other words, the channel yields `c_i⊗ 1` for `1 ∈ R` and generators `c_i 
 
 # Examples
 ```jldoctest
-julia> R = @ring ℤ[x];
+julia> R = @ring! ℤ[x];
 julia> coeffs = formal_coefficients(R, :c);
 julia> c() = take!(coeffs);
 julia> [c()*x^2 + c()*x + c() , c()*x^2 + c()*x + c()]
@@ -96,30 +96,7 @@ _baserings = Dict(
     :ℂ => Complex{BigFloat},
 )
 
-"""
-    @ring ℚ[x,y]
-
-Define and return the specified polynomial ring, and bind the variable names to its generators.
-
-Currently, the supported rings are: ℚ (`Rational{BigInt}`), ℤ (`BigInt`), ℝ (`BigFloat`) and
-ℂ (`Complex{BigFloat}`).
-
-If you need different coefficient rings, or need to specify a non-default monomial order or
-exponent integer type, use `polynomial_ring` instead.
-
-# Examples
-```jldoctest
-julia> using PolynomialRings
-julia> @ring ℚ[x,y];
-julia> x^3 + y
-1 y + 1 x^3
-```
-
-# See also
-`polynomial_ring`
-
-"""
-macro ring(definition)
+function _parse_ring_definition(definition)
     if(definition.head != :ref)
         throw(ArgumentError("@ring can only be used with a polynomial ring expression"))
     end
@@ -133,6 +110,37 @@ macro ring(definition)
         basering = get(_baserings, basering_spec, esc(basering_spec))
     end
 
+    return basering, variables
+end
+
+"""
+    @ring! ℚ[x,y]
+
+Define and return the specified polynomial ring, and bind the variable names to its generators.
+
+Currently, the supported rings are: ℚ (`Rational{BigInt}`), ℤ (`BigInt`), ℝ (`BigFloat`) and
+ℂ (`Complex{BigFloat}`).
+
+Note: `@ring!` returns the ring and injects the variables. The macro `@ring` only returns
+the ring.
+
+If you need different coefficient rings, or need to specify a non-default monomial order or
+exponent integer type, use `polynomial_ring` instead.
+
+# Examples
+```jldoctest
+julia> using PolynomialRings
+julia> @ring! ℚ[x,y];
+julia> x^3 + y
+1 y + 1 x^3
+```
+
+# See also
+`polynomial_ring` `@ring`
+
+"""
+macro ring!(definition)
+    basering, variables = _parse_ring_definition(definition)
     variables_lvalue = :(())
     append!(variables_lvalue.args, variables)
 
@@ -140,6 +148,44 @@ macro ring(definition)
         return quote
             R,vars = polynomial_ring($variables..., basering=$basering)
             ($(esc(variables_lvalue))) = vars
+            R
+        end
+    elseif length(variables) == 1 && variables.head == :...
+        @assert(false) # not implemented yet
+    end
+end
+
+"""
+    @ring ℚ[x,y]
+
+Define and return the specified polynomial ring.
+
+Currently, the supported rings are: ℚ (`Rational{BigInt}`), ℤ (`BigInt`), ℝ (`BigFloat`) and
+ℂ (`Complex{BigFloat}`).
+
+Note: `@ring!` returns the ring and injects the variables into the surrounding
+scope. The macro `@ring` only returns the ring.
+
+If you need different coefficient rings, or need to specify a non-default monomial order or
+exponent integer type, use `polynomial_ring` instead.
+
+# Examples
+```jldoctest
+julia> using PolynomialRings
+julia> @ring ℚ[x,y]
+ℚ[x,y]
+```
+
+# See also
+`polynomial_ring` `@ring!`
+
+"""
+macro ring(definition)
+    basering, variables = _parse_ring_definition(definition)
+
+    if all(v isa Symbol for v in variables)
+        return quote
+            R,_ = polynomial_ring($variables..., basering=$basering)
             R
         end
     elseif length(variables) == 1 && variables.head == :...

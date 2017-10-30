@@ -9,9 +9,9 @@ one(Foo) = Foo()
 
     using PolynomialRings: basering
 
-    R = @ring ℚ[x,y]
+    R = @ring! ℚ[x,y]
     S,(z,) = polynomial_ring(:z, basering=Int)
-    T = @ring ℤ[a,b]
+    T = @ring! ℤ[a,b]
 
     @testset "Arithmetic" begin
         @test x != 0
@@ -99,7 +99,7 @@ one(Foo) = Foo()
         g = [h5(); h5()]
         @test euler(g) == 5*g
 
-        @ring ℤ[d1,d2,d3]
+        @ring! ℤ[d1,d2,d3]
         dd1,dd2,dd3 = formal_coefficients(R, :d)
         ((_,ddd1),) = expansion(dd1, variablesymbols(R)...)
         ((_,ddd2),) = expansion(dd2, variablesymbols(R)...)
@@ -128,7 +128,7 @@ one(Foo) = Foo()
     using PolynomialRings.Modules: modulebasering
 
     @testset "base extension" begin
-        @ring ℤ[x,y]
+        @ring! ℤ[x,y]
         @test basering( base_extend(x,BigInt) ) == BigInt
         @test modulebasering( base_extend([x, 0, y])) == @ring(ℚ[x,y])
         @test base_extend(x, Float64) == 1.0 * x
@@ -139,7 +139,7 @@ end
 
     using PolynomialRings: expansion, @expand, coefficient, @coefficient
     R,(x,y,z) = polynomial_ring(:x, :y, :z, basering=Int)
-    @ring ℚ[ε]
+    @ring! ℚ[ε]
 
     @testset "expansion()" begin
         @test collect(expansion(zero(z), :z)) == []
@@ -212,8 +212,8 @@ end
 
     @testset "Nested types" begin
         @testset "Through tensor" begin
-            R = @ring ℤ[x]
-            S = @ring ℤ[y]
+            R = @ring! ℤ[x]
+            S = @ring! ℤ[y]
 
             @test @coefficient(x⊗y, x) == y
             @test @coefficient(x⊗y, y) == x
@@ -224,8 +224,8 @@ end
             @test (x⊗y)(x=1) == y == (x*y)(x=1) == (y⊗x)(x=1)
         end
         @testset "Explicit types" begin
-            R = @ring ℤ[x]
-            S = @ring ℤ[y]
+            R = @ring! ℤ[x]
+            S = @ring! ℤ[y]
             T = @ring S[x]
             U = @ring ℤ[y][x]
             V = @ring ℤ[x][y]
@@ -248,7 +248,7 @@ end
     end
 
     @testset "Arrays" begin
-        R = @ring ℚ[x,y]
+        R = @ring! ℚ[x,y]
         @test [[0 1], [1 0]] == @coefficients [x y] x y
         @test [1 2] == [x y](x=1,y=2)
         @test [1 1] == @coefficient [x^2+y^2 x^2+1] x^2

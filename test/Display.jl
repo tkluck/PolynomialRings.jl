@@ -6,12 +6,12 @@ using PolynomialRings
     using PolynomialRings
     using PolynomialRings: basering, termtype
 
-    R = @ring ℚ[x,y]
+    R = @ring! ℚ[x,y]
     q, = formal_coefficients(R, :q)
     S = typeof(q)
-    T = @ring ℤ[a,b,c]
+    T = @ring! ℤ[a,b,c]
     r, = formal_coefficients(T, :r)
-    U = @ring Int64[ε]
+    U = @ring! Int64[ε]
 
     @testset "Types" begin
         @test repr(R) == "ℚ[x,y]"

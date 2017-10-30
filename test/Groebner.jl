@@ -3,7 +3,7 @@ using PolynomialRings
 
 @testset "Groebner" begin
 
-    R = @ring ℤ[x,y]
+    R = @ring! ℤ[x,y]
 
     @test divrem(x^2, [x]) == ([x]', 0)
 
@@ -31,7 +31,7 @@ end
 
 @testset "Syzygy" begin
 
-    R = @ring ℚ[x,y]
+    R = @ring! ℚ[x,y]
 
     G = [x^5, x^2 + y, x*y + y^2]
     GG, tr = groebner_transformation(G)
