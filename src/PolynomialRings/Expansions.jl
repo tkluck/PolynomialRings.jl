@@ -5,7 +5,7 @@ import PolynomialRings.NamedPolynomials: NamedPolynomial, _lossy_convert_monomia
 import PolynomialRings.Polynomials: Polynomial, termtype, monomialtype, terms
 import PolynomialRings.Terms: Term, monomial, coefficient
 import PolynomialRings: basering, namestype, variablesymbols
-import PolynomialRings.Monomials: AbstractMonomial, TupleMonomial, exptype
+import PolynomialRings.Monomials: AbstractMonomial, TupleMonomial, exptype, expstype
 import PolynomialRings.VariableNames: Named, Numbered
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.Util: lazymap, TrivialIter
@@ -79,9 +79,13 @@ julia> collect(expansion(x^3 + y^2, :x, :y))
 # See also
 `@expansion(...)`, `@coefficient` and `coefficient`
 """
-expansion(args...) = lazymap(_expansion(args...)) do item
-    w,c = item
-    return w.e,c
+function expansion(p::P, args...) where P <: Polynomial
+    MonomialType, CoeffType = _expansion_types(P, args...)
+    return Channel(ctype=Tuple{expstype(MonomialType), CoeffType}) do ch
+        for (w,c) in _expansion(p, args...)
+            push!(ch, (w.e, c))
+        end
+    end
 end
 
 
@@ -140,7 +144,7 @@ end
 function _expansion(p::P, ::Type{Numbered{name}}) where P <: Polynomial where name
     @assert namestype(p) == Numbered{name}
 
-    return Channel() do ch
+    return Channel(ctype=Tuple{monomialtype(P), basering(P)}) do ch
         for t in terms(p)
             push!(ch, (monomial(t), coefficient(t)))
         end
@@ -161,7 +165,7 @@ function _expansion(p::P, ::Type{Numbered{name}}) where P <: NamedPolynomial whe
 
     MonomialType, CoeffType = _expansion_types(P, Numbered{name})
 
-    return Channel() do ch
+    return Channel(ctype=Tuple{MonomialType, CoeffType}) do ch
         iszero(p) && return
         separated_terms = [
             (inner_monomial,c*CoeffType(monomial(t)))

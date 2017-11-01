@@ -191,6 +191,7 @@ end
 num_variables(::Type{TupleMonomial{N,I,Nm}}) where {N,I,Nm} = N
 namestype(::Type{TupleMonomial{N,I,Nm}}) where {N,I,Nm} = Nm
 exptype(::Type{TupleMonomial{N,I,Nm}}) where I <: Integer where {N,Nm} = I
+expstype(::Type{TupleMonomial{N,I,Nm}}) where I <: Integer where {N,Nm} = NTuple{N,I}
 @inline getindex(m::TupleMonomial, i::Integer) = m.e[i]
 
 generators(::Type{TupleMonomial{N, I, Nm}}) where {N, I, Nm} = [
@@ -238,6 +239,7 @@ end
 
 namestype(::Type{VectorMonomial{V,Nm}}) where {V,Nm} = Nm
 exptype(::Type{VectorMonomial{V,Nm}}) where {V,Nm} = eltype(V)
+expstype(::Type{VectorMonomial{V,Nm}}) where {V,Nm} = V
 @inline getindex(m::VectorMonomial, i::Integer) = i <= length(m.e) ? m.e[i] : zero(exptype(m))
 
 # special case for sparsevectors; for some reason, SparseVector{Int,Int}() does not give
