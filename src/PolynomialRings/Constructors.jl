@@ -269,4 +269,37 @@ macro polynomial(expr)
     esc(expr)
 end
 
+"""
+    @polyvar var [var...]
+
+Define a polynomial ring in the given variables, and inject them into the surrounding scope.
+
+This is equivalent to `@ring! Int[var...]`.
+
+If you need different coefficient rings, or need to specify a non-default monomial order or
+exponent integer type, use `@ring!` or `polynomial_ring` instead.
+
+# Examples
+```jldoctest
+julia> using PolynomialRings
+julia> @polyvar x y;
+julia> x + 3y
+3 y + x
+```
+
+# See also
+`polynomial_ring` `@ring!`
+
+"""
+macro polyvar(expr...)
+    if(!all(ex isa Symbol for ex in expr))
+        throw(ArgumentError("The @polyvar macro can only be used with symbols. Example: @polyvar x y"))
+    end
+    definition = :( Int[] )
+    append!(definition.args, expr)
+    quote
+        @ring! $(esc(definition))
+    end
+end
+
 end

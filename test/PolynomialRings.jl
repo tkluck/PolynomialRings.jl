@@ -11,7 +11,7 @@ one(Foo) = Foo()
 
     R = @ring! ℚ[x,y]
     S,(z,) = polynomial_ring(:z, basering=Int)
-    T = @ring! ℤ[a,b]
+    @polyvar a b
 
     @testset "Arithmetic" begin
         @test x != 0

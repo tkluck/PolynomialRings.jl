@@ -23,13 +23,14 @@ include("PolynomialRings/Conversions.jl")
 import .Monomials: TupleMonomial, VectorMonomial
 import .Terms: Term
 import .Polynomials: Polynomial, generators
-import .Constructors: polynomial_ring, formal_coefficients, @ring, @ring!, @polynomial
+import .Constructors: polynomial_ring, formal_coefficients, @ring, @ring!, @polynomial, @polyvar
 import .Expansions: expansion, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, coefficients, @coefficients, linear_coefficients, @linear_coefficients, deg, @deg
 import .Groebner: groebner_basis, groebner_transformation, syzygies
 import .Arrays: flat_coefficients, @flat_coefficients
 
 export TupleMonomial, Term, Polynomial, generators, ⊗, polynomial_ring, formal_coefficients, variablesymbols
-export expansion, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, coefficients, @coefficients, linear_coefficients, @linear_coefficients, @ring, @ring!, @polynomial
+export expansion, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient
+export coefficients, @coefficients, linear_coefficients, @linear_coefficients, @ring, @ring!, @polynomial, @polyvar
 export deg, @deg
 export flat_coefficients, @flat_coefficients
 export groebner_basis, groebner_transformation, syzygies
