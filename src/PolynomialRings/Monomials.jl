@@ -29,7 +29,7 @@ and optionally:
     total_degree(a)
     lcm(a,b)
     gcd(a,b)
-    enumerate(m)
+    enumeratenz(m)
 
 These latter function have fallbacks in terms of the functions above.
 """
@@ -40,7 +40,7 @@ abstract type AbstractMonomial{Nm} end
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: getindex, gcd, lcm, one, *, ^, enumerate, ==, diff
+import Base: getindex, gcd, lcm, one, *, ^, ==, diff
 import PolynomialRings: generators, to_dense_monomials, max_variable_index
 import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namestype
 
@@ -123,7 +123,7 @@ total_degree(a::A) where A <: AbstractMonomial = (ix = nzindices(a); length(ix)=
 
 lcm(a::M, b::M) where M <: AbstractMonomial = _construct(M,i -> max(a[i], b[i]), index_union(a,b))
 gcd(a::M, b::M) where M <: AbstractMonomial = _construct(M,i -> min(a[i], b[i]), index_union(a,b))
-enumerate(a::M) where M <: AbstractMonomial = Channel(ctype=Tuple{Int,exptype(M)}) do ch
+enumeratenz(a::M) where M <: AbstractMonomial = Channel(ctype=Tuple{Int,exptype(M)}) do ch
     for i in nzindices(a)
         push!(ch, (i, a[i]))
     end
@@ -296,8 +296,8 @@ to_dense_monomials(n::Integer, m::AbstractMonomial) = _construct(TupleMonomial{n
 # User-facing interface
 #
 # -----------------------------------------------------------------------------
-(m::TupleMonomial)(args...)  = prod(args[i]^e for (i,e) in enumerate(m))
-(m::VectorMonomial)(args...) = prod(args[i]^e for (i,e) in enumerate(m))
+(m::TupleMonomial)(args...)  = prod(args[i]^e for (i,e) in enumeratenz(m))
+(m::VectorMonomial)(args...) = prod(args[i]^e for (i,e) in enumeratenz(m))
 
 
 end

@@ -5,7 +5,7 @@ import PolynomialRings.NamedPolynomials: NamedPolynomial, _lossy_convert_monomia
 import PolynomialRings.Polynomials: Polynomial, termtype, monomialtype, terms
 import PolynomialRings.Terms: Term, monomial, coefficient
 import PolynomialRings: basering, namestype, variablesymbols
-import PolynomialRings.Monomials: AbstractMonomial, TupleMonomial, exptype, expstype
+import PolynomialRings.Monomials: AbstractMonomial, TupleMonomial, exptype, expstype, enumeratenz
 import PolynomialRings.VariableNames: Named, Numbered
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.Util: lazymap, TrivialIter
@@ -237,7 +237,7 @@ function _substitute(p::Polynomial, ::Type{Numbered{Name}}, values) where Name
         return zero(ReturnType)
     end
     # TODO: type stability even in corner cases
-    sum( p * prod(values(i)^k for (i,k) in enumerate(w)) for (w,p) in expansion(p, Numbered{Name}) )
+    sum( p * prod(values(i)^k for (i,k) in enumeratenz(m)) for (m,p) in _expansion(p, Numbered{Name}) )
 end
 
 """

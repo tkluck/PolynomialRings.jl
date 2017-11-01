@@ -3,7 +3,7 @@ module Display
 import PolynomialRings: namestype
 import PolynomialRings.Polynomials: Polynomial, terms, basering
 import PolynomialRings.Terms: Term, coefficient, monomial
-import PolynomialRings.Monomials: AbstractMonomial
+import PolynomialRings.Monomials: AbstractMonomial, enumeratenz
 import PolynomialRings.VariableNames: Named, Numbered
 import PolynomialRings.MonomialOrderings: MonomialOrder
 
@@ -20,7 +20,7 @@ _variable(::Type{Numbered{Name}}, ix) where Name  = "$Name[$ix]"
 
 function show(io::IO, m::AbstractMonomial)
     factors = String[]
-    for (ix, i) in enumerate(m)
+    for (ix, i) in enumeratenz(m)
         symbol = _variable(namestype(m), ix)
         if i == 1
             push!(factors, "$symbol")
