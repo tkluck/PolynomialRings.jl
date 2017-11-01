@@ -8,7 +8,8 @@ modulebasering(::Type{A}) where A <: AbstractModuleElement{P} where P<:Polynomia
 modulebasering(::A)       where A <: AbstractModuleElement{P} where P<:Polynomial = modulebasering(A)
 
 import PolynomialRings: leading_term, iszero, base_extend
-import Base: divrem
+import Base: div, rem, divrem
+import PolynomialRings.Operators: leaddiv, leadrem, leaddivrem
 
 function leading_term(x::AbstractArray{P}) where P<:Polynomial
     i = findfirst(x)
@@ -43,6 +44,11 @@ function leaddivrem(a::AbstractArray{P}, b::AbstractArray{P}) where P<:Polynomia
         return zero(P), a
     end
 end
+
+div(a::AbstractArray{P}, b::AbstractArray{P}) where P<:Polynomial = divrem(a, b)[1]
+rem(a::AbstractArray{P}, b::AbstractArray{P}) where P<:Polynomial = divrem(a, b)[2]
+leaddiv(a::AbstractArray{P}, b::AbstractArray{P}) where P<:Polynomial = leaddivrem(a, b)[1]
+leadrem(a::AbstractArray{P}, b::AbstractArray{P}) where P<:Polynomial = leaddivrem(a, b)[2]
 
 
 end

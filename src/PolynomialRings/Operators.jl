@@ -11,7 +11,7 @@ import PolynomialRings.Polynomials: Polynomial, termtype, terms, monomialorder
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: zero, one, +, -, *, ==, divrem, iszero, diff, ^
+import Base: zero, one, +, -, *, ==, div, rem, divrem, iszero, diff, ^
 import PolynomialRings: maybe_div
 
 # -----------------------------------------------------------------------------
@@ -234,6 +234,19 @@ function leaddivrem(f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:
         return typeof(f)([factor]), f - factor*g
     end
     return zero(g), f
+end
+
+function leaddiv(f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
+    leaddivrem(f, g)[1]
+end
+function leadrem(f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
+    leaddivrem(f, g)[2]
+end
+function div(f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
+    divrem(f, g)[1]
+end
+function rem(f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
+    divrem(f, g)[2]
 end
 
 # -----------------------------------------------------------------------------
