@@ -114,7 +114,13 @@ general polynomial of degree two":
     [c1*x^2 + c2*x + c3, c4*x^2 + c5*x + c6 ]
 
 We make this possible by supporting polynomial rings with an unbounded
-number of variables and a sparse representation of the exponents.
+number of variables and a sparse representation of the exponents. For example:
+
+    julia> R = @ring! ℤ[x]
+    ℤ[x]
+    julia> sum(c*x^i for (i,c) in zip(1:5, formal_coefficients(R, :c)))
+    c[1] x + c[2] x^2 + c[3] x^3 + c[4] x^4 + c[5] x^5
+
 
 ### Speed
 
