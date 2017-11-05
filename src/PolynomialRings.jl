@@ -36,8 +36,14 @@ export flat_coefficients, @flat_coefficients
 export groebner_basis, groebner_transformation, syzygies
 
 # TODO: needs a better place
-construct_monomial(::Type{P}, e::T) where P<:Polynomial where T<:Tuple = P([termtype(P)(monomialtype(P)(e, sum(e)),one(basering(P)))])
-construct_monomial(::Type{P}, e::T) where P<:Polynomial where T<:AbstractArray = P([termtype(P)(monomialtype(P)(ntuple(i->e[i], length(e)), sum(e)),one(basering(P)))])
+function construct_monomial(::Type{P}, e::T) where P<:Polynomial where T<:Tuple
+    @assert all(e.>=0)
+    P([termtype(P)(monomialtype(P)(e, sum(e)),one(basering(P)))])
+end
+function construct_monomial(::Type{P}, e::T) where P<:Polynomial where T<:AbstractArray
+    @assert all(e.>=0)
+    P([termtype(P)(monomialtype(P)(ntuple(i->e[i], length(e)), sum(e)),one(basering(P)))])
+end
 export construct_monomial
 
 import .Monomials: AbstractMonomial
