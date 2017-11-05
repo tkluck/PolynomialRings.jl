@@ -1,8 +1,7 @@
 module Expansions
 
-import PolynomialRings.Constructors: polynomial_ring
 import PolynomialRings.NamedPolynomials: NamedPolynomial, _lossy_convert_monomial
-import PolynomialRings.Polynomials: Polynomial, termtype, monomialtype, terms
+import PolynomialRings.Polynomials: Polynomial, termtype, monomialtype, terms, polynomial_ring
 import PolynomialRings.Terms: Term, monomial, coefficient
 import PolynomialRings: basering, namestype, variablesymbols
 import PolynomialRings.Monomials: AbstractMonomial, TupleMonomial, exptype, expstype, enumeratenz

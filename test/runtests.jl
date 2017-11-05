@@ -5,4 +5,5 @@ using Base.Test
     include("Display.jl")
     #include("Coefficients.jl")
     include("Groebner.jl")
+    include("CommutativeAlgebras.jl")
 end

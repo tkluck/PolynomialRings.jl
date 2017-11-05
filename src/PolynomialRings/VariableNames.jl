@@ -23,7 +23,9 @@ variablesymbols(::Type{Named{Names}}) where Names = Names
 #
 # -----------------------------------------------------------------------------
 abstract type Numbered{Name} end
-variablesymbols(::Type{Numbered{Name}}) where Name = Channel() do ch
+variablesymbols(::Type{Numbered{Name}}) where Name = tuple()
+
+flatvariablesymbols(::Type{Numbered{Name}}) where Name = Channel() do ch
     i = 0
     while true
         i += 1
