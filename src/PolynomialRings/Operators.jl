@@ -11,7 +11,7 @@ import PolynomialRings.Polynomials: Polynomial, termtype, terms, monomialorder
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: zero, one, +, -, *, ==, div, rem, divrem, iszero, diff, ^
+import Base: zero, one, +, -, *, ==, div, rem, divrem, iszero, diff, ^, gcd
 import PolynomialRings: maybe_div
 
 # -----------------------------------------------------------------------------
@@ -332,6 +332,24 @@ function diff(f::Polynomial, i::Integer)
     sort!(new_terms, order=monomialorder(f))
     return typeof(f)(new_terms)
 end
+
+# -----------------------------------------------------------------------------
+#
+# gcds and content
+#
+# -----------------------------------------------------------------------------
+gcd(f::Polynomial, g::Integer) = gcd(g, reduce(gcd, 0, (coefficient(t) for t in terms(f))))
+gcd(g::Integer, f::Polynomial) = gcd(g, reduce(gcd, 0, (coefficient(t) for t in terms(f))))
+
+function div(f::Polynomial, g::Integer)
+    T = termtype(f)
+    P = typeof(f)
+    new_terms = [T(monomial(t),div(coefficient(t),g)) for t in terms(f)]
+    filter!(!iszero, new_terms)
+    return P(new_terms)
+end
+
+content(f::Polynomial) = gcd(f, 0)
 
 # -----------------------------------------------------------------------------
 #
