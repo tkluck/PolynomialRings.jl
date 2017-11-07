@@ -115,6 +115,7 @@ one(Foo) = Foo()
 
     @testset "constructors" begin
         @test @polynomial(x) == x
+        @test @polynomial(x^4+x^3+x^2+x+1) == x^4+x^3+x^2+x+1
         @test @polynomial(y) == y
         @test @polynomial(x^2) == x^2
         @test @polynomial(x^10 - y^10) == x^10 - y^10

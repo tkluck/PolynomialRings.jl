@@ -273,10 +273,10 @@ julia> @polynomial x^3 + x^2*y + x*y^2 + y^3
 `@ring`, `polynomial_ring`, `convert(R, symbol)`
 """
 macro polynomial(expr)
-    symbols = Symbol[]
+    symbols = Set{Symbol}()
     expr = _visit_symbols(s->(push!(symbols,s);s), expr)
 
-    R,vars=polynomial_ring(symbols..., basering=Int)
+    R,vars=polynomial_ring(sort(collect(symbols))..., basering=Int)
 
     expr = _visit_symbols(s->convert(R,s), expr)
     esc(expr)
