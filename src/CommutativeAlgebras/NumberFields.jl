@@ -207,6 +207,7 @@ function inv(a::Q) where Q<:NumberField
 end
 
 //(a::Q, b::Q) where Q<:NumberField = a * inv(b)
+/(a::Q, b::Q) where Q<:NumberField = a * inv(b)
 
 # -----------------------------------------------------------------------------
 #
