@@ -140,5 +140,7 @@ done(::TrivialIter, state) = state
 next(t::TrivialIter, state) = (t.item, true)
 length(::TrivialIter) = 1
 
+include("LinAlgUtil.jl")
+
 
 end

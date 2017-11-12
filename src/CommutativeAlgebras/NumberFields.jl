@@ -8,8 +8,6 @@ using PolynomialRings.Monomials: AbstractMonomial
 using PolynomialRings.Terms: Term, monomial, coefficient
 using PolynomialRings.QuotientRings: QuotientRing, monomial_basis
 
-include("ExactLinAlg.jl")
-
 # -----------------------------------------------------------------------------
 #
 # Imports for overloading
@@ -23,6 +21,7 @@ import Base: show
 import PolynomialRings: allvariablesymbols, fraction_field, basering
 import PolynomialRings.Ideals: ring
 import PolynomialRings.QuotientRings: _ideal
+import PolynomialRings.Util.LinAlgUtil: AbstractExactNumber
 
 # -----------------------------------------------------------------------------
 #
@@ -30,7 +29,7 @@ import PolynomialRings.QuotientRings: _ideal
 #
 # -----------------------------------------------------------------------------
 
-struct NumberField{P<:Polynomial,C,ID} <: Number
+struct NumberField{P<:Polynomial,C,ID} <: AbstractExactNumber
     coeffs::Vector{C}
     NumberField{P,C,ID}(coeffs::Vector{C}) where {P,C,ID} = new(coeffs)
 end
@@ -79,7 +78,7 @@ function NumberField(::Type{Q}) where Q<:QuotientRing
     α = sum(generators(P))
     M = hcat((coeffs(α^n) for n=0:N)...)
 
-    K = ExactLinAlg.kernel(M)
+    K = nullspace(M)
     if size(K,2) != 1 || iszero(K[end])
         throw(AssertionError("OOPS! My naive guess for a primitive element doesn't work. Maybe this is not a number field?"))
         # TODO: check that the polynomial is irreducible.
@@ -94,7 +93,7 @@ function NumberField(::Type{Q}) where Q<:QuotientRing
     for β in variablesymbols(P)
         MM = copy(M)
         MM[:,end] = coeffs(P(β))
-        KK = ExactLinAlg.kernel(MM)
+        KK = nullspace(MM)
         named_values[β] = F( KK[1:end-1] // -KK[end] )
     end
 
