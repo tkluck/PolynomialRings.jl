@@ -33,6 +33,11 @@ one(Foo) = Foo()
         @test div(3z^5 + 6z + 3, 3) == z^5 + 2z + 1
     end
 
+    @testset "Hashing" begin
+        @test hash(2x) == hash(2x)
+        @test length( Set([2x,2x,2x]) ) == 1
+    end
+
     @testset "Extension of scalars" begin
         @test 1//2*z == z//2
         @test z//(2//1) == z//2

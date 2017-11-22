@@ -23,6 +23,7 @@ end
 #
 # -----------------------------------------------------------------------------
 import Base: *, ^, +, -, one, ==, iszero, diff
+import Base: hash
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering
 import PolynomialRings: maybe_div, lcm_multipliers, monomialtype, exptype, lcm_degree, namestype
 import Base.Order: lt
@@ -56,6 +57,8 @@ one(t::T) where T <: Term = one(typeof(t))
 
 monomial(a::Term) = a.m
 coefficient(a::Term) = a.c
+
+hash(a::Term, h::UInt) = hash(a.m, hash(a.c, h))
 
 import PolynomialRings.Util: lazymap
 generators(::Type{Term{M,C}}) where {M, C} = lazymap(g -> Term{M,C}(g, one(C)), generators(M))

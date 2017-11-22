@@ -41,6 +41,7 @@ abstract type AbstractMonomial{Nm} end
 #
 # -----------------------------------------------------------------------------
 import Base: getindex, gcd, lcm, one, *, ^, ==, diff
+import Base: hash
 import PolynomialRings: generators, to_dense_monomials, max_variable_index
 import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namestype
 
@@ -130,6 +131,14 @@ enumeratenz(a::M) where M <: AbstractMonomial = Channel(ctype=Tuple{Int,exptype(
 end
 
 exptype(a::AbstractMonomial) = exptype(typeof(a))
+
+# More easy on the eye would be
+#
+#     foldr(hash, h, <iterator>)
+#
+# but the iterator is a channel and so it doesn't have an endof().
+# That's why we use foldl() and a swapped-arguments version of hash()
+hash(a::AbstractMonomial, h::UInt) = foldl((h,x)->hash(x,h), h, enumeratenz(a))
 
 function maybe_div(a::M, b::M) where M <: AbstractMonomial
     if all(a[i] >= b[i] for i in index_union(a,b))
