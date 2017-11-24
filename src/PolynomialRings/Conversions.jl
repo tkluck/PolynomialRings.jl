@@ -203,7 +203,7 @@ convert(::Type{P}, a::T) where P <: Polynomial{V} where V <: AbstractVector{T} w
 # Promotions for more complicated functions
 #
 # -----------------------------------------------------------------------------
-function promote_vector(a::S,b::AbstractVector{T}) where {S<:Number,T<:Polynomial}
+function promote_vector(a::S,b::AbstractVector{T}) where {S,T<:Polynomial}
     U = typejoin(promote_rule(S,T), promote_rule(T,S))
     if U === Union{}
         throw(TypeError())
@@ -212,8 +212,8 @@ function promote_vector(a::S,b::AbstractVector{T}) where {S<:Number,T<:Polynomia
     end
 end
 
-div(a::Number, b::AbstractVector)    = div(promote_vector(a, b)...)
-rem(a::Number, b::AbstractVector)    = rem(promote_vector(a, b)...)
-divrem(a::Number, b::AbstractVector) = divrem(promote_vector(a, b)...)
+div(a, b::AbstractVector)    = div(promote_vector(a, b)...)
+rem(a, b::AbstractVector)    = rem(promote_vector(a, b)...)
+divrem(a, b::AbstractVector) = divrem(promote_vector(a, b)...)
 
 end

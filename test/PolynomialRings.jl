@@ -57,6 +57,9 @@ one(Foo) = Foo()
 
         @test convert(R,:x) == x
         @test convert(S,:z) == z
+
+        @test div(x+y+z, [z]) == [1]'
+        @test rem(x+y+z, [z]) == x+y
     end
 
     @testset "substitution" begin
