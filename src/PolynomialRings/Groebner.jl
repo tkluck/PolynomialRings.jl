@@ -146,16 +146,16 @@ _leading_term(a::AbstractArray) = leading_term(a[_leading_row(a)])
 _leading_monomial(p::Polynomial) = monomial(leading_term(p))
 _leading_monomial(a::AbstractArray) = (i = findfirst(a); (i, _leading_monomial(a[i])))
 
-import PolynomialRings.Monomials: AbstractMonomial, exptype, nzindices, _construct
+import PolynomialRings.Monomials: AbstractMonomial, exptype, nzindices, enumeratenz, _construct
 
 function _divisors_foreach(f::Function, a::M) where M <: AbstractMonomial
-    e = zeros(exptype(M), last(nzindices(a)))
 
     if length(nzindices(a)) == 0
         return
     end
 
-    nonzeros = find(a.e)
+    e = zeros(exptype(M), last(nzindices(a)))
+    nonzeros = [j for (j,_) in enumeratenz(a)]
 
     while true
         carry = 1

@@ -165,6 +165,8 @@ function diff(a::M, i::Integer) where M <: AbstractMonomial
 end
 
 function lcm_degree(a::M, b::M) where M <: AbstractMonomial
+    # avoid summing empty iterator
+    iszero(total_degree(a)) && iszero(total_degree(b)) && return zero(exptype(M))
     return sum(max(a[i],b[i]) for i in index_union(a,b))
 end
 
