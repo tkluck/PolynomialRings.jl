@@ -28,7 +28,7 @@ function show(io::IO, m::AbstractMonomial)
             push!(factors, "$symbol^$i")
         end
     end
-    join(io, factors, " ")
+    join(io, factors, "*")
 end
 
 function show(io::IO, t::Term)
@@ -46,7 +46,7 @@ function show(io::IO, t::Term)
     if monom != one(monom)
         push!(factors, "$monom")
     end
-    join(io, factors, " ")
+    join(io, factors, "*")
 end
 
 function show(io::IO, p::Polynomial)
