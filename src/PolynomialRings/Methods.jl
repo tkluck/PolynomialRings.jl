@@ -18,11 +18,15 @@ function variablesymbols end
 function allvariablesymbols end
 
 base_extend(::Type{A}, ::Type{B}) where {A,B} = promote_type(A,B)
+base_restrict(::Type{A}, ::Type{B}) where {A,B} = B
 
 fraction_field(::Type{I}) where I <: Integer = Rational{I}
 fraction_field(::Type{R}) where R <: Rational = R
 fraction_field(::Type{R}) where R <: Real = R
 fraction_field(::Type{Complex{N}}) where N <: Number = Complex{fraction_field(N)}
+
+integers(::Type{I}) where I <: Integer = I
+integers(::Type{R}) where R <: Rational{I} where I = I
 
 allvariablesymbols(::Type) = Set()
 

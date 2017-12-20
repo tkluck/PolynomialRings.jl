@@ -1,6 +1,6 @@
 module Operators
 
-import PolynomialRings: leading_term, basering, exptype, base_extend
+import PolynomialRings: leading_term, basering, exptype, base_extend, base_restrict
 import PolynomialRings.Monomials: AbstractMonomial
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.Terms: Term, monomial, coefficient
@@ -350,6 +350,16 @@ function div(f::Polynomial, g::Integer)
 end
 
 content(f::Polynomial) = gcd(f, 0)
+
+common_denominator(a, b...) = lcm(denominator(a), denominator.(b)...)
+common_denominator(f::Polynomial) = iszero(f) ? 1 : lcm([common_denominator(coefficient(t)) for t in terms(f)]...)
+
+function integral_fraction(f::Polynomial)
+    D = common_denominator(f)
+
+    return base_restrict(D*f), D
+end
+
 
 # -----------------------------------------------------------------------------
 #

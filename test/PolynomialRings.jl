@@ -30,6 +30,12 @@ one(Foo) = Foo()
         @test prod(x*y+y for _=1:20) == (x*y+y)^20
         @test content(z^5 + 3z + 1) == 1
         @test content(3z^5 + 6z + 3) == 3
+        @test common_denominator(3z^5 + 6z + 3) == 1
+        @test common_denominator(3z^5 + 6z + 3//2) == 2
+        @test common_denominator((3//5)z^5 + 6z + 3//2) == 10
+        @test integral_fraction(3z^5 + 6z + 3) == (3z^5 + 6z + 3, 1)
+        @test integral_fraction(3z^5 + 6z + 3//2) == (6z^5 + 12z + 3, 2)
+        @test integral_fraction((3//5)z^5 + 6z + 3//2) == (6z^5 + 60z + 15, 10)
         @test div(3z^5 + 6z + 3, 3) == z^5 + 2z + 1
     end
 

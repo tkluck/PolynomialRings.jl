@@ -25,7 +25,7 @@ import .Polynomials: Polynomial, generators, polynomial_ring
 import .Expansions: expansion, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, coefficients, @coefficients, linear_coefficients, @linear_coefficients, deg, @deg
 import .Groebner: groebner_basis, groebner_transformation, syzygies
 import .Arrays: flat_coefficients, @flat_coefficients
-import .Operators: content
+import .Operators: content, common_denominator, integral_fraction
 
 export TupleMonomial, Term, Polynomial, generators, ⊗, polynomial_ring, variablesymbols
 export expansion, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient
@@ -33,7 +33,7 @@ export coefficients, @coefficients, linear_coefficients, @linear_coefficients
 export deg, @deg
 export flat_coefficients, @flat_coefficients
 export groebner_basis, groebner_transformation, syzygies
-export content
+export content, common_denominator, integral_fraction
 
 # TODO: needs a better place
 function construct_monomial(::Type{P}, e::T) where P<:Polynomial where T<:Tuple

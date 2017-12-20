@@ -3,7 +3,7 @@ module Conversions
 import PolynomialRings.Polynomials: Polynomial, termtype, monomialtype, basering, terms
 import PolynomialRings.Terms: Term, monomial, coefficient
 import PolynomialRings.Monomials: AbstractMonomial
-import PolynomialRings: fraction_field, base_extend, namestype
+import PolynomialRings: fraction_field, integers, base_extend, base_restrict, namestype
 
 # -----------------------------------------------------------------------------
 #
@@ -12,7 +12,7 @@ import PolynomialRings: fraction_field, base_extend, namestype
 # -----------------------------------------------------------------------------
 import Base: promote_rule, convert
 import Base: +,*,-,==,/,//
-import PolynomialRings: ⊗, base_extend
+import PolynomialRings: ⊗, base_extend, base_restrict
 import Base: div, rem, divrem
 
 # -----------------------------------------------------------------------------
@@ -39,6 +39,28 @@ function convert(::Type{P}, a::C) where P<:Polynomial{V} where V <: AbstractVect
     end
 end
 
+# -----------------------------------------------------------------------------
+#
+# Base restriction
+#
+# -----------------------------------------------------------------------------
+base_restrict(::Type{Term{M,C1}}, ::Type{C2}) where {M,C1,C2} = Term{M, base_restrict(C1,C2)}
+base_restrict(::Type{Polynomial{V,O}}, ::Type{C}) where V<:AbstractVector{T} where {O,T,C} = Polynomial{Vector{base_restrict(T,C)}, O}
+
+function base_restrict(t::T, ::Type{C}) where T<:Term where C
+    TT = base_restrict(T, C)
+    CC = basering(TT)
+    return TT(monomial(t), CC(coefficient(t)))
+end
+
+function base_restrict(p::P, ::Type{C}) where P<:Polynomial where C
+    PP = base_restrict(P, C)
+    T = termtype(PP)
+    return PP(T[ base_restrict(t, C) for t in terms(p) ])
+end
+
+base_restrict(p::P)      where P <: Union{Term,Polynomial} = base_restrict(p, integers(basering(p)))
+base_restrict(::Type{P}) where P <: Union{Term,Polynomial} = base_restrict(P, integers(basering(P)))
 # -----------------------------------------------------------------------------
 #
 # Base extension
