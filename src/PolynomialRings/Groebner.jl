@@ -72,7 +72,9 @@ julia> rem(x^2 + y^2 + 1, [x, y])
 1
 ```
 """
-function rem(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
+rem(f::P, G::AbstractVector{P}) where P <: Polynomial = _rem(f,G)
+rem(f::M, G::AbstractVector{M}) where M <: AbstractArray{<:Polynomial} = _rem(f,G)
+function _rem(f, G)
     f_red = leadrem(f,G)
 
     i=1
@@ -110,7 +112,9 @@ julia> divrem(x^2 + y^2 + 1, [x, y])
 (1, [x,y]')
 ```
 """
-function divrem(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
+divrem(f::P, G::AbstractVector{P}) where P <: Polynomial = _divrem(f,G)
+divrem(f::M, G::AbstractVector{M}) where M <: AbstractArray{<:Polynomial} = _divrem(f,G)
+function _divrem(f, G)
     factors, f_red = leaddivrem(f,G)
 
     i=1
@@ -131,7 +135,8 @@ function divrem(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
     return factors, f_red
 end
 
-div(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement = divrem(f, G)[1]
+div(f::P, G::AbstractVector{P}) where P <: Polynomial = _divrem(f,G)[1]
+div(f::M, G::AbstractVector{M}) where M <: AbstractArray{<:Polynomial} = _divrem(f,G)[1]
 
 # a few functions to be able to write the same algorithm for
 # computations in a free f.g. module and in a polynomial ring.

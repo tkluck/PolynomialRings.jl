@@ -25,7 +25,7 @@ iszero(x::AbstractArray{P}) where P<:Polynomial = (i = findfirst(x); i>0 ? iszer
 base_extend(x::AbstractArray{P}, ::Type{C}) where P<:Polynomial where C = map(p->base_extend(p,C), x)
 base_extend(x::AbstractArray{P})            where P<:Polynomial         = map(base_extend, x)
 
-function divrem(a::AbstractArray{P}, b::AbstractArray{P}) where P<:Polynomial
+function divrem(a::A, b::A) where A<:AbstractArray{<:Polynomial}
     i = findfirst(b)
     if i>0
         (q,r) = divrem(a[i], b[i])
@@ -35,7 +35,7 @@ function divrem(a::AbstractArray{P}, b::AbstractArray{P}) where P<:Polynomial
     end
 end
 
-function leaddivrem(a::AbstractArray{P}, b::AbstractArray{P}) where P<:Polynomial
+function leaddivrem(a::A, b::A) where A<:AbstractArray{<:Polynomial}
     i = findfirst(b)
     if i>0
         (q,r) = leaddivrem(a[i], b[i])
@@ -45,10 +45,10 @@ function leaddivrem(a::AbstractArray{P}, b::AbstractArray{P}) where P<:Polynomia
     end
 end
 
-div(a::AbstractArray{P}, b::AbstractArray{P}) where P<:Polynomial = divrem(a, b)[1]
-rem(a::AbstractArray{P}, b::AbstractArray{P}) where P<:Polynomial = divrem(a, b)[2]
-leaddiv(a::AbstractArray{P}, b::AbstractArray{P}) where P<:Polynomial = leaddivrem(a, b)[1]
-leadrem(a::AbstractArray{P}, b::AbstractArray{P}) where P<:Polynomial = leaddivrem(a, b)[2]
+div(a::A, b::A) where A<:AbstractArray{<:Polynomial} = divrem(a, b)[1]
+rem(a::A, b::A) where A<:AbstractArray{<:Polynomial} = divrem(a, b)[2]
+leaddiv(a::A, b::A) where A<:AbstractArray{<:Polynomial} = leaddivrem(a, b)[1]
+leadrem(a::A, b::A) where A<:AbstractArray{<:Polynomial} = leaddivrem(a, b)[2]
 
 
 end

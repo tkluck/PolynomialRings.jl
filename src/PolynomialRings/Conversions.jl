@@ -234,8 +234,11 @@ function promote_vector(a::S,b::AbstractVector{T}) where {S,T<:Polynomial}
     end
 end
 
-div(a, b::AbstractVector)    = div(promote_vector(a, b)...)
-rem(a, b::AbstractVector)    = rem(promote_vector(a, b)...)
-divrem(a, b::AbstractVector) = divrem(promote_vector(a, b)...)
+div(a::Polynomial, b::AbstractVector{<:Polynomial})    = div(promote_vector(a, b)...)
+rem(a::Polynomial, b::AbstractVector{<:Polynomial})    = rem(promote_vector(a, b)...)
+divrem(a::Polynomial, b::AbstractVector{<:Polynomial}) = divrem(promote_vector(a, b)...)
+div(a::Number, b::AbstractVector{<:Polynomial})    = div(promote_vector(a, b)...)
+rem(a::Number, b::AbstractVector{<:Polynomial})    = rem(promote_vector(a, b)...)
+divrem(a::Number, b::AbstractVector{<:Polynomial}) = divrem(promote_vector(a, b)...)
 
 end
