@@ -47,6 +47,7 @@ function _named_values end
 #
 # -----------------------------------------------------------------------------
 _id_counter = 0
+const PRIMITIVE_ELEMENT_TRIES = 10
 """
     S = NumberField(R)
 
@@ -74,16 +75,29 @@ function NumberField(::Type{Q}) where Q<:QuotientRing
     ID = (_id_counter+=1)
     F = NumberField{P, C, ID}
 
-    # let's hope this is a primitive element
-    α = sum(generators(P))
-    M = hcat((coeffs(α^n) for n=0:N)...)
+    K = Vector{C}()
+    # let's hope one of these is a primitive element
+    possible_α = collect(generators(P))
+    append!(possible_α, α+β for (α,β) in zip(generators(P)[2:end], generators(P)[1:end-1]))
+    append!(possible_α, α*β for (α,β) in zip(generators(P)[2:end], generators(P)[1:end-1]))
+    push!(possible_α, sum(generators(P)))
+    found = false
+    α = zero(P)
+    M = Matrix{C}(0,0)
+    for α in possible_α
+        M = hcat((coeffs(α^n) for n=0:N)...)
 
-    K = nullspace(M)
-    if size(K,2) != 1 || iszero(K[end])
-        throw(AssertionError("OOPS! My naive guess for a primitive element doesn't work. Maybe this is not a number field?"))
-        # TODO: check that the polynomial is irreducible.
+        K = nullspace(M)
+        if size(K,2) == 1 && !iszero(K[end,1])
+            # TODO: check that the polynomial is irreducible.
+            K = K[:,1]
+            found = true
+            break
+        end
     end
-    K = K[:,1]
+    if !found
+        throw(AssertionError("OOPS! My naive guesses for a primitive element all didn't work. Maybe this is not a number field?"))
+    end
 
     @eval _primitive_element(::Type{$F}) = $(Q(α))
     @eval _extension_degree(::Type{$F}) = $N
