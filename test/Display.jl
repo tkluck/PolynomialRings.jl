@@ -7,11 +7,10 @@ using PolynomialRings
     using PolynomialRings: basering, termtype
 
     R = @ring! ℚ[x,y]
-    q, = formal_coefficients(R, :q)
-    S = typeof(q)
+    S = @ring! ℚ[q[]][x,y]
     T = @ring! ℤ[a,b,c]
-    r, = formal_coefficients(T, :r)
     U = @ring! Int64[ε]
+    V = @ring! ℤ[r[]]
 
     @testset "Types" begin
         @test repr(R) == "ℚ[x,y]"
@@ -27,14 +26,15 @@ using PolynomialRings
 
     @testset "Polynomials" begin
         @test repr(a) == "a"
-        @test repr(r) == "r[1]"
+        @test repr(r[1]) == "r[1]"
         @test repr(a+b) == "b + a"
         @test repr(2a) == "2*a"
-        @test repr(r*a) == "r[1]*a"
-        @test repr(r*a + a) == "(1 + r[1])*a"
-        @test repr(2r*a + a) == "(1 + 2*r[1])*a"
+        @test repr(r[1]*a) == "r[1]*a"
+        @test repr(r[1]*a + a) == "(1 + r[1])*a"
+        @test repr(2r[1]*a + a) == "(1 + 2*r[1])*a"
 
-        e1,e2,e3 = formal_coefficients(R, :e)
+        @ring! R[e[]]
+        e1,e2,e3 = e[]
         @test repr(e1) == "e[1]"
         @test repr(e2) == "e[2]"
         @test repr(e3) == "e[3]"

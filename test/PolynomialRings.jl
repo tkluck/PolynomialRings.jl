@@ -106,9 +106,8 @@ one(Foo) = Foo()
         @test dz(S(1)) == 0
     end
 
-    @testset "formal coefficients" begin
-        ch = formal_coefficients(R, :c)
-        c() = take!(ch)
+    @testset "sparse monomials" begin
+        @ring! ℚ[c[]]
         h5() = c()*x^5 + c()*x^4*y + c()*x^3*y^2 + c()*x^2*y^3 + c()*x*y^4 + c()*y^5
         f = h5()
         @test euler(f) == 5*f
@@ -119,11 +118,9 @@ one(Foo) = Foo()
         @test euler(g) == 5*g
 
         @ring! ℤ[d1,d2,d3]
-        dd1,dd2,dd3 = formal_coefficients(R, :d)
-        ((_,ddd1),) = expansion(dd1, variablesymbols(R)...)
-        ((_,ddd2),) = expansion(dd2, variablesymbols(R)...)
-        ((_,ddd3),) = expansion(dd3, variablesymbols(R)...)
-        @test to_dense_monomials([ddd1, ddd2, ddd3]) == [d1,d2,d3]
+        @ring! ℤ[d[]]
+        dd1,dd2,dd3 = d[]
+        @test to_dense_monomials([dd1, dd2, dd3]) == [d1,d2,d3]
 
     end
 
@@ -186,7 +183,8 @@ end
         @test lhs == [(x,-1), (x*y, 1)]
     end
 
-    c1,c2,c3 = formal_coefficients(R, :c)
+    @ring! R[c[]]
+    c1,c2,c3 = c[]
     @testset "numbered variables" begin
         @test [1] == @coefficients c1*c2*c3 c[]
         @test [1,-1] == @coefficients c1-c1*c2*c3 c[]

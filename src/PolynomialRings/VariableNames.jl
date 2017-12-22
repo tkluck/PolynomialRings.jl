@@ -8,6 +8,7 @@ module VariableNames
 import PolynomialRings: variablesymbols, namestype
 
 variablesymbols(a) = variablesymbols(namestype(a))
+numberedvariablename(a) = numberedvariablename(namestype(a))
 
 # -----------------------------------------------------------------------------
 #
@@ -24,6 +25,7 @@ variablesymbols(::Type{Named{Names}}) where Names = Names
 # -----------------------------------------------------------------------------
 abstract type Numbered{Name} end
 variablesymbols(::Type{Numbered{Name}}) where Name = tuple()
+numberedvariablename(::Type{Numbered{Name}}) where Name = Name
 
 flatvariablesymbols(::Type{Numbered{Name}}) where Name = Channel() do ch
     i = 0

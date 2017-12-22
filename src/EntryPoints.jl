@@ -1,8 +1,10 @@
 module EntryPoints
 
 import PolynomialRings: generators, base_extend, variablesymbols, allvariablesymbols, ⊗
-import PolynomialRings.Polynomials: Polynomial, polynomial_ring
-import PolynomialRings.VariableNames: Numbered
+import PolynomialRings: construct_monomial, exptype
+import PolynomialRings.Polynomials: Polynomial, polynomial_ring, numbered_polynomial_ring
+import PolynomialRings.NamedPolynomials: NamedPolynomial, NumberedPolynomial
+import PolynomialRings.VariableNames: Numbered, numberedvariablename
 import PolynomialRings.Terms: Term, basering
 import PolynomialRings.Monomials: TupleMonomial, VectorMonomial
 import PolynomialRings.Util: lazymap
@@ -15,6 +17,7 @@ import PolynomialRings.NumberFields: NumberField
 #
 # -----------------------------------------------------------------------------
 import Base: convert
+import Base: getindex
 
 # -----------------------------------------------------------------------------
 #
@@ -67,12 +70,36 @@ function _variables_in_ring_definition(definition)
     end
 
     basering_spec = definition.args[1]
-    variables = definition.args[2:end]
+    variable_spec = definition.args[2:end]
+
+    if length(variable_spec) == 1 && variable_spec[1] isa Expr && variable_spec[1].head == :ref && length(variable_spec[1].args) == 1
+        variables = [variable_spec[1].args[1]]
+    elseif all(var isa Symbol for var in variable_spec)
+        variables = variable_spec
+    else
+        throw(RuntimeError("Cannot find variables in $definition"))
+    end
 
     if basering_spec isa Expr && basering_spec.head == :ref
         return union(variables, _variables_in_ring_definition(basering_spec))
     else
         return variables
+    end
+end
+
+function _inject_var(::Type{Outer}, ::Type{Inner}, name) where Outer where Inner<:NamedPolynomial
+    if name in variablesymbols(Inner)
+        return Outer(convert(Inner, name))
+    else
+        return _inject_var(Outer, basering(Inner), name)
+    end
+end
+
+function _inject_var(::Type{Outer}, ::Type{Inner}, name) where Outer where Inner<:NumberedPolynomial
+    if name == numberedvariablename(Inner)
+        return NumberedVariableGenerator{Outer,Inner}()
+    else
+        return _inject_var(Outer, basering(Inner), name)
     end
 end
 
@@ -84,7 +111,7 @@ function _inject_vars(R, definition)
     variables_lvalue = :(())
     append!(variables_lvalue.args, variables)
     return quote
-        ($(esc(variables_lvalue))) = map($R, $variables)
+        ($(esc(variables_lvalue))) = map(sym->$_inject_var($R,$R,sym), $variables)
     end
 end
 
@@ -124,10 +151,15 @@ function _polynomial_ring(definition)
 
     if all(v isa Symbol for v in variables)
         return quote
-            polynomial_ring($variables..., basering=$basering)[1]
+            $polynomial_ring($variables..., basering=$basering)[1]
         end
-    elseif length(variables) == 1 && variables.head == :...
-        @assert(false) # not implemented yet
+    elseif length(variables) == 1 && variables[1].head == :ref
+        variable = QuoteNode( variables[1].args[1] )
+        return quote
+            $numbered_polynomial_ring($variable, basering=$basering)
+        end
+    else
+        throw(ArgumentError("The specification $definition is not a valid list of variables"))
     end
 end
 
@@ -330,6 +362,36 @@ macro polyvar(expr...)
     append!(definition.args, expr)
     quote
         @ring! $(esc(definition))
+    end
+end
+
+# -----------------------------------------------------------------------------
+#
+# An object representing numbered variables
+#
+# -----------------------------------------------------------------------------
+mutable struct NumberedVariableGenerator{Outer,Inner}
+    next::Int
+    NumberedVariableGenerator{Outer,Inner}() where {Outer,Inner} = new(1)
+end
+
+function (g::NumberedVariableGenerator)()
+    ix = g.next
+    g.next += 1
+    return g[ix]
+end
+
+function getindex(g::NumberedVariableGenerator{Outer,Inner}, i::Integer) where {Outer,Inner}
+    E = exptype(Inner)
+    e = spzeros(E, i)
+    e[i] = one(E)
+    return Outer(construct_monomial(Inner, e))
+end
+
+
+getindex(g::NumberedVariableGenerator) = Channel() do ch
+    for i in 1:typemax(Int)
+        push!(ch, g[i])
     end
 end
 

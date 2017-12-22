@@ -1,6 +1,6 @@
 module Polynomials
 
-import PolynomialRings.Monomials: TupleMonomial
+import PolynomialRings.Monomials: TupleMonomial, VectorMonomial
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.VariableNames: Named, Numbered
 import PolynomialRings.Terms: Term
@@ -110,6 +110,15 @@ function polynomial_ring(symbols::Symbol...; basering::Type=Rational{BigInt}, ex
 
     P = Polynomial{Vector{Term{TupleMonomial{length(symbols),exptype, Named{symbols}}, basering}}, monomialorder}
     return P, generators(P)
+end
+
+function numbered_polynomial_ring(symbol::Symbol; basering::Type=Rational{BigInt}, exptype::Type=UInt16, monomialorder::Symbol=:degrevlex)
+    if symbol in allvariablesymbols(basering)
+        throw(ArgumentError("Duplicated symbols when extending $basering by $(Numbered{symbol})"))
+    end
+
+    P = Polynomial{Vector{Term{VectorMonomial{SparseVector{exptype,Int}, Numbered{symbol}}, basering}}, monomialorder}
+    return P
 end
 
 
