@@ -36,15 +36,17 @@ export groebner_basis, groebner_transformation, syzygies
 export content, common_denominator, integral_fraction
 
 # TODO: needs a better place
-function construct_monomial(::Type{P}, e::T) where P<:Polynomial where T<:Tuple
+import .Monomials: _construct
+import Base.SparseArrays: nonzeroinds
+_nzindices(t::Tuple) = 1:length(t)
+_nzindices(t::AbstractVector) = eachindex(t)
+_nzindices(t::SparseVector) = nonzeroinds(t)
+function construct_monomial(::Type{P}, e::T) where P<:Polynomial where T<:Union{Tuple,AbstractVector}
     @assert all(e.>=0)
-    P([termtype(P)(monomialtype(P)(e, sum(e)),one(basering(P)))])
-end
-function construct_monomial(::Type{P}, e::T) where P<:Polynomial where T<:AbstractArray
-    @assert all(e.>=0)
-    P([termtype(P)(monomialtype(P)(ntuple(i->e[i], length(e)), sum(e)),one(basering(P)))])
+    P([termtype(P)(_construct(monomialtype(P), i->e[i], _nzindices(e)),one(basering(P)))])
 end
 export construct_monomial
+# --------------------------
 
 import .Monomials: AbstractMonomial
 const _P = Union{Polynomial,Term,AbstractMonomial}

@@ -112,7 +112,7 @@ end
 #
 # -----------------------------------------------------------------------------
 @inline _construct(::Type{M}, f, nzindices, deg) where M <: AbstractMonomial = _construct(M, f, nzindices)
-@inline _construct(::Type{M}, f, nzindices) where M <: AbstractMonomial = _construct(M, f, nzindices, mapreduce(f, +, zero(exptype(M)), nzindices))
+@inline _construct(::Type{M}, f, nzindices) where M <: AbstractMonomial = _construct(M, f, nzindices, mapreduce(exptype(M)∘f, +, zero(exptype(M)), nzindices))
 
 one(::Type{M}) where M <: AbstractMonomial = _construct(M, i->0, 1:0)
 one(::M) where M <: AbstractMonomial = one(M)
