@@ -29,33 +29,33 @@ using PolynomialRings
 
         @test S(α)^2 - 2 == 0
 
-        Q = NumberField(S)
-        @test Q(α)^2 - 2 == 0
+        #Q = NumberField(S)
+        #@test Q(α)^2 - 2 == 0
 
-        @test Q(1+α) // Q(1+α) == 1
-        @test Q(1+α)*Q(1-α) == -1
-        @test -1 // Q(1+α) == Q(1-α)
+        #@test Q(1+α) // Q(1+α) == 1
+        #@test Q(1+α)*Q(1-α) == -1
+        #@test -1 // Q(1+α) == Q(1-α)
 
-        A = @ring! Q[x]
-        @test (α*x)^2 == 2x^2
+        #A = @ring! Q[x]
+        #@test (α*x)^2 == 2x^2
 
-        # duplicate variable name
-        @test_throws ArgumentError @ring Q[α]
+        ## duplicate variable name
+        #@test_throws ArgumentError @ring Q[α]
 
-        @numberfield! Q[γ]/(γ^2 - α)
+        #@numberfield! Q[γ]/(γ^2 - α)
 
-        @test γ^2 == α
-        @test γ^3 == α*γ
-        @test γ^4 == 2
+        #@test γ^2 == α
+        #@test γ^3 == α*γ
+        #@test γ^4 == 2
 
-        B = @ring! ℚ[α, x]
-        @test (α*x)^2 != 2x^2
-        @test A(α*x)^2 == A(2x^2)
+        #B = @ring! ℚ[α, x]
+        #@test (α*x)^2 != 2x^2
+        #@test A(α*x)^2 == A(2x^2)
 
-        S = @numberfield! ℚ[α,β]/(α^2 - 2, β^3 - 2)
-        @test α^2 == β^3 == 2
+        #S = @numberfield! ℚ[α,β]/(α^2 - 2, β^3 - 2)
+        #@test α^2 == β^3 == 2
 
-        QQ = @numberfield Q[β]/(β^3 - 2)
-        @test QQ(β + α) == QQ(β) + Q(α)
+        #QQ = @numberfield Q[β]/(β^3 - 2)
+        #@test QQ(β + α) == QQ(β) + Q(α)
     end
 end
