@@ -26,8 +26,9 @@ end
 
     G = [x^5, x^2 + y, x*y + y^2]
     GG, tr = groebner_transformation(G)
-    @test length(GG) == 5
+    @test rem(y^2, GG) == 0
     @test [a for a in tr]*G == GG
+    @test rem(y^2, groebner_basis(G)) == 0
 
     G = [[x^5-y,x^4],[x^3+y,y^3]]
     GG, tr= groebner_transformation(G)
