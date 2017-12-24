@@ -147,6 +147,10 @@ _leading_term(p::Polynomial) = leading_term(p)
 _leading_term(a::AbstractArray) = leading_term(a[_leading_row(a)])
 _leading_monomial(p::Polynomial) = monomial(leading_term(p))
 _leading_monomial(a::AbstractArray) = (i = findfirst(a); (i, _leading_monomial(a[i])))
+_lcm_degree(a, b) = lcm_degree(a, b)
+_lcm_degree(a::Tuple, b::Tuple) = lcm_degree(a[2], b[2])
+_lcm_multipliers(a, b) = lcm_multipliers(a, b)
+_lcm_multipliers(a::Tuple, b::Tuple) = lcm_multipliers(a[2], b[2])
 
 import PolynomialRings.Monomials: AbstractMonomial, exptype, nzindices, enumeratenz, _construct
 
@@ -239,18 +243,22 @@ function buchberger(polynomials::AbstractVector{M}, ::Type{Val{with_transformati
         sort_order = sortperm(result_lm, order=monomialorder(P))
     end
 
-
     pairs_to_consider = PriorityQueue{Tuple{Int,Int}, Int}()
+    function add_pair(i,j)
+        a = result[i]
+        b = result[j]
+        if _leading_row(a) == _leading_row(b)
+            lm_a = _leading_monomial(a)
+            lm_b = _leading_monomial(b)
+            degree = _lcm_degree(lm_a, lm_b)
+            m_a, m_b = _lcm_multipliers(lm_a, lm_b)
+            enqueue!(pairs_to_consider, (i,j), degree)
+        end
+    end
+
     for j in eachindex(result)
         for i in 1:(j-1)
-            a = result[i]
-            b = result[j]
-            if _leading_row(a) == _leading_row(b)
-                lt_a = _leading_term(a)
-                lt_b = _leading_term(b)
-                degree = lcm_degree(lt_a, lt_b)
-                enqueue!(pairs_to_consider, (i,j), degree)
-            end
+            add_pair(i,j)
         end
     end
 
@@ -281,21 +289,14 @@ function buchberger(polynomials::AbstractVector{M}, ::Type{Val{with_transformati
         end
 
         if !iszero(S_red)
-            new_j = length(result)+1
-            new_lr = _leading_row(S_red)
-            new_lt = _leading_term(S_red)
-            for new_i in eachindex(result)
-                new_a = result[new_i]
-                if _leading_row(new_a) == new_lr
-                    new_lt_a = _leading_term(new_a)
-                    degree = lcm_degree(new_lt_a, new_lt)
-                    enqueue!(pairs_to_consider, (new_i,new_j), degree)
-                end
-            end
-
             S_red_lm = _leading_monomial(S_red)
             push!(result, S_red)
             push!(result_lm, S_red_lm)
+            new_j = length(result)
+
+            for new_i in eachindex(result)
+                add_pair(new_i, new_j)
+            end
 
             if with_transformation
                 factors[1, i] -= m_a
