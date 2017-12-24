@@ -223,7 +223,7 @@ function _grb_red(f::M, G::AbstractVector{M}, G_lm) where M <: AbstractModuleEle
 end
 
 using DataStructures
-function buchberger(polynomials::AbstractVector{M}, ::Type{Val{with_transformation}}; max_degree=Inf) where M <: AbstractModuleElement where with_transformation
+function buchberger(polynomials::AbstractVector{M}, ::Type{Val{with_transformation}}) where M <: AbstractModuleElement where with_transformation
 
     polynomials = map(base_extend, polynomials)
     P = base_extend(modulebasering(M))
@@ -249,9 +249,7 @@ function buchberger(polynomials::AbstractVector{M}, ::Type{Val{with_transformati
                 lt_a = _leading_term(a)
                 lt_b = _leading_term(b)
                 degree = lcm_degree(lt_a, lt_b)
-                if degree <= max_degree
-                    enqueue!(pairs_to_consider, (i,j), degree)
-                end
+                enqueue!(pairs_to_consider, (i,j), degree)
             end
         end
     end
@@ -291,9 +289,7 @@ function buchberger(polynomials::AbstractVector{M}, ::Type{Val{with_transformati
                 if _leading_row(new_a) == new_lr
                     new_lt_a = _leading_term(new_a)
                     degree = lcm_degree(new_lt_a, new_lt)
-                    if degree <= max_degree
-                        enqueue!(pairs_to_consider, (new_i,new_j), degree)
-                    end
+                    enqueue!(pairs_to_consider, (new_i,new_j), degree)
                 end
             end
 
