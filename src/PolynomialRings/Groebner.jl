@@ -5,9 +5,6 @@ import PolynomialRings.Polynomials: Polynomial, monomialorder, terms
 import PolynomialRings.Terms: monomial
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering
 
-import PolynomialRings.Util: ReadWriteLock, read_lock!, write_lock!, read_unlock!, write_unlock!
-
-
 # impors for overloading
 import Base: div, rem, divrem
 import PolynomialRings.Operators: leaddiv, leadrem, leaddivrem
@@ -259,129 +256,69 @@ function buchberger(polynomials::AbstractVector{M}, ::Type{Val{with_transformati
         end
     end
 
+    loops = 0
+    while true
+        if length(pairs_to_consider) == 0
+            break
+        end
+        (i,j) = dequeue!(pairs_to_consider)
 
-    result_lock = ReadWriteLock{Threads.Mutex}()
-    log_lock = Threads.Mutex()
+        a = result[i]
+        b = result[j]
 
-    loops = Threads.Atomic{Int}(0)
-    Threads.@threads for thread=1:Threads.nthreads() # run code on all threads
-        while true
-            write_lock!(result_lock)
-            if length(pairs_to_consider) == 0
-                write_unlock!(result_lock)
-                break
+        lt_a = _leading_term(a)
+        lt_b = _leading_term(b)
+
+        m_a, m_b = lcm_multipliers(lt_a, lt_b)
+
+        S = m_a * a - m_b * b
+
+        # potential speedup: wikipedia says that in all but the 'last steps'
+        # (whichever those may be), we can get away with a version of red
+        # that only does lead division
+        if with_transformation
+            (factors, S_red) = divrem(S, result[sort_order])
+        else
+            S_red = _grb_red(S, result[sort_order], result_lm[sort_order])
+        end
+
+        if !iszero(S_red)
+            new_j = length(result)+1
+            new_lr = _leading_row(S_red)
+            new_lt = _leading_term(S_red)
+            for new_i in eachindex(result)
+                new_a = result[new_i]
+                if _leading_row(new_a) == new_lr
+                    new_lt_a = _leading_term(new_a)
+                    degree = lcm_degree(new_lt_a, new_lt)
+                    if degree <= max_degree
+                        enqueue!(pairs_to_consider, (new_i,new_j), degree)
+                    end
+                end
             end
-            (i,j) = dequeue!(pairs_to_consider)
-            write_unlock!(result_lock)
 
-            read_lock!(result_lock)
-            a = result[i]
-            b = result[j]
-            read_unlock!(result_lock)
+            S_red_lm = _leading_monomial(S_red)
+            push!(result, S_red)
+            push!(result_lm, S_red_lm)
 
-            lt_a = _leading_term(a)
-            lt_b = _leading_term(b)
-
-            m_a, m_b = lcm_multipliers(lt_a, lt_b)
-
-            S = m_a * a - m_b * b
-
-            # potential speedup: wikipedia says that in all but the 'last steps'
-            # (whichever those may be), we can get away with a version of red
-            # that only does lead division
-            read_lock!(result_lock)
-            snapshot = result[sort_order]
-            snapshot_lm = result_lm[sort_order]
-            read_unlock!(result_lock)
             if with_transformation
-                (factors, S_red) = divrem(S, snapshot)
+                factors[1, i] -= m_a
+                factors[1, j] += m_b
+                nonzero_factors = find(factors)
+                tr = [ -sum(factors[x] * transformation[x][y] for x in nonzero_factors) for y in eachindex(polynomials) ]
+                push!(transformation, tr)
+
+                sort_order = 1:new_j
             else
-                S_red = _grb_red(S, snapshot, snapshot_lm)
+                sorted_ix = searchsortedfirst(@view(result_lm[sort_order]), S_red_lm, order=monomialorder(P))
+                insert!(sort_order, sorted_ix, new_j)
             end
-
-            if !iszero(S_red)
-                write_lock!(result_lock)
-
-                # we'd now like to add our new-found basis element to result, but
-                # another thread may have added new elements since we created our
-                # snapshot. So we do the following:
-                # 1.  check whether f_red can be reduced further with the newly
-                #     added elements
-                # 2a. if not, add it.
-                # 2b. if so, we'll have to also see whether the further reduced
-                #     f_red can be further reduced.
-                # In the 2b. case, we release the lock, take a new snapshot and
-                # basically restart the computation. It is hoped that this is
-                # either relatively rare, or is a brief computation.
-
-                new_elements_since_snapshot = result[length(snapshot)+1:end]
-                remaining_factors = div(S_red, new_elements_since_snapshot)
-                while !iszero(remaining_factors)
-                    # case 2b: new snapshot and new computation
-                    snapshot = result[sort_order]
-                    snapshot_lm = result_lm[sort_order]
-
-                    write_unlock!(result_lock)
-                    if with_transformation
-                        (new_factors, S_red) = divrem(S_red, snapshot)
-                        factors = new_factors + [factors zeros(remaining_factors)]
-                    else
-                        S_red = _grb_red(S_red, snapshot, snapshot_lm)
-                    end
-                    write_lock!(result_lock)
-
-                    new_elements_since_snapshot = result[length(snapshot)+1:end]
-                    remaining_factors = div(S_red, new_elements_since_snapshot)
-                end
-                # case 2a
-                if with_transformation
-                    factors = [factors remaining_factors]
-                end
-
-                if !iszero(S_red)
-                    new_j = length(result)+1
-                    new_lr = _leading_row(S_red)
-                    new_lt = _leading_term(S_red)
-                    for new_i in eachindex(result)
-                        new_a = result[new_i]
-                        if _leading_row(new_a) == new_lr
-                            new_lt_a = _leading_term(new_a)
-                            degree = lcm_degree(new_lt_a, new_lt)
-                            if degree <= max_degree
-                                enqueue!(pairs_to_consider, (new_i,new_j), degree)
-                            end
-                        end
-                    end
-
-                    S_red_lm = _leading_monomial(S_red)
-                    push!(result, S_red)
-                    push!(result_lm, S_red_lm)
-
-                    if with_transformation
-                        factors[1, i] -= m_a
-                        factors[1, j] += m_b
-                        nonzero_factors = find(factors)
-                        tr = [ -sum(factors[x] * transformation[x][y] for x in nonzero_factors) for y in eachindex(polynomials) ]
-                        push!(transformation, tr)
-
-                        sort_order = 1:new_j
-                    else
-                        sorted_ix = searchsortedfirst(@view(result_lm[sort_order]), S_red_lm, order=monomialorder(P))
-                        insert!(sort_order, sorted_ix, new_j)
-                    end
-                end
-                write_unlock!(result_lock)
-            end
-            old_value = Threads.atomic_add!(loops, 1)
-            if old_value % 1000 == 999
-                read_lock!(result_lock)
-                l = length(result)
-                k = length(pairs_to_consider)
-                read_unlock!(result_lock)
-                lock(log_lock)
-                info("Groebner: After about $(old_value+1) loops: $l elements in basis; $k pairs left to consider.")
-                unlock(log_lock)
-            end
+        end
+        loops += 1
+        if loops % 1000 == 0
+            l = length(result)
+            k = length(pairs_to_consider)
+            info("Groebner: After about $loops loops: $l elements in basis; $k pairs left to consider.")
         end
     end
 

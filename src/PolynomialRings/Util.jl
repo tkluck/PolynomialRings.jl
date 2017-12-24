@@ -79,53 +79,6 @@ function findnext(m::SparseMatrixCSC, i::Int)
    return sub2ind(m, m.rowval[nextlo], nextcol-1)
 end
 
-
-# -----------------------------------------------------------------------------
-#
-# Read/write locks
-#
-# -----------------------------------------------------------------------------
-
-using Base.Threads: lock, unlock
-
-mutable struct ReadWriteLock{L}
-    readers::Int
-    read_lock::L
-    write_lock::L
-    ReadWriteLock{L}() where L = new(0, L(), L())
-end
-
-function read_lock!(l::ReadWriteLock)
-    lock(l.read_lock)
-    l.readers += 1
-    unlock(l.read_lock)
-end
-
-function read_unlock!(l::ReadWriteLock)
-    lock(l.read_lock)
-    @assert l.readers > 0
-    l.readers -= 1
-    unlock(l.read_lock)
-end
-
-function write_lock!(l::ReadWriteLock)
-    lock(l.write_lock)
-    lock(l.read_lock)
-    while l.readers > 0
-        unlock(l.read_lock)
-        # this unlock+lock thing, hoping that another thread can lock it in the
-        # mean time, works better or worse based on the exact semantics of the
-        # lock. I'm guessing a SpinLock is terrible and an OS mutex is fine.
-        lock(l.read_lock)
-    end
-end
-
-function write_unlock!(l::ReadWriteLock)
-    unlock(l.read_lock)
-    unlock(l.write_lock)
-end
-
-
 # -----------------------------------------------------------------------------
 #
 # One-element iterator
