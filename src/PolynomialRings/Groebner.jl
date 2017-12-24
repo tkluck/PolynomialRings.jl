@@ -263,6 +263,7 @@ function buchberger(polynomials::AbstractVector{M}, ::Type{Val{with_transformati
     end
 
     loops = 0
+    reductions_to_zero = 0
     while true
         if length(pairs_to_consider) == 0
             break
@@ -310,12 +311,14 @@ function buchberger(polynomials::AbstractVector{M}, ::Type{Val{with_transformati
                 sorted_ix = searchsortedfirst(@view(result_lm[sort_order]), S_red_lm, order=monomialorder(P))
                 insert!(sort_order, sorted_ix, new_j)
             end
+        else
+            reductions_to_zero += 1
         end
         loops += 1
         if loops % 1000 == 0
             l = length(result)
             k = length(pairs_to_consider)
-            info("Groebner: After about $loops loops: $l elements in basis; $k pairs left to consider.")
+            info("Groebner: After about $loops loops: $l elements in basis; $reductions_to_zero reductions to zero; $k pairs left to consider.")
         end
     end
 
