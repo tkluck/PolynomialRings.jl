@@ -60,7 +60,7 @@ julia> [c()*x^2 + c()*x + c() , c()*x^2 + c()*x + c()]
 ```
 """
 function formal_coefficients(::Type{P}, name::Symbol) where P <: Polynomial
-    CP = Polynomial{Vector{Term{VectorMonomial{SparseVector{Int16,Int}, Numbered{name}}, Int}}, :degrevlex}
+    CP = Polynomial{Vector{Term{VectorMonomial{SparseVector{Int16,Int}, Int16, Numbered{name}}, Int}}, :degrevlex}
     return lazymap(g->g⊗one(P), generators(CP))
 end
 

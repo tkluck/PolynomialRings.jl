@@ -117,7 +117,7 @@ function numbered_polynomial_ring(symbol::Symbol; basering::Type=Rational{BigInt
         throw(ArgumentError("Duplicated symbols when extending $basering by $(Numbered{symbol})"))
     end
 
-    P = Polynomial{Vector{Term{VectorMonomial{SparseVector{exptype,Int}, Numbered{symbol}}, basering}}, monomialorder}
+    P = Polynomial{Vector{Term{VectorMonomial{SparseVector{exptype,Int}, exptype, Numbered{symbol}}, basering}}, monomialorder}
     return P
 end
 

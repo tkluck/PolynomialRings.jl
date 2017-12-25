@@ -221,7 +221,7 @@ nzindices(a::TupleMonomial{N,I,Nm}) where {N,I,Nm} = 1:N
 # -----------------------------------------------------------------------------
 
 """
-    VectorMonomial{V,Nm} <: AbstractMonomial where V <: AbstractVector{I} where I <: Integer where Nm
+    VectorMonomial{V,I,Nm} <: AbstractMonomial where V <: AbstractVector{I} where I <: Integer where Nm
 
 An implementation of AbstractMonomial that stores exponents as a vector
 of integers. This can be a sparse or dense representation, depending on the
@@ -231,26 +231,27 @@ This representation is intended for the case when the number of variables
 is unbounded. In particular, the indexing operation `m[i]` returns `0` when `i`
 is out-of-bounds, instead of throwing an exception.
 """
-struct VectorMonomial{V,Nm} <: AbstractMonomial{Nm}
+struct VectorMonomial{V,I,Nm} <: AbstractMonomial{Nm}
     e::V
-    VectorMonomial{V,Nm}(e) where V<: AbstractVector{<:Integer} where Nm = new(e)
+    deg::I
+    VectorMonomial{V,I,Nm}(e, deg) where V<:AbstractVector{I} where {I<:Integer,Nm} = new(e, deg)
 end
 
-function _construct(::Type{M}, f::Function, nonzero_indices) where M <: VectorMonomial{V,Nm} where V <: AbstractVector{I} where I <: Integer where Nm
+function _construct(::Type{M}, f::Function, nonzero_indices, deg) where M <: VectorMonomial{V,I,Nm} where V <: AbstractVector{I} where I <: Integer where Nm
     if findlast(nonzero_indices) == 0
-        return M(V())
+        return M(V(), deg)
     else
         e = zeros(I, last(nonzero_indices))
         for i in nonzero_indices
             e[i] = f(i)
         end
-        return M(e)
+        return M(e, deg)
     end
 end
 
-namestype(::Type{VectorMonomial{V,Nm}}) where {V,Nm} = Nm
-exptype(::Type{VectorMonomial{V,Nm}}) where {V,Nm} = eltype(V)
-expstype(::Type{VectorMonomial{V,Nm}}) where {V,Nm} = V
+namestype(::Type{VectorMonomial{V,I,Nm}}) where {V,I,Nm} = Nm
+exptype(::Type{VectorMonomial{V,I,Nm}}) where {V,I,Nm} = I
+expstype(::Type{VectorMonomial{V,I,Nm}}) where {V,I,Nm} = V
 @inline getindex(m::VectorMonomial, i::Integer) = i <= length(m.e) ? m.e[i] : zero(exptype(m))
 
 # special case for sparsevectors; for some reason, SparseVector{Int,Int}() does not give
@@ -262,11 +263,11 @@ expstype(::Type{VectorMonomial{V,Nm}}) where {V,Nm} = V
 # for VectorMonomial (???)
 ==(a::M,b::M) where M<:VectorMonomial = a.e == b.e
 
-generators(::Type{VectorMonomial{V,Nm}}) where {V,Nm} = Channel(ctype=VectorMonomial{V}) do ch
+generators(::Type{VectorMonomial{V,I,Nm}}) where {V,I,Nm} = Channel(ctype=VectorMonomial{V,I,Nm}) do ch
     for j in 1:typemax(Int)
-        x = spzeros(eltype(V), j)
-        x[j] = one(eltype(V))
-        push!(ch, VectorMonomial{V,Nm}(x))
+        x = spzeros(I, j)
+        x[j] = one(I)
+        push!(ch, VectorMonomial{V,I,Nm}(x))
     end
     throw(AssertionError("typemax exhausted"))
 end
@@ -285,8 +286,10 @@ total_degree(a::TupleMonomial) = a.deg
 # VectorMonomial: overloads for speedup
 #
 # -----------------------------------------------------------------------------
+total_degree(a::VectorMonomial) = a.deg
+
 import Base.SparseArrays: nonzeroinds
-nzindices(a::VectorMonomial{V,Nm}) where {V <: SparseVector,Nm} = nonzeroinds(a.e)
+nzindices(a::VectorMonomial{V,I,Nm}) where {V <: SparseVector,I,Nm} = nonzeroinds(a.e)
 
 # -----------------------------------------------------------------------------
 #
@@ -295,7 +298,7 @@ nzindices(a::VectorMonomial{V,Nm}) where {V <: SparseVector,Nm} = nonzeroinds(a.
 # -----------------------------------------------------------------------------
 
 max_variable_index(m::TupleMonomial{N}) where N = N
-max_variable_index(m::VectorMonomial{V,Nm}) where {V,Nm} = length(m.e)
+max_variable_index(m::VectorMonomial{V,I,Nm}) where {V,I,Nm} = length(m.e)
 
 import PolynomialRings.VariableNames: Named, Numbered, flatvariablesymbols
 _densenames(n::Integer, ::Type{Numbered{Name}}) where Name = (g = flatvariablesymbols(Numbered{Name}); Named{ tuple([take!(g) for _ = 1:n]...) })
