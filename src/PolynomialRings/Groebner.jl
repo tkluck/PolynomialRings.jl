@@ -255,6 +255,8 @@ function buchberger(polynomials::AbstractVector{M}, ::Type{Val{with_transformati
             enqueue!(pairs_to_consider, (i,j), degree)
         end
     end
+    pop_pair() = dequeue!(pairs_to_consider)
+    pairs_left() = length(pairs_to_consider) > 0
 
     for j in eachindex(result)
         for i in 1:(j-1)
@@ -264,11 +266,8 @@ function buchberger(polynomials::AbstractVector{M}, ::Type{Val{with_transformati
 
     loops = 0
     reductions_to_zero = 0
-    while true
-        if length(pairs_to_consider) == 0
-            break
-        end
-        (i,j) = dequeue!(pairs_to_consider)
+    while pairs_left()
+        (i,j) = pop_pair()
 
         a = result[i]
         b = result[j]
