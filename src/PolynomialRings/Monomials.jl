@@ -124,11 +124,8 @@ total_degree(a::A) where A <: AbstractMonomial = (ix = nzindices(a); length(ix)=
 
 lcm(a::M, b::M) where M <: AbstractMonomial = _construct(M,i -> max(a[i], b[i]), index_union(a,b))
 gcd(a::M, b::M) where M <: AbstractMonomial = _construct(M,i -> min(a[i], b[i]), index_union(a,b))
-enumeratenz(a::M) where M <: AbstractMonomial = Channel(ctype=Tuple{Int,exptype(M)}) do ch
-    for i in nzindices(a)
-        push!(ch, (i, a[i]))
-    end
-end
+
+enumeratenz(a::M) where M <: AbstractMonomial = [(i, a[i]) for i in nzindices(a)]
 
 exptype(a::AbstractMonomial) = exptype(typeof(a))
 
