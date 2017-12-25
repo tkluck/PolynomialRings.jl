@@ -14,6 +14,7 @@ function leadrem(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
     i = 1
     while i<=length(G)
         g = G[i]
+        iszero(g) && continue
         q, f_red = leaddivrem(f_red, g)
         if !iszero(q)
             i = 1
@@ -33,6 +34,7 @@ function leaddivrem(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
     i = 1
     while i<=length(G)
         g = G[i]
+        iszero(g) && continue
         q, f_red = leaddivrem(f_red, g)
         if !iszero(q)
             factors[1, i] += q
@@ -77,6 +79,7 @@ function _rem(f, G)
     i=1
     while i<=length(G)
         g = G[i]
+        iszero(g) && continue
         q, f_red = divrem(f_red, g)
         if !iszero(q)
             i = 1
@@ -117,6 +120,7 @@ function _divrem(f, G)
     i=1
     while i<=length(G)
         g = G[i]
+        iszero(g) && continue
         q, f_red = divrem(f_red, g)
         if !iszero(q)
             factors[1, i] += q

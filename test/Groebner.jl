@@ -7,6 +7,7 @@ using PolynomialRings
     @test divrem(x^2, [x]) == ([x]', 0)
     @test divrem(x + y, [x]) == ([1]', y)
     @test divrem(1, [x]) == ([0]', 1)
+    @test divrem(x^2, [x,0]) == ([x,0]', 0)
 
     @test div(x^2, [x]) == [x]'
     @test div(x + y, [x]) == [1]'
