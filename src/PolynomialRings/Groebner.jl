@@ -1,6 +1,7 @@
 module Groebner
 
 import PolynomialRings: leading_term, lcm_multipliers, lcm_degree, fraction_field, basering, base_extend
+import PolynomialRings: maybe_div
 import PolynomialRings.Polynomials: Polynomial, monomialorder, terms
 import PolynomialRings.Terms: monomial
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering
@@ -248,6 +249,8 @@ function buchberger(polynomials::AbstractVector{M}, ::Type{Val{with_transformati
     end
 
     pairs_to_consider = PriorityQueue{Tuple{Int,Int}, Int}()
+    pairs_to_consider_set = Set{Tuple{Int,Int}}()
+    _pair(i,j) = (min(i,j), max(i,j))
     function add_pair(i,j)
         a = result[i]
         b = result[j]
@@ -256,10 +259,12 @@ function buchberger(polynomials::AbstractVector{M}, ::Type{Val{with_transformati
             lm_b = _leading_monomial(b)
             degree = _lcm_degree(lm_a, lm_b)
             m_a, m_b = _lcm_multipliers(lm_a, lm_b)
-            enqueue!(pairs_to_consider, (i,j), degree)
+
+            enqueue!(pairs_to_consider, _pair(i,j), degree)
+            push!(pairs_to_consider_set, _pair(i,j))
         end
     end
-    pop_pair() = dequeue!(pairs_to_consider)
+    pop_pair() = (p = dequeue!(pairs_to_consider); delete!(pairs_to_consider_set, p); p)
     pairs_left() = length(pairs_to_consider) > 0
 
     for j in eachindex(result)
@@ -270,7 +275,15 @@ function buchberger(polynomials::AbstractVector{M}, ::Type{Val{with_transformati
 
     loops = 0
     reductions_to_zero = 0
+    saved = 0
     while pairs_left()
+        loops += 1
+        if loops % 1000 == 0
+            l = length(result)
+            k = length(pairs_to_consider)
+            info("Groebner: After about $loops loops: $l elements in basis; $saved reductions saved; $reductions_to_zero reductions to zero; $k pairs left to consider.")
+        end
+
         (i,j) = pop_pair()
 
         a = result[i]
@@ -280,6 +293,25 @@ function buchberger(polynomials::AbstractVector{M}, ::Type{Val{with_transformati
         lt_b = _leading_term(b)
 
         m_a, m_b = lcm_multipliers(lt_a, lt_b)
+
+        criterion = false
+        leading_lcm = m_a*lt_a
+        for l in eachindex(result)
+            if(
+               l != i && l != j &&
+               _leading_row(result[l]) == _leading_row(a) &&
+               !(_pair(i,l) in pairs_to_consider_set) &&
+               !(_pair(j,l) in pairs_to_consider_set) &&
+               !isnull(maybe_div(leading_lcm, _leading_term(result[l])))
+              )
+                criterion = true
+                break
+            end
+        end
+        if criterion
+            saved += 1
+            continue
+        end
 
         S = m_a * a - m_b * b
 
@@ -316,12 +348,6 @@ function buchberger(polynomials::AbstractVector{M}, ::Type{Val{with_transformati
             end
         else
             reductions_to_zero += 1
-        end
-        loops += 1
-        if loops % 1000 == 0
-            l = length(result)
-            k = length(pairs_to_consider)
-            info("Groebner: After about $loops loops: $l elements in basis; $reductions_to_zero reductions to zero; $k pairs left to consider.")
         end
     end
 
