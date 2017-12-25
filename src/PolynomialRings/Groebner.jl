@@ -5,7 +5,7 @@ import PolynomialRings.Polynomials: Polynomial, monomialorder, terms
 import PolynomialRings.Terms: monomial
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering
 
-# impors for overloading
+# imports for overloading
 import Base: div, rem, divrem
 import PolynomialRings.Operators: leaddiv, leadrem, leaddivrem
 
