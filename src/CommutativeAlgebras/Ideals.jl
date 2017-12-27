@@ -25,8 +25,8 @@ import PolynomialRings.Expansions: _expansion
 
 mutable struct Ideal{P<:Polynomial}
     generators::AbstractVector{P}
-    _grb::Union{Null, AbstractVector{P}}
-    _trns::Union{Null, AbstractMatrix{P}}
+    _grb::Union{Null, AbstractVector}
+    _trns::Union{Null, AbstractMatrix}
 end
 Ideal(generators::AbstractVector{<:Polynomial}) = Ideal(generators, null, null)
 Ideal(generators::Polynomial...) = Ideal(collect(generators), null, null)
