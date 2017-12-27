@@ -149,6 +149,13 @@ one(Foo) = Foo()
         @test basering( base_extend(x,BigInt) ) == BigInt
         @test modulebasering( base_extend([x, 0, y])) == @ring(ℚ[x,y])
         @test base_extend(x, Float64) == 1.0 * x
+        @test convert(@ring(ℚ[x,y]), x+y) == x+y
+
+        @ring! ℤ[a[]]
+        @test basering( base_extend(a[1],BigInt) ) == BigInt
+        @test modulebasering( base_extend([a[1], 0, a[2]])) == @ring(ℚ[a[]])
+        @test base_extend(a[1], Float64) == 1.0 * a[1]
+        @test convert(@ring(ℚ[a[]]), a[1]+a[2]) == a[1]+a[2]
     end
 end
 

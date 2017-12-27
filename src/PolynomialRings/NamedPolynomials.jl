@@ -18,12 +18,28 @@ import Base: promote_rule, convert
 # Type definitions
 #
 # -----------------------------------------------------------------------------
+const NamedMonomial                 = AbstractMonomial{<:Named}
+const NumberedMonomial              = AbstractMonomial{<:Numbered}
+const PolynomialOver{C,Names,Order} = Polynomial{<:AbstractVector{<:Term{<:AbstractMonomial{Names}, C}},Order}
+const NamedPolynomial{C,Order}      = PolynomialOver{C,<:Named,Order}
+const NumberedPolynomial{C,Order}   = PolynomialOver{C,<:Numbered,Order}
+# -----------------------------------------------------------------------------
+#
+# Coefficient promotions when variable names are the same
+#
+# -----------------------------------------------------------------------------
+function promote_rule(P1::Type{<:PolynomialOver{C,N}}, P2::Type{<:PolynomialOver{D,N}}) where {C,D,N}
+    return base_extend(P1, D)
+end
 
-NamedMonomial    = AbstractMonomial{<:Named}
-NumberedMonomial = AbstractMonomial{<:Numbered}
-NamedPolynomial    = Polynomial{<:AbstractVector{<:Term{<:NamedMonomial,   C}}} where C
-NumberedPolynomial = Polynomial{<:AbstractVector{<:Term{<:NumberedMonomial,C}}} where C
-
+# separate versions for N<:Named and N<:Numbered to resolve method ambiguity
+# with the version for which P and p do not have the same names.
+function convert(P::Type{<:PolynomialOver{C,N}}, p::PolynomialOver{D,N}) where {C,D,N<:Named}
+    return base_extend(p, C)
+end
+function convert(P::Type{<:PolynomialOver{C,N}}, p::PolynomialOver{D,N}) where {C,D,N<:Numbered}
+    return base_extend(p, C)
+end
 # -----------------------------------------------------------------------------
 #
 # Promotions for different variable name sets
