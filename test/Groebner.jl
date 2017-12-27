@@ -38,6 +38,8 @@ end
 
     GG= groebner_basis(G)
     @test length(GG) == 6
+
+    @test groebner_basis(R[]) == R[]
 end
 
 @testset "Syzygy" begin
