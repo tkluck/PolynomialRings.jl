@@ -33,11 +33,9 @@ end
 
     G = [[x^5-y,x^4],[x^3+y,y^3]]
     GG, tr= groebner_transformation(G)
-    @test length(GG) == 6
     @test [a for a in tr]*G == GG
 
     GG= groebner_basis(G)
-    @test length(GG) == 6
 
     @test groebner_basis(R[]) == R[]
 end
