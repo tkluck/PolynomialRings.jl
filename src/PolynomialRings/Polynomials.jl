@@ -3,7 +3,7 @@ module Polynomials
 import PolynomialRings.Monomials: TupleMonomial, VectorMonomial
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.VariableNames: Named, Numbered
-import PolynomialRings.Terms: Term
+import PolynomialRings.Terms: Term, monomial
 
 # -----------------------------------------------------------------------------
 #
