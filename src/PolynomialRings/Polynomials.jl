@@ -65,7 +65,7 @@ function to_dense_monomials(n, p::Polynomial)
     return Polynomial{typeof(A), monomialordersymbol(p)}(A)
 end
 
-max_variable_index(p::Polynomial) = maximum(max_variable_index(t) for t in terms(p))
+max_variable_index(p::Polynomial) = iszero(p) ? 0 : maximum(max_variable_index(t) for t in terms(p))
 
 leading_term(p::Polynomial) = last(terms(p))
 

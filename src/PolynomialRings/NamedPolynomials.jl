@@ -3,7 +3,7 @@ module NamedPolynomials
 import PolynomialRings: termtype, terms, namestype, variablesymbols, exptype, monomialtype, allvariablesymbols
 import PolynomialRings.Polynomials: Polynomial, monomialorder
 import PolynomialRings.Terms: Term, basering, monomial, coefficient
-import PolynomialRings.Monomials: TupleMonomial, AbstractMonomial
+import PolynomialRings.Monomials: TupleMonomial, AbstractMonomial, _construct
 import PolynomialRings.VariableNames: Named, Numbered
 
 # -----------------------------------------------------------------------------
@@ -23,6 +23,20 @@ const NumberedMonomial              = AbstractMonomial{<:Numbered}
 const PolynomialOver{C,Names,Order} = Polynomial{<:AbstractVector{<:Term{<:AbstractMonomial{Names}, C}},Order}
 const NamedPolynomial{C,Order}      = PolynomialOver{C,<:Named,Order}
 const NumberedPolynomial{C,Order}   = PolynomialOver{C,<:Numbered,Order}
+
+# -----------------------------------------------------------------------------
+#
+# Generating symbols that do not conflict with existing ones
+#
+# -----------------------------------------------------------------------------
+function unused_variable(P, a)
+    E = exptype(P)
+    N = max_variable_index(a)
+    P(_construct(monomialtype(P), i->i==(N+1)?one(E):zero(E), N+1:N+1))
+end
+unused_variable(p::Polynomial)                  = unused_variable(typeof(p), p)
+unused_variable(a::AbstractArray{<:Polynomial}) = unused_variable(eltype(a), a)
+
 # -----------------------------------------------------------------------------
 #
 # Coefficient promotions when variable names are the same

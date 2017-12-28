@@ -17,9 +17,11 @@ import Base: *, det, transpose, diff
 import PolynomialRings.Expansions: expansion, coefficients, coefficient
 import PolynomialRings.Expansions: constant_coefficient, linear_coefficients
 
+max_variable_index(a::AbstractArray{<:Polynomial}) = length(a) == 0 ? 0 : maximum(max_variable_index(a_i) for a_i in a)
+
 function to_dense_monomials(a::AbstractArray{P}) where P <: Polynomial
-    n = maximum(max_variable_index(a_i) for a_i in a)
-    [ to_dense_monomials(n, a_i) for a_i in a]
+    n = max_variable_index(a)
+    to_dense_monomials.(n, a)
 end
 
 # -----------------------------------------------------------------------------
