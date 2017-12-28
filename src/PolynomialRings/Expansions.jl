@@ -215,28 +215,28 @@ end
 
 function _substitute(p::Polynomial, ::Type{Named{Names}}, values) where Names
     ExpansionType, CoeffType = _expansion_types(typeof(p), Named{Names})
-    ReturnType = promote_type(eltype(values), CoeffType)
+    SubstitutionType = eltype(values)
+    ReturnType = promote_type(SubstitutionType, CoeffType)
     if !isleaftype(ReturnType)
-        throw(ArgumentError("Cannot substitute $(eltype(values)) for $(Named{Names}) into $p; result no more specific than $ReturnType"))
+        throw(ArgumentError("Cannot substitute $SubstitutionType for $(Named{Names}) into $p; result no more specific than $ReturnType"))
     end
-    if iszero(p)
-        return zero(ReturnType)
-    end
-    # TODO: type stability even in corner cases
-    sum( p * prod(v^k for (v,k) in zip(values,w)) for (w,p) in expansion(p, Named{Names}) )
+    return reduce(+, zero(ReturnType),
+        reduce(*, c, v^k for (v,k) in zip(values,w))
+        for (w,c) in expansion(p, Named{Names})
+    )
 end
 
 function _substitute(p::Polynomial, ::Type{Numbered{Name}}, values) where Name
     ExpansionType, CoeffType = _expansion_types(typeof(p), Numbered{Name})
-    ReturnType = promote_type(typeof(values(1)), CoeffType)
+    SubstitutionType = typeof(values(1))
+    ReturnType = promote_type(SubstitutionType, CoeffType)
     if !isleaftype(ReturnType)
-        throw(ArgumentError("Cannot substitute $(typeof(values(1))) for $(Numbered{Name}) into $p; result no more specific than $ReturnType"))
+        throw(ArgumentError("Cannot substitute $SubstitutionType for $(Numbered{Name}) into $p; result no more specific than $ReturnType"))
     end
-    if iszero(p)
-        return zero(ReturnType)
-    end
-    # TODO: type stability even in corner cases
-    sum( p * prod(values(i)^k for (i,k) in enumeratenz(m)) for (m,p) in _expansion(p, Numbered{Name}) )
+    return reduce(+, zero(ReturnType),
+        reduce(*, c, values(i)^k for (i,k) in enumeratenz(m))
+        for (m,c) in _expansion(p, Numbered{Name})
+    )
 end
 
 """

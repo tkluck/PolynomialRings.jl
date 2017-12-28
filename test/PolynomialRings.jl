@@ -190,7 +190,7 @@ end
         @test lhs == [(x,-1), (x*y, 1)]
     end
 
-    @ring! R[c[]]
+    T = @ring! R[c[]]
     c1,c2,c3 = c[]
     @testset "numbered variables" begin
         @test [1] == @coefficients c1*c2*c3 c[]
@@ -201,6 +201,10 @@ end
         @test [] == @linear_coefficients zero(c2) c[]
 
         @test (c1*c2*c3 + 3*c3)(c = i->i) == 15
+
+        @test (c1+c2+c3)(c=i->2i) == 12
+        @test zero(T)(c=i->1) == 0
+        @test one(T)(c=i->1) == 1
     end
 
     @testset "coefficient()" begin
