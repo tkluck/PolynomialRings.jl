@@ -16,6 +16,7 @@ include("PolynomialRings/Expansions.jl")
 include("PolynomialRings/Arrays.jl")
 include("PolynomialRings/Display.jl")
 include("PolynomialRings/Modules.jl")
+include("PolynomialRings/Reductions.jl")
 include("PolynomialRings/Groebner.jl")
 include("PolynomialRings/Conversions.jl")
 
