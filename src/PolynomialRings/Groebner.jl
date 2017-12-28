@@ -51,7 +51,7 @@ function _divisors_foreach(f::Function, a::M) where M <: AbstractMonomial
             break
         end
         m = _construct(M, i->e[i], nonzeros, sum(e[nonzeros]))::M
-        if !f(m)
+        if f(m) == :break
             break
         end
     end
@@ -70,9 +70,9 @@ function _grb_leadred(f::M, G::AbstractVector{M}, G_lm) where M <: AbstractModul
                 i = first(range)
                 (_, f_red) = leaddivrem(f_red, G[i])
                 more_loops = true
-                return false # break
+                return :break
             end
-            return true # continue
+            return :continue
         end
     end
     return f_red
@@ -91,9 +91,9 @@ function _grb_red(f::M, G::AbstractVector{M}, G_lm) where M <: AbstractModuleEle
                     i = first(range)
                     (_ignored, f_red) = divrem(f_red, G[i])
                     more_loops = true
-                    return false # break
+                    return :break
                 end
-                return true # continue
+                return :continue
             end
         end
     end
