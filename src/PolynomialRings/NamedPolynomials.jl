@@ -54,6 +54,9 @@ end
 function convert(P::Type{<:PolynomialOver{C,N}}, p::PolynomialOver{D,N}) where {C,D,N<:Numbered}
     return base_extend(p, C)
 end
+# and short-circuit the non-conversions
+convert(P::Type{<:PolynomialOver{C,N}}, p::PolynomialOver{C,N}) where {C,N<:Named} = p
+convert(P::Type{<:PolynomialOver{C,N}}, p::PolynomialOver{C,N}) where {C,N<:Numbered} = p
 # -----------------------------------------------------------------------------
 #
 # Promotions for different variable name sets
