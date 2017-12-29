@@ -221,7 +221,7 @@ function divrem(::Full, f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where 
         throw(DivideError())
     end
     lt_g = leading_term(g)
-    for t in terms(f)
+    for t in @view terms(f)[end:-1:1]
         factor = maybe_div(t, lt_g)
         if !isnull(factor)
             return typeof(f)([factor]), f - factor*g
