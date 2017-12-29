@@ -5,49 +5,7 @@ import PolynomialRings.Modules: AbstractModuleElement, modulebasering
 
 # imports for overloading
 import Base: div, rem, divrem
-import PolynomialRings.Operators: leaddiv, leadrem, leaddivrem
-
-function leadrem(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
-    f_red = f
-    i = 1
-    while i<=length(G)
-        g = G[i]
-        iszero(g) && continue
-        q, f_red = leaddivrem(f_red, g)
-        if !iszero(q)
-            i = 1
-        else
-            i += 1
-        end
-        if iszero(f_red)
-            return f_red
-        end
-    end
-    return f_red
-end
-
-function leaddivrem(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
-    factors = transpose(spzeros(modulebasering(M), length(G)))
-    f_red = f
-    i = 1
-    while i<=length(G)
-        g = G[i]
-        iszero(g) && continue
-        q, f_red = leaddivrem(f_red, g)
-        if !iszero(q)
-            factors[1, i] += q
-            i = 1
-        else
-            i += 1
-        end
-        if iszero(f_red)
-            return factors, f_red
-        end
-    end
-    return factors, f_red
-end
-
-leaddiv(f::M, G::AbstractVector{M}) where M <: AbstractModuleElement = leaddivrem(f, G)[1]
+import PolynomialRings.Operators: RedType, Lead, Full, leaddiv, leadrem, leaddivrem
 
 """
     f_red = rem(f, G)
@@ -69,16 +27,19 @@ julia> rem(x^2 + y^2 + 1, [x, y])
 1
 ```
 """
-rem(f::P, G::AbstractVector{P}) where P <: Polynomial = _rem(f,G)
-rem(f::M, G::AbstractVector{M}) where M <: AbstractArray{<:Polynomial} = _rem(f,G)
-function _rem(f, G)
-    f_red = leadrem(f,G)
-
-    i=1
+function rem(redtype::RedType, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
+    if typeof(redtype) <: Full
+        f_red = rem(Lead(),f,G)
+    elseif typeof(redtype) <: Lead
+        f_red = f
+    else
+    @assert false "unreachable: didn't expect $redtype"
+    end
+    i = 1
     while i<=length(G)
         g = G[i]
         iszero(g) && continue
-        q, f_red = divrem(f_red, g)
+        q, f_red = divrem(redtype, f_red, g)
         if !iszero(q)
             i = 1
         else
@@ -88,7 +49,6 @@ function _rem(f, G)
             return f_red
         end
     end
-
     return f_red
 end
 
@@ -110,16 +70,20 @@ julia> divrem(x^2 + y^2 + 1, [x, y])
 (1, [x,y]')
 ```
 """
-divrem(f::P, G::AbstractVector{P}) where P <: Polynomial = _divrem(f,G)
-divrem(f::M, G::AbstractVector{M}) where M <: AbstractArray{<:Polynomial} = _divrem(f,G)
-function _divrem(f, G)
-    factors, f_red = leaddivrem(f,G)
-
-    i=1
+function divrem(redtype::RedType, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
+    if typeof(redtype) <: Full
+        factors, f_red = divrem(Lead(),f,G)
+    elseif typeof(redtype) <: Lead
+        factors = transpose(spzeros(modulebasering(M), length(G)))
+        f_red = f
+    else
+        @assert false "unreachable: didn't expect $redtype"
+    end
+    i = 1
     while i<=length(G)
         g = G[i]
         iszero(g) && continue
-        q, f_red = divrem(f_red, g)
+        q, f_red = divrem(redtype, f_red, g)
         if !iszero(q)
             factors[1, i] += q
             i = 1
@@ -130,11 +94,25 @@ function _divrem(f, G)
             return factors, f_red
         end
     end
-
     return factors, f_red
 end
 
-div(f::P, G::AbstractVector{P}) where P <: Polynomial = _divrem(f,G)[1]
-div(f::M, G::AbstractVector{M}) where M <: AbstractArray{<:Polynomial} = _divrem(f,G)[1]
+function div(redtype::RedType, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
+    divrem(redtype, f, G)[1]
+end
+
+leaddivrem(f::M,g::AbstractVector{M}) where M<:Polynomial = divrem(Lead(), f, g)
+divrem(f::M,g::AbstractVector{M})     where M<:Polynomial = divrem(Full(), f, g)
+leadrem(f::M,g::AbstractVector{M})    where M<:Polynomial = rem(Lead(), f, g)
+rem(f::M,g::AbstractVector{M})        where M<:Polynomial = rem(Full(), f, g)
+leaddiv(f::M,g::AbstractVector{M})    where M<:Polynomial = div(Lead(), f, g)
+div(f::M,g::AbstractVector{M})        where M<:Polynomial = div(Full(), f, g)
+
+leaddivrem(f::M,g::AbstractVector{M}) where M<:AbstractArray{<:Polynomial} = divrem(Lead(), f, g)
+divrem(f::M,g::AbstractVector{M})     where M<:AbstractArray{<:Polynomial} = divrem(Full(), f, g)
+leadrem(f::M,g::AbstractVector{M})    where M<:AbstractArray{<:Polynomial} = rem(Lead(), f, g)
+rem(f::M,g::AbstractVector{M})        where M<:AbstractArray{<:Polynomial} = rem(Full(), f, g)
+leaddiv(f::M,g::AbstractVector{M})    where M<:AbstractArray{<:Polynomial} = div(Lead(), f, g)
+div(f::M,g::AbstractVector{M})        where M<:AbstractArray{<:Polynomial} = div(Full(), f, g)
 
 end

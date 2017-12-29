@@ -1,7 +1,7 @@
 module Modules
 
 import PolynomialRings.Polynomials: Polynomial
-import PolynomialRings.Operators: leaddivrem
+import PolynomialRings.Operators: RedType, leaddiv, leadrem, leaddivrem
 
 AbstractModuleElement{P<:Polynomial} = Union{P, AbstractArray{P}}
 modulebasering(::Type{A}) where A <: AbstractModuleElement{P} where P<:Polynomial = P
@@ -9,7 +9,6 @@ modulebasering(::A)       where A <: AbstractModuleElement{P} where P<:Polynomia
 
 import PolynomialRings: leading_term, iszero, base_extend
 import Base: div, rem, divrem
-import PolynomialRings.Operators: leaddiv, leadrem, leaddivrem
 
 function leading_term(x::AbstractArray{P}) where P<:Polynomial
     i = findfirst(x)
@@ -25,30 +24,24 @@ iszero(x::AbstractArray{P}) where P<:Polynomial = (i = findfirst(x); i>0 ? iszer
 base_extend(x::AbstractArray{P}, ::Type{C}) where P<:Polynomial where C = map(p->base_extend(p,C), x)
 base_extend(x::AbstractArray{P})            where P<:Polynomial         = map(base_extend, x)
 
-function divrem(a::A, b::A) where A<:AbstractArray{<:Polynomial}
+function divrem(redtype::RedType,a::A, b::A) where A<:AbstractArray{<:Polynomial}
     i = findfirst(b)
     if i>0
-        (q,r) = divrem(a[i], b[i])
+        (q,r) = divrem(redtype,a[i], b[i])
         return q, a - q*b
     else
         return zero(P), a
     end
 end
 
-function leaddivrem(a::A, b::A) where A<:AbstractArray{<:Polynomial}
-    i = findfirst(b)
-    if i>0
-        (q,r) = leaddivrem(a[i], b[i])
-        return q, a - q*b
-    else
-        return zero(P), a
-    end
-end
+div(redtype::RedType, a::A, b::A) where A<:AbstractArray{<:Polynomial} = divrem(redtype, a, b)[1]
+rem(redtype::RedType, a::A, b::A) where A<:AbstractArray{<:Polynomial} = divrem(redtype, a, b)[2]
 
-div(a::A, b::A) where A<:AbstractArray{<:Polynomial} = divrem(a, b)[1]
-rem(a::A, b::A) where A<:AbstractArray{<:Polynomial} = divrem(a, b)[2]
-leaddiv(a::A, b::A) where A<:AbstractArray{<:Polynomial} = leaddivrem(a, b)[1]
-leadrem(a::A, b::A) where A<:AbstractArray{<:Polynomial} = leaddivrem(a, b)[2]
-
+leaddivrem(f::A,g::AbstractVector{A}) where A<:AbstractArray{Polynomial} = divrem(Lead(), f, g)
+divrem(f::A,g::AbstractVector{A})     where A<:AbstractArray{Polynomial} = divrem(Full(), f, g)
+leadrem(f::A,g::AbstractVector{A})    where A<:AbstractArray{Polynomial} = rem(Lead(), f, g)
+rem(f::A,g::AbstractVector{A})        where A<:AbstractArray{Polynomial} = rem(Full(), f, g)
+leaddiv(f::A,g::AbstractVector{A})    where A<:AbstractArray{Polynomial} = div(Lead(), f, g)
+div(f::A,g::AbstractVector{A})        where A<:AbstractArray{Polynomial} = div(Full(), f, g)
 
 end

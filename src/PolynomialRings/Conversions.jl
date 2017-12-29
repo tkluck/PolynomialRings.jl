@@ -3,6 +3,7 @@ module Conversions
 import PolynomialRings.Polynomials: Polynomial, termtype, monomialtype, basering, terms
 import PolynomialRings.Terms: Term, monomial, coefficient
 import PolynomialRings.Monomials: AbstractMonomial
+import PolynomialRings.Operators: RedType
 import PolynomialRings: fraction_field, integers, base_extend, base_restrict, namestype
 
 # -----------------------------------------------------------------------------

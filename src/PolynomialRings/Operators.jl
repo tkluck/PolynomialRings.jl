@@ -203,7 +203,17 @@ end
 # long division
 #
 # -----------------------------------------------------------------------------
-function divrem(f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
+abstract type RedType end
+struct Lead <: RedType end
+struct Full <: RedType end
+leaddivrem(f::Polynomial, g::Polynomial) = divrem(Lead(), f, g)
+divrem(f::Polynomial, g::Polynomial)     = divrem(Full(), f, g)
+leadrem(f::Polynomial, g::Polynomial)    = rem(Lead(), f, g)
+rem(f::Polynomial, g::Polynomial)        = rem(Full(), f, g)
+leaddiv(f::Polynomial, g::Polynomial)    = div(Lead(), f, g)
+div(f::Polynomial, g::Polynomial)        = div(Full(), f, g)
+
+function divrem(::Full, f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
     if iszero(f)
         return zero(g), f
     end
@@ -220,7 +230,7 @@ function divrem(f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:Abst
     return zero(g), f
 end
 
-function leaddivrem(f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
+function divrem(::Lead, f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
     if iszero(f)
         return zero(g), f
     end
@@ -236,16 +246,10 @@ function leaddivrem(f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:
     return zero(g), f
 end
 
-function leaddiv(f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
-    leaddivrem(f, g)[1]
+function div(redtype::RedType, f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
+    divrem(redtype, f, g)[1]
 end
-function leadrem(f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
-    leaddivrem(f, g)[2]
-end
-function div(f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
-    divrem(f, g)[1]
-end
-function rem(f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
+function rem(redtype::RedType, f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
     divrem(f, g)[2]
 end
 
