@@ -186,7 +186,6 @@ function buchberger(polynomials::AbstractVector{M}, ::Val{with_transformation}) 
     end
     full_reduce_result_element(stable_ix) = full_reduce_result_element(stable_ix, all_other_stable_indices(stable_ix))
     function full_reduce_result_element(stable_ix, other_stable_indices_hint)
-        was = stable_result[stable_ix]
         res = reduce_result_element(Lead(), stable_ix, other_stable_indices_hint)
         if res == :zero || res == :unchanged
             return res
@@ -195,7 +194,6 @@ function buchberger(polynomials::AbstractVector{M}, ::Val{with_transformation}) 
             if res2 == :zero
                 return :zero
             else
-                is = stable_result[stable_ix]
                 for other_ix in all_other_stable_indices(stable_ix)
                     full_reduce_result_element(other_ix, stable_ix:stable_ix)
                 end
@@ -228,7 +226,6 @@ function buchberger(polynomials::AbstractVector{M}, ::Val{with_transformation}) 
             lm_a = _leading_monomial(a)
             lm_b = _leading_monomial(b)
             degree = _lcm_degree(lm_a, lm_b)
-            m_a, m_b = _lcm_multipliers(lm_a, lm_b)
 
             enqueue!(pairs_to_consider, _pair(i,j), degree)
             push!(pairs_to_consider_set, _pair(i,j))
