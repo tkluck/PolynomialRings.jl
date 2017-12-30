@@ -298,21 +298,14 @@ function buchberger(polynomials::AbstractVector{M}, ::Val{with_transformation}) 
         m_a, m_b = lcm_multipliers(lt_a, lt_b)
 
         # step 3a
-        criterion = false
         leading_lcm = m_a*lt_a
-        for l in all_stable_indices()
-            if(
-               l != i && l != j &&
-               _leading_row(stable_result[l]) == _leading_row(a) &&
-               !(_pair(i,l) in pairs_to_consider_set) &&
-               !(_pair(j,l) in pairs_to_consider_set) &&
-               !isnull(maybe_div(leading_lcm, _leading_term(stable_result[l])))
-              )
-                criterion = true
-                break
-            end
+        if any(all_stable_indices()) do l
+           l != i && l != j &&
+           _leading_row(stable_result[l]) == _leading_row(a) &&
+           !(_pair(i,l) in pairs_to_consider_set) &&
+           !(_pair(j,l) in pairs_to_consider_set) &&
+           !isnull(maybe_div(leading_lcm, _leading_term(stable_result[l])))
         end
-        if criterion
             saved += 1
             continue
         end
