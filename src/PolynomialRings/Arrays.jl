@@ -2,7 +2,6 @@ module Arrays
 
 using Nulls
 
-import PolynomialRings: to_dense_monomials, max_variable_index
 import PolynomialRings.Terms: Term
 import PolynomialRings.Polynomials: Polynomial
 import Iterators: groupby
@@ -14,6 +13,8 @@ import PolynomialRings.Expansions: _expansion_expr, _expansion_types
 #
 # -----------------------------------------------------------------------------
 import Base: *, det, transpose, diff
+import PolynomialRings: monomialorder
+import PolynomialRings: to_dense_monomials, max_variable_index, monomialorder
 import PolynomialRings.Expansions: expansion, coefficients, coefficient
 import PolynomialRings.Expansions: constant_coefficient, linear_coefficients
 
@@ -23,6 +24,8 @@ function to_dense_monomials(a::AbstractArray{P}) where P <: Polynomial
     n = max_variable_index(a)
     to_dense_monomials.(n, a)
 end
+
+monomialorder(::Type{<:AbstractArray{P}}) where P <: Polynomial = monomialorder(P)
 
 # -----------------------------------------------------------------------------
 #
