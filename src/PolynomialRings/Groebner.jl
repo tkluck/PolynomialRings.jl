@@ -5,6 +5,7 @@ using DataStructures: PriorityQueue, enqueue!, dequeue!
 
 import PolynomialRings: leading_term, lcm_multipliers, lcm_degree, fraction_field, basering, base_extend
 import PolynomialRings: maybe_div
+import PolynomialRings.Monomials: total_degree
 import PolynomialRings.Polynomials: Polynomial, monomialorder, terms
 import PolynomialRings.Terms: monomial
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering
@@ -219,6 +220,10 @@ function buchberger(polynomials::AbstractVector{M}, ::Val{with_transformation}) 
 
         # step 3a
         leading_lcm = m_a*lt_a
+        if total_degree(leading_lcm) == total_degree(lt_a) + total_degree(lt_b)
+            saved += 1
+            continue
+        end
         if any(all_stable_indices()) do l
            l != i && l != j &&
            _leading_row(stable_result[l]) == _leading_row(a) &&
