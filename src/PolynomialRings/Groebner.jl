@@ -1,6 +1,7 @@
 module Groebner
 
 using Nulls
+using DataStructures: PriorityQueue, enqueue!, dequeue!
 
 import PolynomialRings: leading_term, lcm_multipliers, lcm_degree, fraction_field, basering, base_extend
 import PolynomialRings: maybe_div
@@ -15,8 +16,6 @@ import PolynomialRings.Operators: Lead, Full
 # or a tuple of (index, monomial) (free f.g. module).
 _leading_row(p::Polynomial) = 1
 _leading_row(a::AbstractArray) = findfirst(a)
-_monomials(p::Polynomial) = (monomial(t) for t in terms(p))
-_monomials(a::AbstractArray) = ((i,monomial(t)) for i in find(a) for t in terms(a[i]))
 _leading_term(p::Polynomial) = leading_term(p)
 _leading_term(a::AbstractArray) = leading_term(a[_leading_row(a)])
 _leading_monomial(p::Polynomial) = monomial(leading_term(p))
@@ -26,81 +25,6 @@ _lcm_degree(a::Tuple, b::Tuple) = lcm_degree(a[2], b[2])
 _lcm_multipliers(a, b) = lcm_multipliers(a, b)
 _lcm_multipliers(a::Tuple, b::Tuple) = lcm_multipliers(a[2], b[2])
 
-import PolynomialRings.Monomials: AbstractMonomial, exptype, nzindices, enumeratenz, _construct
-
-function _divisors_foreach(f::Function, a::M) where M <: AbstractMonomial
-
-    if length(nzindices(a)) == 0
-        return
-    end
-
-    e = zeros(exptype(M), last(nzindices(a)))
-    nonzeros = [j for (j,_) in enumeratenz(a)]
-
-    while true
-        carry = 1
-        for j = 1:length(nonzeros)
-            if (e[nonzeros[j]] += carry) > a[nonzeros[j]]
-                e[nonzeros[j]] = 0
-                carry = 1
-            else
-                carry = 0
-            end
-        end
-        if carry == 1
-            break
-        end
-        m = _construct(M, i->e[i], nonzeros, sum(e[nonzeros]))::M
-        if f(m) == :break
-            break
-        end
-    end
-end
-
-_divisors_foreach(f::Function, a::Tuple{Int,M}) where M <: AbstractMonomial = _divisors_foreach(m->f((a[1],m)), a[2])
-
-function _grb_leadred(f::M, G::AbstractVector{M}, G_lm) where M <: AbstractModuleElement
-    f_red = f
-    more_loops = true
-    while !iszero(f_red) && more_loops
-        more_loops = false
-        _divisors_foreach(_leading_monomial(f_red)) do d
-            range = searchsorted(G_lm, d, order=monomialorder(modulebasering(M)))
-            if length(range) > 0
-                i = first(range)
-                (_, f_red) = leaddivrem(f_red, G[i])
-                more_loops = true
-                return :break
-            end
-            return :continue
-        end
-    end
-    return f_red
-end
-
-function _grb_red(f::M, G::AbstractVector{M}, G_lm) where M <: AbstractModuleElement
-    f_red = _grb_leadred(f, G, G_lm)
-
-    more_loops = true
-    while !iszero(f_red) && more_loops
-        more_loops = false
-        for m in _monomials(f_red)
-            _divisors_foreach(m) do d
-                range = searchsorted(G_lm, d, order=monomialorder(modulebasering(M)))
-                if length(range) > 0
-                    i = first(range)
-                    (_ignored, f_red) = divrem(f_red, G[i])
-                    more_loops = true
-                    return :break
-                end
-                return :continue
-            end
-        end
-    end
-    return f_red
-end
-
-using DataStructures
 function buchberger(polynomials::AbstractVector{M}, ::Val{with_transformation}) where M <: AbstractModuleElement where with_transformation
     P = base_extend(modulebasering(M))
 
