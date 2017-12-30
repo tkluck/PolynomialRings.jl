@@ -23,6 +23,7 @@ const NumberedMonomial              = AbstractMonomial{<:Numbered}
 const PolynomialOver{C,Names,Order} = Polynomial{<:AbstractVector{<:Term{<:AbstractMonomial{Names}, C}},Order}
 const NamedPolynomial{C,Order}      = PolynomialOver{C,<:Named,Order}
 const NumberedPolynomial{C,Order}   = PolynomialOver{C,<:Numbered,Order}
+const PolynomialBy{Order}           = PolynomialOver{C,Names,Order} where {C,Names}
 
 # -----------------------------------------------------------------------------
 #
