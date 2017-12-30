@@ -28,7 +28,12 @@ function divrem(redtype::RedType,a::A, b::A) where A<:AbstractArray{<:Polynomial
     i = findfirst(b)
     if i>0
         (q,r) = divrem(redtype,a[i], b[i])
-        return q, a - q*b
+        if iszero(q)
+            # make sure to maintain object identity for a
+            return q, a
+        else
+            return q, a - q*b
+        end
     else
         return zero(P), a
     end
