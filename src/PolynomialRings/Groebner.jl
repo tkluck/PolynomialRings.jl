@@ -110,7 +110,6 @@ function buchberger(polynomials::AbstractVector{M}, ::Val{with_transformation}) 
     result = base_extend.(polynomials)
     if with_transformation
         transformation = [ sparsevec(Dict(i=>one(P)), length(polynomials)) for i in 1:length(result) ]
-        zero_tr = spzeros(P, length(polynomials))
     end
     # --------------------------------------------------------------------------
     # Declare a few helper functions to facilitate manipulating the result array
