@@ -250,12 +250,10 @@ function buchberger(polynomials::AbstractVector{M}, ::Val{with_transformation}) 
     #  1. reduce the input polynomials among themselves.
     #  2. add all pairs of polynomials to the queue.
     #  3. consume the queue:
-    #     3a. discard this pair if it satisfies the Criterion from Cox/Little/O'Shea
+    #     3a. discard this pair if it satisfies Gebauer/Möller's criterion
     #     3b. add the S - polynomial to the set
     #     3c. reduce it w.r.t. the rest
-    #     3d. if it remains nonzero:
-    #         reduce every other polynomial f w.r.t. this new addition.
-    #     3e. add every new pair to the queue.
+    #     3d. if it remains nonzero, add every new pair to the queue.
     # --------------------------------------------------------------------------
 
     # step 1.
@@ -312,6 +310,7 @@ function buchberger(polynomials::AbstractVector{M}, ::Val{with_transformation}) 
         stable_ix = add_result_element(S, i=>m_a, j=>-m_b)
         # step 3c
         if full_reduce_result_element(stable_ix) != :zero
+            # step 3d
             for other_ix in all_other_stable_indices(stable_ix)
                 add_pair(other_ix, stable_ix)
             end
