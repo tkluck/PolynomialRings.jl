@@ -34,6 +34,15 @@ function lt(::MonomialOrder{:deglex}, a::M,b::M) where M <: AbstractMonomial
     end
 end
 
+function lt(::MonomialOrder{:lex}, a::M,b::M) where M <: AbstractMonomial
+    for i in index_union(a,b)
+        if a[i] != b[i]
+            return a[i] < b[i]
+        end
+    end
+    return false
+end
+
 # This method is mostly for supporting leading monomials of elements of a free
 # f.g. module which is a tuple (index, monomial). That's in use in Groebner,
 # and maybe this implementation detail should move there.
