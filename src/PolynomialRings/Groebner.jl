@@ -109,7 +109,8 @@ function buchberger(polynomials::AbstractVector{M}, ::Val{with_transformation}) 
     # --------------------------------------------------------------------------
     result = base_extend.(polynomials)
     if with_transformation
-        transformation = [ sparsevec(Dict(i=>one(P)), length(polynomials)) for i in 1:length(result) ]
+        n = length(polynomials)
+        transformation = [ sparsevec(Dict(i=>one(P)), n) for i in 1:n ]
     end
     # --------------------------------------------------------------------------
     # Declare a few helper functions to facilitate manipulating the result array
