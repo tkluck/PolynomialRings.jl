@@ -122,6 +122,10 @@ one(Foo) = Foo()
         dd1,dd2,dd3 = d[]
         @test to_dense_monomials([dd1, dd2, dd3]) == [d1,d2,d3]
 
+        # the middle one return a tuple, that's why we need to collect()
+        # it before comparison
+        @test c[1:5] == collect( c[1,2,3,4,5] ) == c[[1,2,3,4,5]]
+
     end
 
     @testset "constructors" begin
