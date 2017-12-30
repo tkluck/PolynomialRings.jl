@@ -93,6 +93,7 @@ function buchberger(polynomials::AbstractVector{M}, ::Val{with_transformation}) 
         end
         if iszero(reduced)
             remove_result_element(stable_ix)
+            update_priorities(stable_ix)
             return :zero
         # NOTE: we're using the fact that (div)rem(...) will return the _identical_
         # object in case no reduction takes place.
@@ -105,6 +106,7 @@ function buchberger(polynomials::AbstractVector{M}, ::Val{with_transformation}) 
                     stable_transformation[stable_ix] -= q[j] * stable_transformation[other_stable_indices[j]]
                 end
             end
+            update_priorities(stable_ix)
             return :nonzero
         else
             return :unchanged
@@ -139,9 +141,22 @@ function buchberger(polynomials::AbstractVector{M}, ::Val{with_transformation}) 
     # Declare a few functions for maintaining a priority queue for all the pairs
     # of (stable) indices for which we still need to consider the S polynomial.
     # --------------------------------------------------------------------------
-    pairs_to_consider = PriorityQueue{Tuple{Int,Int}, Int}()
-    pairs_to_consider_set = Set{Tuple{Int,Int}}()
+    pairs_to_consider = PriorityQueue{Tuple{Int,Int},Int}()
     _pair(i,j) = (min(i,j), max(i,j))
+    function pair_priority(i,j)
+        a = stable_result[i]
+        b = stable_result[j]
+        lm_a = _leading_monomial(a)
+        lm_b = _leading_monomial(b)
+        _lcm_degree(lm_a, lm_b)
+    end
+    function update_priorities(k)
+        for ((i,j),prio) in pairs_to_consider
+            if !isremoved(i) && !isremoved(j) && (i == k || j == k)
+                pairs_to_consider[i,j] = pair_priority(i,j)
+            end
+        end
+    end
     function add_pair(i,j)
         isremoved(i) && return
         isremoved(j) && return
@@ -149,19 +164,13 @@ function buchberger(polynomials::AbstractVector{M}, ::Val{with_transformation}) 
         a = stable_result[i]
         b = stable_result[j]
         if _leading_row(a) == _leading_row(b)
-            lm_a = _leading_monomial(a)
-            lm_b = _leading_monomial(b)
-            degree = _lcm_degree(lm_a, lm_b)
-
-            enqueue!(pairs_to_consider, _pair(i,j), degree)
-            push!(pairs_to_consider_set, _pair(i,j))
+            pairs_to_consider[i,j] = pair_priority(i,j)
         end
     end
     function pop_pair()
         while true
             if length(pairs_to_consider)>0
                 (i,j) = dequeue!(pairs_to_consider)
-                delete!(pairs_to_consider_set, (i,j))
                 if !isremoved(i) && !isremoved(j)
                     return i,j
                 end
@@ -227,8 +236,8 @@ function buchberger(polynomials::AbstractVector{M}, ::Val{with_transformation}) 
         if any(all_stable_indices()) do l
            l != i && l != j &&
            _leading_row(stable_result[l]) == _leading_row(a) &&
-           !(_pair(i,l) in pairs_to_consider_set) &&
-           !(_pair(j,l) in pairs_to_consider_set) &&
+           !(_pair(i,l) in keys(pairs_to_consider)) &&
+           !(_pair(j,l) in keys(pairs_to_consider)) &&
            !isnull(maybe_div(leading_lcm, _leading_term(stable_result[l])))
         end
             saved += 1
