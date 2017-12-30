@@ -23,8 +23,6 @@ _leading_monomial(p::Polynomial) = monomial(leading_term(p))
 _leading_monomial(a::AbstractArray) = (i = findfirst(a); (i, _leading_monomial(a[i])))
 _lcm_degree(a, b) = lcm_degree(a, b)
 _lcm_degree(a::Tuple, b::Tuple) = lcm_degree(a[2], b[2])
-_lcm_multipliers(a, b) = lcm_multipliers(a, b)
-_lcm_multipliers(a::Tuple, b::Tuple) = lcm_multipliers(a[2], b[2])
 
 function buchberger(polynomials::AbstractVector{M}, ::Val{with_transformation}) where M <: AbstractModuleElement where with_transformation
     P = base_extend(modulebasering(M))
