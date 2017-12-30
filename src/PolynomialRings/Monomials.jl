@@ -148,7 +148,7 @@ exptype(a::AbstractMonomial) = exptype(typeof(a))
 hash(a::AbstractMonomial, h::UInt) = foldl((h,x)->hash(x,h), h, enumeratenz(a))
 
 function maybe_div(a::M, b::M) where M <: AbstractMonomial
-    if all(a[i] >= b[i] for i in index_union(a,b))
+    if all(i->a[i]>=b[i], index_union(a,b))
         return _construct(M,i -> a[i] - b[i], index_union(a,b))
     else
         return null
