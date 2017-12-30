@@ -100,9 +100,19 @@ function index_union(a::AbstractMonomial, b::AbstractMonomial)
     IndexUnion{typeof(l),typeof(r),<}(l,r)
 end
 
+# part of julia 0.7; doing a poor-man's version here as it is a significant
+# performance win (monomial comparisons being part of many inner loops)
+struct ReversedVector{A<:AbstractVector}
+    a::A
+end
+start(r::ReversedVector) = length(r.a)
+done(r::ReversedVector, state) = state == 0
+next(r::ReversedVector, state) = r.a[state], state-1
+reverseview(a) = reverse(a)
+reverseview(a::AbstractVector) = ReversedVector(a)
 function rev_index_union(a::AbstractMonomial, b::AbstractMonomial)
-    l = reverse(nzindices(a))
-    r = reverse(nzindices(b))
+    l = reverseview(nzindices(a))
+    r = reverseview(nzindices(b))
     IndexUnion{typeof(l),typeof(r),>}(l,r)
 end
 
