@@ -28,6 +28,7 @@ import PolynomialRings: generators, to_dense_monomials, max_variable_index, base
 import PolynomialRings: maybe_div, lcm_multipliers, monomialtype, exptype, lcm_degree, namestype
 import Base.Order: lt
 import PolynomialRings.MonomialOrderings: MonomialOrder
+import PolynomialRings.Monomials: total_degree
 
 # -----------------------------------------------------------------------------
 #
@@ -89,6 +90,7 @@ function diff(t::T, i::Integer) where T <: Term
     return T(m, n*coefficient(t))
 end
 
+total_degree(a::Term) = total_degree(monomial(a))
 lcm_degree(a::T, b::T) where T<:Term = lcm_degree(monomial(a), monomial(b))
 
 lt(o::MonomialOrder, a::T,b::T) where T <: Term = lt(o, monomial(a), monomial(b))
