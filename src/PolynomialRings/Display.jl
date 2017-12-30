@@ -34,8 +34,11 @@ end
 function show(io::IO, t::Term)
     coeff = coefficient(t)
     monom = monomial(t)
+    sign = ""
     factors = String[]
-    if monom == one(monom) || coeff != one(coeff)
+    if monom != one(monom) && coeff == -one(coeff)
+        sign = "-"
+    elseif monom == one(monom) || coeff != one(coeff)
         coeff_repr = "$(coefficient(t))"
         if (contains(coeff_repr, " + ") || contains(coeff_repr, " - ")) && monomial(t) != one(monomial(t))
             push!(factors, "($coeff_repr)")
@@ -46,6 +49,7 @@ function show(io::IO, t::Term)
     if monom != one(monom)
         push!(factors, "$monom")
     end
+    print(io, sign)
     join(io, factors, "*")
 end
 
