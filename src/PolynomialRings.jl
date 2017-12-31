@@ -18,6 +18,7 @@ include("PolynomialRings/Display.jl")
 include("PolynomialRings/Modules.jl")
 include("PolynomialRings/Reductions.jl")
 include("PolynomialRings/Groebner.jl")
+include("PolynomialRings/GroebnerGWV.jl")
 include("PolynomialRings/Conversions.jl")
 
 import .Monomials: TupleMonomial, VectorMonomial
