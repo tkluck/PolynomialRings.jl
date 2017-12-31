@@ -202,15 +202,14 @@ function buchberger(polynomials::AbstractVector{M}, ::Val{with_transformation}) 
     end
 
     loops = 0
-    reductions_to_zero = 0
-    saved = 0
+    considered = 0
     # step 3
     while true
         loops += 1
         if loops % 1000 == 0
             l = length(result)
             k = length(pairs_to_consider)
-            info("Groebner: After about $loops loops: $l elements in basis; $saved reductions saved; $reductions_to_zero reductions to zero; $k pairs left to consider.")
+            info("Groebner: After about $loops loops: $l elements in basis; $considered S-polynomials considered; at most $k pairs left to consider.")
         end
 
         p = pop_pair()
@@ -228,7 +227,6 @@ function buchberger(polynomials::AbstractVector{M}, ::Val{with_transformation}) 
         # step 3a
         leading_lcm = m_a*lt_a
         if total_degree(leading_lcm) == total_degree(lt_a) + total_degree(lt_b)
-            saved += 1
             continue
         end
         if any(all_stable_indices()) do l
@@ -238,7 +236,6 @@ function buchberger(polynomials::AbstractVector{M}, ::Val{with_transformation}) 
            !(_pair(j,l) in keys(pairs_to_consider)) &&
            !isnull(maybe_div(leading_lcm, _leading_term(stable_result[l])))
         end
-            saved += 1
             continue
         end
 
@@ -251,9 +248,8 @@ function buchberger(polynomials::AbstractVector{M}, ::Val{with_transformation}) 
             for other_ix in all_other_stable_indices(stable_ix)
                 add_pair(other_ix, stable_ix)
             end
-        else
-            reductions_to_zero += 1
         end
+        considered += 1
     end
 
     # --------------------------------------------------------------------------
