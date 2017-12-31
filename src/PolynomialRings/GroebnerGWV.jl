@@ -103,7 +103,8 @@ function gwv(polynomials::AbstractVector{P}) where P <: Polynomial
         if loops % 100 == 0
             l = length(G)
             k = length(JP)
-            info("GWV: After about $loops loops: $l elements in basis; $considered J-pairs considered; $k pairs left to consider.")
+            h = sum(length, values(H))
+            info("GWV: After $loops loops: $l elements in basis; $considered J-pairs considered; |JP|=$k, |H|=$h")
         end
 
         # step 1.
