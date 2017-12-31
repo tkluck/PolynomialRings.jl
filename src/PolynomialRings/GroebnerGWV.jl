@@ -140,7 +140,7 @@ function gwv(polynomials::AbstractVector{P}) where P <: Polynomial
             filter!(JP) do sig, jp
                 T2, v2 = jp
                 divisible = !isnull(_maybe_div(_leading_monomial(T2), h))
-                return !divisible
+                !divisible
             end
         else
             if status == :supertopreducible
