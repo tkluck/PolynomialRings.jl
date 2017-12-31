@@ -38,7 +38,10 @@ function rem(redtype::RedType, f::M, G::AbstractVector{M}) where M <: AbstractMo
     i = 1
     while i<=length(G)
         g = G[i]
-        iszero(g) && continue
+        if iszero(g)
+            i += 1
+            continue
+        end
         q, f_red = divrem(redtype, f_red, g)
         if !iszero(q)
             i = 1
@@ -82,7 +85,10 @@ function divrem(redtype::RedType, f::M, G::AbstractVector{M}) where M <: Abstrac
     i = 1
     while i<=length(G)
         g = G[i]
-        iszero(g) && continue
+        if iszero(g)
+            i += 1
+            continue
+        end
         q, f_red = divrem(redtype, f_red, g)
         if !iszero(q)
             factors[1, i] += q
