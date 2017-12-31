@@ -199,7 +199,7 @@ function any_divisor(f::Function, a::M) where M <: AbstractMonomial
             return false
         end
         m = _construct(M, i->e[i], nonzeros, sum(e[nonzeros]))::M
-        if f(m)
+        if f(maybe_div(a,m))
             return true
         end
     end
