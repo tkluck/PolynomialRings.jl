@@ -6,7 +6,7 @@ using Iterators: chain
 
 import PolynomialRings: leading_term, lcm_multipliers, lcm_degree, fraction_field, basering, base_extend
 import PolynomialRings: maybe_div
-import PolynomialRings.Monomials: total_degree
+import PolynomialRings.Monomials: total_degree, any_divisor
 import PolynomialRings.Polynomials: Polynomial, monomialorder, monomialtype
 import PolynomialRings.Terms: monomial, coefficient
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering
@@ -176,8 +176,8 @@ function gwv(polynomials::AbstractVector{P}) where P <: Polynomial
                     end
                     red = t1*T - c*(t2*Tj)
                     if !iszero(red) && _leading_monomial(red) == Jsig
-                        if !any(H[Jsig[1]]) do h
-                            divisible = !isnull(_maybe_div(Jsig[2], h))
+                        if !any_divisor(Jsig[2]) do d
+                            d in H[Jsig[1]]
                         end
                             #info("Adding $Jpair for consideration (signature $Jsig)")
                             #info("(should be reducible either by $((T,v)) or by $((Tj,vj)))")
