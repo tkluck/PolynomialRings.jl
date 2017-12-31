@@ -177,6 +177,34 @@ function lcm_degree(a::M, b::M) where M <: AbstractMonomial
     return sum(max(a[i],b[i]) for i in index_union(a,b))
 end
 
+function any_divisor(f::Function, a::M) where M <: AbstractMonomial
+    if length(nzindices(a)) == 0
+        return
+    end
+
+    e = zeros(exptype(M), last(nzindices(a)))
+    nonzeros = [j for (j,_) in enumeratenz(a)]
+
+    while true
+        carry = 1
+        for j = 1:length(nonzeros)
+            if (e[nonzeros[j]] += carry) > a[nonzeros[j]]
+                e[nonzeros[j]] = 0
+                carry = 1
+            else
+                carry = 0
+            end
+        end
+        if carry == 1
+            return false
+        end
+        m = _construct(M, i->e[i], nonzeros, sum(e[nonzeros]))::M
+        if f(m)
+            return true
+        end
+    end
+end
+
 # -----------------------------------------------------------------------------
 #
 # TupleMonomial
