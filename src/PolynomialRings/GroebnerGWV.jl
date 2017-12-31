@@ -1,7 +1,7 @@
 module GroebnerGWV
 
 using Nulls
-using DataStructures: SortedDict
+using DataStructures: SortedDict, DefaultDict
 using Iterators: chain
 
 import PolynomialRings: leading_term, lcm_multipliers, lcm_degree, fraction_field, basering, base_extend
@@ -84,7 +84,7 @@ function gwv(polynomials::AbstractVector{P}) where P <: Polynomial
     # Declare the variables where we'll accumulate the result
     # --------------------------------------------------------------------------
     G = Tuple{Rm, R}[]
-    H = Set{RmLM}()
+    H = DefaultDict{Int, Set{monomialtype(R)}}(Set{monomialtype(R)})
     JP = SortedDict{Sig, M}(Base.Order.Lt(siglt))
     #JP = PriorityQueue{M, Sig}(Base.Order.Lt(siglt))
 
@@ -135,7 +135,7 @@ function gwv(polynomials::AbstractVector{P}) where P <: Polynomial
 
         if iszero(v)
             h = _leading_monomial(T)
-            push!(H, h)
+            push!(H[h[1]], h[2])
             filter!(JP) do sig, jp
                 T2, v2 = jp
                 divisible = !isnull(_maybe_div(_leading_monomial(T2), h))
@@ -150,7 +150,8 @@ function gwv(polynomials::AbstractVector{P}) where P <: Polynomial
                 for (Tj, vj) in G
                     syzygy = v*Tj - vj*T
                     if !iszero(syzygy)
-                        push!(H, _leading_monomial(syzygy))
+                        newh = _leading_monomial(syzygy)
+                        push!(H[newh[1]], newh[2])
                     end
                 end
                 # ii) Form new J-pairs of (T, v) and (T j , v j ), 1 ≤ j ≤ |U |,
@@ -175,8 +176,8 @@ function gwv(polynomials::AbstractVector{P}) where P <: Polynomial
                     end
                     red = t1*T - c*(t2*Tj)
                     if !iszero(red) && _leading_monomial(red) == Jsig
-                        if !any(H) do h
-                            divisible = !isnull(_maybe_div(Jsig, h))
+                        if !any(H[Jsig[1]]) do h
+                            divisible = !isnull(_maybe_div(Jsig[2], h))
                         end
                             #info("Adding $Jpair for consideration (signature $Jsig)")
                             #info("(should be reducible either by $((T,v)) or by $((Tj,vj)))")
