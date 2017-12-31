@@ -2,6 +2,7 @@ module Arrays
 
 using Nulls
 
+import PolynomialRings.Monomials: AbstractMonomial
 import PolynomialRings.Terms: Term
 import PolynomialRings.Polynomials: Polynomial
 import Iterators: groupby
@@ -147,7 +148,7 @@ function det(m::M) where M <: AbstractMatrix{P} where P <: Polynomial
     )
 end
 
-_PT = Union{Polynomial,Term}
+_PT = Union{Polynomial,Term,AbstractMonomial}
 *(A::_PT, B::AbstractArray) = broadcast(*, A, B)
 *(A::AbstractArray, B::_PT) = broadcast(*, A, B)
 *(A::_PT, B::RowVector) = RowVector(broadcast(*, A, transpose(B)))
