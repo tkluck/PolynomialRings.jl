@@ -23,8 +23,7 @@ using PolynomialRings
 end
 
 @testset "Gröbner" begin
-    for backend in [PolynomialRings.Backends.Gröbner.Buchberger(), PolynomialRings.GröbnerGWV.GWV()]
-        PolynomialRings.Backends.Gröbner.set_default(backend)
+    tests() = begin
 
         R = @ring! ℤ[x,y]
 
@@ -41,6 +40,15 @@ end
         GG= gröbner_basis(G)
 
         @test gröbner_basis(R[]) == R[]
+    end
+
+    # This is usually double work, as the default backend is one of the others.
+    # But this allows the FGb module to include this file and run this testset
+    # while it has just set itself as the default.
+    tests()
+    for backend in [PolynomialRings.Backends.Gröbner.Buchberger(), PolynomialRings.GröbnerGWV.GWV()]
+        PolynomialRings.Backends.Gröbner.set_default(backend)
+        tests()
     end
 end
 
