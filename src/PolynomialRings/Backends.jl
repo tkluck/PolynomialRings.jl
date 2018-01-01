@@ -1,6 +1,6 @@
 module Backends
 
-module Groebner
+module Gröbner
     struct Buchberger end
     default = Buchberger()
     set_default()  = (global default; default=Buchberger())

@@ -22,22 +22,22 @@ using PolynomialRings
     @test f == f_red + (factors * G)
 end
 
-@testset "Groebner" begin
+@testset "Gröbner" begin
     R = @ring! ℤ[x,y]
 
     G = [x^5, x^2 + y, x*y + y^2]
-    GG, tr = groebner_transformation(G)
+    GG, tr = gröbner_transformation(G)
     @test rem(y^2, GG) == 0
     @test [a for a in tr]*G == GG
-    @test rem(y^2, groebner_basis(G)) == 0
+    @test rem(y^2, gröbner_basis(G)) == 0
 
     G = [[x^5-y,x^4],[x^3+y,y^3]]
-    GG, tr= groebner_transformation(G)
+    GG, tr= gröbner_transformation(G)
     @test [a for a in tr]*G == GG
 
-    GG= groebner_basis(G)
+    GG= gröbner_basis(G)
 
-    @test groebner_basis(R[]) == R[]
+    @test gröbner_basis(R[]) == R[]
 end
 
 @testset "Syzygy" begin
@@ -45,14 +45,14 @@ end
     R = @ring! ℚ[x,y]
 
     G = [x^5, x^2 + y, x*y + y^2]
-    GG, tr = groebner_transformation(G)
+    GG, tr = gröbner_transformation(G)
 
     K = syzygies(GG)
 
     @test iszero(K * GG)
 
     G = [[x^5-y,x^4],[x^3+y,y^3]]
-    GG, tr= groebner_transformation(G)
+    GG, tr= gröbner_transformation(G)
 
     K = syzygies(GG)
 

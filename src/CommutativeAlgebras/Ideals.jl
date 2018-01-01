@@ -2,7 +2,7 @@ module Ideals
 
 using Nulls
 using PolynomialRings.Polynomials: Polynomial
-using PolynomialRings.Groebner: groebner_transformation
+using PolynomialRings.Gröbner: gröbner_transformation
 
 # -----------------------------------------------------------------------------
 #
@@ -42,13 +42,13 @@ ring(I::Ideal{P}) where P<:Polynomial = P
 generators(I::Ideal) = I.generators
 function _grb(I::Ideal)
     if isnull(I._grb)
-        I._grb, I._trns = groebner_transformation(I.generators)
+        I._grb, I._trns = gröbner_transformation(I.generators)
     end
     I._grb
 end
 function _trns(I::Ideal)
     if isnull(I._grb)
-        I._grb, I._trns = groebner_transformation(I.generators)
+        I._grb, I._trns = gröbner_transformation(I.generators)
     end
     I._trns
 end

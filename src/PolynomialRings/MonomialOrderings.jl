@@ -44,7 +44,7 @@ function lt(::MonomialOrder{:lex}, a::M,b::M) where M <: AbstractMonomial
 end
 
 # This method is mostly for supporting leading monomials of elements of a free
-# f.g. module which is a tuple (index, monomial). That's in use in Groebner,
+# f.g. module which is a tuple (index, monomial). That's in use in Gröbner,
 # and maybe this implementation detail should move there.
 function lt(m::MonomialOrder, a::T, b::T) where T <: Tuple
     for i = 1:nfields(T)

@@ -86,7 +86,7 @@ specified by `symbols`, and return the type and a tuple of these variables.
 
 The `exptype` parameter defines the integer type for the exponents.
 
-The `monomialorder` defines an order for the monomials for e.g. Groebner basis computations;
+The `monomialorder` defines an order for the monomials for e.g. Gröbner basis computations;
 it also defines the internal sort order. Built-in values are `:degrevlex`
 and `:deglex`. This function will accept any symbol, though, and you can
 define your own monomial order by implementing

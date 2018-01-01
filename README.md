@@ -20,7 +20,7 @@ end
 ```
 
 A few useful functions are `deg`, `expansion`, `groebner_basis`. Use `divrem`
-and friends for doing reduction w.r.t. Groebner bases.
+and friends for doing reduction w.r.t. Gröbner bases.
 
 ## Relation to `MultiVariatePolynomials.jl`
 

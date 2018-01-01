@@ -1,4 +1,4 @@
-module GroebnerGWV
+module GröbnerGWV
 
 using Nulls
 using DataStructures: SortedDict, DefaultDict
@@ -11,7 +11,7 @@ import PolynomialRings.Polynomials: Polynomial, monomialorder, monomialtype
 import PolynomialRings.Terms: monomial, coefficient
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering
 import PolynomialRings.Operators: Lead, Full
-import PolynomialRings.Groebner: groebner_basis
+import PolynomialRings.Gröbner: gröbner_basis
 
 # a few functions to be able to write the same algorithm for
 # computations in a free f.g. module and in a polynomial ring.
@@ -225,6 +225,6 @@ end
 
 struct GWV end
 
-groebner_basis(::GWV, G; kwds...) = gwv(G, kwds...)
+gröbner_basis(::GWV, G; kwds...) = gwv(G, kwds...)
 
 end
