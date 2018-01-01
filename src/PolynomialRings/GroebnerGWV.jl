@@ -106,7 +106,7 @@ function gwv(polynomials::AbstractVector{P}) where P <: Polynomial
             l = length(G)
             k = length(JP)
             h = sum(length, values(H))
-            info("GWV: After $loops loops: $l elements in basis; $considered J-pairs considered; |JP|=$k, |H|=$h; $divisor_considerations considerations of divisors ($(divisors_considered/divisor_considerations) divisors on average.")
+            info("GWV: After $loops loops: $l elements in basis; $considered J-pairs considered; |JP|=$k, |H|=$h; $divisor_considerations considerations of divisors ($(divisors_considered/divisor_considerations) divisors on average).")
         end
 
         # step 1.
