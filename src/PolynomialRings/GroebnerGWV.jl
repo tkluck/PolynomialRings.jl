@@ -97,6 +97,8 @@ function gwv(polynomials::AbstractVector{P}) where P <: Polynomial
 
     loops = 0
     considered = 0
+    divisors_considered = 0
+    divisor_considerations = 0
     # step 3
     while length(JP) > 0
         loops += 1
@@ -104,7 +106,7 @@ function gwv(polynomials::AbstractVector{P}) where P <: Polynomial
             l = length(G)
             k = length(JP)
             h = sum(length, values(H))
-            info("GWV: After $loops loops: $l elements in basis; $considered J-pairs considered; |JP|=$k, |H|=$h")
+            info("GWV: After $loops loops: $l elements in basis; $considered J-pairs considered; |JP|=$k, |H|=$h; $divisor_considerations considerations of divisors ($(divisors_considered/divisor_considerations) divisors on average.")
         end
 
         # step 1.
@@ -177,7 +179,9 @@ function gwv(polynomials::AbstractVector{P}) where P <: Polynomial
                     end
                     red = t1*T - c*(t2*Tj)
                     if !iszero(red) && _leading_monomial(red) == Jsig
+                        divisor_considerations += 1
                         if !any_divisor(Jsig[2]) do d
+                            divisors_considered += 1
                             d in H[Jsig[1]]
                         end
                             #info("Adding $Jpair for consideration (signature $Jsig)")
