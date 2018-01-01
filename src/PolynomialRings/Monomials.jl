@@ -149,7 +149,7 @@ exptype(a::AbstractMonomial) = exptype(typeof(a))
 # That's why we use foldl() and a swapped-arguments version of hash()
 hash(a::AbstractMonomial, h::UInt) = foldl((h,x)->hash(x,h), h, enumeratenz(a))
 
-function maybe_div(a::M, b::M) where M <: AbstractMonomial
+function maybe_div(a::M, b::N) where M <: AbstractMonomial where N <: AbstractMonomial
     if all(i->a[i]>=b[i], index_union(a,b))
         return _construct(M,i -> a[i] - b[i], index_union(a,b))
     else
@@ -187,8 +187,10 @@ function any_divisor(f::Function, a::M) where M <: AbstractMonomial
     e = zeros(exptype(M), last(nzindices(a)))
     nonzeros = [j for (j,_) in enumeratenz(a)]
 
+    N = VectorMonomial{typeof(e),exptype(M), namestype(M)}
+
     while true
-        m = _construct(M, i->e[i], nonzeros, sum(e[nonzeros]))::M
+        m = N(e, sum(e))
         if f(maybe_div(a,m))
             return true
         end
