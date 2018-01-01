@@ -65,4 +65,6 @@ include("EntryPoints.jl")
 import .EntryPoints: formal_coefficients, @ring, @ring!, @polynomial, @polyvar, @numberfield, @numberfield!
 export formal_coefficients, @ring, @ring!, @polynomial, @polyvar, @numberfield, @numberfield!
 
+include("PolynomialRings/Library.jl")
+
 end # module

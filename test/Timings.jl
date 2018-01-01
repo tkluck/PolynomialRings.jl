@@ -1,6 +1,10 @@
 using Combinatorics
 using PolynomialRings
 
+import PolynomialRings.Library: cyclic_ideal, katsura_ideal
+
+PolynomialRings.Backends.Gröbner.set_default(PolynomialRings.GröbnerGWV.GWV())
+
 macro showtime(expr)
     rep = sprint(print, expr)
     quote
@@ -9,16 +13,17 @@ macro showtime(expr)
     end
 end
 
-cyclic(vars...) = (vars=collect(vars); [prod(vars) - 1; [sum(i->prod(circshift(vars, i)[1:n]), 1:length(vars)) for n=1:(length(vars)-1)]])
-
 @ring! ℤ[c[]]
-groebner_basis(cyclic(c[1:3]...)) # compile
-@showtime groebner_basis(cyclic(c[1:5]...))
+gröbner_basis(cyclic_ideal(c[1:3]...)) # compile
+@showtime gröbner_basis(cyclic_ideal(c[1:6]...))
+@showtime gröbner_basis(katsura_ideal(c[1:6]...))
 
 R, c = polynomial_ring(:c1, :c2, :c3, :c4, :c5, :c6, :c7, :c8, :c9, monomialorder=:degrevlex)
-groebner_basis(cyclic(c[1:3]...)) # compile
-@showtime groebner_basis(cyclic(c[1:5]...))
+gröbner_basis(cyclic_ideal(c[1:3]...)) # compile
+@showtime gröbner_basis(cyclic_ideal(c[1:6]...))
+@showtime gröbner_basis(katsura_ideal(c[1:6]...))
 
 R, c = polynomial_ring(:c1, :c2, :c3, :c4, :c5, :c6, :c7, :c8, :c9, monomialorder=:lex)
-groebner_basis(cyclic(c[1:3]...)) # compile
-@showtime groebner_basis(cyclic(c[1:4]...))
+gröbner_basis(cyclic_ideal(c[1:3]...)) # compile
+@showtime gröbner_basis(cyclic_ideal(c[1:4]...))
+@showtime gröbner_basis(katsura_ideal(c[1:4]...))
