@@ -41,4 +41,16 @@ function maybe_div end
 function lcm_multipliers end
 function lcm_degree end
 
+# -----------------------------------------------------------------------------
+#
+# Gröbner basis operations
+#
+# -----------------------------------------------------------------------------
+function gröbner_basis end
+function gröbner_transformation end
+function syzygies end
+const groebner_basis = gröbner_basis
+const groebner_transformation = gröbner_transformation
+
+
 export generators, ⊗, to_dense_monomials, max_variable_index, base_extend

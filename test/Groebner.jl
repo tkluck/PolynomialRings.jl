@@ -23,21 +23,25 @@ using PolynomialRings
 end
 
 @testset "Gröbner" begin
-    R = @ring! ℤ[x,y]
+    for backend in [PolynomialRings.Backends.Gröbner.Buchberger(), PolynomialRings.GröbnerGWV.GWV()]
+        PolynomialRings.Backends.Gröbner.set_default(backend)
 
-    G = [x^5, x^2 + y, x*y + y^2]
-    GG, tr = gröbner_transformation(G)
-    @test rem(y^2, GG) == 0
-    @test [a for a in tr]*G == GG
-    @test rem(y^2, gröbner_basis(G)) == 0
+        R = @ring! ℤ[x,y]
 
-    G = [[x^5-y,x^4],[x^3+y,y^3]]
-    GG, tr= gröbner_transformation(G)
-    @test [a for a in tr]*G == GG
+        G = [x^5, x^2 + y, x*y + y^2]
+        GG, tr = gröbner_transformation(G)
+        @test rem(y^2, GG) == 0
+        @test [a for a in tr]*G == GG
+        @test rem(y^2, gröbner_basis(G)) == 0
 
-    GG= gröbner_basis(G)
+        G = [[x^5-y,x^4],[x^3+y,y^3]]
+        GG, tr= gröbner_transformation(G)
+        @test [a for a in tr]*G == GG
 
-    @test gröbner_basis(R[]) == R[]
+        GG= gröbner_basis(G)
+
+        @test gröbner_basis(R[]) == R[]
+    end
 end
 
 @testset "Syzygy" begin

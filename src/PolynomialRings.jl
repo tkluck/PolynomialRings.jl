@@ -25,12 +25,8 @@ import .Monomials: TupleMonomial, VectorMonomial
 import .Terms: Term
 import .Polynomials: Polynomial, generators, polynomial_ring
 import .Expansions: expansion, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, coefficients, @coefficients, linear_coefficients, @linear_coefficients, deg, @deg
-import .Gröbner: gröbner_basis, gröbner_transformation, syzygies
 import .Arrays: flat_coefficients, @flat_coefficients
 import .Operators: content, common_denominator, integral_fraction
-
-const groebner_basis = gröbner_basis
-const groebner_transformation = gröbner_transformation
 
 export TupleMonomial, Term, Polynomial, generators, ⊗, polynomial_ring, variablesymbols
 export expansion, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient

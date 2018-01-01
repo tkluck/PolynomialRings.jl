@@ -4,6 +4,9 @@ using Nulls
 using DataStructures: SortedDict, DefaultDict
 using Iterators: chain
 
+import PolynomialRings
+import PolynomialRings: gröbner_basis
+
 import PolynomialRings: leading_term, lcm_multipliers, lcm_degree, fraction_field, basering, base_extend
 import PolynomialRings: maybe_div
 import PolynomialRings.Monomials: total_degree, any_divisor
@@ -11,7 +14,6 @@ import PolynomialRings.Polynomials: Polynomial, monomialorder, monomialtype
 import PolynomialRings.Terms: monomial, coefficient
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering
 import PolynomialRings.Operators: Lead, Full
-import PolynomialRings.Gröbner: gröbner_basis
 
 # a few functions to be able to write the same algorithm for
 # computations in a free f.g. module and in a polynomial ring.
@@ -223,8 +225,8 @@ function gwv(polynomials::AbstractVector{P}) where P <: Polynomial
     return result
 end
 
-struct GWV end
+struct GWV <: PolynomialRings.Backends.Gröbner.Backend end
 
-gröbner_basis(::GWV, G; kwds...) = gwv(G, kwds...)
+gröbner_basis(::GWV, G::AbstractArray{<:Polynomial}; kwds...) = gwv(G, kwds...)
 
 end
