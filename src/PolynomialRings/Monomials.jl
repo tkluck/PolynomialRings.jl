@@ -50,7 +50,7 @@ import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namesty
 # Utility: iterate over the union of two index sets
 #
 # -----------------------------------------------------------------------------
-import Base: start, done, next, last, findlast
+import Base: start, done, next, last, findlast, length
 struct IndexUnion{I,J,lt}
     left::I
     right::J
@@ -93,6 +93,8 @@ function last(i::IndexUnion)
         return max(i.left[l], i.right[r])
     end
 end
+
+length(i::IndexUnion) = (len=0; for _ in i; len += 1; end; len)
 
 function index_union(a::AbstractMonomial, b::AbstractMonomial)
     l = nzindices(a)
@@ -282,6 +284,13 @@ function _construct(::Type{M}, f::Function, nonzero_indices, deg) where M <: Vec
         end
         return M(e, deg)
     end
+end
+
+function _construct(::Type{M}, f::Function, nonzero_indices, deg) where M <: VectorMonomial{V,I,Nm} where V <: SparseVector{I,J} where I <: Integer where J <: Integer where Nm
+    indices = collect(J, nonzero_indices)
+    len = length(indices) > 0 ? last(indices) : 0
+    e = V(len, indices, map(i->I(f(i)), indices))
+    return M(e, deg)
 end
 
 namestype(::Type{VectorMonomial{V,I,Nm}}) where {V,I,Nm} = Nm
