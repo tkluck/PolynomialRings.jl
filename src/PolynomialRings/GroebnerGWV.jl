@@ -133,11 +133,11 @@ function gwv(polynomials::AbstractVector{P}) where P <: Polynomial
         (_,v), status = regular_topreduce_rem(R, m, G)
 
         if iszero(v)
-            h = _leading_monomial(T)
-            push!(H[h[1]], h[2])
+            newh = _leading_monomial(T)
+            push!(H[newh[1]], newh[2])
             filter!(JP) do sig, jp
                 T2, v2 = jp
-                divisible = !isnull(_maybe_div(_leading_monomial(T2), h))
+                divisible = !isnull(_maybe_div(_leading_monomial(T2), newh))
                 !divisible
             end
         else
