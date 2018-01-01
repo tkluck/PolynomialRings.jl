@@ -188,6 +188,10 @@ function any_divisor(f::Function, a::M) where M <: AbstractMonomial
     nonzeros = [j for (j,_) in enumeratenz(a)]
 
     while true
+        m = _construct(M, i->e[i], nonzeros, sum(e[nonzeros]))::M
+        if f(maybe_div(a,m))
+            return true
+        end
         carry = 1
         for j = 1:length(nonzeros)
             if (e[nonzeros[j]] += carry) > a[nonzeros[j]]
@@ -199,10 +203,6 @@ function any_divisor(f::Function, a::M) where M <: AbstractMonomial
         end
         if carry == 1
             return false
-        end
-        m = _construct(M, i->e[i], nonzeros, sum(e[nonzeros]))::M
-        if f(maybe_div(a,m))
-            return true
         end
     end
 end
