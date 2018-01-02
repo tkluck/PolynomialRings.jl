@@ -40,21 +40,19 @@ end
 """
     formal_coefficients(R, name::Symbol)
 
-Return a `Channel` with formal coefficients for the polynomial ring `R`.
-
-Formal coefficients means that these are generators for a polynomial ring
-`C` with an unbounded number of variables, and this polynomial ring is used
-(through base extension) as the coefficients for `R`.
-
-In other words, the channel yields `c_i⊗ 1` for `1 ∈ R` and generators `c_i ∈ C`.
+Return an object representing formal coefficients for the polynomial ring `R`.
 
 # Examples
 ```jldoctest
 julia> R = @ring! ℤ[x];
 
-julia> coeffs = formal_coefficients(R, :c);
+julia> c = formal_coefficients(R, :c);
 
-julia> c() = take!(coeffs);
+julia> c[1:3]
+3-element Array{ℤ[c[]][x],1}:
+ c[1]
+ c[2]
+ c[3]
 
 julia> [c()*x^2 + c()*x + c() , c()*x^2 + c()*x + c()]
 2-element Array{ℤ[c[]][x],1}:
@@ -63,8 +61,9 @@ julia> [c()*x^2 + c()*x + c() , c()*x^2 + c()*x + c()]
 ```
 """
 function formal_coefficients(::Type{P}, name::Symbol) where P <: Polynomial
-    CP = Polynomial{Vector{Term{VectorMonomial{SparseVector{Int16,Int}, Int16, Numbered{name}}, Int}}, :degrevlex}
-    return lazymap(g->g⊗one(P), generators(CP))
+    R = @eval @ring Int[$name[]]
+    RR = base_extend(P, R)
+    return NumberedVariableGenerator{RR,R}()
 end
 
 function _variables_in_ring_definition(definition)
