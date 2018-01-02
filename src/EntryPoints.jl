@@ -358,6 +358,11 @@ julia> @polyvar x y;
 
 julia> x + 3y
 3*y + x
+
+julia> @polyvar ε[];
+
+julia> 1 + ε()*x + ε()*y
+1 + ε[2]*y + ε[1]*x
 ```
 
 # See also
@@ -365,7 +370,7 @@ julia> x + 3y
 
 """
 macro polyvar(expr...)
-    if(!all(ex isa Symbol for ex in expr))
+    if(!all(ex isa Symbol || (ex.head == :ref && length(ex.args) == 1 && ex.args[1] isa Symbol) for ex in expr))
         throw(ArgumentError("The @polyvar macro can only be used with symbols. Example: @polyvar x y"))
     end
     definition = :( Int[] )
