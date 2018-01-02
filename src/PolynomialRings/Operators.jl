@@ -5,6 +5,7 @@ import PolynomialRings.Monomials: AbstractMonomial
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.Terms: Term, monomial, coefficient
 import PolynomialRings.Polynomials: Polynomial, termtype, terms, monomialorder
+import PolynomialRings.Polynomials: PolynomialBy
 
 # -----------------------------------------------------------------------------
 #
@@ -206,21 +207,28 @@ end
 abstract type RedType end
 struct Lead <: RedType end
 struct Full <: RedType end
-leaddivrem(f::Polynomial, g::Polynomial) = divrem(Lead(), f, g)
-divrem(f::Polynomial, g::Polynomial)     = divrem(Full(), f, g)
-leadrem(f::Polynomial, g::Polynomial)    = rem(Lead(), f, g)
-rem(f::Polynomial, g::Polynomial)        = rem(Full(), f, g)
-leaddiv(f::Polynomial, g::Polynomial)    = div(Lead(), f, g)
-div(f::Polynomial, g::Polynomial)        = div(Full(), f, g)
+leaddivrem(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order} = divrem(Lead(), MonomialOrder{Order}(), f, g)
+divrem(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order})     where {Names, Order} = divrem(Full(), MonomialOrder{Order}(), f, g)
+leadrem(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order})    where {Names, Order} = rem(Lead(), MonomialOrder{Order}(), f, g)
+rem(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order})        where {Names, Order} = rem(Full(), MonomialOrder{Order}(), f, g)
+leaddiv(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order})    where {Names, Order} = div(Lead(), MonomialOrder{Order}(), f, g)
+div(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order})        where {Names, Order} = div(Full(), MonomialOrder{Order}(), f, g)
 
-function divrem(::Full, f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
+leaddivrem(o::MonomialOrder, f, g) = divrem(Lead(), o, f, g)
+divrem(o::MonomialOrder, f, g) = divrem(Full(), o, f, g)
+leadrem(o::MonomialOrder, f, g) = rem(Lead(), o, f, g)
+rem(o::MonomialOrder, f, g) = rem(Full(), o, f, g)
+leaddiv(o::MonomialOrder, f, g) = div(Lead(), o, f, g)
+div(o::MonomialOrder, f, g) = div(Full(), o, f, g)
+
+function divrem(::Full, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
     if iszero(f)
         return zero(g), f
     end
     if iszero(g)
         throw(DivideError())
     end
-    lt_g = leading_term(g)
+    lt_g = leading_term(o, g)
     for t in @view terms(f)[end:-1:1]
         factor = maybe_div(t, lt_g)
         if !isnull(factor)
@@ -230,15 +238,15 @@ function divrem(::Full, f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where 
     return zero(g), f
 end
 
-function divrem(::Lead, f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
+function divrem(::Lead, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
     if iszero(f)
         return zero(g), f
     end
     if iszero(g)
         throw(DivideError())
     end
-    lt_f = leading_term(f)
-    lt_g = leading_term(g)
+    lt_f = leading_term(o, f)
+    lt_g = leading_term(o, g)
     factor = maybe_div(lt_f, lt_g)
     if !isnull(factor)
         return typeof(f)([factor]), f - factor*g
@@ -246,11 +254,11 @@ function divrem(::Lead, f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where 
     return zero(g), f
 end
 
-function div(redtype::RedType, f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
-    divrem(redtype, f, g)[1]
+function div(redtype::RedType, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
+    divrem(redtype, o, f, g)[1]
 end
-function rem(redtype::RedType, f::Polynomial{A1,Order}, g::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
-    divrem(f, g)[2]
+function rem(redtype::RedType, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
+    divrem(redtype, o, f, g)[2]
 end
 
 # -----------------------------------------------------------------------------

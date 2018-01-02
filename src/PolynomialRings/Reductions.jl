@@ -1,5 +1,6 @@
 module Reductions
 
+import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.Polynomials: Polynomial, monomialorder
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering
 
@@ -27,9 +28,9 @@ julia> rem(x^2 + y^2 + 1, [x, y])
 1
 ```
 """
-function rem(redtype::RedType, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
+function rem(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
     if typeof(redtype) <: Full
-        f_red = rem(Lead(),f,G)
+        f_red = rem(Lead(),o,f,G)
     elseif typeof(redtype) <: Lead
         f_red = f
     else
@@ -42,7 +43,7 @@ function rem(redtype::RedType, f::M, G::AbstractVector{M}) where M <: AbstractMo
             i += 1
             continue
         end
-        q, f_red = divrem(redtype, f_red, g)
+        q, f_red = divrem(redtype, o, f_red, g)
         if !iszero(q)
             i = 1
         else
@@ -73,9 +74,9 @@ julia> divrem(x^2 + y^2 + 1, [x, y])
 (1, [x,y]')
 ```
 """
-function divrem(redtype::RedType, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
+function divrem(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
     if typeof(redtype) <: Full
-        factors, f_red = divrem(Lead(),f,G)
+        factors, f_red = divrem(Lead(),o,f,G)
     elseif typeof(redtype) <: Lead
         factors = transpose(spzeros(modulebasering(M), length(G)))
         f_red = f
@@ -89,7 +90,7 @@ function divrem(redtype::RedType, f::M, G::AbstractVector{M}) where M <: Abstrac
             i += 1
             continue
         end
-        q, f_red = divrem(redtype, f_red, g)
+        q, f_red = divrem(redtype, o, f_red, g)
         if !iszero(q)
             factors[1, i] += q
             i = 1
@@ -103,22 +104,16 @@ function divrem(redtype::RedType, f::M, G::AbstractVector{M}) where M <: Abstrac
     return factors, f_red
 end
 
-function div(redtype::RedType, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
-    divrem(redtype, f, G)[1]
+function div(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
+    divrem(redtype, o, f, G)[1]
 end
 
-leaddivrem(f::M,g::AbstractVector{M}) where M<:Polynomial = divrem(Lead(), f, g)
-divrem(f::M,g::AbstractVector{M})     where M<:Polynomial = divrem(Full(), f, g)
-leadrem(f::M,g::AbstractVector{M})    where M<:Polynomial = rem(Lead(), f, g)
-rem(f::M,g::AbstractVector{M})        where M<:Polynomial = rem(Full(), f, g)
-leaddiv(f::M,g::AbstractVector{M})    where M<:Polynomial = div(Lead(), f, g)
-div(f::M,g::AbstractVector{M})        where M<:Polynomial = div(Full(), f, g)
+leaddivrem(f::M,g::AbstractVector{M}) where M<:Polynomial = divrem(Lead(), monomialorder(M), f, g)
+divrem(f::M,g::AbstractVector{M})     where M<:Polynomial = divrem(Full(), monomialorder(M), f, g)
+leadrem(f::M,g::AbstractVector{M})    where M<:Polynomial = rem(Lead(), monomialorder(M), f, g)
+rem(f::M,g::AbstractVector{M})        where M<:Polynomial = rem(Full(), monomialorder(M), f, g)
+leaddiv(f::M,g::AbstractVector{M})    where M<:Polynomial = div(Lead(), monomialorder(M), f, g)
+div(f::M,g::AbstractVector{M})        where M<:Polynomial = div(Full(), monomialorder(M), f, g)
 
-leaddivrem(f::M,g::AbstractVector{M}) where M<:AbstractArray{<:Polynomial} = divrem(Lead(), f, g)
-divrem(f::M,g::AbstractVector{M})     where M<:AbstractArray{<:Polynomial} = divrem(Full(), f, g)
-leadrem(f::M,g::AbstractVector{M})    where M<:AbstractArray{<:Polynomial} = rem(Lead(), f, g)
-rem(f::M,g::AbstractVector{M})        where M<:AbstractArray{<:Polynomial} = rem(Full(), f, g)
-leaddiv(f::M,g::AbstractVector{M})    where M<:AbstractArray{<:Polynomial} = div(Lead(), f, g)
-div(f::M,g::AbstractVector{M})        where M<:AbstractArray{<:Polynomial} = div(Full(), f, g)
 
 end

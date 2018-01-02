@@ -7,9 +7,15 @@ module Gröbner
     set_default()  = (global default; default=Buchberger())
     set_default(x) = (global default; default=x)
 
-    import PolynomialRings: gröbner_basis, gröbner_transformation
-    gröbner_basis(::Backend, args...)          = gröbner_basis(Buchberger(), args...)
+    import PolynomialRings: gröbner_basis, gröbner_transformation, monomialorder
+
+    # fallback in case a backend only provides one, but not the other
+    gröbner_basis(b::Backend, args...)         = gröbner_transformation(b, args...)[1]
     gröbner_transformation(::Backend, args...) = gröbner_transformation(Buchberger(), args...)
+
+    # fallback in case a monomial order is not passed explicitly: choose it from G
+    gröbner_basis(b::Backend, G::AbstractVector, args...) = gröbner_basis(b, monomialorder(eltype(G)), G, args...)
+    gröbner_transformation(b::Backend, G::AbstractVector, args...) = gröbner_transformation(b, monomialorder(eltype(G)), G, args...)
     """
         basis, transformation = gröbner_transformation(polynomials)
 

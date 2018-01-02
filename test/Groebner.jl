@@ -70,4 +70,21 @@ end
 
     @test iszero(K * GG)
 
+    R = @ring! ℚ[c[]]
+    x, y = c[]
+
+    G = [x^5, x^2 + y, x*y + y^2]
+    GG, tr = gröbner_transformation(G)
+
+    K = syzygies(GG)
+
+    @test iszero(K * GG)
+
+    G = [[x^5-y,x^4],[x^3+y,y^3]]
+    GG, tr= gröbner_transformation(G)
+
+    K = syzygies(GG)
+
+    @test iszero(K * GG)
+
 end

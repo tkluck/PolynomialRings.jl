@@ -46,7 +46,7 @@ const NumberedMonomial              = AbstractMonomial{<:Numbered}
 const PolynomialOver{C,Names,Order} = Polynomial{<:AbstractVector{<:Term{<:AbstractMonomial{Names}, C}},Order}
 const NamedPolynomial{C,Order}      = PolynomialOver{C,<:Named,Order}
 const NumberedPolynomial{C,Order}   = PolynomialOver{C,<:Numbered,Order}
-const PolynomialBy{Order,C,Names}   = PolynomialOver{C,Names,Order}
+const PolynomialBy{Names,Order,C}   = PolynomialOver{C,Names,Order}
 
 # -----------------------------------------------------------------------------
 #
@@ -80,11 +80,13 @@ end
 
 max_variable_index(p::Polynomial) = iszero(p) ? 0 : maximum(max_variable_index(t) for t in terms(p))
 
-leading_term(p::Polynomial) = last(terms(p))
+leading_term(::MonomialOrder{Order}, p::PolynomialBy{Names,Order}) where {Names,Order} = last(terms(p))
+leading_term(o::MonomialOrder, p::Polynomial) = reduce((a,b)->lt(o,monomial(a),monomial(b)) ? b : a, terms(p))
+leading_term(p::Polynomial) = leading_term(monomialorder(p), p)
 
 copy(p::Polynomial) = typeof(p)(copy(p.terms))
 
-lt(o::MonomialOrder, a::P,b::P) where P <: Polynomial = lt(o, monomial(leading_term(a)), monomial(leading_term(b)))
+lt(o::MonomialOrder, a::P, b::P) where P <: Polynomial = lt(o, leading_term(o, a), leading_term(o, b))
 
 # -----------------------------------------------------------------------------
 #
