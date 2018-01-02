@@ -1,7 +1,9 @@
 module NamedPolynomials
 
 import PolynomialRings: termtype, terms, namestype, variablesymbols, exptype, monomialtype, allvariablesymbols
-import PolynomialRings.Polynomials: Polynomial, monomialorder
+import PolynomialRings.Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolynomial
+import PolynomialRings.Polynomials:  NamedMonomial, NumberedPolynomial, monomialorder
+
 import PolynomialRings.Terms: Term, basering, monomial, coefficient
 import PolynomialRings.Monomials: TupleMonomial, AbstractMonomial, _construct
 import PolynomialRings.VariableNames: Named, Numbered
@@ -12,18 +14,6 @@ import PolynomialRings.VariableNames: Named, Numbered
 #
 # -----------------------------------------------------------------------------
 import Base: promote_rule, convert
-
-# -----------------------------------------------------------------------------
-#
-# Type definitions
-#
-# -----------------------------------------------------------------------------
-const NamedMonomial                 = AbstractMonomial{<:Named}
-const NumberedMonomial              = AbstractMonomial{<:Numbered}
-const PolynomialOver{C,Names,Order} = Polynomial{<:AbstractVector{<:Term{<:AbstractMonomial{Names}, C}},Order}
-const NamedPolynomial{C,Order}      = PolynomialOver{C,<:Named,Order}
-const NumberedPolynomial{C,Order}   = PolynomialOver{C,<:Numbered,Order}
-const PolynomialBy{Order,C,Names}   = PolynomialOver{C,Names,Order}
 
 # -----------------------------------------------------------------------------
 #

@@ -1,6 +1,6 @@
 module Polynomials
 
-import PolynomialRings.Monomials: TupleMonomial, VectorMonomial
+import PolynomialRings.Monomials: AbstractMonomial, TupleMonomial, VectorMonomial
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.VariableNames: Named, Numbered
 import PolynomialRings.Terms: Term, monomial
@@ -34,6 +34,19 @@ struct Polynomial{A, Order}
     terms::A
     Polynomial{A, Order}(terms::A) where A <: AbstractVector{T} where T <: Term where Order = new(terms)
 end
+
+# -----------------------------------------------------------------------------
+#
+# Type shorthands
+#
+# -----------------------------------------------------------------------------
+
+const NamedMonomial                 = AbstractMonomial{<:Named}
+const NumberedMonomial              = AbstractMonomial{<:Numbered}
+const PolynomialOver{C,Names,Order} = Polynomial{<:AbstractVector{<:Term{<:AbstractMonomial{Names}, C}},Order}
+const NamedPolynomial{C,Order}      = PolynomialOver{C,<:Named,Order}
+const NumberedPolynomial{C,Order}   = PolynomialOver{C,<:Numbered,Order}
+const PolynomialBy{Order,C,Names}   = PolynomialOver{C,Names,Order}
 
 # -----------------------------------------------------------------------------
 #
