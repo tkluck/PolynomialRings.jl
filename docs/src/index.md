@@ -1,7 +1,6 @@
 # PolynomialRings Documentation
 Welcome to the documentation.
 
-
 ## Table of contents
 ```@contents
 ```
@@ -22,6 +21,19 @@ polynomial_ring
 gcd
 lcm
 maybe_div
+rem
+div
+divrem
+```
+
+## Expansions
+
+```@docs
+@expansion
+@expand
+@coefficient
+@deg
+@linear_coefficients
 ```
 
 ## Gröbner bases
