@@ -199,8 +199,12 @@ function any_divisor(f::Function, a::M) where M <: AbstractMonomial
         return f(a)
     end
 
-    e = zeros(exptype(M), last(nzindices(a)))
-    nonzeros = [j for (j,_) in enumeratenz(a)]
+
+    n = last(nzindices(a))
+    nzinds = collect(nzindices(a))
+    nonzeros_a = map(i->a[i], nzinds)
+    nonzeros = copy(nonzeros_a)
+    e = SparseVector{exptype(M), Int}(n, nzinds, nonzeros)
 
     N = VectorMonomial{typeof(e),exptype(M), namestype(M)}
 
@@ -211,14 +215,15 @@ function any_divisor(f::Function, a::M) where M <: AbstractMonomial
         end
         carry = 1
         for j = 1:length(nonzeros)
-            if (e[nonzeros[j]] += carry) > a[nonzeros[j]]
-                e[nonzeros[j]] = 0
+            if iszero(nonzeros[j]) && !iszero(carry)
+                nonzeros[j] = nonzeros_a[j]
                 carry = 1
             else
+                nonzeros[j] -= carry
                 carry = 0
             end
         end
-        if carry == 1
+        if !iszero(carry)
             return false
         end
     end
