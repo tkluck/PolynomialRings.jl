@@ -147,9 +147,11 @@ exptype(a::AbstractMonomial) = exptype(typeof(a))
 #
 # but the iterator is a channel and so it doesn't have an endof().
 # That's why we use foldl() and a swapped-arguments version of hash()
-hash(a::AbstractMonomial, h::UInt) = foldl((h,x)->hash(x,h), h, enumeratenz(a))
+hash(a::AbstractMonomial, h::UInt) = foldl((h,x)->hash(x,h), h, filter(t->!iszero(t[2]), enumeratenz(a)))
 
-function maybe_div(a::M, b::N) where M <: AbstractMonomial where N <: AbstractMonomial
+==(a::AbstractMonomial{Names}, b::AbstractMonomial{Names}) where Names = all(i->a[i]==b[i], index_union(a,b))
+
+function maybe_div(a::M, b::N) where M <: AbstractMonomial{Names} where N <: AbstractMonomial{Names} where Names
     if all(i->a[i]>=b[i], index_union(a,b))
         return _construct(M,i -> a[i] - b[i], index_union(a,b))
     else
@@ -303,11 +305,6 @@ expstype(::Type{VectorMonomial{V,I,Nm}}) where {V,I,Nm} = V
 # special case for sparsevectors; for some reason, SparseVector{Int,Int}() does not give
 # an empty vector by default.
 (::Type{V})() where V <: SparseVector{A,B} where {A,B} = sparsevec(B[],A[])
-
-#
-# workaround: for some reason, comparison does't fall through the struct
-# for VectorMonomial (???)
-==(a::M,b::M) where M<:VectorMonomial = a.e == b.e
 
 generators(::Type{VectorMonomial{V,I,Nm}}) where {V,I,Nm} = Channel(ctype=VectorMonomial{V,I,Nm}) do ch
     for j in 1:typemax(Int)
