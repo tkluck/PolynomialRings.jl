@@ -43,12 +43,13 @@ function rem(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) whe
             i += 1
             continue
         end
-        q, f_red = divrem(redtype, o, f_red, g)
-        if !iszero(q)
+        reduced = rem(redtype, o, f_red, g)
+        if reduced !== f_red
             i = 1
         else
             i += 1
         end
+        f_red = reduced
         if iszero(f_red)
             return f_red
         end

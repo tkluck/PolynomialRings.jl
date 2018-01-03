@@ -254,11 +254,41 @@ function divrem(::Lead, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::Polyn
     return zero(g), f
 end
 
+function rem(::Full, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
+    if iszero(f)
+        return f
+    end
+    if iszero(g)
+        throw(DivideError())
+    end
+    lt_g = leading_term(o, g)
+    for t in @view terms(f)[end:-1:1]
+        factor = maybe_div(t, lt_g)
+        if !isnull(factor)
+            return f - factor*g
+        end
+    end
+    return f
+end
+
+function rem(::Lead, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
+    if iszero(f)
+        return f
+    end
+    if iszero(g)
+        throw(DivideError())
+    end
+    lt_f = leading_term(o, f)
+    lt_g = leading_term(o, g)
+    factor = maybe_div(lt_f, lt_g)
+    if !isnull(factor)
+        return f - factor*g
+    end
+    return f
+end
+
 function div(redtype::RedType, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
     divrem(redtype, o, f, g)[1]
-end
-function rem(redtype::RedType, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
-    divrem(redtype, o, f, g)[2]
 end
 
 # -----------------------------------------------------------------------------
