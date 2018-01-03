@@ -3,7 +3,7 @@ module Polynomials
 import PolynomialRings.Monomials: AbstractMonomial, TupleMonomial, VectorMonomial
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.VariableNames: Named, Numbered
-import PolynomialRings.Terms: Term, monomial
+import PolynomialRings.Terms: Term, monomial, coefficient
 
 # -----------------------------------------------------------------------------
 #
@@ -12,6 +12,7 @@ import PolynomialRings.Terms: Term, monomial
 # -----------------------------------------------------------------------------
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering, monomialtype
 import PolynomialRings: leading_term, termtype, monomialorder, terms, exptype, namestype
+import PolynomialRings: leading_coefficient, leading_monomial
 import PolynomialRings: variablesymbols, allvariablesymbols
 import Base: copy, hash
 import Base.Order: lt
@@ -83,6 +84,12 @@ max_variable_index(p::Polynomial) = iszero(p) ? 0 : maximum(max_variable_index(t
 leading_term(::MonomialOrder{Order}, p::PolynomialBy{Names,Order}) where {Names,Order} = last(terms(p))
 leading_term(o::MonomialOrder, p::Polynomial) = reduce((a,b)->lt(o,monomial(a),monomial(b)) ? b : a, terms(p))
 leading_term(p::Polynomial) = leading_term(monomialorder(p), p)
+
+leading_monomial(o::MonomialOrder, p::Polynomial) = monomial(leading_term(o, p))
+leading_monomial(p::Polynomial) = monomial(leading_term(p))
+
+leading_coefficient(o::MonomialOrder, p::Polynomial) = coefficient(leading_term(o, p))
+leading_coefficient(p::Polynomial) = coefficient(leading_term(p))
 
 copy(p::Polynomial) = typeof(p)(copy(p.terms))
 

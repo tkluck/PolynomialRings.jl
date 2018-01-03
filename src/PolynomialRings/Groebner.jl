@@ -5,27 +5,14 @@ using DataStructures: PriorityQueue, enqueue!, dequeue!
 
 import PolynomialRings: gröbner_basis, gröbner_transformation, syzygies
 
-import PolynomialRings: leading_term, lcm_multipliers, lcm_degree, fraction_field, basering, base_extend
+import PolynomialRings: leading_term, leading_monomial, lcm_multipliers, lcm_degree, fraction_field, basering, base_extend
 import PolynomialRings: maybe_div
 import PolynomialRings.Monomials: total_degree
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.Polynomials: Polynomial, monomialorder, terms
 import PolynomialRings.Terms: monomial
-import PolynomialRings.Modules: AbstractModuleElement, modulebasering
+import PolynomialRings.Modules: AbstractModuleElement, modulebasering, leading_row
 import PolynomialRings.Operators: Lead, Full
-
-# a few functions to be able to write the same algorithm for
-# computations in a free f.g. module and in a polynomial ring.
-# In this context, a 'monomial' is either a monomial (polynomial ring)
-# or a tuple of (index, monomial) (free f.g. module).
-_leading_row(p::Polynomial) = 1
-_leading_row(a::AbstractArray) = findfirst(a)
-_leading_term(o::MonomialOrder, p::Polynomial) = leading_term(o, p)
-_leading_term(o::MonomialOrder, a::AbstractArray) = leading_term(o, a[_leading_row(a)])
-_leading_monomial(o::MonomialOrder, p::Polynomial) = monomial(leading_term(o, p))
-_leading_monomial(o::MonomialOrder, a::AbstractArray) = (i = findfirst(a); (i, _leading_monomial(o, a[i])))
-_lcm_degree(a, b) = lcm_degree(a, b)
-_lcm_degree(a::Tuple, b::Tuple) = lcm_degree(a[2], b[2])
 
 function buchberger(o::MonomialOrder, polynomials::AbstractVector{M}, ::Val{with_transformation}) where M <: AbstractModuleElement where with_transformation
     P = base_extend(modulebasering(M))
@@ -147,9 +134,9 @@ function buchberger(o::MonomialOrder, polynomials::AbstractVector{M}, ::Val{with
     function pair_priority(i,j)
         a = stable_result[i]
         b = stable_result[j]
-        lm_a = _leading_monomial(o, a)
-        lm_b = _leading_monomial(o, b)
-        _lcm_degree(lm_a, lm_b)
+        lm_a = leading_monomial(o, a)
+        lm_b = leading_monomial(o, b)
+        lcm_degree(lm_a, lm_b)
     end
     function update_priorities(k)
         for ((i,j),prio) in pairs_to_consider
@@ -164,7 +151,7 @@ function buchberger(o::MonomialOrder, polynomials::AbstractVector{M}, ::Val{with
         i == j && return
         a = stable_result[i]
         b = stable_result[j]
-        if _leading_row(a) == _leading_row(b)
+        if leading_row(a) == leading_row(b)
             pairs_to_consider[i,j] = pair_priority(i,j)
         end
     end
@@ -222,8 +209,8 @@ function buchberger(o::MonomialOrder, polynomials::AbstractVector{M}, ::Val{with
         a = stable_result[i]
         b = stable_result[j]
 
-        lt_a = _leading_term(o, a)
-        lt_b = _leading_term(o, b)
+        lt_a = leading_term(o, a)
+        lt_b = leading_term(o, b)
 
         m_a, m_b = lcm_multipliers(lt_a, lt_b)
 
@@ -234,10 +221,10 @@ function buchberger(o::MonomialOrder, polynomials::AbstractVector{M}, ::Val{with
         end
         if any(all_stable_indices()) do l
            l != i && l != j &&
-           _leading_row(stable_result[l]) == _leading_row(a) &&
+           leading_row(stable_result[l]) == leading_row(a) &&
            !(_pair(i,l) in keys(pairs_to_consider)) &&
            !(_pair(j,l) in keys(pairs_to_consider)) &&
-           !isnull(maybe_div(leading_lcm, _leading_term(o, stable_result[l])))
+           !isnull(maybe_div(leading_lcm, leading_term(o, stable_result[l])))
         end
             continue
         end
@@ -297,7 +284,7 @@ function syzygies(polynomials::AbstractVector{M}) where M <: AbstractModuleEleme
     o = monomialorder(eltype(polynomials))
     pairs_to_consider = [
         (i,j) for i in eachindex(polynomials) for j in eachindex(polynomials)
-        if i < j && _leading_row(polynomials[i]) == _leading_row(polynomials[j])
+        if i < j && leading_row(polynomials[i]) == leading_row(polynomials[j])
     ]
 
     result = Vector{RowVector{modulebasering(M),SparseVector{modulebasering(M),Int}}}()
@@ -305,8 +292,8 @@ function syzygies(polynomials::AbstractVector{M}) where M <: AbstractModuleEleme
     for (i,j) in pairs_to_consider
         a = polynomials[i]
         b = polynomials[j]
-        lt_a = _leading_term(o, a)
-        lt_b = _leading_term(o, b)
+        lt_a = leading_term(o, a)
+        lt_b = leading_term(o, b)
 
         m_a, m_b = lcm_multipliers(lt_a, lt_b)
         S = m_a * a - m_b * b

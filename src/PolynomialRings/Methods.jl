@@ -37,6 +37,9 @@ allvariablesymbols(::Type) = Set()
 # -----------------------------------------------------------------------------
 function terms end
 function leading_term end
+function leading_monomial end
+function leading_coefficient end
+function leading_row end
 function maybe_div end
 function lcm_multipliers end
 function lcm_degree end
