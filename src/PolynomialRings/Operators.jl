@@ -407,14 +407,20 @@ end
 
 # -----------------------------------------------------------------------------
 #
-# Use Term as a polynomial
+# Use Term/Monomial as a polynomial
 #
 # -----------------------------------------------------------------------------
 function *(a::T, b::P) where P<:Polynomial{V} where V<:AbstractVector{T} where T<:Term
-    P([ T(monomial(a) * monomial(t), coefficient(a) * coefficient(t)) for t in terms(b) ])
+    P(map(t->a*t, terms(b)))
 end
 function *(a::P, b::T) where P<:Polynomial{V} where V<:AbstractVector{T} where T<:Term
-    P([ T(monomial(t) * monomial(b), coefficient(t) * coefficient(b)) for t in terms(a) ])
+    P(map(t->t*b, terms(a)))
+end
+function *(a::M, b::P) where P<:Polynomial{<:AbstractVector{<:Term{M}}} where M<:AbstractMonomial
+    P(map(t->t*a, terms(b)))
+end
+function *(a::P, b::M) where P<:Polynomial{<:AbstractVector{<:Term{M}}} where M<:AbstractMonomial
+    P(map(t->t*b, terms(a)))
 end
 
 
