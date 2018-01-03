@@ -196,7 +196,7 @@ end
 
 function any_divisor(f::Function, a::M) where M <: AbstractMonomial
     if length(nzindices(a)) == 0
-        return
+        return f(a)
     end
 
     e = zeros(exptype(M), last(nzindices(a)))
