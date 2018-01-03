@@ -125,6 +125,14 @@ convert(::Type{T}, a::C) where T <: Term{M} where M where C<:Number = base_exten
 
 # -----------------------------------------------------------------------------
 #
+# Promoting scalar + monomial to a term
+#
+# -----------------------------------------------------------------------------
+
+promote_rule(::Type{M}, ::Type{C}) where M <: AbstractMonomial where C<:Number = Term{M,C}
+
+# -----------------------------------------------------------------------------
+#
 # Promoting terms to polynomials
 #
 # -----------------------------------------------------------------------------
@@ -136,13 +144,23 @@ convert(::Type{P}, a::T) where P <: Polynomial{<:AbstractArray{T}} where T <: Te
 
 # -----------------------------------------------------------------------------
 #
+# Promoting monomials to terms
+#
+# -----------------------------------------------------------------------------
+
+promote_rule(::Type{T}, ::Type{M}) where T <: Term{M,C} where {M<:AbstractMonomial,C} = T
+
+convert(::Type{T}, a::M) where T <: Term{M,C} where {M<:AbstractMonomial,C} = T(a,one(C))
+
+# -----------------------------------------------------------------------------
+#
 # Promoting monomials to polynomials
 #
 # -----------------------------------------------------------------------------
 
-promote_rule(::Type{P}, ::Type{M}) where P <: Polynomial{<:AbstractArray{T}} where T <: Term{M,C} where {M<:AbstractMonomial,C} = P
-#
-convert(::Type{P}, a::M) where P <: Polynomial{<:AbstractArray{T}} where T <: Term{M,C} where {M<:AbstractMonomial,C} = P([T(a,one(C))])
+promote_rule(::Type{P}, ::Type{M}) where P <: Polynomial{<:AbstractArray{T}} where T <: Term{M} where M<:AbstractMonomial = P
+
+convert(::Type{P}, a::M) where P <: Polynomial{<:AbstractArray{T}} where T <: Term{M} where M<:AbstractMonomial = P([convert(T, a)])
 
 # -----------------------------------------------------------------------------
 #
@@ -155,15 +173,24 @@ convert(::Type{P}, a::M) where P <: Polynomial{<:AbstractArray{T}} where T <: Te
 ==(a::P1,b::P2) where {P1<:Polynomial,P2<:Polynomial} = ==(promote(a,b)...)
 
 _C = Union{Number, AbstractMonomial, Term}
-+(a::C,b::P) where P<:Polynomial where C<:_C = +(promote(a,b)...)
-+(a::P,b::C) where P<:Polynomial where C<:_C = +(promote(a,b)...)
-*(a::C,b::P) where P<:Polynomial where C<:_C = *(promote(a,b)...)
-*(a::P,b::C) where P<:Polynomial where C<:_C = *(promote(a,b)...)
--(a::C,b::P) where P<:Polynomial where C<:_C = -(promote(a,b)...)
--(a::P,b::C) where P<:Polynomial where C<:_C = -(promote(a,b)...)
-==(a::P,b::C) where P<:Polynomial where C<:_C = ==(promote(a,b)...)
-==(a::C,b::P) where P<:Polynomial where C<:_C = ==(promote(a,b)...)
+_P = Union{Term,Polynomial}
++(a::C,b::P) where P<:_P where C<:_C = +(promote(a,b)...)
++(a::P,b::C) where P<:_P where C<:_C = +(promote(a,b)...)
+*(a::C,b::P) where P<:_P where C<:_C = *(promote(a,b)...)
+*(a::P,b::C) where P<:_P where C<:_C = *(promote(a,b)...)
+-(a::C,b::P) where P<:_P where C<:_C = -(promote(a,b)...)
+-(a::P,b::C) where P<:_P where C<:_C = -(promote(a,b)...)
+==(a::P,b::C) where P<:_P where C<:_C = ==(promote(a,b)...)
+==(a::C,b::P) where P<:_P where C<:_C = ==(promote(a,b)...)
 
++(a::Number,b::AbstractMonomial) = +(promote(a,b)...)
++(a::AbstractMonomial,b::Number) = +(promote(a,b)...)
+*(a::Number,b::AbstractMonomial) = *(promote(a,b)...)
+*(a::AbstractMonomial,b::Number) = *(promote(a,b)...)
+-(a::Number,b::AbstractMonomial) = -(promote(a,b)...)
+-(a::AbstractMonomial,b::Number) = -(promote(a,b)...)
+==(a::AbstractMonomial,b::Number) = ==(promote(a,b)...)
+==(a::Number,b::AbstractMonomial) = ==(promote(a,b)...)
 # -----------------------------------------------------------------------------
 #
 # Polynomials with polynomial coefficients
