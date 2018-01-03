@@ -118,6 +118,14 @@ function rev_index_union(a::AbstractMonomial, b::AbstractMonomial)
     IndexUnion{typeof(l),typeof(r),>}(l,r)
 end
 
+struct EnumerateNZ{M<:AbstractMonomial}
+    a::M
+end
+start(enz::EnumerateNZ) = start(nzindices(enz.a))
+done(enz::EnumerateNZ, state) = done(nzindices(enz.a), state)
+next(enz::EnumerateNZ, state) = ((i,next_state) = next(nzindices(enz.a), state); ((i,enz.a[i]), next_state))
+length(enz::EnumerateNZ) = length(nzindices(enz.a))
+
 # -----------------------------------------------------------------------------
 #
 # Abstract fallbacks
@@ -137,17 +145,19 @@ total_degree(a::A) where A <: AbstractMonomial = (ix = nzindices(a); length(ix)=
 lcm(a::M, b::M) where M <: AbstractMonomial = _construct(M,i -> max(a[i], b[i]), index_union(a,b))
 gcd(a::M, b::M) where M <: AbstractMonomial = _construct(M,i -> min(a[i], b[i]), index_union(a,b))
 
-enumeratenz(a::M) where M <: AbstractMonomial = [(i, a[i]) for i in nzindices(a)]
+enumeratenz(a::M) where M <: AbstractMonomial = EnumerateNZ(a)
 
 exptype(a::AbstractMonomial) = exptype(typeof(a))
 
-# More easy on the eye would be
-#
-#     foldr(hash, h, <iterator>)
-#
-# but the iterator is a channel and so it doesn't have an endof().
-# That's why we use foldl() and a swapped-arguments version of hash()
-hash(a::AbstractMonomial, h::UInt) = foldl((h,x)->hash(x,h), h, filter(t->!iszero(t[2]), enumeratenz(a)))
+function hash(a::AbstractMonomial, h::UInt)
+    h = hash(1)
+    for (i,e) in enumeratenz(a)
+        if !iszero(e)
+            h = hash((i,e), h)
+        end
+    end
+    h
+end
 
 ==(a::AbstractMonomial{Names}, b::AbstractMonomial{Names}) where Names = all(i->a[i]==b[i], index_union(a,b))
 
