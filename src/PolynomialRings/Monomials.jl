@@ -42,6 +42,7 @@ abstract type AbstractMonomial{Nm} end
 # -----------------------------------------------------------------------------
 import Base: getindex, gcd, lcm, one, *, ^, ==, diff
 import Base: hash
+import Base: promote_rule
 import PolynomialRings: generators, to_dense_monomials, max_variable_index
 import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namestype
 
@@ -137,13 +138,13 @@ length(enz::EnumerateNZ) = length(nzindices(enz.a))
 one(::Type{M}) where M <: AbstractMonomial = _construct(M, i->0, 1:0)
 one(::M) where M <: AbstractMonomial = one(M)
 
-*(a::M, b::M) where M <: AbstractMonomial = _construct(M,i -> a[i] + b[i], index_union(a,b), total_degree(a) + total_degree(b))
+*(a::AbstractMonomial{Nm}, b::AbstractMonomial{Nm}) where Nm = _construct(promote_type(typeof(a), typeof(b)),i -> a[i] + b[i], index_union(a,b), total_degree(a) + total_degree(b))
 ^(a::M, n::Integer) where M <: AbstractMonomial = _construct(M,i -> a[i]*n, nzindices(a), total_degree(a)*n)
 
 total_degree(a::A) where A <: AbstractMonomial = (ix = nzindices(a); length(ix)==0 ? zero(exptype(a)) : sum( a[i] for i in nzindices(a) ) )
 
-lcm(a::M, b::M) where M <: AbstractMonomial = _construct(M,i -> max(a[i], b[i]), index_union(a,b))
-gcd(a::M, b::M) where M <: AbstractMonomial = _construct(M,i -> min(a[i], b[i]), index_union(a,b))
+lcm(a::AbstractMonomial{Nm}, b::AbstractMonomial{Nm}) where Nm = _construct(promote_type(typeof(a), typeof(b)),i -> max(a[i], b[i]), index_union(a,b))
+gcd(a::AbstractMonomial{Nm}, b::AbstractMonomial{Nm}) where Nm = _construct(promote_type(typeof(a), typeof(b)),i -> min(a[i], b[i]), index_union(a,b))
 
 enumeratenz(a::M) where M <: AbstractMonomial = EnumerateNZ(a)
 
@@ -161,7 +162,8 @@ end
 
 ==(a::AbstractMonomial{Names}, b::AbstractMonomial{Names}) where Names = all(i->a[i]==b[i], index_union(a,b))
 
-function maybe_div(a::M, b::N) where M <: AbstractMonomial{Names} where N <: AbstractMonomial{Names} where Names
+function maybe_div(a::AbstractMonomial{Nm}, b::AbstractMonomial{Nm}) where Nm
+    M = promote_type(typeof(a), typeof(b))
     if all(i->a[i]>=b[i], index_union(a,b))
         return _construct(M,i -> a[i] - b[i], index_union(a,b))
     else
@@ -169,7 +171,8 @@ function maybe_div(a::M, b::N) where M <: AbstractMonomial{Names} where N <: Abs
     end
 end
 
-function lcm_multipliers(a::M, b::M)::Tuple{M,M} where M <: AbstractMonomial
+function lcm_multipliers(a::AbstractMonomial{Nm}, b::AbstractMonomial{Nm}) where Nm
+    M = promote_type(typeof(a), typeof(b))
     return (
         _construct(M, i -> max(a[i], b[i]) - a[i], index_union(a,b)),
         _construct(M, i -> max(a[i], b[i]) - b[i], index_union(a,b)),
@@ -185,7 +188,7 @@ function diff(a::M, i::Integer) where M <: AbstractMonomial
     end
 end
 
-function lcm_degree(a::M, b::M) where M <: AbstractMonomial
+function lcm_degree(a::AbstractMonomial{Nm}, b::AbstractMonomial{Nm}) where Nm
     # avoid summing empty iterator
     iszero(total_degree(a)) && iszero(total_degree(b)) && return zero(exptype(M))
     return sum(max(a[i],b[i]) for i in index_union(a,b))
@@ -203,7 +206,7 @@ function any_divisor(f::Function, a::M) where M <: AbstractMonomial
 
     while true
         m = N(e, sum(e))
-        if f(maybe_div(a,m))
+        if f(m)
             return true
         end
         carry = 1
@@ -356,6 +359,8 @@ max_variable_index(m::VectorMonomial{V,I,Nm}) where {V,I,Nm} = length(m.e)
 import PolynomialRings.VariableNames: Named, Numbered, flatvariablesymbols
 _densenames(n::Integer, ::Type{Numbered{Name}}) where Name = (g = flatvariablesymbols(Numbered{Name}); Named{ tuple([take!(g) for _ = 1:n]...) })
 to_dense_monomials(n::Integer, m::AbstractMonomial) = _construct(TupleMonomial{n,exptype(m),_densenames(n, namestype(m))}, i->m[i], 1:n)
+
+promote_rule(::Type{<:TupleMonomial{N,I,Nm}}, ::Type{<:VectorMonomial{V,J,Nm}}) where {N,V,I,J,Nm} = TupleMonomial{N,promote_type(I,J),Nm}
 
 # -----------------------------------------------------------------------------
 #
