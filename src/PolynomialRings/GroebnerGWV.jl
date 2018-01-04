@@ -144,15 +144,16 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
                     lr2 = leading_row(Tj)
                     lt1 = leading_term(o,T)
                     lt2 = leading_term(o,Tj)
-                    if Base.Order.lt(o, t1*leading_monomial(T), t2*leading_monomial(Tj))
-                        Jsig = t2 * leading_monomial(Tj)
-                        Jpair = (t2*Tj, t2*vj)
-                    else
-                        Jsig = t1 * leading_monomial(T)
-                        Jpair = (t1*T, t1*v)
-                    end
-                    red = t1*T - c*(t2*Tj)
-                    if !iszero(red) && leading_monomial(o,red) == Jsig
+                    lhs = t1*leading_monomial(T)
+                    rhs = t2*leading_monomial(Tj)
+                    if !(c == one(c) && lhs == rhs)
+                        if Base.Order.lt(o, lhs, rhs)
+                            Jsig = rhs
+                            Jpair = (t2*Tj, t2*vj)
+                        else
+                            Jsig = lhs
+                            Jpair = (t1*T, t1*v)
+                        end
                         divisor_considerations += 1
                         if !any_divisor(Jsig.m) do d
                             divisors_considered += 1
