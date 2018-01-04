@@ -19,6 +19,10 @@ _variable(::Type{Named{Names}}, ix)   where Names = String(Names[ix])
 _variable(::Type{Numbered{Name}}, ix) where Name  = "$Name[$ix]"
 
 function show(io::IO, m::AbstractMonomial)
+    if m == one(m)
+        print(io, "1")
+        return
+    end
     factors = String[]
     for (ix, i) in enumeratenz(m)
         symbol = _variable(namestype(m), ix)
