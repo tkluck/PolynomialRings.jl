@@ -1,5 +1,6 @@
 module MonomialOrderings
 
+import Base: min, max, minimum, maximum
 import Base.Order: Ordering, lt
 
 import PolynomialRings.Monomials: AbstractMonomial, VectorMonomial, total_degree, index_union, rev_index_union
@@ -64,5 +65,12 @@ function lt(m::MonomialOrder, a::T, b::T) where T <: Tuple
     end
     return false
 end
+
+min(m::MonomialOrder, x, y) = lt(m, x, y) ? x : y
+max(m::MonomialOrder, x, y) = lt(m, x, y) ? y : x
+min(m::MonomialOrder, a, b, c, xs...) = (op(x,y) = min(m,x,y); Base.afoldl(op, op(op(a,b),c), xs...))
+max(m::MonomialOrder, a, b, c, xs...) = (op(x,y) = max(m,x,y); Base.afoldl(op, op(op(a,b),c), xs...))
+minimum(m::MonomialOrder, iter) = (op(x,y) = min(m,x,y); reduce(op, iter))
+maximum(m::MonomialOrder, iter) = (op(x,y) = max(m,x,y); reduce(op, iter))
 
 end
