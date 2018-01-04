@@ -126,7 +126,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
                     lhs = leading_monomial(o,v)*Tj
                     rhs = leading_monomial(o,vj)*T
                     if lhs != rhs
-                        newh = Base.Order.lt(o, lhs, rhs) ? rhs : lhs
+                        newh = max(o, lhs, rhs)
                         push!(H[newh.i], newh.m)
                     end
                 end
