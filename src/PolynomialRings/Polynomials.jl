@@ -93,7 +93,7 @@ leading_coefficient(p::Polynomial) = coefficient(leading_term(p))
 
 copy(p::Polynomial) = typeof(p)(copy(p.terms))
 
-lt(o::MonomialOrder, a::P, b::P) where P <: Polynomial = lt(o, leading_term(o, a), leading_term(o, b))
+lt(o::MonomialOrder, a::P, b::P) where P <: Polynomial = lt(o, leading_monomial(o, a), leading_monomial(o, b))
 
 # -----------------------------------------------------------------------------
 #
