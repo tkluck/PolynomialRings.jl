@@ -40,7 +40,7 @@ function show(io::IO, t::Term)
     monom = monomial(t)
     sign = ""
     factors = String[]
-    if monom != one(monom) && coeff == -one(coeff)
+    if monom != one(monom) && coeff == -one(coeff) && coeff != one(coeff) # 1 == -1 in ℤ/2ℤ
         sign = "-"
     elseif monom == one(monom) || coeff != one(coeff)
         coeff_repr = "$(coefficient(t))"
