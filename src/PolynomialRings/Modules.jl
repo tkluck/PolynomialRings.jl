@@ -52,17 +52,18 @@ end
 termtype(p::AbstractArray{<:Polynomial}) = Signature{termtype(eltype(p)), Int}
 monomialtype(p::AbstractArray{<:Polynomial}) = Signature{monomialtype(eltype(p)), Int}
 
-*(s::Signature,m::Union{AbstractMonomial,Term})  = Signature(s.i, s.m * m)
-*(m::Union{AbstractMonomial,Term}, s::Signature) = Signature(s.i, s.m * m)
+*(s::Signature,m::Union{AbstractMonomial,Term,Number})  = Signature(s.i, s.m * m)
+*(m::Union{AbstractMonomial,Term,Number}, s::Signature) = Signature(s.i, s.m * m)
 maybe_div(s::Signature, t::Signature)            = s.i == t.i ? maybe_div(s.m, t.m) : null
 lcm_degree(s::Signature, t::Signature)           = s.i == t.i ? lcm_degree(s.m, t.m) : null
 lcm_multipliers(s::Signature, t::Signature)      = s.i == t.i ? lcm_multipliers(s.m, t.m) : null
 total_degree(s::Signature)                       = total_degree(s.m)
 lt(o::MonomialOrder, s::Signature, t::Signature) = s.i > t.i || (s.i == t.i && lt(o, s.m, t.m))
 ==(s::S, t::S) where S <: Signature = s.i == t.i && s.m == t.m
+iszero(s::Signature{<:Term}) = iszero(s.m)
 
 coefficient(s::Signature{<:Term}) = coefficient(s.m)
-monomial(s::Signature{<:Term}) = Signature(s.i, monomial(m))
+monomial(s::Signature{<:Term}) = Signature(s.i, monomial(s.m))
 
 
 leading_row(x::AbstractArray{<:Polynomial}) = findfirst(x)
