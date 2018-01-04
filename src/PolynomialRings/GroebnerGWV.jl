@@ -18,35 +18,35 @@ import PolynomialRings.Operators: Lead, Full
 
 function regular_topreduce_rem(o, m, G)
     u1,v1 = m
+    u1 = leading_monomial(o,u1)
     i = 1
     supertopreducible = false
     while i <= length(G)
         u2, v2 = G[i]
+        u2 = leading_monomial(o,u2)
         if iszero(v2)
-            if !iszero(u1) && !iszero(u2) && !isnull(maybe_div(leading_monomial(o,u1), leading_monomial(o,u2)))
+            if !isnull(maybe_div(u1, u2))
                 supertopreducible = true
             end
         elseif !iszero(v1)
             t = maybe_div(leading_monomial(o,v1), leading_monomial(o,v2))
             if !isnull(t)
-                if Base.Order.lt(o, t * leading_monomial(o, u2), leading_monomial(o, u1))
-                    c = leading_coefficient(o,v1) // leading_coefficient(o,v2)
-                    new_u1 = u1 - c*(t*u2)
-                    if leading_monomial(o,new_u1) != leading_monomial(o,u1)
-                        supertopreducible = true
-                    else
-                        u1, v1 = (new_u1, v1 - c*(t*v2))
-                        supertopreducible = false
-                        i = 1
-                        continue
-                    end
+                c = leading_coefficient(o,v1) // leading_coefficient(o,v2)
+                if Base.Order.lt(o, t * u2, u1)
+                    # new_u1 = u1 - c*(t*u2)
+                    v1 = v1 - c*(t*v2)
+                    supertopreducible = false
+                    i = 1
+                    continue
+                elseif t * u2 == u1 && c == one(c)
+                    supertopreducible = true
                 end
             end
         end
         i += 1
     end
 
-    return (u1,v1), supertopreducible ? :supertopreducible : :notsupertopreducible
+    return (m[1],v1), supertopreducible ? :supertopreducible : :notsupertopreducible
 end
 
 function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polynomial
