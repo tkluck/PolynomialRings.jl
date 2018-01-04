@@ -48,6 +48,11 @@ lazymap(f::Function, c::C) where C<:Channel = Channel() do ch
     end
 end
 
+# -----------------------------------------------------------------------------
+#
+# an optimization until https://github.com/JuliaLang/julia/pull/23317 gets merged
+#
+# -----------------------------------------------------------------------------
 import Base: findnext
 function findnext(v::SparseVector, i::Int)
     n = searchsortedfirst(v.nzind, i)
