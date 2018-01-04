@@ -18,12 +18,10 @@ import PolynomialRings.Operators: Lead, Full
 
 function regular_topreduce_rem(o, m, G)
     u1,v1 = m
-    u1 = leading_monomial(o,u1)
     i = 1
     supertopreducible = false
     while i <= length(G)
         u2, v2 = G[i]
-        u2 = leading_monomial(o,u2)
         if iszero(v2)
             if !isnull(maybe_div(u1, u2))
                 supertopreducible = true
@@ -52,19 +50,20 @@ end
 function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polynomial
     R = base_extend(P)
     Rm = RowVector{R, SparseVector{R,Int}}
-    M = Tuple{Rm, R}
+    Signature = monomialtype(polynomials)
+    M = Tuple{Signature, R}
 
-    signature(m) = leading_monomial(o,m[1])
+    signature(m) = m[1]
     # --------------------------------------------------------------------------
     # Declare the variables where we'll accumulate the result
     # --------------------------------------------------------------------------
-    G = Tuple{Rm, R}[]
+    G = Tuple{Signature, R}[]
     H = DefaultDict{Int, Set{monomialtype(R)}}(Set{monomialtype(R)})
-    JP = SortedDict{monomialtype(polynomials), M}(o)
+    JP = SortedDict{Signature, M}(o)
 
     n = length(polynomials)
     for (i,p) in enumerate(polynomials)
-        T = sparsevec(Dict(i=>one(R)), n)'
+        T = leading_monomial( sparsevec(Dict(i=>one(R)), n)' )
         m = (T, p)
         JP[signature(m)] = m
     end
@@ -95,7 +94,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
         # lm(T) and t lm(v_2) ≺ lm(v_1) where t = lm(T)/lm(u_2)
         if any(G) do m2
             u2,v2 = m2
-            t = maybe_div(leading_monomial(o,T), leading_monomial(o,u2))
+            t = maybe_div(T, u2)
             if !isnull(t)
                 if Base.Order.lt(o, t * leading_monomial(o,v2), leading_monomial(o,v1))
                     return true
@@ -109,11 +108,11 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
         (_,v), status = regular_topreduce_rem(o, m, G)
 
         if iszero(v)
-            newh = leading_monomial(o,T)
+            newh = T
             push!(H[newh.i], newh.m)
             filter!(JP) do sig, jp
                 T2, v2 = jp
-                divisible = !isnull(maybe_div(leading_monomial(o,T2), newh))
+                divisible = !isnull(maybe_div(T2, newh))
                 !divisible
             end
         else
@@ -124,8 +123,8 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
                 # 1 ≤ j ≤ |U |, to H,
                 for (Tj, vj) in G
                     # syzygy = v*Tj - vj*T
-                    lhs = leading_monomial(v)*leading_monomial(Tj)
-                    rhs = leading_monomial(vj)*leading_monomial(T)
+                    lhs = leading_monomial(o,v)*Tj
+                    rhs = leading_monomial(o,vj)*T
                     if lhs != rhs
                         newh = Base.Order.lt(o, lhs, rhs) ? rhs : lhs
                         push!(H[newh.i], newh.m)
@@ -140,12 +139,8 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
                     lm2 = leading_monomial(o,vj)
                     t1, t2 = lcm_multipliers(lm1, lm2)
                     c = leading_coefficient(o,v) // leading_coefficient(o,vj)
-                    lr1 = leading_row(T)
-                    lr2 = leading_row(Tj)
-                    lt1 = leading_term(o,T)
-                    lt2 = leading_term(o,Tj)
-                    lhs = t1*leading_monomial(T)
-                    rhs = t2*leading_monomial(Tj)
+                    lhs = t1*T
+                    rhs = t2*Tj
                     if !(c == one(c) && lhs == rhs)
                         if Base.Order.lt(o, lhs, rhs)
                             Jsig = rhs
