@@ -123,9 +123,11 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
                 # i) Add the leading terms of the principle syzygies, vT j − v j T for
                 # 1 ≤ j ≤ |U |, to H,
                 for (Tj, vj) in G
-                    syzygy = v*Tj - vj*T
-                    if !iszero(syzygy)
-                        newh = leading_monomial(o,syzygy)
+                    # syzygy = v*Tj - vj*T
+                    lhs = leading_monomial(v)*leading_monomial(Tj)
+                    rhs = leading_monomial(vj)*leading_monomial(T)
+                    if lhs != rhs
+                        newh = Base.Order.lt(o, lhs, rhs) ? rhs : lhs
                         push!(H[newh.i], newh.m)
                     end
                 end
