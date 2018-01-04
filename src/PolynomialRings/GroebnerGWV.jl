@@ -135,9 +135,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
                 # ducible by H (storing only one J-pair for each distinct signature
                 # T , the one with v-part minimal), and
                 for (Tj, vj) in G
-                    lm1 = leading_monomial(o,v)
-                    lm2 = leading_monomial(o,vj)
-                    t1, t2 = lcm_multipliers(lm1, lm2)
+                    t1, t2 = lcm_multipliers(leading_monomial(o,v), leading_monomial(o,vj))
                     c = leading_coefficient(o,v) // leading_coefficient(o,vj)
                     lhs = t1*T
                     rhs = t2*Tj
@@ -157,7 +155,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
                             if Jsig in keys(JP)
                                 oldu,oldv = JP[Jsig]
                                 newv = Jpair[2]
-                                if Base.Order.lt(o, leading_monomial(o,newv), leading_monomial(o,oldv))
+                                if Base.Order.lt(o, newv, oldv)
                                     JP[Jsig] = Jpair
                                 end
                             else
