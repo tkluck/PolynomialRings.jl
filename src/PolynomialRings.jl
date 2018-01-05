@@ -62,8 +62,8 @@ namestype(x::_P)     = namestype(typeof(x))
 include("CommutativeAlgebras.jl")
 
 include("EntryPoints.jl")
-import .EntryPoints: formal_coefficients, @ring, @ring!, @polynomial, @polyvar, @numberfield, @numberfield!
-export formal_coefficients, @ring, @ring!, @polynomial, @polyvar, @numberfield, @numberfield!
+import .EntryPoints: formal_coefficients, formal_coefficient, @ring, @ring!, @polynomial, @polyvar, @numberfield, @numberfield!
+export formal_coefficients, formal_coefficient, @ring, @ring!, @polynomial, @polyvar, @numberfield, @numberfield!
 
 include("PolynomialRings/Library.jl")
 

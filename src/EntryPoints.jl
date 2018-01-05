@@ -66,6 +66,13 @@ function formal_coefficients(::Type{P}, name::Symbol) where P <: Polynomial
     return NumberedVariableGenerator{RR,R}()
 end
 
+function formal_coefficient(::Type{P}) where P <: Polynomial
+    name = :αβγ # poor man's version of 'guaranteeing no clash'
+    R = @eval @ring Int[$name]
+    RR = base_extend(P, R)
+    return name, RR(name)
+end
+
 function _variables_in_ring_definition(definition)
     if(definition.head != :ref)
         throw(ArgumentError("Can't find variables in $definition"))
