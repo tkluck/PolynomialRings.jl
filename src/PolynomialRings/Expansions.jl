@@ -269,6 +269,24 @@ end
 
 import Base: diff
 
+"""
+    diff(polynomial, variable)
+
+Return the derivative of `polynomial` w.r.t. `variable`.
+
+# Examples
+```jldoctest
+julia> using PolynomialRings
+
+julia> R = @ring! ℤ[x,y];
+
+julia> diff(x^3, :x)
+3*x^2
+
+julia> diff(x^3, :y)
+0
+```
+"""
 function diff(p::Polynomial, variable::Symbol)
     for (i,s) in enumerate(variablesymbols(typeof(p)))
         if s == variable

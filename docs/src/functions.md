@@ -13,12 +13,9 @@ polynomial_ring
 ## Arithmetic
 
 ```@docs
-gcd
-lcm
-maybe_div
 rem
-div
 divrem
+PolynomialRings.Expansions.diff
 ```
 
 ### Monomial orderings
@@ -34,6 +31,7 @@ expansion
 @expand
 @coefficient
 coefficient
+coefficients
 @deg
 deg
 @linear_coefficients
@@ -41,6 +39,7 @@ linear_coefficients
 @constant_coefficient
 constant_coefficient
 @flat_coefficients
+flat_coefficients
 ```
 
 ### Gröbner basis computations
