@@ -15,7 +15,7 @@ import PolynomialRings.Operators: RedType
 # -----------------------------------------------------------------------------
 import Base: iszero, div, rem, divrem, *, ==
 import Base.Order: lt
-import PolynomialRings: leading_row, leading_term, leading_monomial, base_extend
+import PolynomialRings: leading_row, leading_term, leading_monomial, leading_coefficient, base_extend
 import PolynomialRings: termtype, monomialtype
 import PolynomialRings: maybe_div, lcm_degree, lcm_multipliers
 import PolynomialRings.Operators: leaddiv, leadrem, leaddivrem
@@ -50,7 +50,9 @@ struct Signature{M,I}
 end
 
 termtype(p::AbstractArray{<:Polynomial}) = Signature{termtype(eltype(p)), Int}
+termtype(P::Type{<:AbstractArray{<:Polynomial}}) = Signature{termtype(eltype(P)), Int}
 monomialtype(p::AbstractArray{<:Polynomial}) = Signature{monomialtype(eltype(p)), Int}
+monomialtype(p::Type{<:AbstractArray{<:Polynomial}}) = Signature{monomialtype(eltype(p)), Int}
 
 *(s::Signature,m::Union{AbstractMonomial,Term,Number})  = Signature(s.i, s.m * m)
 *(m::Union{AbstractMonomial,Term,Number}, s::Signature) = Signature(s.i, s.m * m)
@@ -71,6 +73,8 @@ leading_term(x::AbstractArray{P}) where P<:Polynomial = leading_term(monomialord
 leading_term(o::MonomialOrder, x::AbstractArray{P}) where P<:Polynomial = Signature(leading_row(x), leading_term(o, x[leading_row(x)]))
 leading_monomial(x::AbstractArray{P}) where P<:Polynomial = leading_monomial(monomialorder(P), x)
 leading_monomial(o::MonomialOrder, x::AbstractArray{P}) where P<:Polynomial = Signature(leading_row(x), leading_monomial(o, x[leading_row(x)]))
+leading_coefficient(x::AbstractArray{P}) where P<:Polynomial = leading_coefficient(monomialorder(P), x)
+leading_coefficient(o::MonomialOrder, x::AbstractArray{P}) where P<:Polynomial = leading_coefficient(o, x[leading_row(x)])
 
 function divrem(redtype::RedType, o::MonomialOrder, a::A, b::A) where A<:AbstractArray{<:Polynomial}
     i = findfirst(b)
