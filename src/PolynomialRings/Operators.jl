@@ -207,6 +207,7 @@ end
 abstract type RedType end
 struct Lead <: RedType end
 struct Full <: RedType end
+struct Tail <: RedType end
 leaddivrem(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order} = divrem(Lead(), MonomialOrder{Order}(), f, g)
 divrem(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order})     where {Names, Order} = divrem(Full(), MonomialOrder{Order}(), f, g)
 leadrem(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order})    where {Names, Order} = rem(Lead(), MonomialOrder{Order}(), f, g)
@@ -254,6 +255,25 @@ function divrem(::Lead, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::Polyn
     return zero(g), f
 end
 
+function divrem(::Tail, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
+    if iszero(f)
+        return zero(g), f
+    end
+    if iszero(g)
+        throw(DivideError())
+    end
+    lt_g = leading_term(o, g)
+    # FIXME: when o != monomialorder(f), this is not correct!
+    for t in @view terms(f)[end-1:-1:1]
+        factor = maybe_div(t, lt_g)
+        if !isnull(factor)
+            return typeof(f)([factor]), f - factor*g
+        end
+    end
+    return zero(g), f
+end
+
+
 function rem(::Full, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
     if iszero(f)
         return f
@@ -283,6 +303,24 @@ function rem(::Lead, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::Polynomi
     factor = maybe_div(lt_f, lt_g)
     if !isnull(factor)
         return f - factor*g
+    end
+    return f
+end
+
+function rem(::Tail, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
+    if iszero(f)
+        return f
+    end
+    if iszero(g)
+        throw(DivideError())
+    end
+    lt_g = leading_term(o, g)
+    # FIXME: when o != monomialorder(f), this is not correct!
+    for t in @view terms(f)[end-1:-1:1]
+        factor = maybe_div(t, lt_g)
+        if !isnull(factor)
+            return f - factor*g
+        end
     end
     return f
 end

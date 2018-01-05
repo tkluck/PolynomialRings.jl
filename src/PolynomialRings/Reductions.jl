@@ -6,7 +6,7 @@ import PolynomialRings.Modules: AbstractModuleElement, modulebasering
 
 # imports for overloading
 import Base: div, rem, divrem
-import PolynomialRings.Operators: RedType, Lead, Full, leaddiv, leadrem, leaddivrem
+import PolynomialRings.Operators: RedType, Lead, Full, Tail, leaddiv, leadrem, leaddivrem
 
 """
     f_red = rem(f, G)
@@ -31,7 +31,7 @@ julia> rem(x^2 + y^2 + 1, [x, y])
 function rem(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
     if typeof(redtype) <: Full
         f_red = rem(Lead(),o,f,G)
-    elseif typeof(redtype) <: Lead
+    elseif typeof(redtype) <: Lead || typeof(redtype) <: Tail
         f_red = f
     else
     @assert false "unreachable: didn't expect $redtype"
@@ -78,7 +78,7 @@ julia> divrem(x^2 + y^2 + 1, [x, y])
 function divrem(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
     if typeof(redtype) <: Full
         factors, f_red = divrem(Lead(),o,f,G)
-    elseif typeof(redtype) <: Lead
+    elseif typeof(redtype) <: Lead || typeof(redtype) <: Tail
         factors = transpose(spzeros(modulebasering(M), length(G)))
         f_red = f
     else
