@@ -288,8 +288,8 @@ We now get to an important implementation detail. Imagine that you want to write
 a function that computes a derivative in the following way:
 
 ```@repl getting-started
-function myderivative(f::R, varsymbol) where R <: Polynomial
-    varvalue = R(varsymbol)
+function myderivative(f::RR, varsymbol) where RR <: Polynomial
+    varvalue = RR(varsymbol)
     @ring! Int[ε]
     substitution = Dict(varsymbol => varvalue + ε)
     return @coefficient f(;substitution...) ε^1
@@ -309,8 +309,8 @@ This gives a wrong answer because of the naming clash inside `myderivative`. You
 may be tempted to work around this as follows:
 
 ```@repl getting-started
-function myderivative2(f::R, varsymbol) where R <: Polynomial
-    varvalue = R(varsymbol)
+function myderivative2(f::RR, varsymbol) where RR <: Polynomial
+    varvalue = RR(varsymbol)
     ε = gensym()
     _,(ε_val,) = polynomial_ring(ε)
     substitution = Dict(varsymbol => varvalue + ε_val)
@@ -333,8 +333,8 @@ a variable that's guaranteed not to clash with the ring that you pass as an
 argument:
 
 ```@repl getting-started
-function myderivative3(f::R, varsymbol) where R <: Polynomial
-    varvalue = R(varsymbol)
+function myderivative3(f::RR, varsymbol) where RR <: Polynomial
+    varvalue = RR(varsymbol)
     ε_sym, ε_val = formal_coefficient(typeof(f))
     substitution = Dict(varsymbol => varvalue + ε_val)
     return coefficient(f(;substitution...), (1,), ε_sym)
