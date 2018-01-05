@@ -24,14 +24,8 @@ Each concrete implementation should implement:
     exptype(M)
     namestype(M)
 
-and optionally:
-    *(a,b)
-    total_degree(a)
-    lcm(a,b)
-    gcd(a,b)
-    enumeratenz(m)
-
-These latter function have fallbacks in terms of the functions above.
+In addition, one may choose to add specific optimizations by overloading
+other functions, as well.
 """
 abstract type AbstractMonomial{Nm} end
 

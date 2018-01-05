@@ -5,6 +5,26 @@ import Base.Order: Ordering, lt
 
 import PolynomialRings.Monomials: AbstractMonomial, VectorMonomial, total_degree, index_union, rev_index_union
 
+"""
+    struct MonomialOrder{Name} <: Ordering end
+
+For implementing your own monomial order, do the following:
+
+1. Choose a symbol to represent it, say `:myorder`;
+2. `import Base.Order: lt`;
+3. `lt(::MonomialOrder{:myorder}, a::M, b::M) where M <: AbstractMonomial = ...`
+
+A few useful functions are `enumeratenz`, `index_union`, and `rev_index_union`.
+See `PolynomialRings.Monomials` and `PolynomialRings.MonomialOrderings` for
+details.
+
+You can then create a ring that uses it by calling
+
+    R,vars = polynomial_ring(vars...; monomialorder=:myorder)
+
+There is no performance cost for using your own monomial order compared to a
+built-in one.
+"""
 struct MonomialOrder{Name} <: Ordering end
 
 function lt(::MonomialOrder{:degrevlex}, a::M,b::M) where M <: AbstractMonomial

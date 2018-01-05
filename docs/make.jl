@@ -9,5 +9,8 @@ makedocs(
     authors = "Timo Kluck",
     pages = [
         "Home" => "index.md"
+        "Getting Started" => "getting-started.md"
+        "Reference Index" => "reference.md"
+        "Types and Functions" => "functions.md"
     ],
 )
