@@ -6,6 +6,7 @@ using Iterators: chain
 
 import PolynomialRings
 import PolynomialRings: gröbner_basis
+import PolynomialRings.Backends.Gröbner: GWV
 
 import PolynomialRings: leading_term, leading_monomial, lcm_multipliers, lcm_degree, fraction_field, basering, base_extend
 import PolynomialRings: maybe_div, termtype, monomialtype, leading_row, leading_coefficient
@@ -190,8 +191,6 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
     # --------------------------------------------------------------------------
     return result
 end
-
-struct GWV <: PolynomialRings.Backends.Gröbner.Backend end
 
 gröbner_basis(::GWV, o::MonomialOrder, G::AbstractArray{<:Polynomial}; kwds...) = gwv(o, G, kwds...)
 

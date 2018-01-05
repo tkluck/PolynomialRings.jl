@@ -4,6 +4,7 @@ using Nulls
 using DataStructures: PriorityQueue, enqueue!, dequeue!
 
 import PolynomialRings: gröbner_basis, gröbner_transformation, syzygies
+import PolynomialRings.Backends.Gröbner: Buchberger
 
 import PolynomialRings: leading_term, leading_monomial, lcm_multipliers, lcm_degree, fraction_field, basering, base_extend
 import PolynomialRings: maybe_div
@@ -316,8 +317,6 @@ function syzygies(polynomials::AbstractVector{M}) where M <: AbstractModuleEleme
     return flat_result
 end
 
-import PolynomialRings.Backends
-import PolynomialRings.Backends.Gröbner: Buchberger
 
 gröbner_transformation(::Buchberger, o::MonomialOrder, G; kwds...) = buchberger(o, G, Val{true}(), kwds...)
 gröbner_basis(::Buchberger, o::MonomialOrder, G; kwds...) = buchberger(o, G, Val{false}(), kwds...)
