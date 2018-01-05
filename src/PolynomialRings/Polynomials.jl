@@ -82,7 +82,7 @@ end
 max_variable_index(p::Polynomial) = iszero(p) ? 0 : maximum(max_variable_index(t) for t in terms(p))
 
 leading_term(::MonomialOrder{Order}, p::PolynomialBy{Names,Order}) where {Names,Order} = last(terms(p))
-leading_term(o::MonomialOrder, p::Polynomial) = reduce((a,b)->lt(o,monomial(a),monomial(b)) ? b : a, terms(p))
+leading_term(o::MonomialOrder, p::Polynomial) = maximum(o, terms(p))
 leading_term(p::Polynomial) = leading_term(monomialorder(p), p)
 
 leading_monomial(o::MonomialOrder, p::Polynomial) = monomial(leading_term(o, p))
