@@ -23,7 +23,7 @@ divrem
 
 ### Monomial orderings
 ```@docs
-MonomialOrder
+PolynomialRings.MonomialOrderings.MonomialOrder
 ```
 
 ### Expansions, coefficients, collecting monomials
