@@ -281,6 +281,9 @@ which proves that $y^2 \in (I)$.
 
 ### Using helper variables
 
+(Be sure you understand [Variables in your ring vs. variables in your script](@ref)
+before reading this section.)
+
 We now get to an important implementation detail. Imagine that you want to write
 a function that computes a derivative in the following way:
 
@@ -378,6 +381,13 @@ is taken care of by Julia's type promotion system in the same way as
 1 - 1//2
 ```
 yields a rational result.
+
+If you want, you can also extend to bigger base rings than the quotient field by
+passing that as an extra parameter. For example:
+```@repl getting-started
+f = base_extend(x^2 + 1, Complex{Rational{Int}})
+div(f, [x - im])
+```
 
 ### Implementation of named and numbered variables
 

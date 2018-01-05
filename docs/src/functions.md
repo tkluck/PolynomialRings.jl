@@ -30,10 +30,17 @@ PolynomialRings.MonomialOrderings.MonomialOrder
 
 ```@docs
 @expansion
+expansion
 @expand
 @coefficient
+coefficient
 @deg
+deg
 @linear_coefficients
+linear_coefficients
+@constant_coefficient
+constant_coefficient
+@flat_coefficients
 ```
 
 ### Gröbner basis computations
@@ -42,4 +49,13 @@ PolynomialRings.MonomialOrderings.MonomialOrder
 gröbner_basis
 gröbner_transformation
 syzygies
+```
+
+### Internal types
+```@docs
+PolynomialRings.Monomials.AbstractMonomial
+PolynomialRings.Monomials.TupleMonomial
+PolynomialRings.Monomials.VectorMonomial
+PolynomialRings.Terms.Term
+PolynomialRings.Polynomials.Polynomial
 ```
