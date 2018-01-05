@@ -18,7 +18,6 @@ makedocs(
 )
 deploydocs(
     repo   = "github.com/tkluck/PolynomialRings.jl.git",
-    osname = "linux",
     target = "build",
     deps   = nothing,
     make   = nothing,
