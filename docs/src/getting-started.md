@@ -141,7 +141,7 @@ x
 ```
 As you can see, we did define a type `S` that contains polynomials with names $x$
 and $y$ for the variables. However, in our script, the variable `x` doesn't exist.
-The way to get the variable with name `x` is to start with the *symbol* `:x`, and
+The way to get the variable with name $x$ is to start with the *symbol* `:x`, and
 convert it to `S`. Here's how:
 ```@repl no-variable-injection
 S(:x)
