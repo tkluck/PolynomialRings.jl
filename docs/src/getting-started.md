@@ -373,14 +373,8 @@ gives an error because we have to substract $x^2 + \frac{2}{3}x$, which is
 not representable in $R$. We offer a convenience function `base_extend` to
 extend to ℚ:
 ```@repl getting-started
-rem(base_extend(2x^2), 3x + 1)
+rem(base_extend(2x^2), base_extend(3x + 1))
 ```
-Note that it is sufficient to base-extend one of the arguments; the other
-is taken care of by Julia's type promotion system in the same way as
-```@repl
-1 - 1//2
-```
-yields a rational result.
 
 If you want, you can also extend to bigger base rings than the quotient field by
 passing that as an extra parameter. For example:
