@@ -16,7 +16,7 @@ makedocs(
         "Reference Index"     => "reference.md",
     ],
 )
-other-packagesdeploydocs(
+deploydocs(
     repo   = "github.com/tkluck/PolynomialRings.jl.git",
     osname = "linux",
     target = "build",
