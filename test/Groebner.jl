@@ -37,7 +37,7 @@ end
         GG, tr= gröbner_transformation(G)
         @test [a for a in tr]*G == GG
 
-        GG= gröbner_basis(G)
+        GG = gröbner_basis(G)
 
         @test gröbner_basis(R[]) == R[]
     end
