@@ -16,8 +16,10 @@ makedocs(
 )
 
 deploydocs(
-    deps   = Deps.pip("mkdocs", "python-markdown-math"),
     repo   = "github.com/tkluck/PolynomialRings.jl.git",
     julia  = "0.6",
     osname = "linux",
+    target = "build",
+    deps   = nothing,
+    make   = nothing,
 )
