@@ -109,7 +109,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Getting Started",
     "title": "Using helper variables",
     "category": "section",
-    "text": "(Be sure you understand Variables in your ring vs. variables in your script before reading this section.)We now get to an important implementation detail. Imagine that you want to write a function that computes a derivative in the following way:function myderivative(f::R, varsymbol) where R <: Polynomial\n    varvalue = R(varsymbol)\n    @ring! Int[ε]\n    substitution = Dict(varsymbol => varvalue + ε)\n    return @coefficient f(;substitution...) ε^1\nend\nmyderivative(x^3 + x^2, :x)(In fact, diff is already built-in and has a more efficient implementation, but this example is for educational purposes.)This works, but what about the following?@ring! ℚ[ε]\nmyderivative(ε^3 + ε^2, :ε)This gives a wrong answer because of the naming clash inside myderivative. You may be tempted to work around this as follows:function myderivative2(f::R, varsymbol) where R <: Polynomial\n    varvalue = R(varsymbol)\n    ε = gensym()\n    _,(ε_val,) = polynomial_ring(ε)\n    substitution = Dict(varsymbol => varvalue + ε_val)\n    return coefficient(f(;substitution...), (1,), ε)\nend\nmyderivative2(ε^3 + ε^2, :ε)which gives the correct answer. Unfortunately, this is very inefficient:@time myderivative2(ε^3 + ε^2, :ε);\n@time myderivative2(ε^3 + ε^2, :ε);The reason is that variable names are part of the type definition, and Julia specializes functions based on the type of its arguments. In this case, that means that for evaluating the @coefficient call, and for the substitution call, all the code needs to be compiled every time you call myderivative.For this reason, we provide a function formal_coefficient(R) which yields a variable that's guaranteed not to clash with the ring that you pass as an argument:function myderivative3(f::R, varsymbol) where R <: Polynomial\n    varvalue = R(varsymbol)\n    ε_sym, ε_val = formal_coefficient(typeof(f))\n    substitution = Dict(varsymbol => varvalue + ε_val)\n    return coefficient(f(;substitution...), (1,), ε_sym)\nend\n@time myderivative3(ε^3 + ε^2, :ε);   # first time is still slow (compiling)\n@time myderivative3(ε^3 + ε^2, :ε);   # but much faster the second time\n@time myderivative3(ε^3 + ε^2, :ε);   # and the third"
+    "text": "(Be sure you understand Variables in your ring vs. variables in your script before reading this section.)We now get to an important implementation detail. Imagine that you want to write a function that computes a derivative in the following way:function myderivative(f::RR, varsymbol) where RR <: Polynomial\n    varvalue = RR(varsymbol)\n    @ring! Int[ε]\n    substitution = Dict(varsymbol => varvalue + ε)\n    return @coefficient f(;substitution...) ε^1\nend\nmyderivative(x^3 + x^2, :x)(In fact, diff is already built-in and has a more efficient implementation, but this example is for educational purposes.)This works, but what about the following?@ring! ℚ[ε]\nmyderivative(ε^3 + ε^2, :ε)This gives a wrong answer because of the naming clash inside myderivative. You may be tempted to work around this as follows:function myderivative2(f::RR, varsymbol) where RR <: Polynomial\n    varvalue = RR(varsymbol)\n    ε = gensym()\n    _,(ε_val,) = polynomial_ring(ε)\n    substitution = Dict(varsymbol => varvalue + ε_val)\n    return coefficient(f(;substitution...), (1,), ε)\nend\nmyderivative2(ε^3 + ε^2, :ε)which gives the correct answer. Unfortunately, this is very inefficient:@time myderivative2(ε^3 + ε^2, :ε);\n@time myderivative2(ε^3 + ε^2, :ε);The reason is that variable names are part of the type definition, and Julia specializes functions based on the type of its arguments. In this case, that means that for evaluating the @coefficient call, and for the substitution call, all the code needs to be compiled every time you call myderivative.For this reason, we provide a function formal_coefficient(R) which yields a variable that's guaranteed not to clash with the ring that you pass as an argument:function myderivative3(f::RR, varsymbol) where RR <: Polynomial\n    varvalue = RR(varsymbol)\n    ε_sym, ε_val = formal_coefficient(typeof(f))\n    substitution = Dict(varsymbol => varvalue + ε_val)\n    return coefficient(f(;substitution...), (1,), ε_sym)\nend\n@time myderivative3(ε^3 + ε^2, :ε);   # first time is still slow (compiling)\n@time myderivative3(ε^3 + ε^2, :ε);   # but much faster the second time\n@time myderivative3(ε^3 + ε^2, :ε);   # and the third"
 },
 
 {
@@ -125,7 +125,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Getting Started",
     "title": "Base rings and base restriction / extension",
     "category": "section",
-    "text": "Some operations need a field for a base ring. For example:R = @ring! ℤ[x]\nrem(2x^2, 3x + 1)gives an error because we have to substract x^2 + frac23x, which is not representable in R. We offer a convenience function base_extend to extend to ℚ:rem(base_extend(2x^2), 3x + 1)Note that it is sufficient to base-extend one of the arguments; the other is taken care of by Julia's type promotion system in the same way as1 - 1//2yields a rational result.If you want, you can also extend to bigger base rings than the quotient field by passing that as an extra parameter. For example:f = base_extend(x^2 + 1, Complex{Rational{Int}})\ndiv(f, [x - im])"
+    "text": "Some operations need a field for a base ring. For example:R = @ring! ℤ[x]\nrem(2x^2, 3x + 1)gives an error because we have to substract x^2 + frac23x, which is not representable in R. We offer a convenience function base_extend to extend to ℚ:rem(base_extend(2x^2), base_extend(3x + 1))If you want, you can also extend to bigger base rings than the quotient field by passing that as an extra parameter. For example:f = base_extend(x^2 + 1, Complex{Rational{Int}})\ndiv(f, [x - im])"
 },
 
 {
@@ -145,19 +145,83 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "reference.html#",
-    "page": "Reference Index",
-    "title": "Reference Index",
+    "location": "design-goals.html#",
+    "page": "Design Goals",
+    "title": "Design Goals",
     "category": "page",
     "text": ""
 },
 
 {
-    "location": "reference.html#Reference-Index-1",
-    "page": "Reference Index",
-    "title": "Reference Index",
+    "location": "design-goals.html#Design-goals-1",
+    "page": "Design Goals",
+    "title": "Design goals",
     "category": "section",
     "text": ""
+},
+
+{
+    "location": "design-goals.html#First-class-support-for-different-expansions-of-the-same-object-1",
+    "page": "Design Goals",
+    "title": "First-class support for different expansions of the same object",
+    "category": "section",
+    "text": "We hope to make it exceedingly easy to regard, for example, a matrix of polynomials as a polynomial with matrix coefficients. Or to regard a polynomial in five variables with coefficients in ℚ as a two-variable polynomial with coefficients in the ring of three-variable polynomials over ℚ.This makes the signature of some functions a bit different than usual. For example, a function call like    coefficient(x^3 + x^2*y + y, y)is ambiguous: should the result be 1 or x^2+1? Most other CAS base their decision on the parent object for the polynomial: these two results are what one gets if it is, respectively, ℚ[x,y] or ℚ[x][y].We make a different choice: the variables relative to which one wants to take the expansion, need to be passed explicitly:julia> coefficient(x^3 + x^2*y + y, (1,), :y)\nx^2 + 1\njulia> coefficient(x^3 + x^2*y + y, (0,1), :x, :y)\n1At first glance, this may seem more cumbersome than usual. However, in a situation where one switches perspective regularly, the alternative is much harder to work with. This is because it is not obvious from the name of a variable x which parent object it belongs to.Moreover, in practice, this choice does not sacrifice convenience at all, because the following macro is provided:julia> @coefficient(x^2 + x^2*y + y, y)\nx^2 + 1\njulia> @coefficient(x^2 + x^2*y + y, x^0 * y)\n1We (intend to) have similar 'relative' versions of functions such as expansion(), leading_term() and deg()."
+},
+
+{
+    "location": "design-goals.html#User-friendly-support-for-pools-of-indeterminate-variables-1",
+    "page": "Design Goals",
+    "title": "User-friendly support for pools of indeterminate variables",
+    "category": "section",
+    "text": "It should be easy to generate a vector such as \"two instances of the most general polynomial of degree two\":[c1*x^2 + c2*x + c3, c4*x^2 + c5*x + c6 ]We make this possible by supporting polynomial rings with an unbounded number of variables and a sparse representation of the exponents. For example:julia> R = @ring! ℤ[c[]][x]\nℤ[c[]][x]\njulia> sum(c[i] * x^i for i in 1:5)\nc[1] * x + c[2] * x^2 + c[3] * x^3 + c[4] * x^4 + c[5] * x^5"
+},
+
+{
+    "location": "design-goals.html#Speed-1",
+    "page": "Design Goals",
+    "title": "Speed",
+    "category": "section",
+    "text": "For elementary operations, we aim to get within the typical factor 2 for julia-vs-C when compared to Singular. At this point, this library has comparable performance to Singular on at least one simple benchmark:$ julia <<JULIA\nusing PolynomialRings; using Singular\nR = @ring! ℤ[d,e,f]\nS,g,h,i = Singular.SingularPolynomialRing(Singular.SingularZZ, [\"g\",\"h\",\"i\"])\n(d+e+f)^4; (g+h+i)^4 # compile all julia code\n@time (d+e+f)^200\n@time (g+h+i)^200\nprod(d+e+f for _=1:5); prod(g+h+i for _=1:5) # compile all julia code\n@time prod(d+e+f for _=1:200)\n@time prod(g+h+i for _=1:200)\nJULIA\n  0.151427 seconds (1.51 M allocations: 40.430 MiB, 20.68% gc time)\n  0.879622 seconds (13.50 M allocations: 319.072 MiB, 2.00% gc time)\n  1.584750 seconds (31.07 M allocations: 896.958 MiB, 29.18% gc time)\n  1.030947 seconds (14.87 M allocations: 373.402 MiB, 1.99% gc time)Note: the Singular code has some non-trivial Julia-overhead (as can be seen from the allocations), so this comparison isn't quite fair."
+},
+
+{
+    "location": "design-goals.html#Use-elementary-Julia-types-wherever-possible-1",
+    "page": "Design Goals",
+    "title": "Use elementary Julia types wherever possible",
+    "category": "section",
+    "text": "For example, for any function operating on free finitely generated modules, the module elements should just be represented by AbstractArray{<:Polynomial} or Dict{K,<:Polynomial}. Polynomial coefficients can be any Number, any Array (for expansions in a module), or any Matrix (for a polynomial ring with matrix coefficients)."
+},
+
+{
+    "location": "other-packages.html#",
+    "page": "Other packages",
+    "title": "Other packages",
+    "category": "page",
+    "text": ""
+},
+
+{
+    "location": "other-packages.html#Relation-to-other-packages-1",
+    "page": "Other packages",
+    "title": "Relation to other packages",
+    "category": "section",
+    "text": ""
+},
+
+{
+    "location": "other-packages.html#Relation-to-MultiVariatePolynomials.jl-1",
+    "page": "Other packages",
+    "title": "Relation to MultiVariatePolynomials.jl",
+    "category": "section",
+    "text": "Julia already has an excellent offering for multi-variate polynomials in the form of MultiVariatePolynomials.jl. What place does PolynomialRings take?The most important design difference is that in the latter, we choose to make variable names (for example x and y) part of the type specification, as opposed to part of the data structure.  We feel this is necessary for type stability. For example, the expression (x+y)*x has exponents of type Tuple{Int,Int}, whereas the expression (x+y)*z has exponents of type Tuple{Int,Int,Int}. This is true even though in both cases, the arguments to * have exponents of type Tuple{Int,Int} and Tuple{Int} respectively. This means that the return type can only be inferred if the variable names are part of the type.In doing so, this is a nice exercise for Julia's type system. In practice, this seems to add non-negligibly to compilation times, but not to run times."
+},
+
+{
+    "location": "other-packages.html#Relation-to-Singular.jl-1",
+    "page": "Other packages",
+    "title": "Relation to Singular.jl",
+    "category": "section",
+    "text": "Eventually, we hope to be an easy-to-deploy alternative to Singular.jl.A pure Julia library will likely never match the brute computing power that Singular brings to the table. However, a pure Julia implementation, thanks to parametrized types, may apply the same algorithm with more ease for different data types for exponents, base rings, etc, without needing a compilation step from the user.In addition, Julia's high-level constructs may allow the user to make certain  routine optimizations with more ease. As a speculative example, consider  the following. In Julia, an invocation such as@coefficient(f*g, x^10*y^10)could conceivably notice that the first argument is a product. It could then only compute the requested coefficient of the product, skipping the computation whose result will be discarded."
 },
 
 {
@@ -181,7 +245,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.EntryPoints.@ring!",
     "category": "Macro",
-    "text": "@ring! ℚ[x,y]\n\nDefine and return the specified polynomial ring, and bind the variable names to its generators.\n\nCurrently, the supported rings are: ℚ (Rational{BigInt}), ℤ (BigInt), ℝ (BigFloat) and ℂ (Complex{BigFloat}).\n\nNote: @ring! returns the ring and injects the variables. The macro @ring only returns the ring.\n\nIf you need different coefficient rings, or need to specify a non-default monomial order or exponent integer type, use polynomial_ring instead.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> @ring! ℚ[x,y];\n\njulia> x^3 + y\ny + x^3\n\nSee also\n\npolynomial_ring @polynomialring\n\n\n\n"
+    "text": "@ring! ℚ[x,y]\n\nDefine and return the specified polynomial ring, and bind the variable names to its generators.\n\nCurrently, the supported rings are: ℚ (Rational{BigInt}), ℤ (BigInt), ℝ (BigFloat) and ℂ (Complex{BigFloat}).\n\nNote: @ring! returns the ring and injects the variables. The macro @ring only returns the ring.\n\nIf you need different coefficient rings, or need to specify a non-default monomial order or exponent integer type, use polynomial_ring instead.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> @ring! ℚ[x,y];\n\njulia> x^3 + y\ny + x^3\n\nSee also\n\npolynomial_ring\n\n\n\n"
 },
 
 {
@@ -225,11 +289,35 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "functions.html#Base.rem",
+    "page": "Types and Functions",
+    "title": "Base.rem",
+    "category": "Function",
+    "text": "f_red = rem(f, G)\n\nReturn the multivariate reduction of a polynomial f by a vector of polynomials G. By definition, this means that no leading term of a polynomial in G divides any monomial in f, and f_red + factors * G == f for some factors.\n\nIf you need to obtain the vector of factors, use divrem instead.\n\nExamples\n\nIn one variable, this is just the normal Euclidean algorithm:\n\njulia> R,(x,y) = polynomial_ring(:x, :y, basering=Complex{Int});\njulia> rem(x^1 + 1, [x-im])\n0\njulia> rem(x^2 + y^2 + 1, [x, y])\n1\n\n\n\n"
+},
+
+{
+    "location": "functions.html#Base.divrem",
+    "page": "Types and Functions",
+    "title": "Base.divrem",
+    "category": "Function",
+    "text": "factors, f_red = divrem(f, G)\n\nReturn the multivariate reduction of a polynomial f by a vector of polynomials G, together with  row vector of factors. By definition, this means that no leading term of a polynomial in G divides any monomial in f, and f_red + factors * G == f.\n\nExamples\n\nIn one variable, this is just the normal Euclidean algorithm:\n\njulia> R,(x,y) = polynomial_ring(:x, :y, basering=Complex{Int});\njulia> divrem(x^1 + 1, [x-im])\n(0, [x+im]')\njulia> divrem(x^2 + y^2 + 1, [x, y])\n(1, [x,y]')\n\n\n\n"
+},
+
+{
+    "location": "functions.html#Base.LinAlg.diff",
+    "page": "Types and Functions",
+    "title": "Base.LinAlg.diff",
+    "category": "Function",
+    "text": "diff(polynomial, variable)\n\nReturn the derivative of polynomial w.r.t. variable.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> diff(x^3, :x)\n3*x^2\n\njulia> diff(x^3, :y)\n0\n\n\n\n"
+},
+
+{
     "location": "functions.html#Arithmetic-1",
     "page": "Types and Functions",
     "title": "Arithmetic",
     "category": "section",
-    "text": "gcd\nlcm\nmaybe_div\nrem\ndiv\ndivrem"
+    "text": "rem\ndivrem\nPolynomialRings.Expansions.diff"
 },
 
 {
@@ -289,6 +377,14 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "functions.html#PolynomialRings.Expansions.coefficients",
+    "page": "Types and Functions",
+    "title": "PolynomialRings.Expansions.coefficients",
+    "category": "Function",
+    "text": "coefficients(f, symbol, [symbol...])\n\nReturn the coefficients of f when expanded as a polynomial in the given variables.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> collect(coefficients(x^3 + y^2, :y))\n[x^3, 1]\n\njulia> collect(coefficients(x^3 + y^2, :x, :y))\n[1, 1]\n\nSee also\n\n@coefficients, @expansion, expansion, @coefficient and coefficient\n\n\n\n"
+},
+
+{
     "location": "functions.html#PolynomialRings.Expansions.@deg",
     "page": "Types and Functions",
     "title": "PolynomialRings.Expansions.@deg",
@@ -345,11 +441,19 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "functions.html#PolynomialRings.Arrays.flat_coefficients",
+    "page": "Types and Functions",
+    "title": "PolynomialRings.Arrays.flat_coefficients",
+    "category": "Function",
+    "text": "flat_coefficients(a, symbol, [symbol...])\n\nReturn the polynomial coefficients of the matrix coefficients of a, when those matrix coefficients are regarded as polynomials in the given variables.\n\nExamples\n\njulia> R = @ring! ℤ[x,y];\njulia> collect(flat_coefficients([x^3 + y^2; y^5], :y))\n[1 x^3, 1, 1]\njulia> collect(flat_coefficients([x^3 + y^2, y^5], :x, :y))\n[1, 1, 1]\n\nSee also\n\n@coefficients, @expansion, expansion, @coefficient and coefficient\n\n\n\n"
+},
+
+{
     "location": "functions.html#Expansions,-coefficients,-collecting-monomials-1",
     "page": "Types and Functions",
     "title": "Expansions, coefficients, collecting monomials",
     "category": "section",
-    "text": "@expansion\nexpansion\n@expand\n@coefficient\ncoefficient\n@deg\ndeg\n@linear_coefficients\nlinear_coefficients\n@constant_coefficient\nconstant_coefficient\n@flat_coefficients"
+    "text": "@expansion\nexpansion\n@expand\n@coefficient\ncoefficient\ncoefficients\n@deg\ndeg\n@linear_coefficients\nlinear_coefficients\n@constant_coefficient\nconstant_coefficient\n@flat_coefficients\nflat_coefficients"
 },
 
 {
@@ -430,6 +534,22 @@ var documenterSearchIndex = {"docs": [
     "title": "Internal types",
     "category": "section",
     "text": "PolynomialRings.Monomials.AbstractMonomial\nPolynomialRings.Monomials.TupleMonomial\nPolynomialRings.Monomials.VectorMonomial\nPolynomialRings.Terms.Term\nPolynomialRings.Polynomials.Polynomial"
+},
+
+{
+    "location": "reference.html#",
+    "page": "Reference Index",
+    "title": "Reference Index",
+    "category": "page",
+    "text": ""
+},
+
+{
+    "location": "reference.html#Reference-Index-1",
+    "page": "Reference Index",
+    "title": "Reference Index",
+    "category": "section",
+    "text": ""
 },
 
 ]}
