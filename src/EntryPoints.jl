@@ -237,7 +237,7 @@ y + x^3
 ```
 
 # See also
-`polynomial_ring` `@polynomialring`
+`polynomial_ring`
 
 """
 macro ring!(definition)
