@@ -147,7 +147,7 @@ one(Foo) = Foo()
         @test @ring(BaseRing[x]) === polynomial_ring(:x, basering=BaseRing)[1]
 
         a_sym, a_val = formal_coefficient(R)
-        @test R(a_sym) == a_val
+        @test typeof(a_val)(a_sym) == a_val
     end
 
     using PolynomialRings.Modules: modulebasering
