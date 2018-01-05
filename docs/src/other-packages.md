@@ -28,9 +28,14 @@ parametrized types, may apply the same algorithm with more ease for different
 data types for exponents, base rings, etc, without needing a compilation step
 from the user.
 
- In addition, Julia's high-level constructs may allow the user to make certain
- routine optimizations with more ease. As a speculative example, consider
- the following. In Julia, an invocation such as
+One can also compare this effort to the [pure Julia implementation of
+Libm](https://github.com/JuliaMath/Libm.jl), and note that their is just
+inherent value in having certain algorithms available in a language that
+combines high-level readability with low-level speed.
+
+In addition, Julia's high-level constructs may allow the user to make certain
+routine optimizations with more ease. As a speculative example, consider
+the following. In Julia, an invocation such as
 
 ```julia
 @coefficient(f*g, x^10*y^10)
