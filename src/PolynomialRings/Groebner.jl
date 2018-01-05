@@ -13,7 +13,7 @@ import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.Polynomials: Polynomial, monomialorder, terms
 import PolynomialRings.Terms: monomial
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering, leading_row
-import PolynomialRings.Operators: Lead, Full
+import PolynomialRings.Operators: Lead, Full, Tail
 
 function buchberger(o::MonomialOrder, polynomials::AbstractVector{M}, ::Val{with_transformation}) where M <: AbstractModuleElement where with_transformation
     P = base_extend(modulebasering(M))
@@ -71,7 +71,7 @@ function buchberger(o::MonomialOrder, polynomials::AbstractVector{M}, ::Val{with
     all_stable_indices() = find(!iszero, stable_ix_to_ix)
     all_other_stable_indices(stable_ix) = filter(i->i!=stable_ix, all_stable_indices())
 
-    function reduce_result_element(reducetype, stable_ix, other_stable_indices)
+    function reduce_result_element(reducetype, stable_ix, other_stable_indices, is_new)
         isremoved(stable_ix) && return :zero
         other_stable_indices = filter(!isremoved, other_stable_indices)
         unreduced = stable_result[stable_ix]
@@ -86,8 +86,25 @@ function buchberger(o::MonomialOrder, polynomials::AbstractVector{M}, ::Val{with
             return :zero
         # NOTE: we're using the fact that (div)rem(...) will return the _identical_
         # object in case no reduction takes place.
-        elseif reduced !== unreduced
+        elseif reduced === unreduced
+            return :unchanged
+        else
             # @assert reduced != unreduced
+            # if the leading term has changed but we didn't fully reduce to
+            # zero, we cannot guarantee the correctness of this algorithm if we've
+            # already computed S-pairs with this element. In that case, we
+            # discard the result of the full reduction and only do a tail
+            # reduction instead.
+            if !is_new && leading_term(o, reduced) != leading_term(o, unreduced)
+                if with_transformation
+                    q, reduced = divrem(Tail(), o, unreduced, @view stable_result[other_stable_indices])
+                else
+                    reduced    =    rem(Tail(), o, unreduced, @view stable_result[other_stable_indices])
+                end
+                if reduced === unreduced
+                    return :unchanged
+                end
+            end
             stable_result[stable_ix] = reduced
             if with_transformation
                 nonzero_ixs = find(q)
@@ -97,22 +114,20 @@ function buchberger(o::MonomialOrder, polynomials::AbstractVector{M}, ::Val{with
             end
             update_priorities(stable_ix)
             return :nonzero
-        else
-            return :unchanged
         end
     end
     full_reduce_result_element(stable_ix) = full_reduce_result_element(stable_ix, all_other_stable_indices(stable_ix))
-    function full_reduce_result_element(stable_ix, other_stable_indices_hint)
-        res = reduce_result_element(Lead(), stable_ix, other_stable_indices_hint)
+    function full_reduce_result_element(stable_ix, other_stable_indices_hint, is_new=true)
+        res = reduce_result_element(Lead(), stable_ix, other_stable_indices_hint, is_new)
         if res == :zero || res == :unchanged
             return res
         elseif res == :nonzero
-            res2 = reduce_result_element(Full(), stable_ix, all_other_stable_indices(stable_ix))
+            res2 = reduce_result_element(Full(), stable_ix, all_other_stable_indices(stable_ix), is_new)
             if res2 == :zero
                 return :zero
             else
                 for other_ix in all_other_stable_indices(stable_ix)
-                    full_reduce_result_element(other_ix, stable_ix:stable_ix)
+                    full_reduce_result_element(other_ix, stable_ix:stable_ix, false)
                 end
                 # the recursion above may have removed us by now
                 if isremoved(stable_ix)
