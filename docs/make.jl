@@ -8,6 +8,7 @@ makedocs(
     sitename = "PolynomialRings.jl",
     authors  = "Timo Kluck",
     pages    = [
+        # keep in sync with index.md
         "Home"                => "index.md",
         "Getting Started"     => "getting-started.md",
         "Design Goals"        => "design-goals.md",
