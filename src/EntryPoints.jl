@@ -379,7 +379,7 @@ macro polyvar(expr...)
     if(!all(ex isa Symbol || (ex.head == :ref && length(ex.args) == 1 && ex.args[1] isa Symbol) for ex in expr))
         throw(ArgumentError("The @polyvar macro can only be used with symbols. Example: @polyvar x y"))
     end
-    definition = :( Int[] )
+    definition = :( Int64[] )
     append!(definition.args, expr)
     quote
         @ring! $(esc(definition))
