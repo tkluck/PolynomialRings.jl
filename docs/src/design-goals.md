@@ -15,9 +15,9 @@ For example, a function call like
     coefficient(x^3 + x^2*y + y, y)
 ```
 
-is ambiguous: should the result be `1` or `x^2+1`? Most other CAS base
-their decision on the parent object for the polynomial: these two results
-are what one gets if it is, respectively, `ℚ[x,y]` or `ℚ[x][y]`.
+is ambiguous: should the result be `1` or `x^2+1`? Most other computer algebra
+systems base their decision on the parent object for the polynomial: these two
+results are what one gets if it is, respectively, `ℚ[x,y]` or `ℚ[x][y]`.
 
 We make a different choice: the variables relative to which one wants to
 take the expansion, need to be passed explicitly:
