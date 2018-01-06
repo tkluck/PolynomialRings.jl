@@ -50,11 +50,12 @@ gröbner_transformation
 syzygies
 ```
 
-### Internal types
+### Internal types and functions
 ```@docs
 PolynomialRings.Monomials.AbstractMonomial
 PolynomialRings.Monomials.TupleMonomial
 PolynomialRings.Monomials.VectorMonomial
+PolynomialRings.Monomials.enumeratenz
 PolynomialRings.Terms.Term
 PolynomialRings.Polynomials.Polynomial
 ```

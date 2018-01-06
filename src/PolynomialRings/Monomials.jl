@@ -140,6 +140,16 @@ total_degree(a::A) where A <: AbstractMonomial = (ix = nzindices(a); length(ix)=
 lcm(a::AbstractMonomial{Nm}, b::AbstractMonomial{Nm}) where Nm = _construct(promote_type(typeof(a), typeof(b)),i -> max(a[i], b[i]), index_union(a,b))
 gcd(a::AbstractMonomial{Nm}, b::AbstractMonomial{Nm}) where Nm = _construct(promote_type(typeof(a), typeof(b)),i -> min(a[i], b[i]), index_union(a,b))
 
+"""
+    enumeratenz(monomial)
+
+Enumerate (i.e. return an iterator) for `(variable index, exponent)` tuples for `monomial`,
+where `exponent` is a structural nonzero (hence `nz`).
+
+This means that, depending on implementation details, the variable indices with
+zero exponent *may* be skipped, but this is not guaranteed. In practice, this
+only happens if the storage format is sparse.
+"""
 enumeratenz(a::M) where M <: AbstractMonomial = EnumerateNZ(a)
 
 exptype(a::AbstractMonomial) = exptype(typeof(a))
