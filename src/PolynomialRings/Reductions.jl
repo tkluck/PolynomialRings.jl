@@ -70,7 +70,7 @@ In one variable, this is just the normal Euclidean algorithm:
 ```jldoctest
 julia> R,(x,y) = polynomial_ring(:x, :y, basering=Complex{Int});
 julia> divrem(x^1 + 1, [x-im])
-(0, [x+im]')
+(0, [x + im]')
 julia> divrem(x^2 + y^2 + 1, [x, y])
 (1, [x,y]')
 ```

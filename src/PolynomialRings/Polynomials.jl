@@ -124,7 +124,7 @@ julia> using PolynomialRings
 julia> R,(x,y,z) = polynomial_ring(:x, :y, :z);
 
 julia> x*y + z
-z + x*y
+x*y + -z
 ```
 """
 function polynomial_ring(symbols::Symbol...; basering::Type=Rational{BigInt}, exptype::Type=UInt16, monomialorder::Symbol=:degrevlex)

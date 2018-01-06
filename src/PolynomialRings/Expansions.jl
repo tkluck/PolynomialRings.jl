@@ -74,7 +74,7 @@ julia> using PolynomialRings
 julia> R = @ring! ℤ[x,y];
 
 julia> collect(expansion(x^3 + y^2, :y))
-[((0,), 1 x^3), ((2,), 1)]
+[((0,), x^3), ((2,), 1)]
 
 julia> collect(expansion(x^3 + y^2, :x, :y))
 [((3,0), 1), ((0,2), 1)]
@@ -355,7 +355,7 @@ julia> using PolynomialRings
 julia> R = @ring! ℤ[x,y];
 
 julia> constant_coefficient(x^3*y + x + y + 1, :x)
-1 + y
+y + -1
 
 julia> constant_coefficient(x^3*y + x + y + 1, :x, :y)
 1
@@ -391,7 +391,7 @@ julia> linear_coefficients(x^3*y + x + y + 1, :x)
 [1]
 
 julia> linear_coefficients(x^3*y + x + y + 1, :x, :y)
-[1,x^3+1]
+[1,x^3 + 1]
 ```
 # See also
 `@constant_coefficient`, `@coefficient`, and `@expansion`
@@ -540,7 +540,7 @@ julia> using PolynomialRings
 julia> R = @ring! ℤ[x,y];
 
 julia> @constant_coefficient(x^3*y + x + y + 1, x)
-1 + 1 y
+y + -1
 
 julia> @constant_coefficient(x^3*y + x + y + 1, x, y)
 1
@@ -574,7 +574,7 @@ julia> @linear_coefficients(x^3*y + x + y + 1, x)
 [1]
 
 julia> @linear_coefficients(x^3*y + x + y + 1, x, y)
-[1,x^3+1]
+[1,x^3 + 1]
 ```
 # See also
 `@constant_coefficient`, `@coefficient`, and `@expansion`
@@ -694,10 +694,10 @@ julia> using PolynomialRings
 
 julia> R = @ring! ℤ[x,y];
 
-julia> @deg x^2 + x*y - 1 x
+julia> @deg (x^2 + x*y - 1) x
 2
 
-julia> @deg x^2 + x*y - 1 y
+julia> @deg (x^2 + x*y - 1) y
 1
 ```
 # See also

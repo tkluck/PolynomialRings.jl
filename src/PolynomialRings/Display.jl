@@ -61,7 +61,7 @@ function show(io::IO, p::Polynomial)
     if length(terms(p)) == 0
         print(io, zero(basering(p)))
     end
-    print(io, join((repr(t) for t in terms(p)), " + "))
+    print(io, join((repr(t) for t in reverse(terms(p))), " + "))
 end
 
 # -----------------------------------------------------------------------------

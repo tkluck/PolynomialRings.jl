@@ -27,14 +27,14 @@ using PolynomialRings
     @testset "Polynomials" begin
         @test repr(a) == "a"
         @test repr(r[1]) == "r[1]"
-        @test repr(a+b) == "b + a"
+        @test repr(a+b) == "a + b"
         @test repr(-a) == "-a"
-        @test repr(b-a) == "b + -a"
+        @test repr(b-a) == "-a + b"
         @test repr(2a) == "2*a"
         @test repr(-2a) == "-2*a"
         @test repr(r[1]*a) == "r[1]*a"
-        @test repr(r[1]*a + a) == "(1 + r[1])*a"
-        @test repr(2r[1]*a + a) == "(1 + 2*r[1])*a"
+        @test repr(r[1]*a + a) == "(r[1] + 1)*a"
+        @test repr(2r[1]*a + a) == "(2*r[1] + 1)*a"
 
         @ring! R[e[]]
         e1,e2,e3 = e[]
