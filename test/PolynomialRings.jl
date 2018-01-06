@@ -10,7 +10,7 @@ one(Foo) = Foo()
     using PolynomialRings: basering
 
     R = @ring! ℚ[x,y]
-    S,(z,) = polynomial_ring(:z, basering=Int)
+    S,(z,) = polynomial_ring(:z, basering=Int64)
     @polyvar a b
 
     @testset "Arithmetic" begin
@@ -51,8 +51,8 @@ one(Foo) = Foo()
         @test 0.5*z == z/2
         @test 2(z+0.5) == 2*z + 1
         @test 2(z+1//2) == 2*z + 1
-        @test basering(z+1//2) == Rational{Int}
-        @test basering(z+0.5) == float(Int)
+        @test basering(z+1//2) == Rational{Int64}
+        @test basering(z+0.5) == float(Int64)
         @test (x+im*y)*(x-im*y) == x^2 + y^2
     end
 
@@ -140,10 +140,10 @@ one(Foo) = Foo()
         @test @polynomial(x^d + y^d) == x^d + y^d
 
         @test @ring(ℤ[x]) === polynomial_ring(:x, basering=BigInt)[1]
-        @test @ring(Int[x]) === polynomial_ring(:x, basering=Int)[1]
+        @test @ring(Int64[x]) === polynomial_ring(:x, basering=Int64)[1]
 
         # proper escaping of variables inside the macro
-        BaseRing = Int
+        BaseRing = Int64
         @test @ring(BaseRing[x]) === polynomial_ring(:x, basering=BaseRing)[1]
 
         a_sym, a_val = formal_coefficient(R)
@@ -170,7 +170,7 @@ end
 @testset "Expansions" begin
 
     using PolynomialRings: expansion, @expand, coefficient, @coefficient
-    R,(x,y,z) = polynomial_ring(:x, :y, :z, basering=Int)
+    R,(x,y,z) = polynomial_ring(:x, :y, :z, basering=Int64)
     @ring! ℚ[ε]
 
     @testset "expansion()" begin
@@ -245,10 +245,10 @@ end
         @test [0] == @linear_coefficients(ε^2, ε)
 
         @test [0,1] == @linear_coefficients(y + y^2, x, y)
-        @test eltype(@linear_coefficients(y + y^2, x, y, z)) == Int
-        @test eltype(@linear_coefficients(y + y^2, x, y)) == @ring(Int[z])
-        @test eltype(@linear_coefficients(y + y^2, x)) == @ring(Int[y,z])
-        @test eltype(@linear_coefficients(y + y^2, y)) == @ring(Int[x,z])
+        @test eltype(@linear_coefficients(y + y^2, x, y, z)) == Int64
+        @test eltype(@linear_coefficients(y + y^2, x, y)) == @ring(Int64[z])
+        @test eltype(@linear_coefficients(y + y^2, x)) == @ring(Int64[y,z])
+        @test eltype(@linear_coefficients(y + y^2, y)) == @ring(Int64[x,z])
     end
 
     @testset "Nested types" begin
