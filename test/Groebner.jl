@@ -40,6 +40,16 @@ end
         GG = gröbner_basis(G)
 
         @test gröbner_basis(R[]) == R[]
+
+        # sparse arrays will make use of an optimization
+        # for findnext in Util.jl
+        G = sparse.([[x^5-y,x^4],[x^3+y,y^3]])         # vectors
+        GG, tr= gröbner_transformation(G)
+        @test [a for a in tr]*G == GG
+
+        G = sparse.([[x^5-y x^4;y x],[x^3+y y^3;x y]]) # matrices
+        GG, tr= gröbner_transformation(G)
+        @test [a for a in tr]*G == GG
     end
 
     # This is usually double work, as the default backend is one of the others.
