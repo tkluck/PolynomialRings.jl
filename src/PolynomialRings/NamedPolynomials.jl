@@ -23,7 +23,7 @@ import Base: promote_rule, convert
 function unused_variable(P, a)
     E = exptype(P)
     N = max_variable_index(a)
-    P(_construct(monomialtype(P), i->i==(N+1)?one(E):zero(E), N+1:N+1))
+    P(_construct(monomialtype(P), i->i==(N+1) ? one(E) : zero(E), N+1:N+1))
 end
 unused_variable(p::Polynomial)                  = unused_variable(typeof(p), p)
 unused_variable(a::AbstractArray{<:Polynomial}) = unused_variable(eltype(a), a)
