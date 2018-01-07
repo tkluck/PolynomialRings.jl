@@ -29,18 +29,18 @@ using PolynomialRings
 
         @test S(α)^2 - 2 == 0
 
-        #Q = NumberField(S)
-        #@test Q(α)^2 - 2 == 0
+        Q = NumberField(S)
+        @test Q(α)^2 - 2 == 0
 
-        #@test Q(1+α) // Q(1+α) == 1
-        #@test Q(1+α)*Q(1-α) == -1
-        #@test -1 // Q(1+α) == Q(1-α)
+        @test Q(1+α) // Q(1+α) == 1
+        @test Q(1+α)*Q(1-α) == -1
+        @test -1 // Q(1+α) == Q(1-α)
 
-        #A = @ring! Q[x]
-        #@test (α*x)^2 == 2x^2
+        A = @ring! Q[x]
+        @test (α*x)^2 == 2x^2
 
-        ## duplicate variable name
-        #@test_throws ArgumentError @ring Q[α]
+        # duplicate variable name
+        @test_throws ArgumentError @ring Q[α]
 
         #@numberfield! Q[γ]/(γ^2 - α)
 
