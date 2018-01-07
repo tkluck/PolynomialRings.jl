@@ -15,6 +15,27 @@ import PolynomialRings.Terms: monomial
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering, leading_row
 import PolynomialRings.Operators: Lead, Full, Tail
 
+"""
+    gröbner_basis = buchberger(monomialorder, polynomials, Val{false}())
+    gröbner_basis, transformation = buchberger(monomialorder, polynomials, Val{true}())
+
+An implementation of the Buchberger algorithm with a few standard optimizations.
+This is based on the description in
+> Cox, David, John Little, and Donal O'shea. Ideals, varieties, and algorithms.
+> Vol. 3. New York: Springer, 1992.
+They describe a "Criterion" (capitalized) which seems to be known in the
+literature as Gebauer/Möller's optimization, which is how I've described it
+below.
+
+In addition to that, with every addition of a nonzero polynomial \$f\$ to the
+result set, we check for every other polynomial \$g\$ whether it now reduces to
+zero w.r.t. the new set. If so, we discard it; if not, we perform a tail
+reduction on \$g\$, hoping that this reduces its number of monomials, speeding up
+future reductions.
+
+We avoid reducing \$g\$'s lead monomial if \$g\$ doesn't reduce to zero, as I'm
+not convinced that maintains the correctness of the algorithm.
+"""
 function buchberger(o::MonomialOrder, polynomials::AbstractVector{M}, ::Val{with_transformation}) where M <: AbstractModuleElement where with_transformation
     P = base_extend(modulebasering(M))
 

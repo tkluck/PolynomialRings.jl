@@ -31,6 +31,7 @@ expansion
 @expand
 @coefficient
 coefficient
+@coefficients
 coefficients
 @deg
 deg
@@ -48,6 +49,8 @@ flat_coefficients
 gröbner_basis
 gröbner_transformation
 syzygies
+PolynomialRings.Gröbner.buchberger
+PolynomialRings.GröbnerGWV.gwv
 ```
 
 ### Internal types and functions

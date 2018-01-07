@@ -18,6 +18,7 @@ namestype(::Type{M}) returns Numbered; otherwise, it returns Named{Names}. This
 is also the value of Nm.
 
 Each concrete implementation should implement:
+
     m[i]
     nzindices(m)
     _construct(M, i -> exponent, nonzero_indices, [total_degree])

@@ -48,6 +48,13 @@ function regular_topreduce_rem(o, m, G)
     return (m[1],v1), supertopreducible ? :supertopreducible : :notsupertopreducible
 end
 
+"""
+    gröbner_basis = gwv(monomialorder, polynomials)
+
+An implementation of the GWV algorithm as popularized by
+> Gao, Shuhong, Frank Volny, and Mingsheng Wang. "A new algorithm for computing
+> Groebner bases." IACR Cryptology ePrint Archive 2010 (2010): 641.
+"""
 function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polynomial
     R = base_extend(P)
     Rm = RowVector{R, SparseVector{R,Int}}
