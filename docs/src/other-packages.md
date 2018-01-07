@@ -29,7 +29,7 @@ data types for exponents, base rings, etc, without needing a compilation step
 from the user.
 
 One can also compare this effort to the [pure Julia implementation of
-Libm](https://github.com/JuliaMath/Libm.jl), and note that their is just
+Libm](https://github.com/JuliaMath/Libm.jl), and note that there is just
 inherent value in having certain algorithms available in a language that
 combines high-level readability with low-level speed.
 
