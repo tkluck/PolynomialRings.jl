@@ -3,9 +3,10 @@
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://tkluck.github.io/PolynomialRings.jl/stable)
 [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://tkluck.github.io/PolynomialRings.jl/latest)
 
-[![Build Status](https://travis-ci.org/tkluck/PolynomialRings.jl.svg?branch=master)](https://travis-ci.org/tkluck/PolynomialRings.jl)
 
-[![Coverage Status](https://coveralls.io/repos/tkluck/PolynomialRings.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/tkluck/PolynomialRings.jl?branch=master)
+| **PackageEvaluator**           | **Build Status**                                                | **Test coverage**                                       |
+|:------------------------------:|:---------------------------------------------------------------:|:-------------------------------------------------------:|
+|[![][pkg-0.6-img]][pkg-0.6-url] | [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] | [![Coverage Status][coveralls-img]][coveralls-url]      |
 
 A library for arithmetic and algebra with multi-variable polynomials.
 
@@ -30,3 +31,15 @@ Want to know more? Have a look [at the getting started guide][1].
 ## Maturity
 
 Currently, this library should be considered alpha quality.
+
+[travis-img]: https://travis-ci.org/tkluck/PolynomialRings.jl.svg?branch=master
+[travis-url]: https://travis-ci.org/tkluck/PolynomialRings.jl
+
+[appveyor-img]: https://ci.appveyor.com/api/projects/status/4g6ax1ni7ijx3rn4?svg=true
+[appveyor-url]: https://ci.appveyor.com/project/tkluck/polynomialrings-jl
+
+[coveralls-img]: https://coveralls.io/repos/github/tkluck/PolynomialRings.jl/badge.svg?branch=master
+[coveralls-url]: https://coveralls.io/github/tkluck/PolynomialRings.jl?branch=master
+
+[pkg-0.6-img]: http://pkg.julialang.org/badges/PolynomialRings_0.6.svg
+[pkg-0.6-url]: http://pkg.julialang.org/?pkg=PolynomialRings
