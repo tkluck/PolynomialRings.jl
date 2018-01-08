@@ -16,6 +16,7 @@ makedocs(
         "Types and Functions" => "functions.md",
         "Reference Index"     => "reference.md",
     ],
+    html_canonical = "http://tkluck.github.io/PolynomialRings.jl/stable/",
 )
 deploydocs(
     repo   = "github.com/tkluck/PolynomialRings.jl.git",
