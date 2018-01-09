@@ -42,6 +42,7 @@ one(Foo) = Foo()
     @testset "Hashing" begin
         @test hash(2x) == hash(2x)
         @test length( Set([2x,2x,2x]) ) == 1
+        @test length( Set([2x,2x,3x]) ) == 2
     end
 
     @testset "Extension of scalars" begin
