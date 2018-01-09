@@ -5,10 +5,10 @@
 Refer to [the Julia website](https://julialang.org/downloads/) for details on
 installing Julia. As soon as you have, start it and run
 ```julia-repl
-julia> Pkg.clone("https://github.com/tkluck/PolynomialRings.jl.git")
+julia> Pkg.add("PolynomialRings")
 ```
 
-to install `PolynomialRings.jl` and its dependencies. To test whether it worked,
+to install `PolynomialRings` and its dependencies. To test whether it worked,
 type
 
 ```@repl getting-started
