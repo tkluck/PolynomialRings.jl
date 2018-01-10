@@ -3,7 +3,7 @@ using PolynomialRings
 
 struct Foo end
 import Base: one
-one(Foo) = Foo()
+one(::Type{Foo}) = Foo()
 
 @testset "PolynomialRings" begin
 
