@@ -501,7 +501,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.GröbnerGWV.gwv",
     "category": "Function",
-    "text": "gröbner_basis = gwv(monomialorder, polynomials)\n\nAn implementation of the GWV algorithm as popularized by\n\nGao, Shuhong, Frank Volny, and Mingsheng Wang. \"A new algorithm for computing Groebner bases.\" IACR Cryptology ePrint Archive 2010 (2010): 641.\n\n\n\n"
+    "text": "gröbner_basis = gwv(monomialorder, polynomials)\n\nAn implementation of the GWV algorithm as popularized by\n\nShuhong Gao, Frank Volny, and Mingsheng Wang. \"A new algorithm for computing Groebner bases.\" IACR Cryptology ePrint Archive 2010 (2010): 641.\n\n\n\n"
 },
 
 {
