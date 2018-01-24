@@ -52,7 +52,7 @@ end
     gröbner_basis = gwv(monomialorder, polynomials)
 
 An implementation of the GWV algorithm as popularized by
-> Gao, Shuhong, Frank Volny, and Mingsheng Wang. "A new algorithm for computing
+> Shuhong Gao, Frank Volny, and Mingsheng Wang. "A new algorithm for computing
 > Groebner bases." IACR Cryptology ePrint Archive 2010 (2010): 641.
 """
 function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polynomial
