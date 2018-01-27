@@ -4,6 +4,7 @@ module Gröbner
     abstract type Backend end
     struct Buchberger <: Backend end
     struct GWV <: Backend end
+    struct F5C <: Backend end
     _default = GWV()
     cur_default = _default
     set_default()  = (global cur_default; cur_default=_default)

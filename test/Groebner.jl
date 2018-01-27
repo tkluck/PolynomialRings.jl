@@ -56,7 +56,7 @@ end
     # But this allows the FGb module to include this file and run this testset
     # while it has just set itself as the default.
     tests()
-    for backend in [PolynomialRings.Backends.Gröbner.Buchberger(), PolynomialRings.GröbnerGWV.GWV()]
+    for backend in [PolynomialRings.Backends.Gröbner.Buchberger(), PolynomialRings.GröbnerGWV.GWV(), PolynomialRings.Backends.Gröbner.F5C()]
         PolynomialRings.Backends.Gröbner.set_default(backend)
         tests()
     end
