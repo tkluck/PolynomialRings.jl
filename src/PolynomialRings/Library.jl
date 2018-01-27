@@ -26,4 +26,6 @@ function cyclic_ideal(vars...)
   [p1; ps]
 end
 
+export katsura_ideal, cyclic_ideal
+
 end
