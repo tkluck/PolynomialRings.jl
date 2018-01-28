@@ -315,7 +315,7 @@ end
 
 function _construct(::Type{M}, f::Function, nonzero_indices, deg) where M <: VectorMonomial{V,I,Nm} where V <: SparseVector{I,J} where I <: Integer where J <: Integer where Nm
     indices = collect(J, nonzero_indices)
-    len = length(indices) > 0 ? last(indices) : 0
+    len = !isempty(indices) ? last(indices) : 0
     e = V(len, indices, map(i->I(f(i)), indices))
     return M(e, deg)
 end

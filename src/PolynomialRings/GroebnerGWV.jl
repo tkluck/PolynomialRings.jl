@@ -82,7 +82,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
     divisor_considerations = 0
     progress_logged = false
     # step 3
-    while length(JP) > 0
+    while !isempty(JP)
         loops += 1
         if loops % 100 == 0
             l = length(G)
