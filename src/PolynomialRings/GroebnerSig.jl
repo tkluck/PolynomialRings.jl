@@ -7,16 +7,18 @@ using Iterators: chain
 
 import PolynomialRings
 import PolynomialRings: gröbner_basis
-import PolynomialRings.Backends.Gröbner: Backend, F5C
+import PolynomialRings.Backends.Gröbner: Backend, F5C, Arri
 
 import PolynomialRings: leading_term, leading_monomial, lcm_multipliers, lcm_degree, fraction_field, basering, base_extend
-import PolynomialRings: maybe_div, termtype, monomialtype, leading_row, leading_coefficient
+import PolynomialRings: maybe_div, termtype, monomialtype, exptype, leading_row, leading_coefficient
 import PolynomialRings.MonomialOrderings: MonomialOrder, degreecompatible
 import PolynomialRings.Monomials: total_degree, any_divisor
 import PolynomialRings.Polynomials: Polynomial, monomialorder, monomialtype
 import PolynomialRings.Terms: monomial, coefficient
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering
-import PolynomialRings.Operators: Lead, Full
+import PolynomialRings.Operators: Lead, Full, leadrem
+
+reduction_rem(::Arri, o, m, G) = semi_complete_reduction_rem(o, m, G)
 
 function semi_complete_reduction_rem(o, m, G)
     σ,p = m
@@ -39,6 +41,35 @@ function semi_complete_reduction_rem(o, m, G)
     return (σ, p)
 end
 
+function s_poly_lm(o, p, q)
+    (m_p, m_q) = lcm_multipliers(leading_monomial(o,p), leading_monomial(o,q))
+    (c_p, c_q) = leading_coefficient.(o, (p,q))
+    S_pq = m_p * p - c_p//c_q * m_q * q
+    leading_monomial(o, S_pq)
+end
+
+function is_prunable(::Arri, o, x, G, P, S)
+    (σ, p, q) = x
+    # (AR) there exist (τ F i+1 , g) ∈ G and t ∈ M such that tτ = σ and lm (tg) <
+    # lm (S p,q ), or there exist (τ F i+1 , f, g) ∈ S ∪ P and t ∈ M such that tτ = σ
+    # and lm (tS f,g ) < lm (S p,q ).
+    any(G) do y
+        τ, g = y
+        t = maybe_div(σ, τ)
+        !isnull(t) && Base.Order.lt(o, t * leading_monomial(g), s_poly_lm(o, p, q))
+    end || any(values(P)) do SS
+        any(SS) do pair
+            (τ, f, g),_ = pair
+            t = maybe_div(σ, τ)
+            !isnull(t) && Base.Order.lt(o, t * s_poly_lm(o, f, g), s_poly_lm(o, p, q))
+        end
+    end || any(S) do pair
+        (τ, f, g),_ = pair
+        t = maybe_div(σ, τ)
+        !isnull(t) && Base.Order.lt(o, t * s_poly_lm(o, f, g), s_poly_lm(o, p, q))
+    end
+end
+
 is_sig_redundant(o, G, i::Integer) = is_sig_redundant(o, G[i], G[[1:i-1; i+1:end]])
 
 function is_sig_redundant(o, f, G)
@@ -49,8 +80,7 @@ function is_sig_redundant(o, f, G)
     lm_f = leading_monomial(o, f)
     return any(G) do g
         (τ, g) = g
-        iszero(g) && return false
-        return !isnull(maybe_div(σ, τ)) && !isnull(maybe_div(lm_f, leading_monomial(o,g)))
+        !iszero(g) && !isnull(maybe_div(σ, τ)) && !isnull(maybe_div(lm_f, leading_monomial(o,g)))
     end
 end
 
@@ -73,8 +103,9 @@ function gröbner_basis_sig_incremental(alg::Backend, o::MonomialOrder, polynomi
     @assert degreecompatible(o)
 
     R = base_extend(PP)
-    Rm = RowVector{R, SparseVector{R,Int}}
     M = monomialtype(PP)
+    Degree = exptype(PP)
+    Rm = RowVector{R, SparseVector{R,Int}}
     Signature = monomialtype(polynomials)
 
     signature(m) = m[1]
@@ -83,8 +114,8 @@ function gröbner_basis_sig_incremental(alg::Backend, o::MonomialOrder, polynomi
     # --------------------------------------------------------------------------
     G = Tuple{Signature, R}[]
     PQ = PriorityQueue{Tuple{Signature, R, R}, Signature}
-    P = DefaultDict{Int, PQ}(PQ(o))
-    Syz = [] # DefaultDict{Int, Set{monomialtype(R)}}(Set{monomialtype(R)})
+    P = DefaultDict{Degree, PQ}(PQ(o))
+    Syz = Set{Signature}()
 
     let n = length(polynomials)
         for (i,p) in enumerate(polynomials)
@@ -99,6 +130,10 @@ function gröbner_basis_sig_incremental(alg::Backend, o::MonomialOrder, polynomi
             enqueue!(P[total_degree(m_a)], (s, new_p, p), s)
         end
     end
+    for (i,p) in enumerate(polynomials)
+        i == 1 && continue
+        push!(Syz, Signature(i, leading_monomial(p)))
+    end
 
     loops = 0
     considered = 0
@@ -106,29 +141,55 @@ function gröbner_basis_sig_incremental(alg::Backend, o::MonomialOrder, polynomi
     divisor_considerations = 0
     progress_logged = false
 
-    while length(P) > 0
-        loops += 1
-        if loops % 100 == 0
-            l = length(G)
-            k = length(P)
-            h = length(Syz)
-            info("$alg: After $loops loops: $l elements in basis; $considered pairs considered; |P|=$k, |Syz|=$h")
-            progress_logged = true
-        end
+    while !isempty(P)
+        # prune P w.r.t. Syz
 
         current_degree = minimum(keys(P))
         S = P[current_degree]
         delete!(P, current_degree)
 
-        while length(S) > 0
+        while !isempty(S)
+            loops += 1
+            if loops % 100 == 0
+                l = length(G)
+                k = length(P)
+                h = length(Syz)
+                info("$alg: After $loops loops: $l elements in basis; $considered pairs considered; |P|=$k, |Syz|=$h")
+                progress_logged = true
+            end
+            # prune S w.r.t. Syz
+            #for x in keys(S)
+            #    if is_prunable(alg, o, x, G, P, S)
+            #        delete!(S, x)
+            #    end
+            #end
+
             (σ, p, q) = dequeue!(S)
 
-            (m_p, m_q) = lcm_multipliers(leading_monomial(o,p), leading_monomial(o,q))
-            (c_p, c_q) = leading_coefficient.((p,q))
-            S_pq = m_p * p - c_p//c_q * m_q * q
-            (σ, r) = semi_complete_reduction_rem(o, (σ, S_pq), G)
+            is_prunable(alg, o, (σ, p, q), G, P, S) && continue
 
-            if !iszero(r) && !is_sig_redundant(o, (σ, r), G)
+            considered += 1
+
+            (m_p, m_q) = lcm_multipliers(leading_monomial(o,p), leading_monomial(o,q))
+            (c_p, c_q) = leading_coefficient.(o,(p,q))
+            S_pq = m_p * p - c_p//c_q * m_q * q
+            (σ, r) = reduction_rem(alg, o, (σ, S_pq), G)
+
+            if iszero(r)
+                filter!(S) do k,v
+                    (τ, _, _) = k
+                    divisible = !isnull(maybe_div(τ, σ))
+                    !divisible
+                end
+                for SS in values(P)
+                    filter!(SS) do k,v
+                        (τ, _, _) = k
+                        divisible = !isnull(maybe_div(τ, σ))
+                        !divisible
+                    end
+                end
+                push!(Syz, σ)
+            elseif !is_sig_redundant(o, (σ, r), G)
                 for (i,(τ,g)) in enumerate(G)
                     iszero(g) && continue
                     τ.i == 1 || continue
@@ -140,10 +201,15 @@ function gröbner_basis_sig_incremental(alg::Backend, o::MonomialOrder, polynomi
                         else
                             (μ, p, q) = (m_g * τ, g, r)
                         end
-                        if total_degree(μ) == current_degree
-                            (μ,p,q) ∉ keys(S) && enqueue!(S, (μ, p, q), μ)
-                        else
-                            (μ,p,q) ∉ keys(P[total_degree(μ)]) && enqueue!(P[total_degree(μ)], (μ, p, q), μ)
+                        if !any(Syz) do τ
+                            divisible = !isnull(maybe_div(μ, τ))
+                            divisible
+                        end
+                            if total_degree(μ) == current_degree
+                                S[μ,p,q] = μ
+                            else
+                                P[total_degree(μ)][μ,p,q] = μ
+                            end
                         end
                     end
                 end
@@ -168,15 +234,16 @@ function gröbner_basis_sig_incremental(alg::Backend, o::MonomialOrder, polynomi
 end
 
 function interreduce!(o, H)
+    info("Interreducing $(length(H)) polynomials")
     for i in 1:length(H)
-        H[i] = rem(o, H[i], H[[1:i-1; i+1:end]])
+        info("$i/$(length(H))")
+        H[i] = leadrem(o, H[i], H[[1:i-1; i+1:end]])
     end
     filter!(!iszero, H)
+    info("After interreduction, $(length(H)) polynomials left")
 end
 
-function gröbner_basis(alg::F5C, o::MonomialOrder, G::AbstractArray{<:Polynomial}; kwds...)
-    length(G) == 0 && return copy(G)
-
+function gröbner_basis(alg::Arri, o::MonomialOrder, G::AbstractArray{<:Polynomial}; kwds...)
     # we go from last to first instead of from first to last, since in our convention,
     # the signature is the _first_ nonzero leading monomial in a vector, not the _last_.
     H = G[end:end]
