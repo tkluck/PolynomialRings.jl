@@ -291,8 +291,7 @@ a function that computes a derivative in the following way:
 function myderivative(f::RR, varsymbol) where RR <: Polynomial
     varvalue = RR(varsymbol)
     @ring! Int[ε]
-    substitution = Dict(varsymbol => varvalue + ε)
-    return @coefficient f(;substitution...) ε^1
+    return @coefficient f(; varsymbol => varvalue + ε) ε^1
 end
 myderivative(x^3 + x^2, :x)
 ```
@@ -313,8 +312,7 @@ function myderivative2(f::RR, varsymbol) where RR <: Polynomial
     varvalue = RR(varsymbol)
     ε = gensym()
     _,(ε_val,) = polynomial_ring(ε)
-    substitution = Dict(varsymbol => varvalue + ε_val)
-    return coefficient(f(;substitution...), (1,), ε)
+    return coefficient(f(;varsymbol => varvalue + ε_val), (1,), ε)
 end
 myderivative2(ε^3 + ε^2, :ε)
 ```
@@ -336,8 +334,7 @@ argument:
 function myderivative3(f::RR, varsymbol) where RR <: Polynomial
     varvalue = RR(varsymbol)
     ε_sym, ε_val = formal_coefficient(typeof(f))
-    substitution = Dict(varsymbol => varvalue + ε_val)
-    return coefficient(f(;substitution...), (1,), ε_sym)
+    return coefficient(f(;varsymbol => varvalue + ε_val), (1,), ε_sym)
 end
 @time myderivative3(ε^3 + ε^2, :ε);   # first time is still slow (compiling)
 @time myderivative3(ε^3 + ε^2, :ε);   # but much faster the second time
