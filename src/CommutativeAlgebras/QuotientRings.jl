@@ -2,9 +2,11 @@ module QuotientRings
 
 using Nulls
 
+using PolynomialRings
 using PolynomialRings.Polynomials: Polynomial, exptype, leading_term
 using PolynomialRings.Terms: Term, monomial, coefficient
 using PolynomialRings.Ideals: Ideal, _grb
+using PolynomialRings: construct_monomial, variablesymbols
 
 # -----------------------------------------------------------------------------
 #
@@ -133,6 +135,28 @@ function monomial_basis(::Type{Q}) where Q<:QuotientRing
     end
 
     return [tuple([i-1 for i in ind2sub(divisible,i)]...) for i in eachindex(divisible) if !divisible[i]]
+end
+
+function representation_matrix(::Type{Q}, x::Symbol) where Q<:QuotientRing
+    P = ring(Q)
+    xs = variablesymbols(P)
+
+    basis_exponents = monomial_basis(Q)
+    basis = map(e->Q(construct_monomial(P,e)), basis_exponents)
+
+    left_action = Q(P(x)) .* basis
+    columns = map(v->coefficient.(v.f,basis_exponents,xs...), left_action)
+    hcat(columns...)
+end
+
+function representation_matrix(::Type{Q}, f) where Q<:QuotientRing
+    P = ring(Q)
+    xs = variablesymbols(P)
+    matrices = representation_matrix.(Q,xs)
+    reduce(+, zero(matrices[1]),
+        coeff*prod(matrices.^exp)
+        for (exp,coeff) in expansion(f, xs...)
+    )
 end
 
 # -----------------------------------------------------------------------------
