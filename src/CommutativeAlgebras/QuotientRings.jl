@@ -125,7 +125,7 @@ function monomial_basis(::Type{Q}) where Q<:QuotientRing
     end
 
     if !all(b->b<MAX, rectangular_bounds)
-        throw("$Q is not a number field; it is infinite dimensional")
+        throw("$Q is infinite dimensional and does not have a finite monomial basis")
     end
 
     divisible = BitArray(rectangular_bounds...)
