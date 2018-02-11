@@ -42,6 +42,9 @@ using PolynomialRings
         # duplicate variable name
         @test_throws ArgumentError @ring Q[α]
 
+        # memoization
+        @test S === R/Ideal(α^2 - 2)
+
         #@numberfield! Q[γ]/(γ^2 - α)
 
         #@test γ^2 == α

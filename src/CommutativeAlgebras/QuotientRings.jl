@@ -30,11 +30,8 @@ end
 ring(::Type{Q}) where Q<:QuotientRing{P} where P = P
 
 function _ideal end
-_id_counter = 0
 function /(::Type{P}, I::Ideal{P}) where P<:Polynomial
-    global _id_counter
-    ID = (_id_counter+=1)
-
+    ID = hash(I)
     R = QuotientRing{P, ID}
     @eval _ideal(::Type{$R}) = $I
 

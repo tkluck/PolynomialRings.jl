@@ -29,9 +29,9 @@ import PolynomialRings.Util.LinAlgUtil: AbstractExactNumber
 #
 # -----------------------------------------------------------------------------
 
-struct NumberField{P<:Polynomial,C,ID} <: AbstractExactNumber
+struct NumberField{P<:Polynomial,C,Q} <: AbstractExactNumber
     coeffs::Vector{C}
-    NumberField{P,C,ID}(coeffs::Vector{C}) where {P,C,ID} = new(coeffs)
+    NumberField{P,C,Q}(coeffs::Vector{C}) where {P,C,Q} = new(coeffs)
 end
 ring(::Type{F}) where F<:NumberField{P} where P = P
 basering(::Type{F}) where F<:NumberField{P} where P = basering(P)
@@ -46,7 +46,6 @@ function _named_values end
 # The constructor and verification logic
 #
 # -----------------------------------------------------------------------------
-_id_counter = 0
 const PRIMITIVE_ELEMENT_TRIES = 10
 """
     S = NumberField(R)
@@ -71,9 +70,7 @@ function NumberField(::Type{Q}) where Q<:QuotientRing
     coeffs(f) = (ff = rem(f,_ideal(Q)); [coefficient(ff,m,variablesymbols(P)...) for m in monomials])
     N = length(monomials)
 
-    global _id_counter
-    ID = (_id_counter+=1)
-    F = NumberField{P, C, ID}
+    F = NumberField{P, C, Q}
 
     K = Vector{C}()
     # let's hope one of these is a primitive element
@@ -116,13 +113,13 @@ function NumberField(::Type{Q}) where Q<:QuotientRing
     return F
 end
 
-function convert(::Type{F}, c::C) where F<:NumberField{P, C, ID} where {P<:Polynomial, C, ID}
+function convert(::Type{F}, c::C) where F<:NumberField{P, C} where {P<:Polynomial, C}
     coeffs = zeros(C, _extension_degree(F))
     coeffs[1] = c
     F(coeffs)
 end
 
-convert(::Type{F}, f::P) where F<:NumberField{P, C, ID} where {P<:Polynomial, C, ID} =
+convert(::Type{F}, f::P) where F<:NumberField{P, C} where {P<:Polynomial, C} =
     f(;_named_values(F)...)
 
 # -----------------------------------------------------------------------------
