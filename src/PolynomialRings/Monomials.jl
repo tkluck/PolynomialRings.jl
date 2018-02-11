@@ -17,7 +17,7 @@ may choose to support having a symbolic name for each as well. In the former cas
 namestype(::Type{M}) returns Numbered; otherwise, it returns Named{Names}. This
 is also the value of Nm.
 
-Each concrete implementation should implement:
+Each concrete implementation `M` should implement for elements `m`:
 
     m[i]
     nzindices(m)
