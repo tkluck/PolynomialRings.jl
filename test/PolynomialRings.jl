@@ -67,6 +67,9 @@ one(::Type{Foo}) = Foo()
 
         @test div(x+y+z, [z]) == [1]'
         @test rem(x+y+z, [z]) == x+y
+
+        @test convert(@ring(ℚ[x]), x) == x
+        @test_throws InexactError convert(@ring(ℚ[y]), x)
     end
 
     @testset "substitution" begin

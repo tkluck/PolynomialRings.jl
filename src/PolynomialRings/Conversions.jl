@@ -1,8 +1,9 @@
 module Conversions
 
 import PolynomialRings.Polynomials: Polynomial, termtype, monomialtype, basering, terms
+import PolynomialRings.Polynomials: PolynomialOver
 import PolynomialRings.Terms: Term, monomial, coefficient
-import PolynomialRings.Monomials: AbstractMonomial
+import PolynomialRings.Monomials: AbstractMonomial, total_degree
 import PolynomialRings.Operators: RedType
 import PolynomialRings: fraction_field, integers, base_extend, base_restrict, namestype
 
@@ -161,6 +162,22 @@ convert(::Type{T}, a::M) where T <: Term{M,C} where {M<:AbstractMonomial,C} = T(
 promote_rule(::Type{P}, ::Type{M}) where P <: Polynomial{<:AbstractArray{T}} where T <: Term{M} where M<:AbstractMonomial = P
 
 convert(::Type{P}, a::M) where P <: Polynomial{<:AbstractArray{T}} where T <: Term{M} where M<:AbstractMonomial = P([convert(T, a)])
+
+# -----------------------------------------------------------------------------
+#
+# Converting constant polynomials to the basering
+#
+# -----------------------------------------------------------------------------
+function convert(::Type{C}, a::P) where P <: PolynomialOver{C} where C
+    if length(terms(a)) == 0
+        return zero(C)
+    elseif length(terms(a)) == 1 && total_degree(monomial(terms(a)[1])) == 0
+        return coefficient(terms(a)[1])
+    else
+        throw(InexactError())
+    end
+end
+
 
 # -----------------------------------------------------------------------------
 #
