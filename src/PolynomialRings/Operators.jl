@@ -370,10 +370,14 @@ function ^(f::Polynomial, n::Integer)
     s = 0
 
     while true
-        # C(multinomial(...)) may raise an InexactError when the coefficient is too big to fit;
-        # this is intentional. The suggested fix is for the user to do
-        #     base_extend(f, BigInt)^n
-        new_coeff = C(multinomial(bign, i...)) * prod(coefficient(f.terms[k])^I(i[k]) for k=1:N)
+        c = try
+            C(multinomial(bign, i...))
+        catch
+            # FIXME: what's the Julian way of doing a typeassert e::IneactError
+            # and bubble up all other exceptions?
+            throw(OverflowError("Coefficient overflow while doing exponentiation; suggested fix is replacing `f^n` by `base_extend(f, BigInt)^n`"))
+        end
+        new_coeff = c * prod(coefficient(f.terms[k])^I(i[k]) for k=1:N)
         new_monom = prod(monomial(f.terms[k])^E(i[k]) for k=1:N)
         summands[s+=1] = T(new_monom, new_coeff)
         carry = 1
