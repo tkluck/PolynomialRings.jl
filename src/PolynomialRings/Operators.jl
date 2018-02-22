@@ -36,7 +36,7 @@ iszero(a::P)        where P <: Polynomial = length(terms(a)) == 0
 #
 # -----------------------------------------------------------------------------
 function _collect_summands!(summands::AbstractVector{T}) where T <: Term
-    if length(summands) > 0
+    if !isempty(summands)
         last_exp = monomial(summands[1])
         n = 1
         for j in 2:length(summands)

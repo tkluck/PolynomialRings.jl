@@ -136,7 +136,7 @@ one(::M) where M <: AbstractMonomial = one(M)
 *(a::AbstractMonomial{Nm}, b::AbstractMonomial{Nm}) where Nm = _construct(promote_type(typeof(a), typeof(b)),i -> a[i] + b[i], index_union(a,b), total_degree(a) + total_degree(b))
 ^(a::M, n::Integer) where M <: AbstractMonomial = _construct(M,i -> a[i]*n, nzindices(a), total_degree(a)*n)
 
-total_degree(a::A) where A <: AbstractMonomial = (ix = nzindices(a); length(ix)==0 ? zero(exptype(a)) : sum( a[i] for i in nzindices(a) ) )
+total_degree(a::A) where A <: AbstractMonomial = mapreduce(i->a[i], +, zero(exptype(a)), nzindices(a))
 
 lcm(a::AbstractMonomial{Nm}, b::AbstractMonomial{Nm}) where Nm = _construct(promote_type(typeof(a), typeof(b)),i -> max(a[i], b[i]), index_union(a,b))
 gcd(a::AbstractMonomial{Nm}, b::AbstractMonomial{Nm}) where Nm = _construct(promote_type(typeof(a), typeof(b)),i -> min(a[i], b[i]), index_union(a,b))
@@ -200,7 +200,7 @@ function lcm_degree(a::AbstractMonomial{Nm}, b::AbstractMonomial{Nm}) where Nm
 end
 
 function any_divisor(f::Function, a::M) where M <: AbstractMonomial
-    if length(nzindices(a)) == 0
+    if isempty(nzindices(a))
         return f(a)
     end
 
