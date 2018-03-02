@@ -35,7 +35,7 @@ iszero(a::P)        where P <: Polynomial = length(terms(a)) == 0
 # utility for operators
 #
 # -----------------------------------------------------------------------------
-function _collect_summands!(summands::AbstractVector{T}) where T <: Term
+function _collect_summands!(summands::AbstractVector{T}) where T <: Term{M,C} where {M,C}
     if !isempty(summands)
         last_exp = monomial(summands[1])
         n = 1
@@ -46,6 +46,33 @@ function _collect_summands!(summands::AbstractVector{T}) where T <: Term
                 @inbounds summands[n] = T(exponent, cur_coef + coef)
             else
                 @inbounds summands[n+=1] = summands[j]
+                last_exp = exponent
+            end
+        end
+        resize!(summands, n)
+        filter!(!iszero, summands)
+    end
+end
+
+if VERSION < v"0.7-"
+    const mpz_t = Ref{BigInt}
+    add!(x::BigInt, a::BigInt, b::BigInt) = (ccall((:__gmpz_add, :libgmp), Void, (mpz_t, mpz_t, mpz_t), x, a, b); x)
+    add!(x::BigInt, b::BigInt) = add!(x, x, b)
+else
+    using Base.GMP.MPZ: add!
+end
+
+function _collect_summands!(summands::AbstractVector{T}) where T <: Term{M, BigInt} where M
+    if !isempty(summands)
+        last_exp = monomial(summands[1])
+        n = 1
+        @inbounds for j in 2:length(summands)
+            exponent, coef = monomial(summands[j]), coefficient(summands[j])
+            if exponent == last_exp
+                cur_coef = coefficient(summands[n])
+                add!(cur_coef, coef)
+            else
+                summands[n+=1] = T(exponent, copy(coef))
                 last_exp = exponent
             end
         end
