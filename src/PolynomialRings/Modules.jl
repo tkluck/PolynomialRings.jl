@@ -6,7 +6,7 @@ import PolynomialRings.Polynomials: Polynomial, monomialorder
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.Monomials: AbstractMonomial
 import PolynomialRings.Terms: Term
-import PolynomialRings.Operators: RedType
+import PolynomialRings.Operators: RedType, Lead, Full, Tail
 
 # -----------------------------------------------------------------------------
 #
