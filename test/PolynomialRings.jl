@@ -133,6 +133,8 @@ one(::Type{Foo}) = Foo()
         @polyvar γ[]
         @test γ[1:5] == collect( γ[1,2,3,4,5] ) == γ[[1,2,3,4,5]]
 
+        @test c[1] * c[2] == c[2] * c[1]
+
     end
 
     @testset "constructors" begin
