@@ -117,9 +117,9 @@ y^2</code></pre><p>However, if you compute a Gröbner basis first, you will:</p>
  y^2
 
 julia&gt; rem(y^2, G) # now, it reduces to zero.
-0//1</code></pre><p>If you want to obtain the expression of <span>$y^2$</span> in these elements, you can first use <code>div</code> to obtain the (row) vector of factors expressing <span>$y^2$</span> in G:</p><pre><code class="language-julia-repl">julia&gt; div(y^2, G)
+0</code></pre><p>If you want to obtain the expression of <span>$y^2$</span> in these elements, you can first use <code>div</code> to obtain the (row) vector of factors expressing <span>$y^2$</span> in G:</p><pre><code class="language-julia-repl">julia&gt; div(y^2, G)
 1×3 RowVector{ℚ[x,y],SparseVector{ℚ[x,y],Int64}}:
- 0//1  0//1  1//1</code></pre><p>The <a href="functions.html#PolynomialRings.gröbner_transformation"><code>gröbner_transformation</code></a> function gives a matrix <code>tr</code> expressing <code>G</code> in terms of <code>I</code>:</p><pre><code class="language-julia-repl">julia&gt; G, tr = gröbner_transformation(I); tr
+ 0  0  1//1</code></pre><p>The <a href="functions.html#PolynomialRings.gröbner_transformation"><code>gröbner_transformation</code></a> function gives a matrix <code>tr</code> expressing <code>G</code> in terms of <code>I</code>:</p><pre><code class="language-julia-repl">julia&gt; G, tr = gröbner_transformation(I); tr
 3×3 SparseMatrixCSC{ℚ[x,y],Int64} with 5 stored entries:
   [3, 1]  =  1//1
   [1, 2]  =  1//1
@@ -128,16 +128,9 @@ julia&gt; rem(y^2, G) # now, it reduces to zero.
   [3, 3]  =  -x
 
 julia&gt; div(y^2, G) * tr * I   # gives back y^2
-ERROR: MethodError: *(::RowVector{ℚ[x,y],SparseVector{ℚ[x,y],Int64}}, ::SparseMatrixCSC{ℚ[x,y],Int64}) is ambiguous. Candidates:
-  *(a::AbstractArray{#s40,2} where #s40&lt;:PolynomialRings.Polynomials.Polynomial, b::AbstractArray{#s39,2} where #s39&lt;:PolynomialRings.Polynomials.Polynomial) in PolynomialRings.Conversions at /home/travis/.julia/v0.6/PolynomialRings/src/PolynomialRings/Conversions.jl:298
-  *(rowvec::RowVector, mat::AbstractArray{T,2} where T) in Base.LinAlg at linalg/rowvector.jl:181
-Possible fix, define
-  *(::RowVector{T,V} where V&lt;:(AbstractArray{T,1} where T) where T&lt;:PolynomialRings.Polynomials.Polynomial, ::AbstractArray{#s39,2} where #s39&lt;:PolynomialRings.Polynomials.Polynomial)</code></pre><p>In other words, by looking at</p><pre><code class="language-julia-repl">julia&gt; div(y^2, G) * tr
-ERROR: MethodError: *(::RowVector{ℚ[x,y],SparseVector{ℚ[x,y],Int64}}, ::SparseMatrixCSC{ℚ[x,y],Int64}) is ambiguous. Candidates:
-  *(a::AbstractArray{#s40,2} where #s40&lt;:PolynomialRings.Polynomials.Polynomial, b::AbstractArray{#s39,2} where #s39&lt;:PolynomialRings.Polynomials.Polynomial) in PolynomialRings.Conversions at /home/travis/.julia/v0.6/PolynomialRings/src/PolynomialRings/Conversions.jl:298
-  *(rowvec::RowVector, mat::AbstractArray{T,2} where T) in Base.LinAlg at linalg/rowvector.jl:181
-Possible fix, define
-  *(::RowVector{T,V} where V&lt;:(AbstractArray{T,1} where T) where T&lt;:PolynomialRings.Polynomials.Polynomial, ::AbstractArray{#s39,2} where #s39&lt;:PolynomialRings.Polynomials.Polynomial)</code></pre><p>we see that <span>$y^2 = 1(x^5) + (y + xy - x^3)(x^2 + y) + -x(xy + y^2)$</span> which proves that <span>$y^2 \in (I)$</span>.</p><h3><a class="nav-anchor" id="Using-helper-variables-1" href="#Using-helper-variables-1">Using helper variables</a></h3><p>(Be sure you understand <a href="getting-started.html#Variables-in-your-ring-vs.-variables-in-your-script-1">Variables in your ring vs. variables in your script</a> before reading this section.)</p><p>We now get to an important implementation detail. Imagine that you want to write a function that computes a derivative in the following way:</p><pre><code class="language-julia-repl">julia&gt; function myderivative(f::RR, varsymbol) where RR &lt;: Polynomial
+y^2</code></pre><p>In other words, by looking at</p><pre><code class="language-julia-repl">julia&gt; div(y^2, G) * tr
+1×3 RowVector{ℚ[x,y],SparseVector{ℚ[x,y],Int64}}:
+ 1//1  -x^3 + x*y + y  -x</code></pre><p>we see that <span>$y^2 = 1(x^5) + (y + xy - x^3)(x^2 + y) + -x(xy + y^2)$</span> which proves that <span>$y^2 \in (I)$</span>.</p><h3><a class="nav-anchor" id="Using-helper-variables-1" href="#Using-helper-variables-1">Using helper variables</a></h3><p>(Be sure you understand <a href="getting-started.html#Variables-in-your-ring-vs.-variables-in-your-script-1">Variables in your ring vs. variables in your script</a> before reading this section.)</p><p>We now get to an important implementation detail. Imagine that you want to write a function that computes a derivative in the following way:</p><pre><code class="language-julia-repl">julia&gt; function myderivative(f::RR, varsymbol) where RR &lt;: Polynomial
            varvalue = RR(varsymbol)
            @ring! Int[ε]
            return @coefficient f(; varsymbol =&gt; varvalue + ε) ε^1
@@ -159,10 +152,10 @@ myderivative2 (generic function with 1 method)
 
 julia&gt; myderivative2(ε^3 + ε^2, :ε)
 3//1*ε^2 + 2//1*ε</code></pre><p>which gives the correct answer. Unfortunately, this is <em>very</em> inefficient:</p><pre><code class="language-julia-repl">julia&gt; @time myderivative2(ε^3 + ε^2, :ε);
-  2.189513 seconds (609.68 k allocations: 34.510 MiB, 1.52% gc time)
+  2.169752 seconds (609.68 k allocations: 34.407 MiB, 0.51% gc time)
 
 julia&gt; @time myderivative2(ε^3 + ε^2, :ε);
-  2.043393 seconds (609.60 k allocations: 34.266 MiB, 1.09% gc time)</code></pre><p>The reason is that variable names are part of the type definition, and Julia specializes functions based on the type of its arguments. In this case, that means that for evaluating the <code>@coefficient</code> call, and for the substitution call, all the code needs to be compiled <em>every time you call <code>myderivative</code></em>.</p><p>For this reason, we provide a function <code>formal_coefficient(R)</code> which yields a variable that&#39;s guaranteed not to clash with the ring that you pass as an argument:</p><pre><code class="language-julia-repl">julia&gt; function myderivative3(f::RR, varsymbol) where RR &lt;: Polynomial
+  2.176218 seconds (609.60 k allocations: 34.302 MiB, 0.50% gc time)</code></pre><p>The reason is that variable names are part of the type definition, and Julia specializes functions based on the type of its arguments. In this case, that means that for evaluating the <code>@coefficient</code> call, and for the substitution call, all the code needs to be compiled <em>every time you call <code>myderivative</code></em>.</p><p>For this reason, we provide a function <code>formal_coefficient(R)</code> which yields a variable that&#39;s guaranteed not to clash with the ring that you pass as an argument:</p><pre><code class="language-julia-repl">julia&gt; function myderivative3(f::RR, varsymbol) where RR &lt;: Polynomial
            varvalue = RR(varsymbol)
            ε_sym, ε_val = formal_coefficient(typeof(f))
            return coefficient(f(;varsymbol =&gt; varvalue + ε_val), (1,), ε_sym)
@@ -170,13 +163,13 @@ julia&gt; @time myderivative2(ε^3 + ε^2, :ε);
 myderivative3 (generic function with 1 method)
 
 julia&gt; @time myderivative3(ε^3 + ε^2, :ε);   # first time is still slow (compiling)
-  3.734478 seconds (1.30 M allocations: 75.127 MiB, 0.94% gc time)
+  3.729969 seconds (1.30 M allocations: 74.702 MiB, 1.37% gc time)
 
 julia&gt; @time myderivative3(ε^3 + ε^2, :ε);   # but much faster the second time
-  0.004891 seconds (6.73 k allocations: 287.234 KiB)
+  0.004573 seconds (6.73 k allocations: 287.297 KiB)
 
 julia&gt; @time myderivative3(ε^3 + ε^2, :ε);   # and the third
-  0.003624 seconds (6.73 k allocations: 287.234 KiB)</code></pre><h3><a class="nav-anchor" id="Free-modules-(arrays-of-polynomials)-1" href="#Free-modules-(arrays-of-polynomials)-1">Free modules (arrays of polynomials)</a></h3><p>For practical purposes, a <em>free module</em> (of finite rank) over a ring <span>$R$</span> is just an array of polynomials in <span>$R$</span>. Many algorithms that work for polynomial rings also work for modules. For example, the function <code>gröbner_basis</code> works just as well if we pass a vector of vectors of polynomials instead of a vector of polynomials:</p><pre><code class="language-julia-repl">julia&gt; G = [[x^5-y,x^4],[x^3+y,y^3]];
+  0.003671 seconds (6.73 k allocations: 287.297 KiB)</code></pre><h3><a class="nav-anchor" id="Free-modules-(arrays-of-polynomials)-1" href="#Free-modules-(arrays-of-polynomials)-1">Free modules (arrays of polynomials)</a></h3><p>For practical purposes, a <em>free module</em> (of finite rank) over a ring <span>$R$</span> is just an array of polynomials in <span>$R$</span>. Many algorithms that work for polynomial rings also work for modules. For example, the function <code>gröbner_basis</code> works just as well if we pass a vector of vectors of polynomials instead of a vector of polynomials:</p><pre><code class="language-julia-repl">julia&gt; G = [[x^5-y,x^4],[x^3+y,y^3]];
 
 julia&gt; GG = gröbner_basis(G)
 5-element Array{Array{ℚ[x,y],1},1}:
@@ -184,7 +177,7 @@ julia&gt; GG = gröbner_basis(G)
  ℚ[x,y][x^3 + y, y^3]
  ℚ[x,y][-x*y + y^2, -x^3*y^3 + x^5 + y^4]
  ℚ[x,y][y^3 + y, -x^4*y^3 + -x^3*y^4 + x^6 + x^5*y + x^2*y^3 + x*y^4 + y^5 + -x^4]
- ℚ[x,y][0//1, -x^5*y^3 + x^7 + x^4*y + y^4]</code></pre><p>One can then use the functions <code>rem</code> and <code>div</code> to express a given vector as an <span>$R$</span>-linear combination of the others.</p><p>For these purposes, the leading term of a vector is defined to be the tuple <span>$(i,t)$</span> where <span>$i$</span> is the first nonzero index, and <span>$t$</span> is the leading term of that nonzero element.</p><h3><a class="nav-anchor" id="Base-rings-and-base-restriction-/-extension-1" href="#Base-rings-and-base-restriction-/-extension-1">Base rings and base restriction / extension</a></h3><p>Some operations need a field for a base ring. For example:</p><pre><code class="language-julia-repl">julia&gt; R = @ring! ℤ[x]
+ ℚ[x,y][0, -x^5*y^3 + x^7 + x^4*y + y^4]</code></pre><p>One can then use the functions <code>rem</code> and <code>div</code> to express a given vector as an <span>$R$</span>-linear combination of the others.</p><p>For these purposes, the leading term of a vector is defined to be the tuple <span>$(i,t)$</span> where <span>$i$</span> is the first nonzero index, and <span>$t$</span> is the leading term of that nonzero element.</p><h3><a class="nav-anchor" id="Base-rings-and-base-restriction-/-extension-1" href="#Base-rings-and-base-restriction-/-extension-1">Base rings and base restriction / extension</a></h3><p>Some operations need a field for a base ring. For example:</p><pre><code class="language-julia-repl">julia&gt; R = @ring! ℤ[x]
 ℤ[x]
 
 julia&gt; rem(2x^2, 3x + 1)
