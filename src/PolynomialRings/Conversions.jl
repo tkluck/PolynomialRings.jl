@@ -293,10 +293,7 @@ divrem(a::Number, b::AbstractVector{<:Polynomial}) = divrem(promote_vector(a, b)
 # Base implementation
 #
 # -----------------------------------------------------------------------------
-
-function *(a::AbstractMatrix{<:Polynomial}, b::AbstractMatrix{<:Polynomial})
-    T = promote_type(eltype(a), eltype(b))
-    T.(invoke(*, Tuple{AbstractMatrix, AbstractMatrix}, a, b))
-end
+import Base: promote_op
+promote_op(f, ::Type{P}, ::Type{Q}) where P<:Polynomial where Q<:Polynomial = promote_type(P,Q)
 
 end
