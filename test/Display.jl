@@ -35,6 +35,7 @@ using PolynomialRings
         @test repr(r[1]*a) == "r[1]*a"
         @test repr(r[1]*a + a) == "(r[1] + 1)*a"
         @test repr(2r[1]*a + a) == "(2*r[1] + 1)*a"
+        @test repr(0*x) == "0"
 
         @ring! R[e[]]
         e1,e2,e3 = e[]
