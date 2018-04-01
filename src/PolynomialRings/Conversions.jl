@@ -286,4 +286,17 @@ div(a::Number, b::AbstractVector{<:Polynomial})    = div(promote_vector(a, b)...
 rem(a::Number, b::AbstractVector{<:Polynomial})    = rem(promote_vector(a, b)...)
 divrem(a::Number, b::AbstractVector{<:Polynomial}) = divrem(promote_vector(a, b)...)
 
+
+# -----------------------------------------------------------------------------
+#
+# Avoid Matrix{Any} results arising from the use of promote_op in the
+# Base implementation
+#
+# -----------------------------------------------------------------------------
+
+function *(a::AbstractMatrix{<:Polynomial}, b::AbstractMatrix{<:Polynomial})
+    T = promote_type(eltype(a), eltype(b))
+    T.(invoke(*, Tuple{AbstractMatrix, AbstractMatrix}, a, b))
+end
+
 end

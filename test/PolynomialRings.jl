@@ -72,6 +72,8 @@ one(::Type{Foo}) = Foo()
 
         @test convert(@ring(ℚ[x]), x) == x
         @test_throws InexactError convert(@ring(ℚ[y]), x)
+
+        @test eltype([x x; x x] * [z z; z z]) == typeof(x*z)
     end
 
     @testset "substitution" begin
