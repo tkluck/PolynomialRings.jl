@@ -17,8 +17,8 @@ necessarily equal to type(y), and the behaviour of this function may (will)
 change when I do.
 """
 function matrix_solve_affine(f, y, dims, Type=eltype(y))
-    z = zeros(Type, dims)
-    basis = map(eachindex(z)) do i
+    z = sparse(zeros(Type, dims))
+    basis = map(1:length(z)) do i
         b = copy(z)
         b[i] = one(Type)
         b
