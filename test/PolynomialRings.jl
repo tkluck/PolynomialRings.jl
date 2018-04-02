@@ -319,6 +319,9 @@ end
         @test [[0 0], [1 0]] == @linear_coefficients [x+y^2 x^2+1] y x
         @test [[0 0]] == @linear_coefficients [ε^2  ε^3] ε
 
+        @test [x 0; 0 x] == sparse([x 0; 0 x])
+        @test [x 0; 0 x] * sparse([x 0; 0 x]) == [x^2 0; 0 x^2]
+
         @test eltype(eltype(@linear_coefficients([x+y, -x-y], x, y))) == Rational{BigInt}
         @test eltype(eltype(@linear_coefficients([x+y, -x-y], x))) == @ring(ℚ[y])
         @test eltype(eltype(@linear_coefficients([x+y, -x-y], y))) == @ring(ℚ[x])

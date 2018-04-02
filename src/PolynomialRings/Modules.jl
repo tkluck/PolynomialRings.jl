@@ -106,4 +106,28 @@ div(f::A,g::AbstractVector{A})        where A<:AbstractArray{P} where P<:Polynom
 # row is just the first one.
 leading_row(x::Polynomial) = 1
 
+# Work around sparse-dense multiplication in Base only working for eltype() <: Number
+# The following code is copied from base/sparse/linalg.jl
+# (https://github.com/JuliaLang/julia/blob/93168a68268a2023c0da5f14e75ccb807cc4fc35/base/sparse/linalg.jl#L50)
+import Base: A_mul_B!
+function A_mul_B!(α::Polynomial, A::SparseMatrixCSC, B::StridedVecOrMat, β::Polynomial, C::StridedVecOrMat)
+    A.n == size(B, 1) || throw(DimensionMismatch())
+    A.m == size(C, 1) || throw(DimensionMismatch())
+    size(B, 2) == size(C, 2) || throw(DimensionMismatch())
+    nzv = A.nzval
+    rv = A.rowval
+    if β != 1
+        β != 0 ? scale!(C, β) : fill!(C, zero(eltype(C)))
+    end
+    for k = 1:size(C, 2)
+        for col = 1:A.n
+            αxj = α*B[col,k]
+            @inbounds for j = A.colptr[col]:(A.colptr[col + 1] - 1)
+                C[rv[j], k] += nzv[j]*αxj
+            end
+        end
+    end
+    C
+end
+
 end
