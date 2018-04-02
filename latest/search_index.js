@@ -489,6 +489,14 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "functions.html#PolynomialRings.Solve.matrix_solve_affine",
+    "page": "Types and Functions",
+    "title": "PolynomialRings.Solve.matrix_solve_affine",
+    "category": "function",
+    "text": "x = matrix_solve_affine(f, y, dims, Type=eltype(y))\n\nReturn the solution x to the equation\n\n``f(x) = y``\n\nwhere x is assumed to be a matrix of size dims, and f is assumed to be a linear map over Type.\n\nNote: I haven\'t really considered the proper semantics when type(x) is not necessarily equal to type(y), and the behaviour of this function may (will) change when I do.\n\n\n\n"
+},
+
+{
     "location": "functions.html#PolynomialRings.Gröbner.buchberger",
     "page": "Types and Functions",
     "title": "PolynomialRings.Gröbner.buchberger",
@@ -509,7 +517,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "Gröbner basis computations",
     "category": "section",
-    "text": "gröbner_basis\ngröbner_transformation\nsyzygies\nPolynomialRings.Gröbner.buchberger\nPolynomialRings.GröbnerGWV.gwv"
+    "text": "gröbner_basis\ngröbner_transformation\nsyzygies\nmatrix_solve_affine\nPolynomialRings.Gröbner.buchberger\nPolynomialRings.GröbnerGWV.gwv"
 },
 
 {
