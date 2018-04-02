@@ -49,6 +49,7 @@ flat_coefficients
 gröbner_basis
 gröbner_transformation
 syzygies
+matrix_solve_affine
 PolynomialRings.Gröbner.buchberger
 PolynomialRings.GröbnerGWV.gwv
 ```
