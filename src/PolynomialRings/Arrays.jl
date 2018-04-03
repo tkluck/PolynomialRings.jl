@@ -92,7 +92,7 @@ those matrix coefficients are regarded as polynomials in the given variables.
 ```jldoctest
 julia> R = @ring! ℤ[x,y];
 julia> collect(flat_coefficients([x^3 + y^2; y^5], :y))
-[1 x^3, 1, 1]
+[x^3, 1, 1]
 julia> collect(flat_coefficients([x^3 + y^2, y^5], :x, :y))
 [1, 1, 1]
 ```
@@ -113,7 +113,7 @@ those matrix coefficients are regarded as polynomials in the given variables.
 ```jldoctest
 julia> R = @ring! ℤ[x,y];
 julia> collect(flat_coefficients([x^3 + y^2; y^5], :y))
-[1 x^3, 1, 1]
+[x^3, 1, 1]
 julia> collect(flat_coefficients([x^3 + y^2, y^5], :x, :y))
 [1, 1, 1]
 ```
