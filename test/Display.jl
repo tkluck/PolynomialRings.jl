@@ -47,4 +47,3 @@ using PolynomialRings
     end
 
 end
-
