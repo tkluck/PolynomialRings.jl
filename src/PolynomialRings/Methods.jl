@@ -43,6 +43,9 @@ function leading_row end
 function maybe_div end
 function lcm_multipliers end
 function lcm_degree end
+function leaddiv end
+function leadrem end
+function leaddivrem end
 
 # -----------------------------------------------------------------------------
 #

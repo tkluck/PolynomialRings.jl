@@ -18,7 +18,8 @@ import Base.Order: lt
 import PolynomialRings: leading_row, leading_term, leading_monomial, leading_coefficient, base_extend
 import PolynomialRings: termtype, monomialtype
 import PolynomialRings: maybe_div, lcm_degree, lcm_multipliers
-import PolynomialRings.Operators: leaddiv, leadrem, leaddivrem
+import PolynomialRings: leaddiv, leadrem, leaddivrem
+import PolynomialRings.Operators: one_step_div, one_step_rem, one_step_divrem
 import PolynomialRings.Terms: coefficient, monomial
 import PolynomialRings.Monomials: total_degree
 
@@ -76,7 +77,7 @@ leading_monomial(o::MonomialOrder, x::AbstractArray{P}) where P<:Polynomial = Si
 leading_coefficient(x::AbstractArray{P}) where P<:Polynomial = leading_coefficient(monomialorder(P), x)
 leading_coefficient(o::MonomialOrder, x::AbstractArray{P}) where P<:Polynomial = leading_coefficient(o, x[leading_row(x)])
 
-function divrem(redtype::RedType, o::MonomialOrder, a::A, b::A) where A<:AbstractArray{<:Polynomial}
+function one_step_divrem(redtype::RedType, o::MonomialOrder, a::A, b::A) where A<:AbstractArray{<:Polynomial}
     i = findfirst(b)
     if i>0
         (q,r) = divrem(redtype, o, a[i], b[i])
@@ -91,8 +92,8 @@ function divrem(redtype::RedType, o::MonomialOrder, a::A, b::A) where A<:Abstrac
     end
 end
 
-div(redtype::RedType, o::MonomialOrder, a::A, b::A) where A<:AbstractArray{<:Polynomial} = divrem(redtype, o, a, b)[1]
-rem(redtype::RedType, o::MonomialOrder, a::A, b::A) where A<:AbstractArray{<:Polynomial} = divrem(redtype, o, a, b)[2]
+one_step_div(redtype::RedType, o::MonomialOrder, a::A, b::A) where A<:AbstractArray{<:Polynomial} = one_step_divrem(redtype, o, a, b)[1]
+one_step_rem(redtype::RedType, o::MonomialOrder, a::A, b::A) where A<:AbstractArray{<:Polynomial} = one_step_divrem(redtype, o, a, b)[2]
 
 leaddivrem(f::A,g::AbstractVector{A}) where A<:AbstractArray{P} where P<:Polynomial = divrem(Lead(), monomialorder(P), f, g)
 divrem(f::A,g::AbstractVector{A})     where A<:AbstractArray{P} where P<:Polynomial = divrem(Full(), monomialorder(P), f, g)

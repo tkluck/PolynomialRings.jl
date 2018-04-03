@@ -3,10 +3,12 @@ module Reductions
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.Polynomials: Polynomial, monomialorder
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering
+import PolynomialRings.Polynomials: PolynomialBy
 
 # imports for overloading
 import Base: div, rem, divrem
-import PolynomialRings.Operators: RedType, Lead, Full, Tail, leaddiv, leadrem, leaddivrem
+import PolynomialRings.Operators: RedType, Lead, Full, Tail
+import PolynomialRings.Operators: one_step_div, one_step_rem, one_step_divrem
 
 """
     f_red = rem(f, G)
@@ -34,7 +36,7 @@ function rem(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) whe
     elseif typeof(redtype) <: Lead || typeof(redtype) <: Tail
         f_red = f
     else
-    @assert false "unreachable: didn't expect $redtype"
+        @assert false "unreachable: didn't expect $redtype"
     end
     i = 1
     while i<=length(G)
@@ -43,7 +45,7 @@ function rem(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) whe
             i += 1
             continue
         end
-        reduced = rem(redtype, o, f_red, g)
+        reduced = one_step_rem(redtype, o, f_red, g)
         if reduced !== f_red
             i = 1
         else
@@ -91,7 +93,7 @@ function divrem(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) 
             i += 1
             continue
         end
-        q, f_red = divrem(redtype, o, f_red, g)
+        q, f_red = one_step_divrem(redtype, o, f_red, g)
         if !iszero(q)
             factors[1, i] += q
             i = 1
@@ -108,6 +110,26 @@ end
 function div(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
     divrem(redtype, o, f, G)[1]
 end
+
+_unpack(a) = a[1]
+_unpack(a::Tuple) = a[1][1], a[2]
+leaddivrem(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order} = divrem(Lead(), MonomialOrder{Order}(), f, [g]) |> _unpack
+divrem(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order})     where {Names, Order} = divrem(Full(), MonomialOrder{Order}(), f, [g]) |> _unpack
+leadrem(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order})    where {Names, Order} = rem(Lead(), MonomialOrder{Order}(), f, [g])
+rem(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order})        where {Names, Order} = rem(Full(), MonomialOrder{Order}(), f, [g])
+leaddiv(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order})    where {Names, Order} = div(Lead(), MonomialOrder{Order}(), f, [g]) |> _unpack
+div(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order})        where {Names, Order} = div(Full(), MonomialOrder{Order}(), f, [g]) |> _unpack
+
+divrem(redtype::RedType, o::MonomialOrder, f::P, g::P) where P<:Polynomial = divrem(redtype, o, f, [g]) |> _unpack
+rem(redtype::RedType, o::MonomialOrder, f::P, g::P)    where P<:Polynomial = rem(redtype, o, f, [g])
+div(redtype::RedType, o::MonomialOrder, f::P, g::P)    where P<:Polynomial = div(redtype, o, f, [g]) |> _unpack
+
+leaddivrem(o::MonomialOrder, f, g) = divrem(Lead(), o, f, g)
+divrem(o::MonomialOrder, f, g) = divrem(Full(), o, f, g)
+leadrem(o::MonomialOrder, f, g) = rem(Lead(), o, f, g)
+rem(o::MonomialOrder, f, g) = rem(Full(), o, f, g)
+leaddiv(o::MonomialOrder, f, g) = div(Lead(), o, f, g)
+div(o::MonomialOrder, f, g) = div(Full(), o, f, g)
 
 leaddivrem(f::M,g::AbstractVector{M}) where M<:Polynomial = divrem(Lead(), monomialorder(M), f, g)
 divrem(f::M,g::AbstractVector{M})     where M<:Polynomial = divrem(Full(), monomialorder(M), f, g)

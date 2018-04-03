@@ -16,7 +16,8 @@ import PolynomialRings.Monomials: total_degree, any_divisor
 import PolynomialRings.Polynomials: Polynomial, monomialorder, monomialtype
 import PolynomialRings.Terms: monomial, coefficient
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering
-import PolynomialRings.Operators: Lead, Full, leadrem
+import PolynomialRings.Operators: Lead, Full
+import PolynomialRings: leadrem
 
 reduction_rem(::Arri, o, m, G) = semi_complete_reduction_rem(o, m, G)
 

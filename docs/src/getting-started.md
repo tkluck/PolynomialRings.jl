@@ -85,26 +85,21 @@ The usual ring operations `+`,`-`,`*`,`^` work as you'd expect:
 ```
 
 We also support reduction operations between polynomials; for that, you can use
-the standard julia functions `div`, `rem` and `divrem`. For doing a single
-reduction step, use `divrem(f, g)`. If you want to do a full reduction until no
-further reductions are possible, use `divrem(f, [g])`. Using the latter semantics,
-you can also reduce until no reductions are possible with a set of polynomials,
-e.g. `divrem(f, [g1,g2])`.
+the standard julia functions `div`, `rem` and `divrem`. For example, `divrem(f,
+g)`.  You can also reduce with respect to a set of polynomials, e.g. `divrem(f,
+[g1,g2])`.
 
 For example, in the one-variable case, this is just the Euclidean algorithm:
-
-```@repl getting-started
-rem(x^2 - 1, [x - 1])
-```
-
-Don't forget to pass the second parameter as an array if you want to do as many
-reduction operations as possible! For example,
 
 ```@repl getting-started
 rem(x^2 - 1, x - 1)
 ```
 
-only did the first reduction step `x^2 - 1 - x*(x-1)`.
+If you prefer, you can also use the symbols `÷` for `div` and `%` for `rem`:
+
+```@repl getting-started
+(x^2 - 1)÷(x - 1)
+```
 
 ### Variables in your ring vs. variables in your script
 

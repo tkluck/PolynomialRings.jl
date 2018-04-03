@@ -12,7 +12,7 @@ import PolynomialRings.Polynomials: PolynomialBy
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: zero, one, +, -, *, ==, div, rem, divrem, iszero, diff, ^, gcd
+import Base: zero, one, +, -, *, ==, div, iszero, diff, ^, gcd
 import PolynomialRings: maybe_div
 
 # -----------------------------------------------------------------------------
@@ -235,21 +235,8 @@ abstract type RedType end
 struct Lead <: RedType end
 struct Full <: RedType end
 struct Tail <: RedType end
-leaddivrem(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order} = divrem(Lead(), MonomialOrder{Order}(), f, g)
-divrem(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order})     where {Names, Order} = divrem(Full(), MonomialOrder{Order}(), f, g)
-leadrem(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order})    where {Names, Order} = rem(Lead(), MonomialOrder{Order}(), f, g)
-rem(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order})        where {Names, Order} = rem(Full(), MonomialOrder{Order}(), f, g)
-leaddiv(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order})    where {Names, Order} = div(Lead(), MonomialOrder{Order}(), f, g)
-div(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order})        where {Names, Order} = div(Full(), MonomialOrder{Order}(), f, g)
 
-leaddivrem(o::MonomialOrder, f, g) = divrem(Lead(), o, f, g)
-divrem(o::MonomialOrder, f, g) = divrem(Full(), o, f, g)
-leadrem(o::MonomialOrder, f, g) = rem(Lead(), o, f, g)
-rem(o::MonomialOrder, f, g) = rem(Full(), o, f, g)
-leaddiv(o::MonomialOrder, f, g) = div(Lead(), o, f, g)
-div(o::MonomialOrder, f, g) = div(Full(), o, f, g)
-
-function divrem(::Full, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
+function one_step_divrem(::Full, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
     if iszero(f)
         return zero(g), f
     end
@@ -266,7 +253,7 @@ function divrem(::Full, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::Polyn
     return zero(g), f
 end
 
-function divrem(::Lead, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
+function one_step_divrem(::Lead, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
     if iszero(f)
         return zero(g), f
     end
@@ -282,7 +269,7 @@ function divrem(::Lead, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::Polyn
     return zero(g), f
 end
 
-function divrem(::Tail, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
+function one_step_divrem(::Tail, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
     if iszero(f)
         return zero(g), f
     end
@@ -301,7 +288,7 @@ function divrem(::Tail, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::Polyn
 end
 
 
-function rem(::Full, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
+function one_step_rem(::Full, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
     if iszero(f)
         return f
     end
@@ -318,7 +305,7 @@ function rem(::Full, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::Polynomi
     return f
 end
 
-function rem(::Lead, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
+function one_step_rem(::Lead, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
     if iszero(f)
         return f
     end
@@ -334,7 +321,7 @@ function rem(::Lead, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::Polynomi
     return f
 end
 
-function rem(::Tail, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
+function one_step_rem(::Tail, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
     if iszero(f)
         return f
     end
@@ -352,8 +339,8 @@ function rem(::Tail, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::Polynomi
     return f
 end
 
-function div(redtype::RedType, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
-    divrem(redtype, o, f, g)[1]
+function one_step_div(redtype::RedType, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
+    one_step_divrem(redtype, o, f, g)[1]
 end
 
 # -----------------------------------------------------------------------------
