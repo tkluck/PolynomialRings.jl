@@ -27,7 +27,8 @@ function matrix_solve_affine(f, y, dims, Type=eltype(y))
     gr, tr = gröbner_transformation(image)
     factors, r = divrem(y, gr)
     !iszero(r) && return nothing
-    return sum(prod, zip(factors * tr, basis))
+    sparse_result = sum(prod, zip(factors * tr, basis))
+    return collect(sparse_result)
 end
 
 
