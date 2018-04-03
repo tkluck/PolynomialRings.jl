@@ -69,7 +69,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Getting Started",
     "title": "Arithmetic",
     "category": "section",
-    "text": "The usual ring operations +,-,*,^ work as you\'d expect:@ring! ℤ[x,y]\n(x + y) * (x - y) == x^2 - y^2We also support reduction operations between polynomials; for that, you can use the standard julia functions div, rem and divrem. For doing a single reduction step, use divrem(f, g). If you want to do a full reduction until no further reductions are possible, use divrem(f, [g]). Using the latter semantics, you can also reduce until no reductions are possible with a set of polynomials, e.g. divrem(f, [g1,g2]).For example, in the one-variable case, this is just the Euclidean algorithm:rem(x^2 - 1, [x - 1])Don\'t forget to pass the second parameter as an array if you want to do as many reduction operations as possible! For example,rem(x^2 - 1, x - 1)only did the first reduction step x^2 - 1 - x*(x-1)."
+    "text": "The usual ring operations +,-,*,^ work as you\'d expect:@ring! ℤ[x,y]\n(x + y) * (x - y) == x^2 - y^2We also support reduction operations between polynomials; for that, you can use the standard julia functions div, rem and divrem. For example, divrem(f, g).  You can also reduce with respect to a set of polynomials, e.g. divrem(f, [g1,g2]).For example, in the one-variable case, this is just the Euclidean algorithm:rem(x^2 - 1, x - 1)If you prefer, you can also use the symbols ÷ for div and % for rem:(x^2 - 1)÷(x - 1)"
 },
 
 {
@@ -445,7 +445,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Arrays.@flat_coefficients",
     "category": "macro",
-    "text": "@flat_coefficients(a, var, [var...])\n\nReturn the polynomial coefficients of the matrix coefficients of a, when those matrix coefficients are regarded as polynomials in the given variables.\n\nExamples\n\njulia> R = @ring! ℤ[x,y];\njulia> collect(flat_coefficients([x^3 + y^2; y^5], :y))\n[1 x^3, 1, 1]\njulia> collect(flat_coefficients([x^3 + y^2, y^5], :x, :y))\n[1, 1, 1]\n\nSee also\n\nflat_coefficients, @expansion, expansion, @coefficient and coefficient\n\n\n\n"
+    "text": "@flat_coefficients(a, var, [var...])\n\nReturn the polynomial coefficients of the matrix coefficients of a, when those matrix coefficients are regarded as polynomials in the given variables.\n\nExamples\n\njulia> R = @ring! ℤ[x,y];\njulia> collect(flat_coefficients([x^3 + y^2; y^5], :y))\n[x^3, 1, 1]\njulia> collect(flat_coefficients([x^3 + y^2, y^5], :x, :y))\n[1, 1, 1]\n\nSee also\n\nflat_coefficients, @expansion, expansion, @coefficient and coefficient\n\n\n\n"
 },
 
 {
@@ -453,7 +453,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Arrays.flat_coefficients",
     "category": "function",
-    "text": "flat_coefficients(a, symbol, [symbol...])\n\nReturn the polynomial coefficients of the matrix coefficients of a, when those matrix coefficients are regarded as polynomials in the given variables.\n\nExamples\n\njulia> R = @ring! ℤ[x,y];\njulia> collect(flat_coefficients([x^3 + y^2; y^5], :y))\n[1 x^3, 1, 1]\njulia> collect(flat_coefficients([x^3 + y^2, y^5], :x, :y))\n[1, 1, 1]\n\nSee also\n\n@coefficients, @expansion, expansion, @coefficient and coefficient\n\n\n\n"
+    "text": "flat_coefficients(a, symbol, [symbol...])\n\nReturn the polynomial coefficients of the matrix coefficients of a, when those matrix coefficients are regarded as polynomials in the given variables.\n\nExamples\n\njulia> R = @ring! ℤ[x,y];\njulia> collect(flat_coefficients([x^3 + y^2; y^5], :y))\n[x^3, 1, 1]\njulia> collect(flat_coefficients([x^3 + y^2, y^5], :x, :y))\n[1, 1, 1]\n\nSee also\n\n@coefficients, @expansion, expansion, @coefficient and coefficient\n\n\n\n"
 },
 
 {
