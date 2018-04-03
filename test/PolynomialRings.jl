@@ -325,6 +325,9 @@ end
         @test eltype(eltype(@linear_coefficients([x+y, -x-y], x, y))) == Rational{BigInt}
         @test eltype(eltype(@linear_coefficients([x+y, -x-y], x))) == @ring(ℚ[y])
         @test eltype(eltype(@linear_coefficients([x+y, -x-y], y))) == @ring(ℚ[x])
+
+        @test common_denominator([(3//5)z^5, 6z + 3//2]) == 10
+        @test integral_fraction([(3//5)z^5, 6z + 3//2]) == ([6z^5, 60z + 15], 10)
     end
 
 end

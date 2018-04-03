@@ -7,6 +7,7 @@ import PolynomialRings.Terms: Term
 import PolynomialRings.Polynomials: Polynomial
 import Iterators: groupby
 import PolynomialRings.Expansions: _expansion_expr, _expansion_types
+import PolynomialRings: base_restrict
 
 # -----------------------------------------------------------------------------
 #
@@ -16,6 +17,7 @@ import PolynomialRings.Expansions: _expansion_expr, _expansion_types
 import Base: *, det, transpose, diff
 import PolynomialRings: monomialorder
 import PolynomialRings: to_dense_monomials, max_variable_index, monomialorder
+import PolynomialRings.Operators: common_denominator, integral_fraction
 import PolynomialRings.Expansions: expansion, coefficients, coefficient
 import PolynomialRings.Expansions: constant_coefficient, linear_coefficients
 
@@ -125,6 +127,14 @@ macro flat_coefficients(a, symbols...)
     quote
         flat_coefficients($(esc(a)), $expansion_expr)
     end
+end
+
+common_denominator(a::AbstractArray{P}) where P <: Polynomial = mapreduce(common_denominator, lcm, a)
+
+function integral_fraction(a::AbstractArray{P}) where P <: Polynomial
+    D = common_denominator(a)
+
+    return base_restrict.(D*a), D
 end
 
 function det(m::M) where M <: AbstractMatrix{P} where P <: Polynomial
