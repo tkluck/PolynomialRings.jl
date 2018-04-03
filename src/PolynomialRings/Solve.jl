@@ -1,6 +1,6 @@
 module Solve
 
-using PolynomialRings: gröbner_transformation
+using PolynomialRings: lift
 
 """
     x = matrix_solve_affine(f, y, dims, Type=eltype(y))
@@ -23,11 +23,9 @@ function matrix_solve_affine(f, y, dims, Type=eltype(y))
         b[i] = one(Type)
         b
     end
-    image = f.(basis)
-    gr, tr = gröbner_transformation(image)
-    factors, r = divrem(y, gr)
-    !iszero(r) && return nothing
-    sparse_result = sum(prod, zip(factors * tr, basis))
+    factors = lift(f.(basis), y)
+    isnull(factors) && return nothing
+    sparse_result = sum(prod, zip(factors, basis))
     return collect(sparse_result)
 end
 

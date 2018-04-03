@@ -36,7 +36,7 @@ export expansion, @expansion, @expand, coefficient, @coefficient, constant_coeff
 export coefficients, @coefficients, linear_coefficients, @linear_coefficients
 export deg, @deg
 export flat_coefficients, @flat_coefficients
-export groebner_basis, groebner_transformation, gröbner_basis, gröbner_transformation, syzygies
+export groebner_basis, groebner_transformation, gröbner_basis, gröbner_transformation, lift, syzygies
 export content, common_denominator, integral_fraction
 export matrix_solve_affine
 

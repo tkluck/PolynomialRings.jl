@@ -54,6 +54,7 @@ function leaddivrem end
 # -----------------------------------------------------------------------------
 function gröbner_basis end
 function gröbner_transformation end
+function lift end
 function syzygies end
 const groebner_basis = gröbner_basis
 const groebner_transformation = gröbner_transformation
