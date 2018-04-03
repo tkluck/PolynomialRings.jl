@@ -19,7 +19,7 @@ import PolynomialRings: to_dense_monomials, max_variable_index, monomialorder
 import PolynomialRings.Expansions: expansion, coefficients, coefficient
 import PolynomialRings.Expansions: constant_coefficient, linear_coefficients
 
-max_variable_index(a::AbstractArray{<:Polynomial}) = length(a) == 0 ? 0 : maximum(max_variable_index(a_i) for a_i in a)
+max_variable_index(a::AbstractArray{<:Polynomial}) = isempty(a) ? 0 : maximum(max_variable_index(a_i) for a_i in a)
 
 function to_dense_monomials(a::AbstractArray{P}) where P <: Polynomial
     n = max_variable_index(a)
