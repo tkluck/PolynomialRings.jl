@@ -460,6 +460,19 @@ function integral_fraction(f::Polynomial)
     return base_restrict(D*f), D
 end
 
+"""
+    p = map_coefficients(f, q)
+
+Apply a function `f` to all coefficients of `q`, and return the result.
+"""
+function map_coefficients(f, a::Polynomial)
+    T = termtype(a)
+    new_terms = map(t->T(monomial(t), f(coefficient(t))), terms(a))
+    # work around type inference issue
+    new_terms = collect(T, new_terms)
+    filter!(!iszero, new_terms)
+    return typeof(a)(new_terms)
+end
 
 # -----------------------------------------------------------------------------
 #

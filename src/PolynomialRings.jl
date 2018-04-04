@@ -28,7 +28,7 @@ import .Terms: Term
 import .Polynomials: Polynomial, generators, polynomial_ring
 import .Expansions: expansion, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, coefficients, @coefficients, linear_coefficients, @linear_coefficients, deg, @deg
 import .Arrays: flat_coefficients, @flat_coefficients
-import .Operators: content, common_denominator, integral_fraction
+import .Operators: content, common_denominator, integral_fraction, map_coefficients
 import .Solve: matrix_solve_affine
 
 export TupleMonomial, Term, Polynomial, generators, ⊗, polynomial_ring, variablesymbols
@@ -37,7 +37,7 @@ export coefficients, @coefficients, linear_coefficients, @linear_coefficients
 export deg, @deg
 export flat_coefficients, @flat_coefficients
 export groebner_basis, groebner_transformation, gröbner_basis, gröbner_transformation, lift, syzygies
-export content, common_denominator, integral_fraction
+export content, common_denominator, integral_fraction, map_coefficients
 export matrix_solve_affine
 
 # TODO: needs a better place

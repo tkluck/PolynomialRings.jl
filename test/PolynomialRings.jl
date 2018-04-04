@@ -36,6 +36,8 @@ one(::Type{Foo}) = Foo()
         @test integral_fraction(3z^5 + 6z + 3) == (3z^5 + 6z + 3, 1)
         @test integral_fraction(3z^5 + 6z + 3//2) == (6z^5 + 12z + 3, 2)
         @test integral_fraction((3//5)z^5 + 6z + 3//2) == (6z^5 + 60z + 15, 10)
+        @test map_coefficients(c->c^2, x + 2x^2 + 3x^3) == x + 4x^2 + 9x^3
+        @test map_coefficients(c->c^2-4, x + 2x^2 + 3x^3) == -3x + 5x^3
         @test div(3z^5 + 6z + 3, 3) == z^5 + 2z + 1
 
         @test_throws OverflowError (z+1)^120
