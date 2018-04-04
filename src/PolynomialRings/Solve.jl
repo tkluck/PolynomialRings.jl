@@ -28,7 +28,7 @@ function matrix_solve_affine(f, y, dims, Type=eltype(y))
     factors = lift(f.(basis), y)
     isnull(factors) && return null
     sparse_result = sum(prod, zip(factors, basis))
-    return collect(sparse_result)
+    return issparse(y) ?  sparse_result : collect(sparse_result)
 end
 
 
