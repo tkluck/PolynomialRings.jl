@@ -19,13 +19,12 @@ module Gröbner
     # fallback in case a backend only provides a subset of these
     gröbner_basis(b::Backend, args...; kwds...)         = gröbner_transformation(b, args...; kwds...)[1]
     gröbner_transformation(::Backend, args...; kwds...) = gröbner_transformation(Buchberger(), args...; kwds...)
-    function lift(b::Backend, G, y; kwds...)
+    lift(b::Backend, G, y; kwds...)                     = lift(b, G, (y,); kwds...)[1]
+    function lift(b::Backend, G, y::Tuple; kwds...)
         gr, tr = gröbner_transformation(b, G; kwds...)
-        f, y_red = divrem(y, gr)
-        if !iszero(y_red)
-            return null
-        else
-            return f * tr
+        map(y) do y_i
+            f, y_red = divrem(y_i, gr)
+            iszero(y_red) ? f * tr : null
         end
     end
 
