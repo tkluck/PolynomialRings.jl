@@ -189,7 +189,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Design Goals",
     "title": "Use elementary Julia types wherever possible",
     "category": "section",
-    "text": "For example, for any function operating on free finitely generated modules, the module elements should just be represented by AbstractArray{<:Polynomial} or Dict{K,<:Polynomial}. Polynomial coefficients can be any Number, any Array (for expansions in a module), or any Matrix (for a polynomial ring with matrix coefficients)."
+    "text": "For example, for any function operating on free finitely generated modules, the module elements should just be represented by AbstractArray{<:Polynomial} or Dict{K,<:Polynomial}. Polynomial coefficients can be any Number, any Array (for expansions in a module), or any Matrix (for a polynomial ring with matrix coefficients).A module element can be any AbstractArray, not necessarily an AbstractVector. That also means that if we need to represent a finite set of module elements, we use AbstractVector{<:AbstractVector}, not an AbstractMatrix. This makes it easier to work with matrix spaces: e.g. solving matrix equations a*x + x*a = y over polynomial rings using Gröbner basis methods."
 },
 
 {
