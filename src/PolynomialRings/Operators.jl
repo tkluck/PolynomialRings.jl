@@ -366,6 +366,9 @@ function ^(f::Polynomial, n::Integer)
     if n == 1
         return f
     end
+    if iszero(f)
+        return f
+    end
 
     T = termtype(f)
     C = basering(f)

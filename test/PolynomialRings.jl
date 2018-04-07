@@ -30,6 +30,7 @@ one(::Type{Foo}) = Foo()
         @test +x == x
         @test x^1 == x
         @test (x+y)^9 == (x+y)^6 * (x+y)^3
+        @test (x-x)^10 == 0
         @test prod(x+y for _=1:20) == (x+y)^20
         @test prod(x*y+y for _=1:20) == (x*y+y)^20
         @test content(z^5 + 3z + 1) == 1
