@@ -1,5 +1,9 @@
 module Monomials
 
+if VERSION >= v"0.7-"
+    using SparseArrays: SparseVector
+end
+
 """
     AbstractMonomial{Nm}
 
@@ -36,6 +40,11 @@ abstract type AbstractMonomial{Nm} end
 import Base: getindex, gcd, lcm, one, *, ^, ==, diff
 import Base: hash
 import Base: promote_rule
+if VERSION < v"0.7-"
+    import Base.SparseArrays: nonzeroinds
+else
+    import SparseArrays: nonzeroinds
+end
 import PolynomialRings: generators, to_dense_monomials, max_variable_index
 import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namestype
 
@@ -352,7 +361,6 @@ total_degree(a::TupleMonomial) = a.deg
 # -----------------------------------------------------------------------------
 total_degree(a::VectorMonomial) = a.deg
 
-import Base.SparseArrays: nonzeroinds
 nzindices(a::VectorMonomial{V,I,Nm}) where {V <: SparseVector,I,Nm} = nonzeroinds(a.e)
 
 # -----------------------------------------------------------------------------

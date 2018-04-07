@@ -13,13 +13,16 @@ using PolynomialRings.QuotientRings: QuotientRing, monomial_basis
 # -----------------------------------------------------------------------------
 import Base: promote_rule, convert
 import Base: zero, one, inv, copy
-import Base: trace, norm
+import Base: norm
 import Base: +,-,*,/,//,==,!=
 import Base: show
 import PolynomialRings: allvariablesymbols, fraction_field, basering
 import PolynomialRings.Ideals: ring
 import PolynomialRings.QuotientRings: _ideal
 import PolynomialRings.Util.LinAlgUtil: AbstractExactNumber
+if VERSION >= v"0.7-"
+    import LinearAlgebra: tr
+end
 
 # -----------------------------------------------------------------------------
 #
@@ -79,13 +82,14 @@ function NumberField(::Type{Q}) where Q<:QuotientRing
     found = false
     α = zero(P)
     M = Matrix{C}(0,0)
-    for α in possible_α
-        M = hcat((coeffs(α^n) for n=0:N)...)
+    for α₁ in possible_α
+        M = hcat((coeffs(α₁^n) for n=0:N)...)
 
         K = nullspace(M)
         if size(K,2) == 1 && !iszero(K[end,1])
             # TODO: check that the polynomial is irreducible.
             K = K[:,1]
+            α = α₁
             found = true
             break
         end
@@ -283,7 +287,7 @@ NumberFieldOver{C} = NumberField{P,C} where P<:Polynomial
 # Algebraic functions
 #
 # -----------------------------------------------------------------------------
-function trace(a::NumberField)
+function tr(a::NumberField)
     N = _extension_degree(Q)
     minpoly = _minimal_polynomial(typeof(a))
 

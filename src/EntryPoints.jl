@@ -381,9 +381,7 @@ macro polyvar(expr...)
     end
     definition = :( Int64[] )
     append!(definition.args, expr)
-    quote
-        @ring! $(esc(definition))
-    end
+    esc(:( @ring! $definition ))
 end
 
 # -----------------------------------------------------------------------------

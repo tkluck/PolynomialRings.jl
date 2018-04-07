@@ -607,7 +607,6 @@ julia> collect(@expansion(x^3 + y^2, x, y))
 # See also
 `@expand`, `expansion(...)`, `@coefficient` and `coefficient`
 """
-
 macro expansion(f, symbols...)
     expansion_expr = _expansion_expr(symbols)
     quote

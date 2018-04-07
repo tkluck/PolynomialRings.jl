@@ -1,6 +1,10 @@
 module LinAlgUtil
 
-import Base: nullspace
+if VERSION < v"0.7-"
+    import Base: nullspace
+else
+    import LinearAlgebra: nullspace
+end
 
 abstract type AbstractExactNumber <: Number end
 

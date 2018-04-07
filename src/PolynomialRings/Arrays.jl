@@ -6,18 +6,26 @@ import PolynomialRings.Polynomials: Polynomial
 import Iterators: groupby
 import PolynomialRings.Expansions: _expansion_expr, _expansion_types
 import PolynomialRings: base_restrict
+if VERSION >= v"0.7-"
+    import LinearAlgebra: RowVector
+end
 
 # -----------------------------------------------------------------------------
 #
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: *, det, transpose, diff
+import Base: *, transpose, diff
 import PolynomialRings: monomialorder
 import PolynomialRings: to_dense_monomials, max_variable_index, monomialorder
 import PolynomialRings.Operators: common_denominator, integral_fraction
 import PolynomialRings.Expansions: expansion, coefficients, coefficient
 import PolynomialRings.Expansions: constant_coefficient, linear_coefficients
+if VERSION < v"0.7-"
+    import Base: det
+else
+    import LinearAlgebra: det
+end
 
 max_variable_index(a::AbstractArray{<:Polynomial}) = isempty(a) ? 0 : maximum(max_variable_index(a_i) for a_i in a)
 

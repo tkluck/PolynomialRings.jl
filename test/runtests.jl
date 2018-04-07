@@ -1,4 +1,8 @@
-using Base.Test
+if VERSION < v"0.7-"
+    using Base.Test
+else
+    using Test
+end
 
 @testset "PolynomialRings" begin
     include("PolynomialRings.jl")

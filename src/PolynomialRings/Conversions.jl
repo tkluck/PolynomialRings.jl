@@ -218,7 +218,6 @@ _P = Union{Term,Polynomial}
 
 Construct a polynomial with polynomial coefficients, by promoting a with the type of the coefficients of b.
 """
-
 function ⊗(a::P1, b::P2) where P1 <: Polynomial where P2 <: Polynomial
     P = P1⊗P2
     @assert basering(P) === base_extend(P1, basering(P2))
