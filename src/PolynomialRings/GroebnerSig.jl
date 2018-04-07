@@ -1,6 +1,5 @@
 module GröbnerSig
 
-using Nulls
 using DataStructures: DefaultDict
 using DataStructures: PriorityQueue, enqueue!, dequeue!
 using Iterators: chain
@@ -28,7 +27,7 @@ function semi_complete_reduction_rem(o, m, G)
         τ, q = G[i]
         if !iszero(q)
             t = maybe_div(leading_monomial(o,p), leading_monomial(o,q))
-            if !isnull(t)
+            if t !== nothing
                 if Base.Order.lt(o, t * τ, σ)
                     a = leading_coefficient(o,p) // leading_coefficient(o,q)
                     p = p - a*(t*q)
@@ -57,17 +56,17 @@ function is_prunable(::Arri, o, x, G, P, S)
     any(G) do y
         τ, g = y
         t = maybe_div(σ, τ)
-        !isnull(t) && Base.Order.lt(o, t * leading_monomial(g), s_poly_lm(o, p, q))
+        t !== nothing && Base.Order.lt(o, t * leading_monomial(g), s_poly_lm(o, p, q))
     end || any(values(P)) do SS
         any(SS) do pair
             (τ, f, g),_ = pair
             t = maybe_div(σ, τ)
-            !isnull(t) && Base.Order.lt(o, t * s_poly_lm(o, f, g), s_poly_lm(o, p, q))
+            t !== nothing && Base.Order.lt(o, t * s_poly_lm(o, f, g), s_poly_lm(o, p, q))
         end
     end || any(S) do pair
         (τ, f, g),_ = pair
         t = maybe_div(σ, τ)
-        !isnull(t) && Base.Order.lt(o, t * s_poly_lm(o, f, g), s_poly_lm(o, p, q))
+        t !== nothing && Base.Order.lt(o, t * s_poly_lm(o, f, g), s_poly_lm(o, p, q))
     end
 end
 
@@ -81,7 +80,7 @@ function is_sig_redundant(o, f, G)
     lm_f = leading_monomial(o, f)
     return any(G) do g
         (τ, g) = g
-        !iszero(g) && !isnull(maybe_div(σ, τ)) && !isnull(maybe_div(lm_f, leading_monomial(o,g)))
+        !iszero(g) && maybe_div(σ, τ) !== nothing && maybe_div(lm_f, leading_monomial(o,g)) !== nothing
     end
 end
 
@@ -179,13 +178,13 @@ function gröbner_basis_sig_incremental(alg::Backend, o::MonomialOrder, polynomi
             if iszero(r)
                 filter!(S) do k,v
                     (τ, _, _) = k
-                    divisible = !isnull(maybe_div(τ, σ))
+                    divisible = maybe_div(τ, σ) !== nothing
                     !divisible
                 end
                 for SS in values(P)
                     filter!(SS) do k,v
                         (τ, _, _) = k
-                        divisible = !isnull(maybe_div(τ, σ))
+                        divisible = maybe_div(τ, σ) !== nothing
                         !divisible
                     end
                 end
@@ -203,7 +202,7 @@ function gröbner_basis_sig_incremental(alg::Backend, o::MonomialOrder, polynomi
                             (μ, p, q) = (m_g * τ, g, r)
                         end
                         if !any(Syz) do τ
-                            divisible = !isnull(maybe_div(μ, τ))
+                            divisible = maybe_div(μ, τ) !== nothing
                             divisible
                         end
                             if total_degree(μ) == current_degree

@@ -1,7 +1,5 @@
 module Monomials
 
-using Nulls
-
 """
     AbstractMonomial{Nm}
 
@@ -172,7 +170,7 @@ function maybe_div(a::AbstractMonomial{Nm}, b::AbstractMonomial{Nm}) where Nm
     if all(i->a[i]>=b[i], index_union(a,b))
         return _construct(M,i -> a[i] - b[i], index_union(a,b))
     else
-        return null
+        return nothing
     end
 end
 

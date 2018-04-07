@@ -1,7 +1,5 @@
 module QuotientRings
 
-using Nulls
-
 using PolynomialRings
 using PolynomialRings.Polynomials: Polynomial, exptype, leading_term
 using PolynomialRings.Terms: Term, monomial, coefficient

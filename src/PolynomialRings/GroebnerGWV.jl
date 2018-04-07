@@ -1,6 +1,5 @@
 module GröbnerGWV
 
-using Nulls
 using DataStructures: SortedDict, DefaultDict
 using Iterators: chain
 
@@ -24,12 +23,12 @@ function regular_topreduce_rem(o, m, G)
     while i <= length(G)
         u2, v2 = G[i]
         if iszero(v2)
-            if !isnull(maybe_div(u1, u2))
+            if maybe_div(u1, u2) !== nothing
                 supertopreducible = true
             end
         elseif !iszero(v1)
             t = maybe_div(leading_monomial(o,v1), leading_monomial(o,v2))
-            if !isnull(t)
+            if t !== nothing
                 c = leading_coefficient(o,v1) // leading_coefficient(o,v2)
                 if Base.Order.lt(o, t * u2, u1)
                     # new_u1 = u1 - c*(t*u2)
@@ -103,7 +102,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
         if any(G) do m2
             u2,v2 = m2
             t = maybe_div(T, u2)
-            if !isnull(t)
+            if t !== nothing
                 if Base.Order.lt(o, t * leading_monomial(o,v2), leading_monomial(o,v1))
                     return true
                 end
@@ -120,7 +119,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
             push!(H[newh.i], newh.m)
             filter!(JP) do sig, jp
                 T2, v2 = jp
-                divisible = !isnull(maybe_div(T2, newh))
+                divisible = maybe_div(T2, newh) !== nothing
                 !divisible
             end
         else

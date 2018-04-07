@@ -1,6 +1,8 @@
 module Ideals
 
-using Nulls
+if VERSION < v"v0.7-"
+    Nothing = Void
+end
 using PolynomialRings.Polynomials: Polynomial
 using PolynomialRings.Gröbner: gröbner_transformation
 
@@ -25,11 +27,11 @@ import PolynomialRings.Expansions: _expansion
 
 mutable struct Ideal{P<:Polynomial}
     generators::AbstractVector{P}
-    _grb::Union{Null, AbstractVector}
-    _trns::Union{Null, AbstractMatrix}
+    _grb::Union{Nothing, AbstractVector}
+    _trns::Union{Nothing, AbstractMatrix}
 end
-Ideal(generators::AbstractVector{<:Polynomial}) = Ideal(generators, null, null)
-Ideal(generators::Polynomial...) = Ideal(collect(generators), null, null)
+Ideal(generators::AbstractVector{<:Polynomial}) = Ideal(generators, nothing, nothing)
+Ideal(generators::Polynomial...) = Ideal(collect(generators), nothing, nothing)
 
 ring(I::Ideal{P}) where P<:Polynomial = P
 
@@ -41,13 +43,13 @@ ring(I::Ideal{P}) where P<:Polynomial = P
 
 generators(I::Ideal) = I.generators
 function _grb(I::Ideal)
-    if isnull(I._grb)
+    if I._grb === nothing
         I._grb, I._trns = gröbner_transformation(I.generators)
     end
     I._grb
 end
 function _trns(I::Ideal)
-    if isnull(I._grb)
+    if I._grb === nothing
         I._grb, I._trns = gröbner_transformation(I.generators)
     end
     I._trns

@@ -1,7 +1,5 @@
 module Terms
 
-using Nulls
-
 import PolynomialRings.Monomials: AbstractMonomial
 
 """
@@ -71,8 +69,8 @@ max_variable_index(a::Term) = max_variable_index(monomial(a))
 
 function maybe_div(a::T, b::T) where T<:Term
     q = maybe_div(monomial(a), monomial(b))
-    if isnull(q) || iszero(coefficient(b))
-        return null
+    if q === nothing || iszero(coefficient(b))
+        return nothing
     else
         return T(q, coefficient(a) // coefficient(b))
     end

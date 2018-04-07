@@ -246,7 +246,7 @@ function one_step_divrem(::Full, o::MonomialOrder, f::PolynomialBy{Names,Order},
     lt_g = leading_term(o, g)
     for t in @view terms(f)[end:-1:1]
         factor = maybe_div(t, lt_g)
-        if !isnull(factor)
+        if factor !== nothing
             return typeof(f)([factor]), f - factor*g
         end
     end
@@ -263,7 +263,7 @@ function one_step_divrem(::Lead, o::MonomialOrder, f::PolynomialBy{Names,Order},
     lt_f = leading_term(o, f)
     lt_g = leading_term(o, g)
     factor = maybe_div(lt_f, lt_g)
-    if !isnull(factor)
+    if factor !== nothing
         return typeof(f)([factor]), f - factor*g
     end
     return zero(g), f
@@ -280,7 +280,7 @@ function one_step_divrem(::Tail, o::MonomialOrder, f::PolynomialBy{Names,Order},
     # FIXME: when o != monomialorder(f), this is not correct!
     for t in @view terms(f)[end-1:-1:1]
         factor = maybe_div(t, lt_g)
-        if !isnull(factor)
+        if factor !== nothing
             return typeof(f)([factor]), f - factor*g
         end
     end
@@ -298,7 +298,7 @@ function one_step_rem(::Full, o::MonomialOrder, f::PolynomialBy{Names,Order}, g:
     lt_g = leading_term(o, g)
     for t in @view terms(f)[end:-1:1]
         factor = maybe_div(t, lt_g)
-        if !isnull(factor)
+        if factor !== nothing
             return f - factor*g
         end
     end
@@ -315,7 +315,7 @@ function one_step_rem(::Lead, o::MonomialOrder, f::PolynomialBy{Names,Order}, g:
     lt_f = leading_term(o, f)
     lt_g = leading_term(o, g)
     factor = maybe_div(lt_f, lt_g)
-    if !isnull(factor)
+    if factor !== nothing
         return f - factor*g
     end
     return f
@@ -332,7 +332,7 @@ function one_step_rem(::Tail, o::MonomialOrder, f::PolynomialBy{Names,Order}, g:
     # FIXME: when o != monomialorder(f), this is not correct!
     for t in @view terms(f)[end-1:-1:1]
         factor = maybe_div(t, lt_g)
-        if !isnull(factor)
+        if factor !== nothing
             return f - factor*g
         end
     end

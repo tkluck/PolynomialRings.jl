@@ -1,7 +1,5 @@
 module Arrays
 
-using Nulls
-
 import PolynomialRings.Monomials: AbstractMonomial
 import PolynomialRings.Terms: Term
 import PolynomialRings.Polynomials: Polynomial
@@ -35,7 +33,7 @@ monomialorder(::Type{<:AbstractArray{P}}) where P <: Polynomial = monomialorder(
 # Helpers for wrapping 'expansion' like things
 #
 # -----------------------------------------------------------------------------
-_softnext(iter, state) = done(iter, state) ? (null, state) : next(iter, state)
+_softnext(iter, state) = done(iter, state) ? (nothing, state) : next(iter, state)
 
 _joint_iteration(iters, elm, groupby, value) = Channel() do ch
     states = start.(iters)
@@ -46,8 +44,8 @@ _joint_iteration(iters, elm, groupby, value) = Channel() do ch
         items            = getindex.(items_and_states, 1)
         next_states      = getindex.(items_and_states, 2)
 
-        low = minimum(groupby, filter(!isnull, items))
-        lowests = map(i->!isnull(i) && groupby(i)==low, items)
+        low = minimum(groupby, filter(i->i!==nothing, items))
+        lowests = map(i->i!==nothing && groupby(i)==low, items)
         values[lowests] = value.(items[lowests])
 
         push!(ch, (low, values))

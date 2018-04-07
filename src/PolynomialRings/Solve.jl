@@ -1,7 +1,5 @@
 module Solve
 
-using Nulls
-
 using PolynomialRings: lift
 
 """
@@ -26,7 +24,7 @@ function matrix_solve_affine(f, y, dims, Type=eltype(y))
         b
     end
     factors = lift(f.(basis), y)
-    isnull(factors) && return null
+    factors === nothing && return nothing
     sparse_result = sum(prod, zip(factors, basis))
     return issparse(y) ?  sparse_result : collect(sparse_result)
 end

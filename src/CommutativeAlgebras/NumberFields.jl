@@ -1,7 +1,5 @@
 module NumberFields
 
-using Nulls
-
 using PolynomialRings
 using PolynomialRings.Polynomials: Polynomial, basering, variablesymbols
 using PolynomialRings.Monomials: AbstractMonomial

@@ -1,6 +1,5 @@
 module Gröbner
 
-using Nulls
 using DataStructures: PriorityQueue, enqueue!, dequeue!
 
 import PolynomialRings: gröbner_basis, gröbner_transformation, syzygies
@@ -200,7 +199,7 @@ function buchberger(o::MonomialOrder, polynomials::AbstractVector{M}, ::Val{with
                     return i,j
                 end
             else
-                return null
+                return nothing
             end
         end
     end
@@ -240,7 +239,7 @@ function buchberger(o::MonomialOrder, polynomials::AbstractVector{M}, ::Val{with
         end
 
         p = pop_pair()
-        isnull(p) && break
+        p === nothing && break
         (i,j) = p
 
         a = stable_result[i]
@@ -261,7 +260,7 @@ function buchberger(o::MonomialOrder, polynomials::AbstractVector{M}, ::Val{with
            leading_row(stable_result[l]) == leading_row(a) &&
            !(_pair(i,l) in keys(pairs_to_consider)) &&
            !(_pair(j,l) in keys(pairs_to_consider)) &&
-           !isnull(maybe_div(leading_lcm, leading_term(o, stable_result[l])))
+           maybe_div(leading_lcm, leading_term(o, stable_result[l])) !== nothing
         end
             continue
         end

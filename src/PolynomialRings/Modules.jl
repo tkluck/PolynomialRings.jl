@@ -1,7 +1,5 @@
 module Modules
 
-using Nulls
-
 import PolynomialRings.Polynomials: Polynomial, monomialorder
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.Monomials: AbstractMonomial
@@ -57,9 +55,9 @@ monomialtype(p::Type{<:AbstractArray{<:Polynomial}}) = Signature{monomialtype(el
 
 *(s::Signature,m::Union{AbstractMonomial,Term,Number})  = Signature(s.i, s.m * m)
 *(m::Union{AbstractMonomial,Term,Number}, s::Signature) = Signature(s.i, s.m * m)
-maybe_div(s::Signature, t::Signature)            = s.i == t.i ? maybe_div(s.m, t.m) : null
-lcm_degree(s::Signature, t::Signature)           = s.i == t.i ? lcm_degree(s.m, t.m) : null
-lcm_multipliers(s::Signature, t::Signature)      = s.i == t.i ? lcm_multipliers(s.m, t.m) : null
+maybe_div(s::Signature, t::Signature)            = s.i == t.i ? maybe_div(s.m, t.m) : nothing
+lcm_degree(s::Signature, t::Signature)           = s.i == t.i ? lcm_degree(s.m, t.m) : nothing
+lcm_multipliers(s::Signature, t::Signature)      = s.i == t.i ? lcm_multipliers(s.m, t.m) : nothing
 total_degree(s::Signature)                       = total_degree(s.m)
 lt(o::MonomialOrder, s::Signature, t::Signature) = s.i > t.i || (s.i == t.i && lt(o, s.m, t.m))
 ==(s::S, t::S) where S <: Signature = s.i == t.i && s.m == t.m
