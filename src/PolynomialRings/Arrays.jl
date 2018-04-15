@@ -20,7 +20,7 @@ import PolynomialRings: monomialorder
 import PolynomialRings: to_dense_monomials, max_variable_index, monomialorder
 import PolynomialRings.Operators: common_denominator, integral_fraction
 import PolynomialRings.Expansions: expansion, coefficients, coefficient, deg
-import PolynomialRings.Expansions: constant_coefficient, linear_coefficients
+import PolynomialRings.Expansions: constant_coefficient, linear_coefficients, expansion_terms
 if VERSION < v"0.7-"
     import Base: det
 else
@@ -104,6 +104,15 @@ function linear_coefficients(a::AbstractArray{P}, args...) where P <: Polynomial
             push!(ch, el)
         end
     end
+end
+
+function expansion_terms(a::AbstractArray{P}, symbols...) where P <: Polynomial
+    MonomialType, CoeffType =_expansion_types(P, symbols...)
+    vars = map(P, symbols)
+    return [
+        prod(v^k for (v,k) in zip(vars,w))*P.(c)
+        for (w,c) in expansion(a, symbols...)
+    ]
 end
 
 function deg(a::AbstractArray{P}, args...) where P <: Polynomial

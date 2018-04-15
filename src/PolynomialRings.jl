@@ -26,13 +26,13 @@ include("PolynomialRings/Solve.jl")
 import .Monomials: TupleMonomial, VectorMonomial
 import .Terms: Term
 import .Polynomials: Polynomial, generators, polynomial_ring
-import .Expansions: expansion, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, coefficients, @coefficients, linear_coefficients, @linear_coefficients, deg, @deg
+import .Expansions: expansion, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, coefficients, @coefficients, linear_coefficients, @linear_coefficients, deg, @deg, expansion_terms, @expansion_terms
 import .Arrays: flat_coefficients, @flat_coefficients
 import .Operators: content, common_denominator, integral_fraction, map_coefficients
 import .Solve: matrix_solve_affine
 
 export TupleMonomial, Term, Polynomial, generators, ⊗, polynomial_ring, variablesymbols
-export expansion, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient
+export expansion, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, expansion_terms, @expansion_terms
 export coefficients, @coefficients, linear_coefficients, @linear_coefficients
 export deg, @deg
 export flat_coefficients, @flat_coefficients

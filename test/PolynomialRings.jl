@@ -200,6 +200,8 @@ end
         @test collect(expansion([x*z 1; z+1 x], :z)) == [((0,), [0 1; 1 x]), ((1,), [x 0; 1 0])]
         @test collect(expansion(sparse([x*z 1; z+1 x]), :z)) == [((0,), [0 1; 1 x]), ((1,), [x 0; 1 0])]
 
+        @test collect(expansion_terms([x*z 1; z+1 x], :z)) == [[0 1; 1 x], [x*z 0; z 0]]
+
         @test collect(coefficients(x*y*z + x*z + z^2, :z)) == [x*y + x, 1]
         @test collect(coefficients(x*y - x, :x, :y, :z)) == [-1, 1]
         @test collect(coefficients(x*y - x, :z, :x, :y)) == [-1, 1]

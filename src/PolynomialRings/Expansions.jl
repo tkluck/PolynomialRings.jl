@@ -214,6 +214,35 @@ function coefficients(p::P, variables) where P <: Polynomial
     return [c for (p,c) in expansion(p, variables)]
 end
 
+"""
+    expansion_terms(f, symbol, [symbol...])
+
+Return the terms of `f` when expanded as a polynomial in the given
+variables.
+
+# Examples
+```jldoctest
+julia> using PolynomialRings
+
+julia> R = @ring! ℤ[x,y];
+
+julia> collect(expansion_terms(x^3 + y^2 + 1, :y))
+[x^3 + 1, y^2]
+
+julia> collect(expansion_terms(x^3 + y^2 + 1, :x, :y))
+[1, y^2, x^3]
+```
+# See also
+`@coefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
+"""
+function expansion_terms(p::P, variables) where P <: Polynomial
+    MonomialType, CoeffType =_expansion_types(P, args...)
+    return [
+        convert(MonomialType, w)*c
+        for (w,c) in expansion(p, variables)
+    ]
+end
+
 @inline expansion(p::Polynomial, variables::Symbol...) = expansion(p, Named{variables})
 @inline coefficients(p::Polynomial, variables::Symbol...) = coefficients(p, Named{variables})
 @inline linear_coefficients(p::Polynomial, variables::Symbol...) = linear_coefficients(p, Named{variables})
@@ -644,6 +673,12 @@ macro expand(f, symbols...)
             (prod(v^k for (v,k) in zip($vars,w)), p)
             for (w,p) in expansion($(esc(f)), $expansion_expr)
         ]
+    end
+end
+
+macro expansion_terms(f, symbols...)
+    quote
+        expansion_terms($(esc(f)), $symbols...)
     end
 end
 
