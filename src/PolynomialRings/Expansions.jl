@@ -430,7 +430,8 @@ end
 """
     deg(f, vars...)
 
-Return the total degree of `f` when regarded as a polynomial in `vars`.
+Return the total degree of `f` when regarded as a polynomial in `vars`. Returns
+-1 for the zero polynomial.
 
 ```jldoctest
 julia> using PolynomialRings
@@ -448,6 +449,7 @@ julia> deg(x^2, :y)
 ```
 """
 function deg(f::Polynomial, args...)
+    iszero(f) && return -1
     return maximum(sum(w) for (w,p) in expansion(f, args...))
 end
 
