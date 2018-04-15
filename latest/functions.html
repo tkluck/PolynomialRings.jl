@@ -121,7 +121,7 @@ julia&gt; @deg (x^2 + x*y - 1) x
 2
 
 julia&gt; @deg (x^2 + x*y - 1) y
-1</code></pre><p><strong>See also</strong></p><p><code>deg</code>, <code>@expansion</code></p></div><a class="source-link" target="_blank" href="https://github.com/tkluck/PolynomialRings.jl.git">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PolynomialRings.Expansions.deg" href="#PolynomialRings.Expansions.deg"><code>PolynomialRings.Expansions.deg</code></a> — <span class="docstring-category">Function</span>.</div><div><pre><code class="language-none">deg(f, vars...)</code></pre><p>Return the total degree of <code>f</code> when regarded as a polynomial in <code>vars</code>.</p><pre><code class="language-julia-repl">julia&gt; using PolynomialRings
+1</code></pre><p><strong>See also</strong></p><p><code>deg</code>, <code>@expansion</code></p></div><a class="source-link" target="_blank" href="https://github.com/tkluck/PolynomialRings.jl.git">source</a></section><section class="docstring"><div class="docstring-header"><a class="docstring-binding" id="PolynomialRings.Expansions.deg" href="#PolynomialRings.Expansions.deg"><code>PolynomialRings.Expansions.deg</code></a> — <span class="docstring-category">Function</span>.</div><div><pre><code class="language-none">deg(f, vars...)</code></pre><p>Return the total degree of <code>f</code> when regarded as a polynomial in <code>vars</code>. Returns -1 for the zero polynomial.</p><pre><code class="language-julia-repl">julia&gt; using PolynomialRings
 
 julia&gt; R = @ring ℤ[x,y];
 

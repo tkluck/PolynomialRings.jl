@@ -405,7 +405,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Expansions.deg",
     "category": "function",
-    "text": "deg(f, vars...)\n\nReturn the total degree of f when regarded as a polynomial in vars.\n\njulia> using PolynomialRings\n\njulia> R = @ring ℤ[x,y];\n\njulia> deg(x^2, :x)\n2\n\njulia> deg(x^2, :x, :y)\n2\n\njulia> deg(x^2, :y)\n0\n\n\n\n"
+    "text": "deg(f, vars...)\n\nReturn the total degree of f when regarded as a polynomial in vars. Returns -1 for the zero polynomial.\n\njulia> using PolynomialRings\n\njulia> R = @ring ℤ[x,y];\n\njulia> deg(x^2, :x)\n2\n\njulia> deg(x^2, :x, :y)\n2\n\njulia> deg(x^2, :y)\n0\n\n\n\n"
 },
 
 {
