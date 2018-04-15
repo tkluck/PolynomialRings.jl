@@ -644,6 +644,7 @@ macro expansion(f, symbols...)
         expansion($(esc(f)), $expansion_expr)
     end
 end
+
 """
     @expand(f, var, [var...])
 
