@@ -428,7 +428,7 @@ julia> linear_coefficients(x^3*y + x + y + 1, :x, :y)
 function linear_coefficients(f::Polynomial, ::Type{Named{Names}}) where Names
     ExpansionType, CoeffType = _expansion_types(typeof(f), Named{Names})
 
-    res = spzeros(CoeffType, length(Names))
+    res = zeros(CoeffType, length(Names))
     for (w, p) in expansion(f, Named{Names})
         if sum(w) == 1
             res[findfirst(w)] = p

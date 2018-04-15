@@ -94,15 +94,14 @@ end
 function linear_coefficients(a::AbstractArray{P}, args...) where P <: Polynomial
     MonomialType, CoeffType =_expansion_types(P, args...)
     zero_element = issparse(a) ? spzeros(CoeffType, size(a)...) : zeros(CoeffType, size(a))
-    return Channel(ctype=typeof(zero_element)) do ch
-        nonzero_indices = find(!iszero,a)
-        # needs collect even though I was hoping to do this lazily. A channel
-        # can't deal with holding onto the state for a few iterations
-        for (_,indices,coefficients) in _joint_iteration(map(a_i->collect(linear_coefficients(a_i, args...)), collect(a[nonzero_indices])), i->1, identity)
-            el = copy(zero_element)
-            el[nonzero_indices[indices]] = coefficients
-            push!(ch, el)
-        end
+
+    nonzero_indices = find(!iszero,a)
+    items = _joint_iteration(map(a_i->linear_coefficients(a_i, args...), collect(a[nonzero_indices])), i->1, identity)
+    return map(items) do item
+        (_,indices,coefficients) = item
+        el = copy(zero_element)
+        el[nonzero_indices[indices]] = coefficients
+        el
     end
 end
 
