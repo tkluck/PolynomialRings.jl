@@ -19,7 +19,7 @@ import Base: *, transpose, diff
 import PolynomialRings: monomialorder
 import PolynomialRings: to_dense_monomials, max_variable_index, monomialorder
 import PolynomialRings.Operators: common_denominator, integral_fraction
-import PolynomialRings.Expansions: expansion, coefficients, coefficient
+import PolynomialRings.Expansions: expansion, coefficients, coefficient, deg
 import PolynomialRings.Expansions: constant_coefficient, linear_coefficients
 if VERSION < v"0.7-"
     import Base: det
@@ -104,6 +104,11 @@ function linear_coefficients(a::AbstractArray{P}, args...) where P <: Polynomial
             push!(ch, el)
         end
     end
+end
+
+function deg(a::AbstractArray{P}, args...) where P <: Polynomial
+    iszero(a) && return -1
+    return maximum(a_i->deg(a_i, args...), a[find(!iszero,a)])
 end
 
 """
