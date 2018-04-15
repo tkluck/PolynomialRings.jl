@@ -1,6 +1,6 @@
 module Arrays
 
-import PolynomialRings.Monomials: AbstractMonomial
+import PolynomialRings.Monomials: AbstractMonomial, expstype
 import PolynomialRings.Terms: Term
 import PolynomialRings.Polynomials: Polynomial
 import Iterators: groupby
@@ -43,30 +43,36 @@ monomialorder(::Type{<:AbstractArray{P}}) where P <: Polynomial = monomialorder(
 # -----------------------------------------------------------------------------
 _softnext(iter, state) = done(iter, state) ? (nothing, state) : next(iter, state)
 
-_joint_iteration(iters, elm, groupby, value) = Channel() do ch
+_joint_iteration(iters, groupby, value) = Channel() do ch
     states = start.(iters)
     while !all(done.(iters, states))
-        values = zeros(elm, size(iters))
-
         items_and_states = _softnext.(iters, states)
         items            = getindex.(items_and_states, 1)
         next_states      = getindex.(items_and_states, 2)
 
-        low = minimum(groupby, filter(i->i!==nothing, items))
-        lowests = map(i->i!==nothing && groupby(i)==low, items)
-        values[lowests] = value.(items[lowests])
+        cur_key = minimum(groupby, filter(i->i!==nothing, items))
+        cur_indices = map(i->i!==nothing && groupby(i)==cur_key, items)
+        cur_values = value.(items[cur_indices])
 
-        push!(ch, (low, values))
+        push!(ch, (cur_key, cur_indices, cur_values))
 
-        states[lowests] = next_states[lowests]
+        states[cur_indices] = next_states[cur_indices]
     end
 end
 
 function expansion(a::AbstractArray{P}, args...) where P <: Polynomial
     MonomialType, CoeffType =_expansion_types(P, args...)
-    # needs collect even though I was hoping to do this lazily. A channel
-    # can't deal with holding onto the state for a few iterations
-    return _joint_iteration(map(a_i->collect(expansion(a_i, args...)), a), CoeffType, i->i[1], i->i[2])
+    zero_element = issparse(a) ? spzeros(CoeffType, size(a)...) : zeros(CoeffType, size(a))
+    return Channel(ctype=Tuple{expstype(MonomialType),typeof(zero_element)}) do ch
+        nonzero_indices = find(!iszero,a)
+        # needs collect even though I was hoping to do this lazily. A channel
+        # can't deal with holding onto the state for a few iterations
+        for (monomial, indices, coefficients) in _joint_iteration(map(a_i->collect(expansion(a_i, args...)), collect(a[nonzero_indices])), i->i[1], i->i[2])
+            el = copy(zero_element)
+            el[nonzero_indices[indices]] = coefficients
+            push!(ch, (monomial,el))
+        end
+    end
 end
 
 function coefficients(a::AbstractArray{P}, args...) where P <: Polynomial
@@ -87,7 +93,17 @@ end
 
 function linear_coefficients(a::AbstractArray{P}, args...) where P <: Polynomial
     MonomialType, CoeffType =_expansion_types(P, args...)
-    return map(i->i[2], _joint_iteration(map(a_i->linear_coefficients(a_i, args...), a), CoeffType, i->1, identity))
+    zero_element = issparse(a) ? spzeros(CoeffType, size(a)...) : zeros(CoeffType, size(a))
+    return Channel(ctype=typeof(zero_element)) do ch
+        nonzero_indices = find(!iszero,a)
+        # needs collect even though I was hoping to do this lazily. A channel
+        # can't deal with holding onto the state for a few iterations
+        for (_,indices,coefficients) in _joint_iteration(map(a_i->collect(linear_coefficients(a_i, args...)), collect(a[nonzero_indices])), i->1, identity)
+            el = copy(zero_element)
+            el[nonzero_indices[indices]] = coefficients
+            push!(ch, el)
+        end
+    end
 end
 
 """
