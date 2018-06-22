@@ -14,6 +14,8 @@ import Iterators: groupby
 
 if VERSION < v"0.7-"
     isconcretetype(x) = isleaftype(x)
+else
+    using SparseArrays: spzeros, SparseVector
 end
 
 # -----------------------------------------------------------------------------

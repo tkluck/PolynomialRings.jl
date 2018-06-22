@@ -13,6 +13,10 @@ import PolynomialRings.Polynomials: Polynomial, monomialorder, terms
 import PolynomialRings.Terms: monomial
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering, leading_row
 import PolynomialRings.Operators: Lead, Full, Tail
+if VERSION >= v"0.7-"
+    using LinearAlgebra: RowVector
+    using SparseArrays: spzeros, sparsevec, SparseVector
+end
 
 """
     gröbner_basis = buchberger(monomialorder, polynomials, Val{false}())

@@ -17,6 +17,10 @@ import PolynomialRings.Terms: monomial, coefficient
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering
 import PolynomialRings.Operators: Lead, Full
 import PolynomialRings: leadrem
+if VERSION >= v"0.7-"
+    using LinearAlgebra: RowVector
+    using SparseArrays: SparseVector
+end
 
 reduction_rem(::Arri, o, m, G) = semi_complete_reduction_rem(o, m, G)
 

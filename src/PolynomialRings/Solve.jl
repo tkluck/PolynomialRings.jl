@@ -1,5 +1,9 @@
 module Solve
 
+if VERSION >= v"0.7-"
+    import SparseArrays: sparse
+end
+
 using PolynomialRings: lift
 
 """

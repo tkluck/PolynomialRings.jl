@@ -15,6 +15,10 @@ import PolynomialRings.Polynomials: Polynomial, monomialorder, monomialtype
 import PolynomialRings.Terms: monomial, coefficient
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering
 import PolynomialRings.Operators: Lead, Full
+if VERSION >= v"0.7-"
+    using LinearAlgebra: RowVector
+    using SparseArrays: SparseVector, sparsevec
+end
 
 function regular_topreduce_rem(o, m, G)
     u1,v1 = m

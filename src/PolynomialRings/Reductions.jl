@@ -1,5 +1,9 @@
 module Reductions
 
+if VERSION >= v"0.7-"
+    import SparseArrays: spzeros
+end
+
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.Polynomials: Polynomial, monomialorder
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering

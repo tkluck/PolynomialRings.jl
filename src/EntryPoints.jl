@@ -12,6 +12,10 @@ import PolynomialRings.Ideals: Ideal
 import PolynomialRings.QuotientRings: QuotientRing
 import PolynomialRings.NumberFields: NumberField
 
+if VERSION >= v"0.7-"
+    import SparseArrays: spzeros
+end
+
 # -----------------------------------------------------------------------------
 #
 # Imports for overloading

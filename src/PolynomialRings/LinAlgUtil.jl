@@ -3,7 +3,7 @@ module LinAlgUtil
 if VERSION < v"0.7-"
     import Base: nullspace
 else
-    import LinearAlgebra: nullspace
+    import LinearAlgebra: nullspace, eye
 end
 
 abstract type AbstractExactNumber <: Number end

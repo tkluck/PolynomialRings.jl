@@ -1,7 +1,7 @@
 module Monomials
 
 if VERSION >= v"0.7-"
-    using SparseArrays: SparseVector
+    using SparseArrays: SparseVector, sparsevec
 end
 
 """

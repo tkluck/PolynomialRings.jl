@@ -1,4 +1,10 @@
-using Base.Test
+if VERSION < v"0.7-"
+    using Base.Test
+else
+    using Test
+    using SparseArrays: sparse
+end
+
 using PolynomialRings
 
 @testset "Reductions" begin

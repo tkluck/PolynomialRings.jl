@@ -2,6 +2,7 @@ if VERSION < v"0.7-"
     using Base.Test
 else
     using Test
+    import SparseArrays: sparse, spzeros
 end
 using PolynomialRings
 

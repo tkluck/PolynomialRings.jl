@@ -5,6 +5,9 @@ using PolynomialRings.Polynomials: Polynomial, basering, variablesymbols
 using PolynomialRings.Monomials: AbstractMonomial
 using PolynomialRings.Terms: Term, monomial, coefficient
 using PolynomialRings.QuotientRings: QuotientRing, monomial_basis
+if VERSION >= v"0.7-"
+    using LinearAlgebra: nullspace
+end
 
 # -----------------------------------------------------------------------------
 #
@@ -13,7 +16,6 @@ using PolynomialRings.QuotientRings: QuotientRing, monomial_basis
 # -----------------------------------------------------------------------------
 import Base: promote_rule, convert
 import Base: zero, one, inv, copy
-import Base: norm
 import Base: +,-,*,/,//,==,!=
 import Base: show
 import PolynomialRings: allvariablesymbols, fraction_field, basering
@@ -21,7 +23,9 @@ import PolynomialRings.Ideals: ring
 import PolynomialRings.QuotientRings: _ideal
 import PolynomialRings.Util.LinAlgUtil: AbstractExactNumber
 if VERSION >= v"0.7-"
-    import LinearAlgebra: tr
+    import LinearAlgebra: tr, norm
+else
+    import Base: norm
 end
 
 # -----------------------------------------------------------------------------

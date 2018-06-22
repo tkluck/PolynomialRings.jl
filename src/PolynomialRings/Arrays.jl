@@ -7,6 +7,7 @@ import Iterators: groupby
 import PolynomialRings.Expansions: _expansion_expr, _expansion_types
 import PolynomialRings: base_restrict
 if VERSION >= v"0.7-"
+    import SparseArrays: issparse, spzeros
     import LinearAlgebra: RowVector
 end
 
