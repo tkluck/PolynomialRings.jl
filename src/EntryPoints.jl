@@ -9,6 +9,7 @@ import PolynomialRings.Terms: Term, basering
 import PolynomialRings.Monomials: TupleMonomial, VectorMonomial
 import PolynomialRings.Util: lazymap
 import PolynomialRings.Ideals: Ideal
+import PolynomialRings.QuotientRings: QuotientRing
 import PolynomialRings.NumberFields: NumberField
 
 # -----------------------------------------------------------------------------
@@ -93,6 +94,14 @@ function _variables_in_ring_definition(definition)
         return union(variables, _variables_in_ring_definition(basering_spec))
     else
         return variables
+    end
+end
+
+function _inject_var(::Type{Outer}, ::Type{Inner}, name) where Outer where Inner<:Union{QuotientRing,NumberField}
+    if name in allvariablesymbols(Inner)
+        return Outer(convert(Inner, name))
+    else
+        throw(RuntimeError("Cannot find variable $name in $Inner"))
     end
 end
 
