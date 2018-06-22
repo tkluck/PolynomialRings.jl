@@ -58,8 +58,10 @@ if VERSION < v"0.7-"
     const mpz_t = Ref{BigInt}
     add!(x::BigInt, a::BigInt, b::BigInt) = (ccall((:__gmpz_add, :libgmp), Void, (mpz_t, mpz_t, mpz_t), x, a, b); x)
     add!(x::BigInt, b::BigInt) = add!(x, x, b)
+    _uninitialized_vec(::Type{V}, size) where V <: Vector = V(size)
 else
     using Base.GMP.MPZ: add!
+    _uninitialized_vec(::Type{V}, size) where V <: Vector = V(undef, size)
 end
 
 function _collect_summands!(summands::AbstractVector{T}) where T <: Term{M, BigInt} where M
@@ -92,7 +94,7 @@ function +(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
     C = promote_type(C1,C2)
     T = Term{M, C}
     P = Polynomial{Vector{T},Order}
-    res = Vector{T}(length(a.terms) + length(b.terms))
+    res = _uninitialized_vec(Vector{T},length(a.terms) + length(b.terms))
     n = 0
 
     state_a = start(terms(a))
@@ -136,7 +138,7 @@ function -(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
     C = promote_type(C1,C2)
     T = Term{M, C}
     P = Polynomial{Vector{T},Order}
-    res = Vector{T}(length(a.terms) + length(b.terms))
+    res = _uninitialized_vec(Vector{T}, length(a.terms) + length(b.terms))
     n = 0
 
     state_a = start(terms(a))
@@ -193,7 +195,7 @@ function *(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
         return zero(PP)
     end
 
-    summands = Vector{T}(length(terms(a)) * length(terms(b)))
+    summands = _uninitialized_vec(Vector{T}, length(terms(a)) * length(terms(b)))
     k = 0
 
     row_indices= zeros(Int, length(terms(a)))
@@ -383,7 +385,7 @@ function ^(f::Polynomial, n::Integer)
     i = zeros(BigInt, N)
     i[N] = bign
 
-    summands = Vector{T}(Int( multinomial(bign+N-1, N-1, bign) ))
+    summands = _uninitialized_vec(Vector{T}, Int( multinomial(bign+N-1, N-1, bign) ))
     s = 0
 
     while true
