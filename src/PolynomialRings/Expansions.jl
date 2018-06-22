@@ -12,6 +12,10 @@ import PolynomialRings.Constants: One
 
 import Iterators: groupby
 
+if VERSION < v"0.7-"
+    isconcretetype(x) = isleaftype(x)
+end
+
 # -----------------------------------------------------------------------------
 #
 # Imports for overloading
@@ -50,7 +54,7 @@ function _expansion_types(::Type{P}, ::Type{Named{vars}}) where P <: NamedPolyno
             Polynomial{Vector{Term{TupleMonomial{M,ExpType,Named{unspecified_vars}},One}},:degrevlex},
         )
     end
-    if !isleaftype(CoeffType)
+    if !isconcretetype(CoeffType)
         throw(ArgumentError("Cannot expand $P in variables $(Named{vars}); would result in $CoeffType"))
     end
     return MonomialType, CoeffType
@@ -254,7 +258,7 @@ function _substitute(p::Polynomial, ::Type{Named{Names}}, values) where Names
     ExpansionType, CoeffType = _expansion_types(typeof(p), Named{Names})
     SubstitutionType = eltype(values)
     ReturnType = promote_type(SubstitutionType, CoeffType)
-    if !isleaftype(ReturnType)
+    if !isconcretetype(ReturnType)
         throw(ArgumentError("Cannot substitute $SubstitutionType for $(Named{Names}) into $p; result no more specific than $ReturnType"))
     end
     return reduce(+, zero(ReturnType),
@@ -267,7 +271,7 @@ function _substitute(p::Polynomial, ::Type{Numbered{Name}}, values) where Name
     ExpansionType, CoeffType = _expansion_types(typeof(p), Numbered{Name})
     SubstitutionType = typeof(values(1))
     ReturnType = promote_type(SubstitutionType, CoeffType)
-    if !isleaftype(ReturnType)
+    if !isconcretetype(ReturnType)
         throw(ArgumentError("Cannot substitute $SubstitutionType for $(Numbered{Name}) into $p; result no more specific than $ReturnType"))
     end
     return reduce(+, zero(ReturnType),
