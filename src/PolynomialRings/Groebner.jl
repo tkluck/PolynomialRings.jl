@@ -356,7 +356,4 @@ end
 gröbner_transformation(::Buchberger, o::MonomialOrder, G; kwds...) = buchberger(o, G, Val{true}(), kwds...)
 gröbner_basis(::Buchberger, o::MonomialOrder, G; kwds...) = buchberger(o, G, Val{false}(), kwds...)
 
-# FIXME: why doesn't this suppress info(...) output?
-logging(DevNull, current_module(), kind=:info)
-
 end
