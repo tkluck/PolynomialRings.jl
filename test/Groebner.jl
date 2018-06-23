@@ -10,14 +10,14 @@ using PolynomialRings
 @testset "Reductions" begin
     R = @ring! ℤ[x,y]
 
-    @test divrem(x^2, [x]) == ([x]', 0)
-    @test divrem(x + y, [x]) == ([1]', y)
-    @test divrem(1, [x]) == ([0]', 1)
-    @test divrem(x^2, [x,0]) == ([x,0]', 0)
+    @test divrem(x^2, [x]) == (transpose([x]), 0)
+    @test divrem(x + y, [x]) == (transpose([1]), y)
+    @test divrem(1, [x]) == (transpose([0]), 1)
+    @test divrem(x^2, [x,0]) == ([x 0], 0)
 
-    @test div(x^2, [x]) == [x]'
-    @test div(x + y, [x]) == [1]'
-    @test div(1, [x]) == [0]'
+    @test div(x^2, [x]) == transpose([x])
+    @test div(x + y, [x]) == transpose([1])
+    @test div(1, [x]) == transpose([0])
 
     @test rem(x^2, [x]) == 0
     @test rem(x + y, [x]) == y

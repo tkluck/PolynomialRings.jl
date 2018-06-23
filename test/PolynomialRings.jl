@@ -75,7 +75,7 @@ one(::Type{Foo}) = Foo()
         @test convert(R,:x) == x
         @test convert(S,:z) == z
 
-        @test div(x+y+z, [z]) == [1]'
+        @test div(x+y+z, [z]) == transpose([1])
         @test rem(x+y+z, [z]) == x+y
 
         @test convert(@ring(ℚ[x]), x) == x
