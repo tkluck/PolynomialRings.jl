@@ -73,7 +73,7 @@ end
 
 function formal_coefficient(::Type{P}) where P <: Polynomial
     name = :αβγ # poor man's version of 'guaranteeing no clash'
-    R = @eval @ring Int[$name]
+    R, _ = polynomial_ring(name, basering=Int)
     RR = base_extend(P, R)
     return name, RR(name)
 end
