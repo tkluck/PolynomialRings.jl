@@ -1,7 +1,7 @@
 module Conversions
 
 import PolynomialRings.Polynomials: Polynomial, termtype, monomialtype, basering, terms
-import PolynomialRings.Polynomials: PolynomialOver
+import PolynomialRings.Polynomials: PolynomialOver, NamedPolynomial
 import PolynomialRings.Terms: Term, monomial, coefficient
 import PolynomialRings.Monomials: AbstractMonomial, total_degree
 import PolynomialRings.Operators: RedType
@@ -248,7 +248,7 @@ end
 
 # Resolve ambiguity with the convert method that takes care of canonical mappings
 # between polynomial rings
-function convert(::Type{P}, a::C) where P<:Polynomial{V} where V <: AbstractVector{T} where T <: Term{M,C} where {M,C<:Polynomial}
+function convert(::Type{P}, a::C) where P <: NamedPolynomial{V} where V <: AbstractVector{T} where T <: Term{M,C} where {M,C<:Polynomial}
     if iszero(a)
         return zero(P)
     else
