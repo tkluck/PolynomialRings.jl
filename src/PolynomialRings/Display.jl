@@ -7,6 +7,10 @@ import PolynomialRings.Monomials: AbstractMonomial, enumeratenz
 import PolynomialRings.VariableNames: Named, Numbered
 import PolynomialRings.MonomialOrderings: MonomialOrder
 
+if VERSION < v"0.7-"
+    occursin(needle, haystack) = contains(haystack, needle)
+end
+
 import Base: show
 
 # -----------------------------------------------------------------------------
@@ -44,7 +48,7 @@ function show(io::IO, t::Term)
         sign = "-"
     elseif monom == one(monom) || coeff != one(coeff)
         coeff_repr = "$(coefficient(t))"
-        if (contains(coeff_repr, " + ") || contains(coeff_repr, " - ")) && monomial(t) != one(monomial(t))
+        if (occursin(" + ", coeff_repr) || occursin(" - ", coeff_repr)) && monomial(t) != one(monomial(t))
             push!(factors, "($coeff_repr)")
         else
             push!(factors, coeff_repr)
