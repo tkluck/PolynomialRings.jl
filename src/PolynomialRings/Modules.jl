@@ -6,6 +6,16 @@ import PolynomialRings.Monomials: AbstractMonomial
 import PolynomialRings.Terms: Term
 import PolynomialRings.Operators: RedType, Lead, Full, Tail
 
+if VERSION >= v"0.7-"
+    import Base: keytype
+    keytype(a::AbstractArray) = CartesianIndex{ndims(a)}
+    keytype(a::AbstractVector) = Int
+else
+    keytype(a::AbstractArray) = CartesianIndex{ndims(a)}
+    keytype(a::AbstractVector) = Int
+end
+
+
 # -----------------------------------------------------------------------------
 #
 # Imports for overloading
@@ -31,7 +41,7 @@ AbstractModuleElement{P<:Polynomial} = Union{P, AbstractArray{P}}
 modulebasering(::Type{A}) where A <: AbstractModuleElement{P} where P<:Polynomial = P
 modulebasering(::A)       where A <: AbstractModuleElement{P} where P<:Polynomial = modulebasering(A)
 
-iszero(x::AbstractArray{P}) where P<:Polynomial = (i = findfirst(x); i>0 ? iszero(x[i]) : true)
+iszero(x::AbstractArray{P}) where P<:Polynomial = all(iszero, x)
 
 base_extend(x::AbstractArray{P}, ::Type{C}) where P<:Polynomial where C = map(p->base_extend(p,C), x)
 base_extend(x::AbstractArray{P})            where P<:Polynomial         = map(base_extend, x)
@@ -48,10 +58,10 @@ struct Signature{M,I}
     m::M
 end
 
-termtype(p::AbstractArray{<:Polynomial}) = Signature{termtype(eltype(p)), Int}
-termtype(P::Type{<:AbstractArray{<:Polynomial}}) = Signature{termtype(eltype(P)), Int}
-monomialtype(p::AbstractArray{<:Polynomial}) = Signature{monomialtype(eltype(p)), Int}
-monomialtype(p::Type{<:AbstractArray{<:Polynomial}}) = Signature{monomialtype(eltype(p)), Int}
+termtype(p::AbstractArray{<:Polynomial}) = Signature{termtype(eltype(p)), keytype(p)}
+termtype(P::Type{<:AbstractArray{<:Polynomial}}) = Signature{termtype(eltype(P)), keytype(P)}
+monomialtype(p::AbstractArray{<:Polynomial}) = Signature{monomialtype(eltype(p)), keytype(p)}
+monomialtype(p::Type{<:AbstractArray{<:Polynomial}}) = Signature{monomialtype(eltype(p)), keytype(p)}
 
 *(s::Signature,m::Union{AbstractMonomial,Term,Number})  = Signature(s.i, s.m * m)
 *(m::Union{AbstractMonomial,Term,Number}, s::Signature) = Signature(s.i, s.m * m)
@@ -67,7 +77,7 @@ coefficient(s::Signature{<:Term}) = coefficient(s.m)
 monomial(s::Signature{<:Term}) = Signature(s.i, monomial(s.m))
 
 
-leading_row(x::AbstractArray{<:Polynomial}) = findfirst(x)
+leading_row(x::AbstractArray{<:Polynomial}) = findfirst(!iszero, x)
 leading_term(x::AbstractArray{P}) where P<:Polynomial = leading_term(monomialorder(P), x)
 leading_term(o::MonomialOrder, x::AbstractArray{P}) where P<:Polynomial = Signature(leading_row(x), leading_term(o, x[leading_row(x)]))
 leading_monomial(x::AbstractArray{P}) where P<:Polynomial = leading_monomial(monomialorder(P), x)
@@ -76,8 +86,8 @@ leading_coefficient(x::AbstractArray{P}) where P<:Polynomial = leading_coefficie
 leading_coefficient(o::MonomialOrder, x::AbstractArray{P}) where P<:Polynomial = leading_coefficient(o, x[leading_row(x)])
 
 function one_step_divrem(redtype::RedType, o::MonomialOrder, a::A, b::A) where A<:AbstractArray{<:Polynomial}
-    i = findfirst(b)
-    if i>0
+    i = findfirst(!iszero, b)
+    if VERSION >= v"0.7-" ? (i != nothing) : (i > 0)
         (q,r) = divrem(redtype, o, a[i], b[i])
         if iszero(q)
             # make sure to maintain object identity for a

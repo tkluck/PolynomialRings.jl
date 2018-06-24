@@ -18,6 +18,7 @@ if VERSION >= v"0.7-"
     using SparseArrays: spzeros, sparsevec, SparseVector
 else
     Transpose = RowVector
+    findall(f, A) = find(f, A)
 end
 
 """
@@ -94,7 +95,7 @@ function buchberger(o::MonomialOrder, polynomials::AbstractVector{M}, ::Val{with
         end
     end
     isremoved(stable_ix) = stable_ix_to_ix[stable_ix] == 0
-    all_stable_indices() = find(!iszero, stable_ix_to_ix)
+    all_stable_indices() = findall(!iszero, stable_ix_to_ix)
     all_other_stable_indices(stable_ix) = filter(i->i!=stable_ix, all_stable_indices())
 
     function reduce_result_element(reducetype, stable_ix, other_stable_indices, is_new)
@@ -133,7 +134,9 @@ function buchberger(o::MonomialOrder, polynomials::AbstractVector{M}, ::Val{with
             end
             stable_result[stable_ix] = reduced
             if with_transformation
-                nonzero_ixs = find(q)
+                # can't use findall(): q is a row vector, but we want
+                # integer indexes to be able to match them to other_stable_indices
+                nonzero_ixs = filter(i->!iszero(q[i]), 1:length(q))
                 for j in nonzero_ixs
                     stable_transformation[stable_ix] -= q[j] * stable_transformation[other_stable_indices[j]]
                 end

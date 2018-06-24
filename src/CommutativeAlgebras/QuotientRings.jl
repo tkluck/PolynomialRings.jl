@@ -117,7 +117,7 @@ function monomial_basis(::Type{Q}) where Q<:QuotientRing
     rectangular_bounds = fill(MAX, nvars)
     for m in leading_monomials
         if count(!iszero, m) == 1
-            i = findfirst(m)
+            i = findfirst(!iszero, m)
             rectangular_bounds[i] = min( m[i], rectangular_bounds[i] )
         end
     end
