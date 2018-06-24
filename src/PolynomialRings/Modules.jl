@@ -96,7 +96,7 @@ function one_step_divrem(redtype::RedType, o::MonomialOrder, a::A, b::A) where A
             return q, a - q*b
         end
     else
-        return zero(P), a
+        return zero(eltype(A)), a
     end
 end
 
