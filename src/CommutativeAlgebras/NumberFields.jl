@@ -125,6 +125,12 @@ function convert(::Type{F}, c::C) where F<:NumberField{P, C} where {P<:Polynomia
     F(coeffs)
 end
 
+function convert(::Type{F}, c::C) where F<:NumberField{P, C} where {P<:Polynomial, C<:Number}
+    coeffs = zeros(C, _extension_degree(F))
+    coeffs[1] = c
+    F(coeffs)
+end
+
 convert(::Type{F}, f::P) where F<:NumberField{P, C} where {P<:Polynomial, C} =
     f(;_named_values(F)...)
 
@@ -245,6 +251,10 @@ function promote_rule(::Type{N}, ::Type{C}) where N<:NumberField{P} where {P<:Po
 end
 
 function convert(::Type{N}, c::C) where N<:NumberField{P} where {P<:Polynomial,C}
+    N(convert(P, c))
+end
+
+function convert(::Type{N}, c::C) where N<:NumberField{P} where {P<:Polynomial,C<:Number}
     N(convert(P, c))
 end
 
