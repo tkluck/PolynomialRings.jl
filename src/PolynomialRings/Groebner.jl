@@ -14,8 +14,10 @@ import PolynomialRings.Terms: monomial
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering, leading_row
 import PolynomialRings.Operators: Lead, Full, Tail
 if VERSION >= v"0.7-"
-    using LinearAlgebra: RowVector
+    using LinearAlgebra: Transpose
     using SparseArrays: spzeros, sparsevec, SparseVector
+else
+    Transpose = RowVector
 end
 
 """
@@ -327,7 +329,7 @@ function syzygies(polynomials::AbstractVector{M}) where M <: AbstractModuleEleme
         if i < j && leading_row(polynomials[i]) == leading_row(polynomials[j])
     ]
 
-    result = Vector{RowVector{modulebasering(M),SparseVector{modulebasering(M),Int}}}()
+    result = Vector{Transpose{modulebasering(M),SparseVector{modulebasering(M),Int}}}()
 
     for (i,j) in pairs_to_consider
         a = polynomials[i]

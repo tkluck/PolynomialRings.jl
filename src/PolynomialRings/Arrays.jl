@@ -8,7 +8,9 @@ import PolynomialRings.Expansions: _expansion_expr, _expansion_types
 import PolynomialRings: base_restrict
 if VERSION >= v"0.7-"
     import SparseArrays: issparse, spzeros
-    import LinearAlgebra: RowVector
+    import LinearAlgebra: Transpose
+else
+    Transpose = RowVector
 end
 
 # -----------------------------------------------------------------------------
@@ -197,8 +199,8 @@ end
 _PT = Union{Polynomial,Term,AbstractMonomial}
 *(A::_PT, B::AbstractArray) = broadcast(*, A, B)
 *(A::AbstractArray, B::_PT) = broadcast(*, A, B)
-*(A::_PT, B::RowVector) = RowVector(broadcast(*, A, transpose(B)))
-*(A::RowVector, B::_PT) = RowVector(broadcast(*, transpose(A), B))
+*(A::_PT, B::Transpose) = Transpose(broadcast(*, A, transpose(B)))
+*(A::Transpose, B::_PT) = Transpose(broadcast(*, transpose(A), B))
 
 transpose(a::_PT) = a
 

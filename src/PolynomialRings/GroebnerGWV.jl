@@ -16,8 +16,10 @@ import PolynomialRings.Terms: monomial, coefficient
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering
 import PolynomialRings.Operators: Lead, Full
 if VERSION >= v"0.7-"
-    using LinearAlgebra: RowVector
+    using LinearAlgebra: Transpose
     using SparseArrays: SparseVector, sparsevec
+else
+    Transpose = RowVector
 end
 
 function regular_topreduce_rem(o, m, G)
@@ -60,7 +62,7 @@ An implementation of the GWV algorithm as popularized by
 """
 function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polynomial
     R = base_extend(P)
-    Rm = RowVector{R, SparseVector{R,Int}}
+    Rm = Transpose{R, SparseVector{R,Int}}
     Signature = monomialtype(polynomials)
     M = Tuple{Signature, R}
 
@@ -74,7 +76,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
 
     n = length(polynomials)
     for (i,p) in enumerate(polynomials)
-        T = leading_monomial( transpose(sparsevec(Dict(i=>one(R)), n)) )
+        T = leading_monomial( sparsevec(Dict(i=>one(R)), n) )
         m = (T, p)
         JP[signature(m)] = m
     end
