@@ -5,7 +5,7 @@ if VERSION >= v"0.7-"
 end
 
 """
-    AbstractMonomial{Nm}
+    AbstractMonomial{Order}
 
 The abstract base type for multi-variate monomials.
 
@@ -13,11 +13,8 @@ Specifying a monomial is equivalent to specifying the exponents for all variable
 The concrete type decides whether this happens as a tuple or as a (sparse or dense)
 array.
 
-The variables may or may not have names at this abstraction level; they can
-always be identified by a number (e.g. the index in the array/tuple) but the type
-may choose to support having a symbolic name for each as well. In the former case,
-namestype(::Type{M}) returns Numbered; otherwise, it returns Named{Names}. This
-is also the value of Nm.
+The type also encodes the monomial order, and as part of that, the names
+of the variables.
 
 Each concrete implementation `M` should implement for elements `m`:
 
@@ -25,19 +22,18 @@ Each concrete implementation `M` should implement for elements `m`:
     nzindices(m)
     _construct(M, i -> exponent, nonzero_indices, [total_degree])
     exptype(M)
-    namestype(M)
 
 In addition, one may choose to add specific optimizations by overloading
 other functions, as well.
 """
-abstract type AbstractMonomial{Nm} end
+abstract type AbstractMonomial{Order} end
 
 # -----------------------------------------------------------------------------
 #
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: getindex, gcd, lcm, one, *, ^, ==, diff
+import Base: getindex, gcd, lcm, one, *, ^, ==, diff, isless
 import Base: hash
 import Base: promote_rule
 if VERSION < v"0.7-"
@@ -46,7 +42,7 @@ else
     import SparseArrays: nonzeroinds
 end
 import PolynomialRings: generators, to_dense_monomials, max_variable_index
-import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namestype
+import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namestype, monomialorder
 
 # -----------------------------------------------------------------------------
 #
@@ -140,13 +136,17 @@ length(enz::EnumerateNZ) = length(nzindices(enz.a))
 one(::Type{M}) where M <: AbstractMonomial = _construct(M, i->0, 1:0)
 one(::M) where M <: AbstractMonomial = one(M)
 
-*(a::AbstractMonomial{Nm}, b::AbstractMonomial{Nm}) where Nm = _construct(promote_type(typeof(a), typeof(b)),i -> a[i] + b[i], index_union(a,b), total_degree(a) + total_degree(b))
+*(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _construct(promote_type(typeof(a), typeof(b)),i -> a[i] + b[i], index_union(a,b), total_degree(a) + total_degree(b))
 ^(a::M, n::Integer) where M <: AbstractMonomial = _construct(M,i -> a[i]*n, nzindices(a), total_degree(a)*n)
 
 total_degree(a::A) where A <: AbstractMonomial = mapreduce(i->a[i], +, zero(exptype(a)), nzindices(a))
 
-lcm(a::AbstractMonomial{Nm}, b::AbstractMonomial{Nm}) where Nm = _construct(promote_type(typeof(a), typeof(b)),i -> max(a[i], b[i]), index_union(a,b))
-gcd(a::AbstractMonomial{Nm}, b::AbstractMonomial{Nm}) where Nm = _construct(promote_type(typeof(a), typeof(b)),i -> min(a[i], b[i]), index_union(a,b))
+lcm(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _construct(promote_type(typeof(a), typeof(b)),i -> max(a[i], b[i]), index_union(a,b))
+gcd(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _construct(promote_type(typeof(a), typeof(b)),i -> min(a[i], b[i]), index_union(a,b))
+
+monomialorder(::Type{M}) where M <: AbstractMonomial{Order} where Order = Order()
+namestype(::Type{M}) where M <: AbstractMonomial = namestype(monomialorder(M))
+isless(a::M, b::M) where M <: AbstractMonomial = Base.Order.lt(monomialorder(M), a, b)
 
 """
     enumeratenz(monomial)
@@ -172,9 +172,9 @@ function hash(a::AbstractMonomial, h::UInt)
     h
 end
 
-==(a::AbstractMonomial{Names}, b::AbstractMonomial{Names}) where Names = all(i->a[i]==b[i], index_union(a,b))
+==(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = all(i->a[i]==b[i], index_union(a,b))
 
-function maybe_div(a::AbstractMonomial{Nm}, b::AbstractMonomial{Nm}) where Nm
+function maybe_div(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order
     M = promote_type(typeof(a), typeof(b))
     if all(i->a[i]>=b[i], index_union(a,b))
         return _construct(M,i -> a[i] - b[i], index_union(a,b))
@@ -183,7 +183,7 @@ function maybe_div(a::AbstractMonomial{Nm}, b::AbstractMonomial{Nm}) where Nm
     end
 end
 
-function lcm_multipliers(a::AbstractMonomial{Nm}, b::AbstractMonomial{Nm}) where Nm
+function lcm_multipliers(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order
     M = promote_type(typeof(a), typeof(b))
     return (
         _construct(M, i -> max(a[i], b[i]) - a[i], index_union(a,b)),
@@ -200,7 +200,7 @@ function diff(a::M, i::Integer) where M <: AbstractMonomial
     end
 end
 
-function lcm_degree(a::AbstractMonomial{Nm}, b::AbstractMonomial{Nm}) where Nm
+function lcm_degree(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order
     # avoid summing empty iterator
     iszero(total_degree(a)) && iszero(total_degree(b)) && return zero(exptype(M))
     return sum(max(a[i],b[i]) for i in index_union(a,b))
@@ -248,18 +248,18 @@ end
 # -----------------------------------------------------------------------------
 
 """
-    TupleMonomial{N, I, Nm} <: AbstractMonomial where I <: Integer where Nm
+    TupleMonomial{N, I, Order} <: AbstractMonomial where I <: Integer where Order
 
 An implementation of AbstractMonomial that stores exponents as a tuple
 of integers. This is a dense representation.
 """
-struct TupleMonomial{N, I, Nm} <: AbstractMonomial{Nm}
+struct TupleMonomial{N, I, Order} <: AbstractMonomial{Order}
     e::NTuple{N, I}
     deg::I
-    TupleMonomial{N,I,Nm}(e,deg) where I <: Integer where {N,Nm} = new(e,deg)
+    TupleMonomial{N,I,Order}(e,deg) where I <: Integer where {N,Order} = new(e,deg)
 end
 
-@generated function _construct(::Type{typ}, f::Function, nonzero_indices, deg) where typ <: TupleMonomial{N,I,Nm} where {N,I,Nm}
+@generated function _construct(::Type{typ}, f::Function, nonzero_indices, deg) where typ <: TupleMonomial{N,I,Order} where {N,I,Order}
     result = :( tuple() )
     for i in 1:N
         push!(result.args, :( I(f($i)) ))
@@ -270,20 +270,19 @@ end
     end
 end
 
-num_variables(::Type{TupleMonomial{N,I,Nm}}) where {N,I,Nm} = N
-namestype(::Type{TupleMonomial{N,I,Nm}}) where {N,I,Nm} = Nm
-exptype(::Type{TupleMonomial{N,I,Nm}}) where I <: Integer where {N,Nm} = I
-expstype(::Type{TupleMonomial{N,I,Nm}}) where I <: Integer where {N,Nm} = NTuple{N,I}
+num_variables(::Type{TupleMonomial{N,I,Order}}) where {N,I,Order} = N
+exptype(::Type{TupleMonomial{N,I,Order}}) where I <: Integer where {N,Order} = I
+expstype(::Type{TupleMonomial{N,I,Order}}) where I <: Integer where {N,Order} = NTuple{N,I}
 @inline getindex(m::TupleMonomial, i::Integer) = m.e[i]
 
-generators(::Type{TupleMonomial{N, I, Nm}}) where {N, I, Nm} = [
-    _construct(TupleMonomial{N, I, Nm}, i->i==j ? one(I) : zero(I), 1:N)
+generators(::Type{TupleMonomial{N, I, Order}}) where {N, I, Order} = [
+    _construct(TupleMonomial{N, I, Order}, i->i==j ? one(I) : zero(I), 1:N)
     for j in 1:N
 ]
 
-nzindices(a::TupleMonomial{N,I,Nm}) where {N,I,Nm} = 1:N
-@inline index_union(::T, ::T) where T<:TupleMonomial{N,I,Nm} where {N,I,Nm} = 1:N
-@inline rev_index_union(::T, ::T) where T<:TupleMonomial{N,I,Nm} where {N,I,Nm} = N:-1:1
+nzindices(a::TupleMonomial{N,I,Order}) where {N,I,Order} = 1:N
+@inline index_union(::T, ::T) where T<:TupleMonomial{N,I,Order} where {N,I,Order} = 1:N
+@inline rev_index_union(::T, ::T) where T<:TupleMonomial{N,I,Order} where {N,I,Order} = N:-1:1
 
 # -----------------------------------------------------------------------------
 #
@@ -292,7 +291,7 @@ nzindices(a::TupleMonomial{N,I,Nm}) where {N,I,Nm} = 1:N
 # -----------------------------------------------------------------------------
 
 """
-    VectorMonomial{V,I,Nm} <: AbstractMonomial where V <: AbstractVector{I} where I <: Integer where Nm
+    VectorMonomial{V,I,Order} <: AbstractMonomial where V <: AbstractVector{I} where I <: Integer where Order
 
 An implementation of AbstractMonomial that stores exponents as a vector
 of integers. This can be a sparse or dense representation, depending on the
@@ -302,13 +301,13 @@ This representation is intended for the case when the number of variables
 is unbounded. In particular, the indexing operation `m[i]` returns `0` when `i`
 is out-of-bounds, instead of throwing an exception.
 """
-struct VectorMonomial{V,I,Nm} <: AbstractMonomial{Nm}
+struct VectorMonomial{V,I,Order} <: AbstractMonomial{Order}
     e::V
     deg::I
-    VectorMonomial{V,I,Nm}(e, deg) where V<:AbstractVector{I} where {I<:Integer,Nm} = new(e, deg)
+    VectorMonomial{V,I,Order}(e, deg) where V<:AbstractVector{I} where {I<:Integer,Order} = new(e, deg)
 end
 
-function _construct(::Type{M}, f::Function, nonzero_indices, deg) where M <: VectorMonomial{V,I,Nm} where V <: AbstractVector{I} where I <: Integer where Nm
+function _construct(::Type{M}, f::Function, nonzero_indices, deg) where M <: VectorMonomial{V,I,Order} where V <: AbstractVector{I} where I <: Integer where Order
     if findlast(nonzero_indices) == 0
         return M(V(), deg)
     else
@@ -320,27 +319,26 @@ function _construct(::Type{M}, f::Function, nonzero_indices, deg) where M <: Vec
     end
 end
 
-function _construct(::Type{M}, f::Function, nonzero_indices, deg) where M <: VectorMonomial{V,I,Nm} where V <: SparseVector{I,J} where I <: Integer where J <: Integer where Nm
+function _construct(::Type{M}, f::Function, nonzero_indices, deg) where M <: VectorMonomial{V,I,Order} where V <: SparseVector{I,J} where I <: Integer where J <: Integer where Order
     indices = collect(J, nonzero_indices)
     len = !isempty(indices) ? last(indices) : 0
     e = V(len, indices, map(i->I(f(i)), indices))
     return M(e, deg)
 end
 
-namestype(::Type{VectorMonomial{V,I,Nm}}) where {V,I,Nm} = Nm
-exptype(::Type{VectorMonomial{V,I,Nm}}) where {V,I,Nm} = I
-expstype(::Type{VectorMonomial{V,I,Nm}}) where {V,I,Nm} = V
+exptype(::Type{VectorMonomial{V,I,Order}}) where {V,I,Order} = I
+expstype(::Type{VectorMonomial{V,I,Order}}) where {V,I,Order} = V
 @inline getindex(m::VectorMonomial, i::Integer) = i <= length(m.e) ? m.e[i] : zero(exptype(m))
 
 # special case for sparsevectors; for some reason, SparseVector{Int,Int}() does not give
 # an empty vector by default.
 (::Type{V})() where V <: SparseVector{A,B} where {A,B} = sparsevec(B[],A[])
 
-generators(::Type{VectorMonomial{V,I,Nm}}) where {V,I,Nm} = Channel(ctype=VectorMonomial{V,I,Nm}) do ch
+generators(::Type{VectorMonomial{V,I,Order}}) where {V,I,Order} = Channel(ctype=VectorMonomial{V,I,Order}) do ch
     for j in 1:typemax(Int)
         x = spzeros(I, j)
         x[j] = one(I)
-        push!(ch, VectorMonomial{V,I,Nm}(x))
+        push!(ch, VectorMonomial{V,I,Order}(x))
     end
     throw(AssertionError("typemax exhausted"))
 end
@@ -361,7 +359,7 @@ total_degree(a::TupleMonomial) = a.deg
 # -----------------------------------------------------------------------------
 total_degree(a::VectorMonomial) = a.deg
 
-nzindices(a::VectorMonomial{V,I,Nm}) where {V <: SparseVector,I,Nm} = nonzeroinds(a.e)
+nzindices(a::VectorMonomial{V,I,Order}) where {V <: SparseVector,I,Order} = nonzeroinds(a.e)
 
 # -----------------------------------------------------------------------------
 #
@@ -370,13 +368,17 @@ nzindices(a::VectorMonomial{V,I,Nm}) where {V <: SparseVector,I,Nm} = nonzeroind
 # -----------------------------------------------------------------------------
 
 max_variable_index(m::TupleMonomial{N}) where N = N
-max_variable_index(m::VectorMonomial{V,I,Nm}) where {V,I,Nm} = length(m.e)
+max_variable_index(m::VectorMonomial{V,I,Order}) where {V,I,Order} = length(m.e)
 
 import PolynomialRings.VariableNames: Named, Numbered, flatvariablesymbols
-_densenames(n::Integer, ::Type{Numbered{Name}}) where Name = (g = flatvariablesymbols(Numbered{Name}); Named{ tuple([take!(g) for _ = 1:n]...) })
-to_dense_monomials(n::Integer, m::AbstractMonomial) = _construct(TupleMonomial{n,exptype(m),_densenames(n, namestype(m))}, i->m[i], 1:n)
+to_dense_monomials(n::Integer, ::Type{Numbered{Name}}) where Name = (g = flatvariablesymbols(Numbered{Name}); Named{ tuple([take!(g) for _ = 1:n]...) })
+function to_dense_monomials(n::Integer, m::AbstractMonomial)
+    Order = to_dense_monomials(n, monomialorder(m))
+    M = TupleMonomial{n, exptype(m), typeof(Order)}
+    _construct(M, i->m[i], 1:n)
+end
 
-promote_rule(::Type{<:TupleMonomial{N,I,Nm}}, ::Type{<:VectorMonomial{V,J,Nm}}) where {N,V,I,J,Nm} = TupleMonomial{N,promote_type(I,J),Nm}
+promote_rule(::Type{<:TupleMonomial{N,I,Order}}, ::Type{<:VectorMonomial{V,J,Order}}) where {N,V,I,J,Order} = TupleMonomial{N,promote_type(I,J),Order}
 
 # -----------------------------------------------------------------------------
 #

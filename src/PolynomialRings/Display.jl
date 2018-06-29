@@ -93,7 +93,7 @@ _repr(::Type{BigFloat}) = :ℝ
 _repr(::Type{Complex{BigFloat}}) = :ℂ
 _repr(x) = x
 
-function show(io::IO, ::Type{Polynomial{A,Order}}) where {A,Order}
+function show(io::IO, ::Type{Polynomial{A}}) where A
     T = eltype(A)
     print(io, "$(_repr(basering(T)))[$(namestype(T))]")
 end

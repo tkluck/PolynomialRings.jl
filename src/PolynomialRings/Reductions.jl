@@ -117,12 +117,12 @@ end
 
 _unpack(a) = a[1]
 _unpack(a::Tuple) = a[1][1], a[2]
-leaddivrem(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order} = divrem(Lead(), MonomialOrder{Order}(), f, [g]) |> _unpack
-divrem(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order})     where {Names, Order} = divrem(Full(), MonomialOrder{Order}(), f, [g]) |> _unpack
-leadrem(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order})    where {Names, Order} = rem(Lead(), MonomialOrder{Order}(), f, [g])
-rem(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order})        where {Names, Order} = rem(Full(), MonomialOrder{Order}(), f, [g])
-leaddiv(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order})    where {Names, Order} = div(Lead(), MonomialOrder{Order}(), f, [g]) |> _unpack
-div(f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order})        where {Names, Order} = div(Full(), MonomialOrder{Order}(), f, [g]) |> _unpack
+leaddivrem(f::PolynomialBy{Order}, g::PolynomialBy{Order}) where Order = divrem(Lead(), MonomialOrder{Order}(), f, [g]) |> _unpack
+divrem(f::PolynomialBy{Order}, g::PolynomialBy{Order})     where Order = divrem(Full(), MonomialOrder{Order}(), f, [g]) |> _unpack
+leadrem(f::PolynomialBy{Order}, g::PolynomialBy{Order})    where Order = rem(Lead(), MonomialOrder{Order}(), f, [g])
+rem(f::PolynomialBy{Order}, g::PolynomialBy{Order})        where Order = rem(Full(), MonomialOrder{Order}(), f, [g])
+leaddiv(f::PolynomialBy{Order}, g::PolynomialBy{Order})    where Order = div(Lead(), MonomialOrder{Order}(), f, [g]) |> _unpack
+div(f::PolynomialBy{Order}, g::PolynomialBy{Order})        where Order = div(Full(), MonomialOrder{Order}(), f, [g]) |> _unpack
 
 divrem(redtype::RedType, o::MonomialOrder, f::P, g::P) where P<:Polynomial = divrem(redtype, o, f, [g]) |> _unpack
 rem(redtype::RedType, o::MonomialOrder, f::P, g::P)    where P<:Polynomial = rem(redtype, o, f, [g])

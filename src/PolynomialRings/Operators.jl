@@ -88,12 +88,10 @@ end
 # addition, subtraction
 #
 # -----------------------------------------------------------------------------
-function +(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
-
-
-    C = promote_type(C1,C2)
-    T = Term{M, C}
-    P = Polynomial{Vector{T},Order}
+function +(a::PolynomialBy{Order,C1}, b::PolynomialBy{Order,C2}) where {C1, C2, Order}
+    P = promote_type(typeof(a), typeof(b))
+    C = basering(P)
+    T = termtype(P)
     res = _uninitialized_vec(Vector{T},length(a.terms) + length(b.terms))
     n = 0
 
@@ -105,10 +103,10 @@ function +(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
         exponent_a, coefficient_a = monomial(term_a), coefficient(term_a)
         exponent_b, coefficient_b = monomial(term_b), coefficient(term_b)
 
-        if Base.Order.lt(MonomialOrder{Order}(), exponent_a, exponent_b)
+        if Base.Order.lt(Order(), exponent_a, exponent_b)
             @inbounds res[n+=1] = T(exponent_a, coefficient_a)
             state_a = next_state_a
-        elseif Base.Order.lt(MonomialOrder{Order}(), exponent_b, exponent_a)
+        elseif Base.Order.lt(Order(), exponent_b, exponent_a)
             @inbounds res[n+=1] = T(exponent_b, coefficient_b)
             state_b = next_state_b
         else
@@ -132,12 +130,10 @@ function +(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
     return P(res)
 end
 
-function -(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
-
-
-    C = promote_type(C1,C2)
-    T = Term{M, C}
-    P = Polynomial{Vector{T},Order}
+function -(a::PolynomialBy{Order,C1}, b::PolynomialBy{Order,C2}) where {C1, C2, Order}
+    P = promote_type(typeof(a), typeof(b))
+    C = basering(P)
+    T = termtype(P)
     res = _uninitialized_vec(Vector{T}, length(a.terms) + length(b.terms))
     n = 0
 
@@ -149,10 +145,10 @@ function -(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
         exponent_a, coefficient_a = monomial(term_a), coefficient(term_a)
         exponent_b, coefficient_b = monomial(term_b), coefficient(term_b)
 
-        if Base.Order.lt(MonomialOrder{Order}(), exponent_a, exponent_b)
+        if Base.Order.lt(Order(), exponent_a, exponent_b)
             @inbounds res[n+=1] = T(exponent_a, coefficient_a)
             state_a = next_state_a
-        elseif Base.Order.lt(MonomialOrder{Order}(), exponent_b, exponent_a)
+        elseif Base.Order.lt(Order(), exponent_b, exponent_a)
             @inbounds res[n+=1] = -T(exponent_b, coefficient_b)
             state_b = next_state_b
         else
@@ -184,15 +180,13 @@ end
 import PolynomialRings.Util: BoundedHeap
 import DataStructures: enqueue!, dequeue!, peek
 
-function *(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractVector{Term{M,C1}} where A2<:AbstractVector{Term{M,C2}} where M <: AbstractMonomial where {C1, C2, Order}
-
-
-    C = promote_type(C1, C2)
-    T = Term{M, C}
-    PP = Polynomial{Vector{T}, Order}
+function *(a::PolynomialBy{Order,C1}, b::PolynomialBy{Order,C2}) where {C1, C2, Order}
+    P = promote_type(typeof(a), typeof(b))
+    C = basering(P)
+    T = termtype(P)
 
     if iszero(a) || iszero(b)
-        return zero(PP)
+        return zero(P)
     end
 
     summands = _uninitialized_vec(Vector{T}, length(terms(a)) * length(terms(b)))
@@ -203,7 +197,7 @@ function *(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
 
     # using a bounded queue not to drop items when it gets too big, but to allocate it
     # once to its maximal theoretical size and never reallocate.
-    order = Base.Order.Lt((a,b)->Base.Order.lt(MonomialOrder{Order}(), a[3], b[3]))
+    order = Base.Order.Lt((a,b)->Base.Order.lt(Order(), a[3], b[3]))
     minimal_corners = BoundedHeap(Tuple{Int,Int,T}, min(length(terms(a)), length(terms(b))), order)
     @inbounds t = terms(a)[1] * terms(b)[1]
     enqueue!(minimal_corners, (1,1,t))
@@ -225,7 +219,7 @@ function *(a::Polynomial{A1,Order}, b::Polynomial{A2,Order}) where A1<:AbstractV
 
     _collect_summands!(summands)
 
-    return PP(summands)
+    return P(summands)
 end
 
 # -----------------------------------------------------------------------------
@@ -238,7 +232,8 @@ struct Lead <: RedType end
 struct Full <: RedType end
 struct Tail <: RedType end
 
-function one_step_divrem(::Full, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
+# XXX TODO: verify monomial order semantics
+function one_step_divrem(::Full, o::MonomialOrder, f::PolynomialBy{Order}, g::PolynomialBy{Order}) where Order
     if iszero(f)
         return zero(g), f
     end
@@ -255,7 +250,8 @@ function one_step_divrem(::Full, o::MonomialOrder, f::PolynomialBy{Names,Order},
     return zero(g), f
 end
 
-function one_step_divrem(::Lead, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
+# XXX TODO: verify monomial order semantics
+function one_step_divrem(::Lead, o::MonomialOrder, f::PolynomialBy{Order}, g::PolynomialBy{Order}) where Order
     if iszero(f)
         return zero(g), f
     end
@@ -271,7 +267,8 @@ function one_step_divrem(::Lead, o::MonomialOrder, f::PolynomialBy{Names,Order},
     return zero(g), f
 end
 
-function one_step_divrem(::Tail, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
+# XXX TODO: verify monomial order semantics
+function one_step_divrem(::Tail, o::MonomialOrder, f::PolynomialBy{Order}, g::PolynomialBy{Order}) where Order
     if iszero(f)
         return zero(g), f
     end
@@ -290,7 +287,7 @@ function one_step_divrem(::Tail, o::MonomialOrder, f::PolynomialBy{Names,Order},
 end
 
 
-function one_step_rem(::Full, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
+function one_step_rem(::Full, o::MonomialOrder, f::PolynomialBy{Order}, g::PolynomialBy{Order}) where Order
     if iszero(f)
         return f
     end
@@ -307,7 +304,7 @@ function one_step_rem(::Full, o::MonomialOrder, f::PolynomialBy{Names,Order}, g:
     return f
 end
 
-function one_step_rem(::Lead, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
+function one_step_rem(::Lead, o::MonomialOrder, f::PolynomialBy{Order}, g::PolynomialBy{Order}) where Order
     if iszero(f)
         return f
     end
@@ -323,7 +320,7 @@ function one_step_rem(::Lead, o::MonomialOrder, f::PolynomialBy{Names,Order}, g:
     return f
 end
 
-function one_step_rem(::Tail, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
+function one_step_rem(::Tail, o::MonomialOrder, f::PolynomialBy{Order}, g::PolynomialBy{Order}) where Order
     if iszero(f)
         return f
     end
@@ -341,7 +338,7 @@ function one_step_rem(::Tail, o::MonomialOrder, f::PolynomialBy{Names,Order}, g:
     return f
 end
 
-function one_step_div(redtype::RedType, o::MonomialOrder, f::PolynomialBy{Names,Order}, g::PolynomialBy{Names,Order}) where {Names, Order}
+function one_step_div(redtype::RedType, o::MonomialOrder, f::PolynomialBy{Order}, g::PolynomialBy{Order}) where Order
     one_step_divrem(redtype, o, f, g)[1]
 end
 

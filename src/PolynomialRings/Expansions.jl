@@ -47,13 +47,13 @@ function _expansion_types(::Type{P}, ::Type{Named{vars}}) where P <: NamedPolyno
     N = length(vars)
     M = length(unspecified_vars)
     ExpType = exptype(P)
-    MonomialType = TupleMonomial{N,ExpType,Named{vars}}
+    MonomialType = TupleMonomial{N,ExpType,MonomialOrder{:degrevlex,Named{vars}}}
     if M == 0
         CoeffType = CoeffCoeffType
     else
         CoeffType = promote_type(
             CoeffCoeffType,
-            Polynomial{Vector{Term{TupleMonomial{M,ExpType,Named{unspecified_vars}},One}},:degrevlex},
+            Polynomial{Vector{Term{TupleMonomial{M,ExpType,MonomialOrder{:degrevlex,Named{unspecified_vars}}},One}}},
         )
     end
     if !isconcretetype(CoeffType)
@@ -118,7 +118,7 @@ function _expansion(p::P, ::Type{Named{vars}}) where P <: NamedPolynomial where 
         end
     else
         ExpType = exptype(P)
-        UnspecifiedMonomial = TupleMonomial{length(unspecified_vars),ExpType,Named{unspecified_vars}}
+        UnspecifiedMonomial = TupleMonomial{length(unspecified_vars),ExpType,MonomialOrder{:degrevlex,Named{unspecified_vars}}}
         g(m) = _lossy_convert_monomial(monomialtype(CoeffType), m)
         h(m) = convert(MonomialType, m)
 
@@ -129,7 +129,7 @@ function _expansion(p::P, ::Type{Named{vars}}) where P <: NamedPolynomial where 
                 for t in terms(p)
                 for (inner_monomial,c) in _expansion(coefficient(t), Named{unknown_vars})
             ]
-            sort!(separated_terms, lt=(a,b)->Base.Order.lt(MonomialOrder{:degrevlex}(),a[1],b[1]))
+            sort!(separated_terms, lt=(a,b)->a[1]<b[1])
             for term_group in groupby(x->x[1], separated_terms)
                 m = term_group[1][1]
                 p = sum(t[2] for t in term_group)
@@ -181,7 +181,7 @@ function _expansion(p::P, ::Type{Numbered{name}}) where P <: NamedPolynomial whe
             for t in terms(p)
             for (inner_monomial,c) in _expansion(coefficient(t), Numbered{name})
         ]
-        sort!(separated_terms, lt=(a,b)->Base.Order.lt(MonomialOrder{:degrevlex}(),a[1],b[1]))
+        sort!(separated_terms, lt=(a,b)->a[1]<b[1])
         for term_group in groupby(x->x[1], separated_terms)
             m = term_group[1][1]
             p = sum(t[2] for t in term_group)

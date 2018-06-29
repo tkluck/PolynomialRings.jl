@@ -1,12 +1,13 @@
 module NamedPolynomials
 
 import PolynomialRings: termtype, terms, namestype, variablesymbols, exptype, monomialtype, allvariablesymbols
-import PolynomialRings.Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolynomial
-import PolynomialRings.Polynomials:  NamedMonomial, NumberedPolynomial, monomialorder
+import PolynomialRings.Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolynomial, PolynomialBy
+import PolynomialRings.Polynomials:  NamedMonomial, NumberedPolynomial, monomialorder, NamedOrder, NumberedOrder
 
 import PolynomialRings.Terms: Term, basering, monomial, coefficient
 import PolynomialRings.Monomials: TupleMonomial, AbstractMonomial, _construct
 import PolynomialRings.VariableNames: Named, Numbered
+import PolynomialRings.MonomialOrderings: MonomialOrder
 
 # -----------------------------------------------------------------------------
 #
@@ -39,15 +40,15 @@ end
 
 # separate versions for N<:Named and N<:Numbered to resolve method ambiguity
 # with the version for which P and p do not have the same names.
-function convert(P::Type{<:PolynomialOver{C,N}}, p::PolynomialOver{D,N}) where {C,D,N<:Named}
+function convert(P::Type{<:PolynomialOver{C,O}}, p::PolynomialOver{D,O}) where {C,D,O<:NamedOrder}
     return base_extend(p, C)
 end
-function convert(P::Type{<:PolynomialOver{C,N}}, p::PolynomialOver{D,N}) where {C,D,N<:Numbered}
+function convert(P::Type{<:PolynomialOver{C,O}}, p::PolynomialOver{D,O}) where {C,D,O<:NumberedOrder}
     return base_extend(p, C)
 end
 # and short-circuit the non-conversions
-convert(P::Type{<:PolynomialOver{C,N}}, p::PolynomialOver{C,N}) where {C,N<:Named} = p
-convert(P::Type{<:PolynomialOver{C,N}}, p::PolynomialOver{C,N}) where {C,N<:Numbered} = p
+convert(P::Type{<:PolynomialOver{C,O}}, p::PolynomialOver{C,O}) where {C,O<:NamedOrder} = p
+convert(P::Type{<:PolynomialOver{C,O}}, p::PolynomialOver{C,O}) where {C,O<:NumberedOrder} = p
 # -----------------------------------------------------------------------------
 #
 # Promotions for different variable name sets
@@ -109,8 +110,9 @@ function promote_rule(::Type{P1}, ::Type{P2}) where P1 <: Polynomial where P2 <:
         N = length(Symbols)
         C = promote_type(_coeff(P1), _coeff(P2))
         I = promote_type(_exptype(P1), _exptype(P2))
+        O = MonomialOrder{:degrevlex, Named{Names}}
 
-        return Polynomial{Vector{Term{TupleMonomial{N, I, Named{Names}}, C}}, :degrevlex}
+        return Polynomial{Vector{Term{TupleMonomial{N, I, O}, C}}}
     else
         return Union{}
     end

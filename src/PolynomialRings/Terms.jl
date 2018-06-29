@@ -23,7 +23,7 @@ end
 import Base: *, ^, +, -, one, ==, iszero, diff
 import Base: hash
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering
-import PolynomialRings: maybe_div, lcm_multipliers, monomialtype, exptype, lcm_degree, namestype
+import PolynomialRings: maybe_div, lcm_multipliers, monomialtype, exptype, lcm_degree, namestype, monomialorder
 import Base.Order: lt
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.Monomials: total_degree
@@ -37,6 +37,7 @@ monomialtype(::Type{Term{M,C}}) where {M,C} = M
 basering(::Type{Term{M,C}}) where {M,C} = C
 exptype(::Type{T}) where T<:Term = exptype(monomialtype(T))
 namestype(::Type{T}) where T<:Term = namestype(monomialtype(T))
+monomialorder(::Type{T}) where T <: Term = monomialorder(monomialtype(T))
 
 # -----------------------------------------------------------------------------
 #

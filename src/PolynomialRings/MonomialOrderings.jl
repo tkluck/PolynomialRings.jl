@@ -2,11 +2,12 @@ module MonomialOrderings
 
 import Base: min, max, minimum, maximum
 import Base.Order: Ordering, lt
+import PolynomialRings: namestype, to_dense_monomials
 
 import PolynomialRings.Monomials: AbstractMonomial, VectorMonomial, total_degree, index_union, rev_index_union
 
 """
-    struct MonomialOrder{Name} <: Ordering end
+    struct MonomialOrder{Rule, Names} <: Ordering end
 
 For implementing your own monomial order, do the following:
 
@@ -25,7 +26,15 @@ You can then create a ring that uses it by calling
 There is no performance cost for using your own monomial order compared to a
 built-in one.
 """
-struct MonomialOrder{Name} <: Ordering end
+struct MonomialOrder{Rule, Names} <: Ordering end
+
+rulesymbol(::O)       where O <: MonomialOrder{Rule, Names} where {Rule, Names} = Rule
+rulesymbol(::Type{O}) where O <: MonomialOrder{Rule, Names} where {Rule, Names} = Rule
+
+namestype(::O)       where O <: MonomialOrder{Rule, Names} where {Rule, Names} = Names
+namestype(::Type{O}) where O <: MonomialOrder{Rule, Names} where {Rule, Names} = Names
+
+to_dense_monomials(n::Integer, o::MonomialOrder) = MonomialOrder{rulesymbol(o), to_dense_monomials(n, namestype(o))}()
 
 function lt(::MonomialOrder{:degrevlex}, a::M,b::M) where M <: AbstractMonomial
 
