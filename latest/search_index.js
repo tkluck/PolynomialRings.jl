@@ -325,7 +325,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.MonomialOrderings.MonomialOrder",
     "category": "type",
-    "text": "struct MonomialOrder{Name} <: Ordering end\n\nFor implementing your own monomial order, do the following:\n\nChoose a symbol to represent it, say :myorder;\nimport Base.Order: lt;\nlt(::MonomialOrder{:myorder}, a::M, b::M) where M <: AbstractMonomial = ...\n\nA few useful functions are enumeratenz, index_union, and rev_index_union. See PolynomialRings.Monomials and PolynomialRings.MonomialOrderings for details.\n\nYou can then create a ring that uses it by calling\n\nR,vars = polynomial_ring(vars...; monomialorder=:myorder)\n\nThere is no performance cost for using your own monomial order compared to a built-in one.\n\n\n\n"
+    "text": "struct MonomialOrder{Rule, Names} <: Ordering end\n\nFor implementing your own monomial order, do the following:\n\nChoose a symbol to represent it, say :myorder;\nimport Base.Order: lt;\nlt(::MonomialOrder{:myorder}, a::M, b::M) where M <: AbstractMonomial = ...\n\nA few useful functions are enumeratenz, index_union, and rev_index_union. See PolynomialRings.Monomials and PolynomialRings.MonomialOrderings for details.\n\nYou can then create a ring that uses it by calling\n\nR,vars = polynomial_ring(vars...; monomialorder=:myorder)\n\nThere is no performance cost for using your own monomial order compared to a built-in one.\n\n\n\n"
 },
 
 {
@@ -525,7 +525,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Monomials.AbstractMonomial",
     "category": "type",
-    "text": "AbstractMonomial{Nm}\n\nThe abstract base type for multi-variate monomials.\n\nSpecifying a monomial is equivalent to specifying the exponents for all variables. The concrete type decides whether this happens as a tuple or as a (sparse or dense) array.\n\nThe variables may or may not have names at this abstraction level; they can always be identified by a number (e.g. the index in the array/tuple) but the type may choose to support having a symbolic name for each as well. In the former case, namestype(::Type{M}) returns Numbered; otherwise, it returns Named{Names}. This is also the value of Nm.\n\nEach concrete implementation M should implement for elements m:\n\nm[i]\nnzindices(m)\n_construct(M, i -> exponent, nonzero_indices, [total_degree])\nexptype(M)\nnamestype(M)\n\nIn addition, one may choose to add specific optimizations by overloading other functions, as well.\n\n\n\n"
+    "text": "AbstractMonomial{Order}\n\nThe abstract base type for multi-variate monomials.\n\nSpecifying a monomial is equivalent to specifying the exponents for all variables. The concrete type decides whether this happens as a tuple or as a (sparse or dense) array.\n\nThe type also encodes the monomial order, and as part of that, the names of the variables.\n\nEach concrete implementation M should implement for elements m:\n\nm[i]\nnzindices(m)\n_construct(M, i -> exponent, nonzero_indices, [total_degree])\nexptype(M)\n\nIn addition, one may choose to add specific optimizations by overloading other functions, as well.\n\n\n\n"
 },
 
 {
@@ -533,7 +533,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Monomials.TupleMonomial",
     "category": "type",
-    "text": "TupleMonomial{N, I, Nm} <: AbstractMonomial where I <: Integer where Nm\n\nAn implementation of AbstractMonomial that stores exponents as a tuple of integers. This is a dense representation.\n\n\n\n"
+    "text": "TupleMonomial{N, I, Order} <: AbstractMonomial where I <: Integer where Order\n\nAn implementation of AbstractMonomial that stores exponents as a tuple of integers. This is a dense representation.\n\n\n\n"
 },
 
 {
@@ -541,7 +541,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Monomials.VectorMonomial",
     "category": "type",
-    "text": "VectorMonomial{V,I,Nm} <: AbstractMonomial where V <: AbstractVector{I} where I <: Integer where Nm\n\nAn implementation of AbstractMonomial that stores exponents as a vector of integers. This can be a sparse or dense representation, depending on the type specialization.\n\nThis representation is intended for the case when the number of variables is unbounded. In particular, the indexing operation m[i] returns 0 when i is out-of-bounds, instead of throwing an exception.\n\n\n\n"
+    "text": "VectorMonomial{V,I,Order} <: AbstractMonomial where V <: AbstractVector{I} where I <: Integer where Order\n\nAn implementation of AbstractMonomial that stores exponents as a vector of integers. This can be a sparse or dense representation, depending on the type specialization.\n\nThis representation is intended for the case when the number of variables is unbounded. In particular, the indexing operation m[i] returns 0 when i is out-of-bounds, instead of throwing an exception.\n\n\n\n"
 },
 
 {
@@ -565,7 +565,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Polynomials.Polynomial",
     "category": "type",
-    "text": "Polynomial{A, Order} where A <: AbstractVector{T} where T <: Term where Order <: Val\n\nThis type represents a polynomial as a vector of terms. All methods guarantee and assume that the vector is sorted by increasing monomial order, according to Order (see PolynomialRings.MonomialOrderings).\n\n\n\n"
+    "text": "Polynomial{A} where A <: AbstractVector{T} where T <: Term\n\nThis type represents a polynomial as a vector of terms. All methods guarantee and assume that the vector is sorted by increasing monomial order (see PolynomialRings.MonomialOrderings).\n\n\n\n"
 },
 
 {
