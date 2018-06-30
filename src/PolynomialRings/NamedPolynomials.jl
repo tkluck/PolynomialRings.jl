@@ -1,13 +1,14 @@
 module NamedPolynomials
 
 import PolynomialRings: termtype, terms, namestype, variablesymbols, exptype, monomialtype, allvariablesymbols
-import PolynomialRings.Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolynomial, PolynomialBy
+import PolynomialRings.Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolynomial, PolynomialBy, PolynomialIn
 import PolynomialRings.Polynomials:  NamedMonomial, NumberedPolynomial, monomialorder, NamedOrder, NumberedOrder
 
 import PolynomialRings.Terms: Term, basering, monomial, coefficient
-import PolynomialRings.Monomials: TupleMonomial, AbstractMonomial, _construct
+import PolynomialRings.Monomials: TupleMonomial, AbstractMonomial, _construct, exptype
 import PolynomialRings.VariableNames: Named, Numbered
-import PolynomialRings.MonomialOrderings: MonomialOrder
+import PolynomialRings.MonomialOrderings: MonomialOrder, rulesymbol
+import PolynomialRings.Constants: One
 
 # -----------------------------------------------------------------------------
 #
@@ -31,20 +32,20 @@ unused_variable(a::AbstractArray{<:Polynomial}) = unused_variable(eltype(a), a)
 
 # -----------------------------------------------------------------------------
 #
-# Coefficient promotions when variable names are the same
+# Coefficient promotions when monomial type is the same
 #
 # -----------------------------------------------------------------------------
-function promote_rule(P1::Type{<:PolynomialOver{C,N}}, P2::Type{<:PolynomialOver{D,N}}) where {C,D,N}
-    return base_extend(P1, D)
+function promote_rule(P1::Type{<:PolynomialIn{M}}, P2::Type{<:PolynomialIn{M}}) where M
+    return base_extend(P1, basering(P2))
 end
 
 # separate versions for N<:Named and N<:Numbered to resolve method ambiguity
 # with the version for which P and p do not have the same names.
 function convert(P::Type{<:PolynomialOver{C,O}}, p::PolynomialOver{D,O}) where {C,D,O<:NamedOrder}
-    return base_extend(p, C)
+    return P(map(t->termtype(P)(monomial(t), convert(C, coefficient(t))), terms(p)))
 end
 function convert(P::Type{<:PolynomialOver{C,O}}, p::PolynomialOver{D,O}) where {C,D,O<:NumberedOrder}
-    return base_extend(p, C)
+    return P(map(t->termtype(P)(monomial(t), convert(C, coefficient(t))), terms(p)))
 end
 # and short-circuit the non-conversions
 convert(P::Type{<:PolynomialOver{C,O}}, p::PolynomialOver{C,O}) where {C,O<:NamedOrder} = p
@@ -90,29 +91,60 @@ end
     return :( M($converter, $degree ) )
 end
 
-_allpolynomialvars(x::Type) = Set()
-_allpolynomialvars(x::Type{P}) where P<:NamedPolynomial = union(variablesymbols(P), _allpolynomialvars(basering(P)))
-_allothervars(x::Type) = setdiff(allvariablesymbols(x), _allpolynomialvars(x))
-_coeff(x::Type) = x
-_coeff(::Type{P}) where P<:NamedPolynomial = _coeff(basering(P))
-_exptype(x::Type) = Union{}
-_exptype(::Type{P}) where P<:NamedPolynomial = promote_type(exptype(P), _exptype(basering(P)))
-
 function promote_rule(::Type{P1}, ::Type{P2}) where P1 <: Polynomial where P2 <: Polynomial
-    if namestype(P1) <: Named && namestype(P2) <: Named
+    T = promote_rule(termtype(P1), termtype(P2))
+    return Polynomial{Vector{T}}
+end
+
+_allfreevars(x::Type) = Set()
+_allfreevars(x::Type{T}) where T<:Term{<:NamedMonomial} = union(variablesymbols(T), _allfreevars(basering(T)))
+_allfreevars(x::Type{P}) where P<:NamedPolynomial = _allfreevars(termtype(P))
+# all other vars are e.g. variables in a quotient ring or a number field. They
+# can't be freely shuffled around and typically stay in the base ring when
+# promotions need to happen
+_allothervars(x::Type) = setdiff(allvariablesymbols(x), _allfreevars(x))
+_coeff(x::Type) = x
+_coeff(::Type{T}) where T<:Term = _coeff(basering(T))
+_monomialtype(x::Type) = One
+_monomialtype(x::Type{P}) where P<:Polynomial = promote_type(monomialtype(P), _monomialtype(basering(P)))
+
+function remove_variables(::Type{N}, vars...) where N <: Named
+    result = [x for x in variablesymbols(N) if !(x in vars)]
+    Named{tuple(result...)}
+end
+
+function remove_variables(::Type{O}, vars...) where O <: NamedOrder
+    MonomialOrder{rulesymbol(O), remove_variables(namestype(O), vars...)}
+end
+
+function remove_variables(::Type{M}, vars...) where M <: TupleMonomial
+    O = remove_variables(typeof(monomialorder(M)), vars...)
+    N = length(variablesymbols(O))
+    TupleMonomial{N, exptype(M), O}
+ end
+
+function promote_rule(::Type{T1}, ::Type{T2}) where T1 <: Term where T2 <: Term
+    C = promote_type(_coeff(T1), _coeff(T2))
+    M = promote_type(
+        monomialtype(T1), _monomialtype(basering(T1)),
+        monomialtype(T2), _monomialtype(basering(T2)),
+    )
+    if !isempty(_allothervars(C))
+        M = remove_variables(M, _allothervars(C)...)
+    end
+    return Term{M,C}
+end
+
+function promote_rule(::Type{M1}, ::Type{M2}) where M1 <: AbstractMonomial where M2 <: AbstractMonomial
+    if namestype(M1) <: Named && namestype(M2) <: Named
         AllNames = Set()
-        free_variables = union(
-                               setdiff(_allpolynomialvars(P1), _allothervars(P2)),
-                               setdiff(_allpolynomialvars(P2), _allothervars(P1)),
-                              )
-        Symbols = sort(collect(free_variables))
+        Symbols = sort(union(variablesymbols(M1), variablesymbols(M2)))
         Names = tuple(Symbols...)
         N = length(Symbols)
-        C = promote_type(_coeff(P1), _coeff(P2))
-        I = promote_type(_exptype(P1), _exptype(P2))
+        I = promote_type(exptype(M1), exptype(M2))
         O = MonomialOrder{:degrevlex, Named{Names}}
 
-        return Polynomial{Vector{Term{TupleMonomial{N, I, O}, C}}}
+        return TupleMonomial{N, I, O}
     else
         return Union{}
     end
@@ -120,6 +152,10 @@ end
 
 function promote_rule(::Type{P1}, ::Type{P2}) where P1 <: NamedPolynomial where P2 <: NumberedPolynomial
     return P2 ⊗ P1
+end
+
+function promote_rule(::Type{P1}, ::Type{P2}) where P1 <: NumberedPolynomial where P2 <: NamedPolynomial
+    return promote_rule(P2, P1)
 end
 
 using PolynomialRings

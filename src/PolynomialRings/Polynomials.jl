@@ -54,6 +54,7 @@ const PolynomialOver{C,Order} = Polynomial{<:AbstractVector{<:Term{<:AbstractMon
 const NamedPolynomial{C}      = PolynomialOver{C,<:NamedOrder}
 const NumberedPolynomial{C}   = PolynomialOver{C,<:NumberedOrder}
 const PolynomialBy{Order,C}   = PolynomialOver{C,Order}
+const PolynomialIn{M}         = Polynomial{<:AbstractVector{<:Term{M}}}
 
 # -----------------------------------------------------------------------------
 #
