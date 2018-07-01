@@ -3,7 +3,8 @@ module MonomialOrderings
 import Base: min, max, minimum, maximum
 import Base.Order: Ordering, lt
 import Base: promote_rule
-import PolynomialRings: namestype, to_dense_monomials
+import PolynomialRings: namestype, to_dense_monomials, variablesymbols
+import PolynomialRings.VariableNames: Named, Numbered
 
 import PolynomialRings.Monomials: AbstractMonomial, VectorMonomial, total_degree, index_union, rev_index_union
 
@@ -106,5 +107,21 @@ maximum(m::MonomialOrder, iter) = (op(x,y) = max(m,x,y); reduce(op, iter))
 degreecompatible(::MonomialOrder) = false
 degreecompatible(::MonomialOrder{:degrevlex}) = true
 degreecompatible(::MonomialOrder{:deglex}) = true
+
+# -----------------------------------------------------------------------------
+#
+# Promotions for different variable name sets
+#
+# -----------------------------------------------------------------------------
+function promote_rule(M1::Type{<:MonomialOrder}, M2::Type{<:MonomialOrder})
+    if namestype(M1) <: Named && namestype(M2) <: Named
+        AllNames = Set()
+        Symbols = sort(union(variablesymbols(M1), variablesymbols(M2)))
+        Names = tuple(Symbols...)
+        return MonomialOrder{:degrevlex, Named{Names}}
+    else
+        return Union{}
+    end
+end
 
 end

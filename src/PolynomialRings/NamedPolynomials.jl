@@ -136,14 +136,10 @@ function promote_rule(::Type{T1}, ::Type{T2}) where T1 <: Term where T2 <: Term
 end
 
 function promote_rule(::Type{M1}, ::Type{M2}) where M1 <: AbstractMonomial where M2 <: AbstractMonomial
-    if namestype(M1) <: Named && namestype(M2) <: Named
-        AllNames = Set()
-        Symbols = sort(union(variablesymbols(M1), variablesymbols(M2)))
-        Names = tuple(Symbols...)
-        N = length(Symbols)
+    O = promote_rule(typeof(monomialorder(M1)), typeof(monomialorder(M2)))
+    if O <: MonomialOrder
+        N = length(variablesymbols(O))
         I = promote_type(exptype(M1), exptype(M2))
-        O = MonomialOrder{:degrevlex, Named{Names}}
-
         return TupleMonomial{N, I, O}
     else
         return Union{}
