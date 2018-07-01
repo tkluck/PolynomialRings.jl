@@ -66,6 +66,11 @@ in(f, I::Ideal) = iszero(rem(f, I))
 issubset(I::Ideal{P}, J::Ideal{P}) where P<:Polynomial = all(g in J for g in generators(I))
 ==(I::Ideal{P}, J::Ideal{P}) where P<:Polynomial = I⊆J && J⊆I
 
++(I::Ideal{P}, J::Ideal{P}) where P<:Polynomial = Ideal([generators(I);generators(J)])
+*(I::Ideal{P}, J::Ideal{P}) where P<:Polynomial = Ideal([
+    i*j for i in generators(I) for j in generators(J)
+])
+
 hash(I::Ideal, h::UInt) = hash(I.generators, h)
 
 # -----------------------------------------------------------------------------

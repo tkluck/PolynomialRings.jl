@@ -23,6 +23,10 @@ using PolynomialRings
         J = Ideal(x^2, y^2)
         @test I ⊆ J
         @test !(J ⊆ I)
+
+        @test I + J == J
+        @test !(y^2 in I*J)
+        @test I^5 ⊆ J^5
     end
 
     @testset "Construction and conversion" begin
