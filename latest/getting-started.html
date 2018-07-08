@@ -30,8 +30,8 @@ x^2 + -y^2</code></pre><h3><a class="nav-anchor" id="Arithmetic-1" href="#Arithm
 
 julia&gt; (x + y) * (x - y) == x^2 - y^2
 true</code></pre><p>We also support reduction operations between polynomials; for that, you can use the standard julia functions <code>div</code>, <code>rem</code> and <code>divrem</code>. For example, <code>divrem(f, g)</code>.  You can also reduce with respect to a set of polynomials, e.g. <code>divrem(f, [g1,g2])</code>.</p><p>For example, in the one-variable case, this is just the Euclidean algorithm:</p><pre><code class="language-julia-repl">julia&gt; rem(x^2 - 1, x - 1)
-ERROR: MethodError: no method matching PolynomialRings.MonomialOrderings.MonomialOrder{PolynomialRings.MonomialOrderings.MonomialOrder{:degrevlex,x,y},Names} where Names()</code></pre><p>If you prefer, you can also use the symbols <code>÷</code> for <code>div</code> and <code>%</code> for <code>rem</code>:</p><pre><code class="language-julia-repl">julia&gt; (x^2 - 1)÷(x - 1)
-ERROR: MethodError: no method matching PolynomialRings.MonomialOrderings.MonomialOrder{PolynomialRings.MonomialOrderings.MonomialOrder{:degrevlex,x,y},Names} where Names()</code></pre><h3><a class="nav-anchor" id="Variables-in-your-ring-vs.-variables-in-your-script-1" href="#Variables-in-your-ring-vs.-variables-in-your-script-1">Variables in your ring vs. variables in your script</a></h3><p>It is common to use names such as <code>f</code>,<code>g</code>,<code>h</code> for polynomials and names such as <span>$x,y,z$</span> for the variables in your ring. For example, you might define</p><pre><code class="language-julia-repl">julia&gt; R = @ring! ℤ[x,y,z]
+0</code></pre><p>If you prefer, you can also use the symbols <code>÷</code> for <code>div</code> and <code>%</code> for <code>rem</code>:</p><pre><code class="language-julia-repl">julia&gt; (x^2 - 1)÷(x - 1)
+x + 1</code></pre><h3><a class="nav-anchor" id="Variables-in-your-ring-vs.-variables-in-your-script-1" href="#Variables-in-your-ring-vs.-variables-in-your-script-1">Variables in your ring vs. variables in your script</a></h3><p>It is common to use names such as <code>f</code>,<code>g</code>,<code>h</code> for polynomials and names such as <span>$x,y,z$</span> for the variables in your ring. For example, you might define</p><pre><code class="language-julia-repl">julia&gt; R = @ring! ℤ[x,y,z]
 ℤ[x,y,z]
 
 julia&gt; f = x^2 - x*y
@@ -152,10 +152,10 @@ myderivative2 (generic function with 1 method)
 
 julia&gt; myderivative2(ε^3 + ε^2, :ε)
 3//1*ε^2 + 2//1*ε</code></pre><p>which gives the correct answer. Unfortunately, this is <em>very</em> inefficient:</p><pre><code class="language-julia-repl">julia&gt; @time myderivative2(ε^3 + ε^2, :ε);
-  1.932235 seconds (636.76 k allocations: 35.749 MiB, 0.58% gc time)
+  2.928331 seconds (636.70 k allocations: 36.099 MiB, 0.44% gc time)
 
 julia&gt; @time myderivative2(ε^3 + ε^2, :ε);
-  1.833572 seconds (636.69 k allocations: 35.682 MiB, 0.55% gc time)</code></pre><p>The reason is that variable names are part of the type definition, and Julia specializes functions based on the type of its arguments. In this case, that means that for evaluating the <code>@coefficient</code> call, and for the substitution call, all the code needs to be compiled <em>every time you call <code>myderivative</code></em>.</p><p>For this reason, we provide a function <code>formal_coefficient(R)</code> which yields a variable that&#39;s guaranteed not to clash with the ring that you pass as an argument:</p><pre><code class="language-julia-repl">julia&gt; function myderivative3(f::RR, varsymbol) where RR &lt;: Polynomial
+  2.911922 seconds (636.65 k allocations: 35.639 MiB, 0.44% gc time)</code></pre><p>The reason is that variable names are part of the type definition, and Julia specializes functions based on the type of its arguments. In this case, that means that for evaluating the <code>@coefficient</code> call, and for the substitution call, all the code needs to be compiled <em>every time you call <code>myderivative</code></em>.</p><p>For this reason, we provide a function <code>formal_coefficient(R)</code> which yields a variable that&#39;s guaranteed not to clash with the ring that you pass as an argument:</p><pre><code class="language-julia-repl">julia&gt; function myderivative3(f::RR, varsymbol) where RR &lt;: Polynomial
            varvalue = RR(varsymbol)
            ε_sym, ε_val = formal_coefficient(typeof(f))
            return coefficient(f(;varsymbol =&gt; varvalue + ε_val), (1,), ε_sym)
@@ -163,13 +163,13 @@ julia&gt; @time myderivative2(ε^3 + ε^2, :ε);
 myderivative3 (generic function with 1 method)
 
 julia&gt; @time myderivative3(ε^3 + ε^2, :ε);   # first time is still slow (compiling)
-  3.127702 seconds (1.27 M allocations: 72.951 MiB, 0.99% gc time)
+  5.082717 seconds (1.27 M allocations: 73.420 MiB, 1.03% gc time)
 
 julia&gt; @time myderivative3(ε^3 + ε^2, :ε);   # but much faster the second time
-  0.003106 seconds (6.64 k allocations: 283.047 KiB)
+  0.003873 seconds (6.64 k allocations: 283.047 KiB)
 
 julia&gt; @time myderivative3(ε^3 + ε^2, :ε);   # and the third
-  0.002418 seconds (6.64 k allocations: 283.047 KiB)</code></pre><h3><a class="nav-anchor" id="Free-modules-(arrays-of-polynomials)-1" href="#Free-modules-(arrays-of-polynomials)-1">Free modules (arrays of polynomials)</a></h3><p>For practical purposes, a <em>free module</em> (of finite rank) over a ring <span>$R$</span> is just an array of polynomials in <span>$R$</span>. Many algorithms that work for polynomial rings also work for modules. For example, the function <code>gröbner_basis</code> works just as well if we pass a vector of vectors of polynomials instead of a vector of polynomials:</p><pre><code class="language-julia-repl">julia&gt; G = [[x^5-y,x^4],[x^3+y,y^3]];
+  0.003461 seconds (6.64 k allocations: 283.047 KiB)</code></pre><h3><a class="nav-anchor" id="Free-modules-(arrays-of-polynomials)-1" href="#Free-modules-(arrays-of-polynomials)-1">Free modules (arrays of polynomials)</a></h3><p>For practical purposes, a <em>free module</em> (of finite rank) over a ring <span>$R$</span> is just an array of polynomials in <span>$R$</span>. Many algorithms that work for polynomial rings also work for modules. For example, the function <code>gröbner_basis</code> works just as well if we pass a vector of vectors of polynomials instead of a vector of polynomials:</p><pre><code class="language-julia-repl">julia&gt; G = [[x^5-y,x^4],[x^3+y,y^3]];
 
 julia&gt; GG = gröbner_basis(G)
 5-element Array{Array{ℚ[x,y],1},1}:
@@ -181,8 +181,8 @@ julia&gt; GG = gröbner_basis(G)
 ℤ[x]
 
 julia&gt; rem(2x^2, 3x + 1)
-ERROR: MethodError: no method matching PolynomialRings.MonomialOrderings.MonomialOrder{PolynomialRings.MonomialOrderings.MonomialOrder{:degrevlex,x},Names} where Names()</code></pre><p>gives an error because we have to substract <span>$x^2 + \frac{2}{3}x$</span>, which is not representable in <span>$R$</span>. We offer a convenience function <code>base_extend</code> to extend to ℚ:</p><pre><code class="language-julia-repl">julia&gt; rem(base_extend(2x^2), base_extend(3x + 1))
-ERROR: MethodError: no method matching PolynomialRings.MonomialOrderings.MonomialOrder{PolynomialRings.MonomialOrderings.MonomialOrder{:degrevlex,x},Names} where Names()</code></pre><p>If you want, you can also extend to bigger base rings than the quotient field by passing that as an extra parameter. For example:</p><pre><code class="language-julia-repl">julia&gt; f = base_extend(x^2 + 1, Complex{Rational{Int}})
+ERROR: InexactError()</code></pre><p>gives an error because we have to substract <span>$x^2 + \frac{2}{3}x$</span>, which is not representable in <span>$R$</span>. We offer a convenience function <code>base_extend</code> to extend to ℚ:</p><pre><code class="language-julia-repl">julia&gt; rem(base_extend(2x^2), base_extend(3x + 1))
+2//9</code></pre><p>If you want, you can also extend to bigger base rings than the quotient field by passing that as an extra parameter. For example:</p><pre><code class="language-julia-repl">julia&gt; f = base_extend(x^2 + 1, Complex{Rational{Int}})
 x^2 + 1//1 + 0//1*im
 
 julia&gt; div(f, [x - im])
