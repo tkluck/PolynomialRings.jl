@@ -125,7 +125,8 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
         if iszero(v)
             newh = T
             push!(H[newh.i], newh.m)
-            filter!(JP) do sig, jp
+            _filter!(JP) do key_value
+                sig, jp = key_value
                 T2, v2 = jp
                 divisible = maybe_div(T2, newh) !== nothing
                 !divisible

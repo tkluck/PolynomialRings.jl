@@ -3,6 +3,9 @@ module Monomials
 if VERSION >= v"0.7-"
     import Base: iterate
     using SparseArrays: SparseVector, sparsevec
+    _mapreduce(f, op, v0, itr) = mapreduce(f, op, itr; init=v0)
+else
+    _mapreduce(f, op, v0, itr) = mapreduce(f, op, v0, itr)
 end
 
 """
@@ -168,7 +171,7 @@ length(enz::EnumerateNZ) = length(nzindices(enz.a))
 #
 # -----------------------------------------------------------------------------
 @inline _construct(::Type{M}, f, nzindices, deg) where M <: AbstractMonomial = _construct(M, f, nzindices)
-@inline _construct(::Type{M}, f, nzindices) where M <: AbstractMonomial = _construct(M, f, nzindices, exptype(M)(mapreduce(f, +, zero(exptype(M)), nzindices)))
+@inline _construct(::Type{M}, f, nzindices) where M <: AbstractMonomial = _construct(M, f, nzindices, exptype(M)(_mapreduce(f, +, zero(exptype(M)), nzindices)))
 
 one(::Type{M}) where M <: AbstractMonomial = _construct(M, i->0, 1:0)
 one(::M) where M <: AbstractMonomial = one(M)
@@ -176,7 +179,7 @@ one(::M) where M <: AbstractMonomial = one(M)
 *(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _construct(promote_type(typeof(a), typeof(b)),i -> a[i] + b[i], index_union(a,b), total_degree(a) + total_degree(b))
 ^(a::M, n::Integer) where M <: AbstractMonomial = _construct(M,i -> a[i]*n, nzindices(a), total_degree(a)*n)
 
-total_degree(a::A) where A <: AbstractMonomial = mapreduce(i->a[i], +, zero(exptype(a)), nzindices(a))
+total_degree(a::A) where A <: AbstractMonomial = _mapreduce(i->a[i], +, zero(exptype(a)), nzindices(a))
 
 lcm(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _construct(promote_type(typeof(a), typeof(b)),i -> max(a[i], b[i]), index_union(a,b))
 gcd(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _construct(promote_type(typeof(a), typeof(b)),i -> min(a[i], b[i]), index_union(a,b))
