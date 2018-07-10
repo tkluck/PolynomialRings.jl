@@ -203,7 +203,6 @@ enumeratenz(a::M) where M <: AbstractMonomial = EnumerateNZ(a)
 exptype(a::AbstractMonomial) = exptype(typeof(a))
 
 function hash(a::AbstractMonomial, h::UInt)
-    h = hash(1)
     for (i,e) in enumeratenz(a)
         if !iszero(e)
             h = hash((i,e), h)
