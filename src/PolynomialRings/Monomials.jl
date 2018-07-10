@@ -1,6 +1,7 @@
 module Monomials
 
 if VERSION >= v"0.7-"
+    import Base: iterate
     using SparseArrays: SparseVector, sparsevec
 end
 
@@ -55,6 +56,27 @@ struct IndexUnion{I,J,lt}
     right::J
 end
 
+struct Start end
+iterate(a, b::Start) = iterate(a)
+iterate(a::Array, b::Start) = iterate(a)
+iterate(i::IndexUnion) = iterate(i, (Start(), Start()))
+function iterate(i::IndexUnion{I,J,lt}, state) where {I,J,lt}
+    lstate, rstate = state
+    liter = iterate(i.left, lstate)
+    riter = iterate(i.right, rstate)
+    if liter == nothing && riter == nothing
+        return nothing
+    elseif liter == nothing || (riter != nothing && lt(riter[1], liter[1]))
+        return riter[1], (lstate, riter[2])
+    elseif riter == nothing || (liter != nothing && lt(liter[1], riter[1]))
+        return liter[1], (liter[2], rstate)
+    elseif liter[1] == riter[1]
+        return liter[1], (liter[2], riter[2])
+    else
+        @assert(false) # unreachable?
+    end
+end
+
 start(i::IndexUnion) = (start(i.left), start(i.right))
 function next(i::IndexUnion{I,J,lt}, state) where {I,J,lt}
     lstate, rstate = state
@@ -106,6 +128,9 @@ end
 struct ReversedVector{A<:AbstractVector}
     a::A
 end
+iterate(r::ReversedVector) = iterate(r, Start())
+iterate(r::ReversedVector, ::Start) = isempty(r.a) ? nothing : (r.a[end], 1)
+iterate(r::ReversedVector, state) = length(r.a) <= state ? nothing : (r.a[end-state], state+1)
 start(r::ReversedVector) = length(r.a)
 done(r::ReversedVector, state) = state == 0
 next(r::ReversedVector, state) = r.a[state], state-1
@@ -119,6 +144,18 @@ end
 
 struct EnumerateNZ{M<:AbstractMonomial}
     a::M
+end
+function iterate(enz::EnumerateNZ)
+    it = iterate(nzindices(enz.a))
+    it == nothing && return nothing
+    i, next_state = it
+    (i,enz.a[i]), next_state
+end
+function iterate(enz::EnumerateNZ, state)
+    it = iterate(nzindices(enz.a), state)
+    it == nothing && return nothing
+    i, next_state = it
+    (i,enz.a[i]), next_state
 end
 start(enz::EnumerateNZ) = start(nzindices(enz.a))
 done(enz::EnumerateNZ, state) = done(nzindices(enz.a), state)

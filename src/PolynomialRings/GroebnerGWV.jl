@@ -18,8 +18,10 @@ import PolynomialRings.Operators: Lead, Full
 if VERSION >= v"0.7-"
     using LinearAlgebra: Transpose
     using SparseArrays: SparseVector, sparsevec
+    _filter!(f, d::AbstractDict) = filter!(f, d)
 else
     Transpose = RowVector
+    _filter!(f, d::Associative) = filter!((k,v)->f(k=>v), d)
 end
 
 function regular_topreduce_rem(o, m, G)
