@@ -1,5 +1,10 @@
 module Util
 
+# -----------------------------------------------------------------------------
+#
+# Bounded heap
+#
+# -----------------------------------------------------------------------------
 mutable struct BoundedHeap{T, O<:Base.Order.Ordering}
     values::Vector{T}
     cur_length::Int
