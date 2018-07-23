@@ -4,7 +4,7 @@ if VERSION < v"v0.7-"
     Nothing = Void
 end
 using PolynomialRings.Polynomials: Polynomial
-using PolynomialRings.Gröbner: gröbner_transformation
+using PolynomialRings.Gröbner: gröbner_basis, gröbner_transformation
 
 # -----------------------------------------------------------------------------
 #
@@ -12,7 +12,7 @@ using PolynomialRings.Gröbner: gröbner_transformation
 #
 # -----------------------------------------------------------------------------
 import Base: promote_rule, convert
-import Base: zero, one, in, rem, issubset, inv
+import Base: zero, one, in, div, rem, divrem, rem, issubset, inv
 import Base: +,-,*,/,//,==,!=, hash
 import Base: show
 import PolynomialRings: generators, expansion
@@ -44,15 +44,15 @@ ring(I::Ideal{P}) where P<:Polynomial = P
 generators(I::Ideal) = I.generators
 function _grb(I::Ideal)
     if I._grb === nothing
-        I._grb, I._trns = gröbner_transformation(I.generators)
+        I._grb = gröbner_basis(I.generators)
     end
     I._grb
 end
-function _trns(I::Ideal)
-    if I._grb === nothing
+function _grb_trns(I::Ideal)
+    if I._trns === nothing
         I._grb, I._trns = gröbner_transformation(I.generators)
     end
-    I._trns
+    I._grb, I._trns
 end
 
 # -----------------------------------------------------------------------------
@@ -60,6 +60,13 @@ end
 # Operations
 #
 # -----------------------------------------------------------------------------
+function divrem(f, I::Ideal)
+    G, T = _grb_trns(I)
+    d, r = divrem(f, G)
+    d*T, r
+end
+
+div(f, I::Ideal) = divrem(f, I)[1]
 rem(f, I::Ideal) = rem(ring(I)(f), _grb(I))
 in(f, I::Ideal) = iszero(rem(f, I))
 
