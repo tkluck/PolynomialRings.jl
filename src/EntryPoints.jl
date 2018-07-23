@@ -137,14 +137,16 @@ function _inject_vars(R, definition)
     end
 end
 
-function _ideal(expr)
+function _ideal(R, expr)
     res = :( Ideal() )
+    symbol_to_variable(sym) = :($R($(QuoteNode(sym))))
+
     if expr isa Expr && expr.head == :tuple
         for ex in expr.args
-            push!(res.args, macroexpand(:( @polynomial $ex )))
+            push!(res.args, _visit_symbols(symbol_to_variable, ex))
         end
     else
-        push!(res.args, macroexpand(:( @polynomial $expr )))
+        push!(res.args, _visit_symbols(symbol_to_variable, expr))
     end
     res
 end
@@ -215,7 +217,7 @@ macro ring(definition)
     if definition.head == :call && definition.args[1] == :/
         return quote
             R = $( _polynomial_ring(definition.args[2]))
-            I = $( _ideal(definition.args[3]) )
+            I = $( _ideal(:R, definition.args[3]) )
             R / I
         end
     else
@@ -257,7 +259,7 @@ macro ring!(definition)
     if definition.head == :call && definition.args[1] == :/
         return quote
             R = $( _polynomial_ring(definition.args[2]))
-            I = $( _ideal(definition.args[3]) )
+            I = $( _ideal(:R, definition.args[3]) )
             S = R/I
             $(_inject_vars(:S,definition))
             S

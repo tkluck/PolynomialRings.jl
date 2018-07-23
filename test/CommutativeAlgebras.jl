@@ -58,12 +58,12 @@ using PolynomialRings
         #@test γ^3 == α*γ
         #@test γ^4 == 2
 
-        #B = @ring! ℚ[α, x]
-        #@test (α*x)^2 != 2x^2
-        #@test A(α*x)^2 == A(2x^2)
+        B = @ring! ℚ[α, x]
+        @test (α*x)^2 != 2x^2
+        @test A(α*x)^2 == A(2x^2)
 
-        #S = @numberfield! ℚ[α,β]/(α^2 - 2, β^3 - 2)
-        #@test α^2 == β^3 == 2
+        S = @numberfield! ℚ[α,β]/(α^2 - 2, β^3 - 2)
+        @test α^2 == β^3 == 2
 
         #QQ = @numberfield Q[β]/(β^3 - 2)
         #@test QQ(β + α) == QQ(β) + Q(α)
