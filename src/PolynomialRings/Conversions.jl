@@ -22,7 +22,7 @@ import Base: div, rem, divrem
 # Fallback for v0.7
 #
 # -----------------------------------------------------------------------------
-(::Type{P})(a) where P <: Polynomial = convert(P, a)
+(::Type{P})(a) where P <: Polynomial{T} where T = convert(P, a)
 
 # -----------------------------------------------------------------------------
 #
