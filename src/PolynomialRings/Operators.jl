@@ -481,16 +481,16 @@ end
 # Use Term/Monomial as a polynomial
 #
 # -----------------------------------------------------------------------------
-function *(a::T, b::P) where P<:Polynomial{V} where V<:AbstractVector{T} where T<:Term
+function *(a::T, b::P) where P<:Polynomial{T} where T<:Term
     P(map(t->a*t, terms(b)))
 end
-function *(a::P, b::T) where P<:Polynomial{V} where V<:AbstractVector{T} where T<:Term
+function *(a::P, b::T) where P<:Polynomial{T} where T<:Term
     P(map(t->t*b, terms(a)))
 end
-function *(a::M, b::P) where P<:Polynomial{<:AbstractVector{<:Term{M}}} where M<:AbstractMonomial
+function *(a::M, b::P) where P<:Polynomial{<:Term{M}} where M<:AbstractMonomial
     P(map(t->t*a, terms(b)))
 end
-function *(a::P, b::M) where P<:Polynomial{<:AbstractVector{<:Term{M}}} where M<:AbstractMonomial
+function *(a::P, b::M) where P<:Polynomial{<:Term{M}} where M<:AbstractMonomial
     P(map(t->t*b, terms(a)))
 end
 

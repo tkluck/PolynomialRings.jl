@@ -53,7 +53,7 @@ function _expansion_types(::Type{P}, ::Type{Named{vars}}) where P <: NamedPolyno
     else
         CoeffType = promote_type(
             CoeffCoeffType,
-            Polynomial{Vector{Term{TupleMonomial{M,ExpType,MonomialOrder{:degrevlex,Named{unspecified_vars}}},One}}},
+            Polynomial{Term{TupleMonomial{M,ExpType,MonomialOrder{:degrevlex,Named{unspecified_vars}}},One}},
         )
     end
     if !isconcretetype(CoeffType)

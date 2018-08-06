@@ -35,7 +35,7 @@ unused_variable(a::AbstractArray{<:Polynomial}) = unused_variable(eltype(a), a)
 # Coefficient promotions when monomial type is the same
 #
 # -----------------------------------------------------------------------------
-function promote_rule(P1::Type{<:PolynomialIn{M}}, P2::Type{<:PolynomialIn{M}}) where M
+function promote_rule(P1::Type{<:PolynomialIn{M}}, P2::Type{<:PolynomialIn{M}}) where M<:AbstractMonomial
     return base_extend(P1, basering(P2))
 end
 
@@ -93,7 +93,7 @@ end
 
 function promote_rule(::Type{P1}, ::Type{P2}) where P1 <: Polynomial where P2 <: Polynomial
     T = promote_rule(termtype(P1), termtype(P2))
-    return Polynomial{Vector{T}}
+    return Polynomial{T}
 end
 
 _allfreevars(x::Type) = Set()

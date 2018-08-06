@@ -38,12 +38,14 @@ convert(::Type{P}, x::P) where P <: Polynomial = x
 #
 # -----------------------------------------------------------------------------
 
-promote_rule(::Type{Polynomial{V}}, ::Type{C}) where V <: AbstractVector{T} where T <: Term{M,C} where {M,C} = Polynomial{V}
+promote_rule(::Type{P}, ::Type{C}) where P<:PolynomialOver{C} where C = P
 
-function convert(::Type{P}, a::C) where P<:Polynomial{V} where V <: AbstractVector{T} where T <: Term{M,C} where {M,C}
+function convert(::Type{P}, a::C) where P<:PolynomialOver{C} where C
     if iszero(a)
         return zero(P)
     else
+        T = termtype(P)
+        M = monomialtype(P)
         return P([T(one(M),a)])
     end
 end
@@ -54,7 +56,7 @@ end
 #
 # -----------------------------------------------------------------------------
 base_restrict(::Type{Term{M,C1}}, ::Type{C2}) where {M,C1,C2} = Term{M, base_restrict(C1,C2)}
-base_restrict(::Type{Polynomial{V}}, ::Type{C}) where V<:AbstractVector{T} where {T,C} = Polynomial{Vector{base_restrict(T,C)}}
+base_restrict(::Type{Polynomial{T}}, ::Type{C}) where {T,C} = Polynomial{base_restrict(T,C)}
 
 function base_restrict(t::T, ::Type{C}) where T<:Term where C
     TT = base_restrict(T, C)
@@ -76,7 +78,7 @@ base_restrict(::Type{P}) where P <: Union{Term,Polynomial} = base_restrict(P, in
 #
 # -----------------------------------------------------------------------------
 base_extend(::Type{Term{M,C1}}, ::Type{C2}) where {M,C1,C2} = Term{M, base_extend(C1,C2)}
-base_extend(::Type{Polynomial{V}}, ::Type{C}) where V<:AbstractVector{T} where {T,C} = Polynomial{Vector{base_extend(T,C)}}
+base_extend(::Type{Polynomial{T}}, ::Type{C}) where {T,C} = Polynomial{base_extend(T,C)}
 
 function base_extend(t::T, ::Type{C}) where T<:Term where C
     TT = base_extend(T, C)
@@ -109,14 +111,16 @@ base_extend(::Type{P}) where P <: Union{Term,Polynomial} = base_extend(P, fracti
 #
 # -----------------------------------------------------------------------------
 promote_rule(::Type{P}, ::Type{C}) where {P <: Polynomial, C<:Number} = base_extend(P,C)
-convert(::Type{P}, a::C) where P <: Polynomial        where C<:Number = P(basering(P)(a))
+convert(::Type{P}, a::C) where P <: Polynomial where C<:Number = P(basering(P)(a))
 
 # resolve ambiguity between C a coefficient and C a number
-promote_rule(::Type{Polynomial{V}}, ::Type{C}) where V <: AbstractVector{T} where T <: Term{M,C} where {M,C<:Number} = Polynomial{V}
-function convert(::Type{P}, a::C) where P<:Polynomial{V} where V <: AbstractVector{T} where T <: Term{M,C} where {M,C<:Number}
+promote_rule(::Type{P}, ::Type{C}) where P<:PolynomialOver{C} where C<:Number = P
+function convert(::Type{P}, a::C)  where P<:PolynomialOver{C} where C<:Number
     if iszero(a)
         return zero(P)
     else
+        T = termtype(P)
+        M = monomialtype(P)
         return P([T(one(M),a)])
     end
 end
@@ -145,9 +149,9 @@ promote_rule(::Type{M}, ::Type{C}) where M <: AbstractMonomial where C<:Number =
 #
 # -----------------------------------------------------------------------------
 
-promote_rule(::Type{P}, ::Type{T}) where P <: Polynomial{<:AbstractArray{T}} where T <: Term = P
+promote_rule(::Type{P}, ::Type{T}) where P <: Polynomial{T} where T <: Term = P
 
-convert(::Type{P}, a::T) where P <: Polynomial{<:AbstractArray{T}} where T <: Term = iszero(a) ? zero(P) : P([a])
+convert(::Type{P}, a::T) where P <: Polynomial{T} where T <: Term = iszero(a) ? zero(P) : P([a])
 
 
 # -----------------------------------------------------------------------------
@@ -166,9 +170,9 @@ convert(::Type{T}, a::M) where T <: Term{M,C} where {M<:AbstractMonomial,C} = T(
 #
 # -----------------------------------------------------------------------------
 
-promote_rule(::Type{P}, ::Type{M}) where P <: Polynomial{<:AbstractArray{T}} where T <: Term{M} where M = P
+promote_rule(::Type{P}, ::Type{M}) where P <: Polynomial{T} where T <: Term{M} where M = P
 
-convert(::Type{P}, a::M) where P <: Polynomial{<:AbstractArray{T}} where T <: Term{M} where M = P([convert(T, a)])
+convert(::Type{P}, a::M) where P <: Polynomial{T} where T <: Term{M} where M = P([convert(T, a)])
 
 # -----------------------------------------------------------------------------
 #
@@ -238,7 +242,7 @@ function ⊗(a::P1, b::P2) where P1 <: Polynomial where P2 <: Polynomial
     l * r
 end
 
-⊗(::Type{P1}, ::Type{P2}) where P1 <: Polynomial where P2 <: Polynomial{<:AbstractVector{T}} where T = base_extend(P2, P1)
+⊗(::Type{P1}, ::Type{P2}) where P1 <: Polynomial where P2 <: Polynomial{T} where T = base_extend(P2, P1)
 
 # -----------------------------------------------------------------------------
 #
@@ -248,10 +252,12 @@ end
 
 # Resolve ambiguity with the convert method that takes care of canonical mappings
 # between polynomial rings
-function convert(::Type{P}, a::C) where P <: NamedPolynomial{V} where V <: AbstractVector{T} where T <: Term{M,C} where {M,C<:Polynomial}
+function convert(::Type{P}, a::C) where P <: NamedPolynomial{C} where C<:Polynomial
     if iszero(a)
         return zero(P)
     else
+        T = termtype(P)
+        M = monomialtype(P)
         return P([T(one(M),a)])
     end
 end
@@ -264,16 +270,6 @@ function base_extend(::Type{Term{M,C1}}, ::Type{C2}) where {M,C1,C2<:Polynomial}
         Term{M, base_extend(C1,C2)}
     end
 end
-
-
-# -----------------------------------------------------------------------------
-#
-# Use Term as a polynomial
-#
-# -----------------------------------------------------------------------------
-promote_rule(::Type{P}, ::Type{T}) where P <: Polynomial{V} where V <: AbstractVector{T} where T <: Term = P
-convert(::Type{P}, a::T) where P <: Polynomial{V} where V <: AbstractVector{T} where T <: Term = P([a])
-
 
 # -----------------------------------------------------------------------------
 #
