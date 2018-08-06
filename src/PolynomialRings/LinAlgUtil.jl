@@ -17,7 +17,7 @@ function echelon(M::Matrix{N}) where N <: ExactNumber
     while i > 0 && j > 0
         # find a pivot in the i'th row left of the j'th column (inclusive)
         k = findprev(!iszero, M_aug[i,:], j)
-        if k == 0
+        if VERSION >= v"0.7-" ? k === nothing : k == 0
             # move one row up if there's no pivots (i.e. everything is zero)
             i -= 1
             continue
