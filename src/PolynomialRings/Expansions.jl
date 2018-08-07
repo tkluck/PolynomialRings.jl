@@ -10,7 +10,7 @@ import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.Util: lazymap, TrivialIter
 import PolynomialRings.Constants: One
 
-import Iterators: groupby
+import IterTools: groupby
 
 if VERSION < v"0.7-"
     isconcretetype(x) = isleaftype(x)

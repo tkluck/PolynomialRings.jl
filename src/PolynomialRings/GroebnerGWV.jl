@@ -1,7 +1,7 @@
 module GröbnerGWV
 
 using DataStructures: SortedDict, DefaultDict
-using Iterators: chain
+using IterTools: chain
 
 import PolynomialRings
 import PolynomialRings: gröbner_basis

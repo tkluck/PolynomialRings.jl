@@ -3,7 +3,7 @@ module Arrays
 import PolynomialRings.Monomials: AbstractMonomial, expstype
 import PolynomialRings.Terms: Term
 import PolynomialRings.Polynomials: Polynomial
-import Iterators: groupby
+import IterTools: groupby
 import PolynomialRings.Expansions: _expansion_expr, _expansion_types
 import PolynomialRings: base_restrict
 if VERSION >= v"0.7-"

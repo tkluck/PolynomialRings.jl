@@ -2,7 +2,7 @@ module GröbnerSig
 
 using DataStructures: DefaultDict
 using DataStructures: PriorityQueue, enqueue!, dequeue!
-using Iterators: chain
+using IterTools: chain
 
 import PolynomialRings
 import PolynomialRings: gröbner_basis
