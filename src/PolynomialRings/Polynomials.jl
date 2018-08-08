@@ -29,7 +29,7 @@ import PolynomialRings.MonomialOrderings: MonomialOrder
 # -----------------------------------------------------------------------------
 
 """
-    Polynomial{A} where A <: AbstractVector{T} where T <: Term
+    Polynomial{T} where T <: Term
 
 This type represents a polynomial as a vector of terms. All methods guarantee and assume
 that the vector is sorted by increasing monomial order (see
