@@ -277,7 +277,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Polynomials.polynomial_ring",
     "category": "function",
-    "text": "polynomial_ring(symbols::Symbol...; basering=Rational{BigInt}, exptype=UInt16, monomialorder=:degrevlex)\n\nCreate a type for the polynomial ring over basering in variables with names specified by symbols, and return the type and a tuple of these variables.\n\nThe exptype parameter defines the integer type for the exponents.\n\nThe monomialorder defines an order for the monomials for e.g. Gröbner basis computations; it also defines the internal sort order. Built-in values are :degrevlex, :deglex and :lex. This function will accept any symbol, though, and you can define your own monomial order by implementing\n\nBase.Order.lt(::MonomialOrder{:myorder}, a::M, b::M) where M <: AbstractMonomial\n\nSee PolynomialRings.MonomialOrderings for examples.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R,(x,y,z) = polynomial_ring(:x, :y, :z);\n\njulia> x*y + z\nx*y + z\n\n\n\n"
+    "text": "polynomial_ring(symbols::Symbol...; basering=Rational{BigInt}, exptype=Int16, monomialorder=:degrevlex)\n\nCreate a type for the polynomial ring over basering in variables with names specified by symbols, and return the type and a tuple of these variables.\n\nThe exptype parameter defines the integer type for the exponents.\n\nThe monomialorder defines an order for the monomials for e.g. Gröbner basis computations; it also defines the internal sort order. Built-in values are :degrevlex, :deglex and :lex. This function will accept any symbol, though, and you can define your own monomial order by implementing\n\nBase.Order.lt(::MonomialOrder{:myorder}, a::M, b::M) where M <: AbstractMonomial\n\nSee PolynomialRings.MonomialOrderings for examples.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R,(x,y,z) = polynomial_ring(:x, :y, :z);\n\njulia> x*y + z\nx*y + z\n\n\n\n"
 },
 
 {
@@ -341,7 +341,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Expansions.@expansion",
     "category": "macro",
-    "text": "@expansion(f, var, [var...])\n\nReturn a collection of (exponent tuple, coefficient) tuples decomposing f into its consituent parts.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> collect(@expansion(x^3 + y^2, y))\n2-element Array{Tuple{Tuple{UInt16},ℤ[x]},1}:\n ((0x0000,), x^3)\n ((0x0002,), 1)\n\njulia> collect(@expansion(x^3 + y^2, x, y))\n2-element Array{Tuple{Tuple{UInt16,UInt16},BigInt},1}:\n ((0x0000, 0x0002), 1)\n ((0x0003, 0x0000), 1)\n\nSee also\n\n@expand, expansion(...), @coefficient and coefficient\n\n\n\n"
+    "text": "@expansion(f, var, [var...])\n\nReturn a collection of (exponent tuple, coefficient) tuples decomposing f into its consituent parts.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> collect(@expansion(x^3 + y^2, y))\n2-element Array{Tuple{Tuple{Int16},ℤ[x]},1}:\n ((0,), x^3)\n ((2,), 1)\n\njulia> collect(@expansion(x^3 + y^2, x, y))\n2-element Array{Tuple{Tuple{Int16,Int16},BigInt},1}:\n ((0, 2), 1)\n ((3, 0), 1)\n\nSee also\n\n@expand, expansion(...), @coefficient and coefficient\n\n\n\n"
 },
 
 {
@@ -349,7 +349,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Expansions.expansion",
     "category": "function",
-    "text": "expansion(f, symbol, [symbol...])\n\nReturn a collection of (exponent_tuple, coefficient) tuples decomposing f into its consituent parts.\n\nIn the REPL, you likely want to use the friendlier version @expansion instead.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> collect(expansion(x^3 + y^2, :y))\n2-element Array{Tuple{Tuple{UInt16},ℤ[x]},1}:\n ((0x0000,), x^3)\n ((0x0002,), 1)\n\njulia> collect(expansion(x^3 + y^2, :x, :y))\n2-element Array{Tuple{Tuple{UInt16,UInt16},BigInt},1}:\n ((0x0000, 0x0002), 1)\n ((0x0003, 0x0000), 1)\n\nSee also\n\n@expansion(...), @coefficient and coefficient\n\n\n\n"
+    "text": "expansion(f, symbol, [symbol...])\n\nReturn a collection of (exponent_tuple, coefficient) tuples decomposing f into its consituent parts.\n\nIn the REPL, you likely want to use the friendlier version @expansion instead.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> collect(expansion(x^3 + y^2, :y))\n2-element Array{Tuple{Tuple{Int16},ℤ[x]},1}:\n ((0,), x^3)\n ((2,), 1)\n\njulia> collect(expansion(x^3 + y^2, :x, :y))\n2-element Array{Tuple{Tuple{Int16,Int16},BigInt},1}:\n ((0, 2), 1)\n ((3, 0), 1)\n\nSee also\n\n@expansion(...), @coefficient and coefficient\n\n\n\n"
 },
 
 {
@@ -397,7 +397,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Expansions.@deg",
     "category": "macro",
-    "text": "@deg(f, vars...)\n\nReturn the total degree of f when expanded as a polynomial in the given variables.\n\nnote: Note\nvars need to be literal variable names; it cannot be a variable containing it.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> @deg (x^2 + x*y - 1) x\n0x0002\n\njulia> @deg (x^2 + x*y - 1) y\n0x0001\n\nSee also\n\ndeg, @expansion\n\n\n\n"
+    "text": "@deg(f, vars...)\n\nReturn the total degree of f when expanded as a polynomial in the given variables.\n\nnote: Note\nvars need to be literal variable names; it cannot be a variable containing it.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> @deg (x^2 + x*y - 1) x\n2\n\njulia> @deg (x^2 + x*y - 1) y\n1\n\nSee also\n\ndeg, @expansion\n\n\n\n"
 },
 
 {
@@ -405,7 +405,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Expansions.deg",
     "category": "function",
-    "text": "deg(f, vars...)\n\nReturn the total degree of f when regarded as a polynomial in vars. Returns -1 for the zero polynomial.\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> deg(x^2, :x)\n0x0002\n\njulia> deg(x^2, :x, :y)\n0x0002\n\njulia> deg(x^2, :y)\n0x0000\n\n\n\n"
+    "text": "deg(f, vars...)\n\nReturn the total degree of f when regarded as a polynomial in vars. Returns -1 for the zero polynomial.\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> deg(x^2, :x)\n2\n\njulia> deg(x^2, :x, :y)\n2\n\njulia> deg(x^2, :y)\n0\n\n\n\n"
 },
 
 {
@@ -565,7 +565,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Polynomials.Polynomial",
     "category": "type",
-    "text": "Polynomial{A} where A <: AbstractVector{T} where T <: Term\n\nThis type represents a polynomial as a vector of terms. All methods guarantee and assume that the vector is sorted by increasing monomial order (see PolynomialRings.MonomialOrderings).\n\n\n\n"
+    "text": "Polynomial{T} where T <: Term\n\nThis type represents a polynomial as a vector of terms. All methods guarantee and assume that the vector is sorted by increasing monomial order (see PolynomialRings.MonomialOrderings).\n\n\n\n"
 },
 
 {
