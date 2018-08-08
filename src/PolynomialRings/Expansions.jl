@@ -80,14 +80,14 @@ julia> using PolynomialRings
 julia> R = @ring! ℤ[x,y];
 
 julia> collect(expansion(x^3 + y^2, :y))
-2-element Array{Tuple{Tuple{UInt16},ℤ[x]},1}:
- ((0x0000,), x^3)
- ((0x0002,), 1)
+2-element Array{Tuple{Tuple{Int16},ℤ[x]},1}:
+ ((0,), x^3)
+ ((2,), 1)
 
 julia> collect(expansion(x^3 + y^2, :x, :y))
-2-element Array{Tuple{Tuple{UInt16,UInt16},BigInt},1}:
- ((0x0000, 0x0002), 1)
- ((0x0003, 0x0000), 1)
+2-element Array{Tuple{Tuple{Int16,Int16},BigInt},1}:
+ ((0, 2), 1)
+ ((3, 0), 1)
 ```
 # See also
 `@expansion(...)`, `@coefficient` and `coefficient`
@@ -485,13 +485,13 @@ julia> using PolynomialRings
 julia> R = @ring! ℤ[x,y];
 
 julia> deg(x^2, :x)
-0x0002
+2
 
 julia> deg(x^2, :x, :y)
-0x0002
+2
 
 julia> deg(x^2, :y)
-0x0000
+0
 ```
 """
 function deg(f::Polynomial, args...)
@@ -650,14 +650,14 @@ julia> using PolynomialRings
 julia> R = @ring! ℤ[x,y];
 
 julia> collect(@expansion(x^3 + y^2, y))
-2-element Array{Tuple{Tuple{UInt16},ℤ[x]},1}:
- ((0x0000,), x^3)
- ((0x0002,), 1)
+2-element Array{Tuple{Tuple{Int16},ℤ[x]},1}:
+ ((0,), x^3)
+ ((2,), 1)
 
 julia> collect(@expansion(x^3 + y^2, x, y))
-2-element Array{Tuple{Tuple{UInt16,UInt16},BigInt},1}:
- ((0x0000, 0x0002), 1)
- ((0x0003, 0x0000), 1)
+2-element Array{Tuple{Tuple{Int16,Int16},BigInt},1}:
+ ((0, 2), 1)
+ ((3, 0), 1)
 ```
 # See also
 `@expand`, `expansion(...)`, `@coefficient` and `coefficient`
@@ -764,10 +764,10 @@ julia> using PolynomialRings
 julia> R = @ring! ℤ[x,y];
 
 julia> @deg (x^2 + x*y - 1) x
-0x0002
+2
 
 julia> @deg (x^2 + x*y - 1) y
-0x0001
+1
 ```
 # See also
 `deg`, `@expansion`

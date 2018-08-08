@@ -106,7 +106,7 @@ lt(o::MonomialOrder, a::P, b::P) where P <: Polynomial = lt(o, leading_monomial(
 #
 # -----------------------------------------------------------------------------
 """
-    polynomial_ring(symbols::Symbol...; basering=Rational{BigInt}, exptype=UInt16, monomialorder=:degrevlex)
+    polynomial_ring(symbols::Symbol...; basering=Rational{BigInt}, exptype=Int16, monomialorder=:degrevlex)
 
 Create a type for the polynomial ring over `basering` in variables with names
 specified by `symbols`, and return the type and a tuple of these variables.
@@ -132,7 +132,7 @@ julia> x*y + z
 x*y + z
 ```
 """
-function polynomial_ring(symbols::Symbol...; basering::Type=Rational{BigInt}, exptype::Type=UInt16, monomialorder::Symbol=:degrevlex)
+function polynomial_ring(symbols::Symbol...; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex)
     length(symbols)>0 || throw(ArgumentError("Need at least one variable name"))
     if any(s in allvariablesymbols(basering) for s in symbols) || !allunique(symbols)
         throw(ArgumentError("Duplicated symbols when extending $basering by $(Named{symbols})"))
@@ -142,7 +142,7 @@ function polynomial_ring(symbols::Symbol...; basering::Type=Rational{BigInt}, ex
     return P, generators(P)
 end
 
-function numbered_polynomial_ring(symbol::Symbol; basering::Type=Rational{BigInt}, exptype::Type=UInt16, monomialorder::Symbol=:degrevlex)
+function numbered_polynomial_ring(symbol::Symbol; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex)
     if symbol in allvariablesymbols(basering)
         throw(ArgumentError("Duplicated symbols when extending $basering by $(Numbered{symbol})"))
     end
