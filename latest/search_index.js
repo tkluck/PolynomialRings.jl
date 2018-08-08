@@ -261,7 +261,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.EntryPoints.@polyvar",
     "category": "macro",
-    "text": "@polyvar var [var...]\n\nDefine a polynomial ring in the given variables, and inject them into the surrounding scope.\n\nThis is equivalent to @ring! Int[var...].\n\nIf you need different coefficient rings, or need to specify a non-default monomial order or exponent integer type, use @ring! or polynomial_ring instead.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> @polyvar x y;\n\njulia> x + 3y\n3*y + x\n\njulia> @polyvar ε[];\n\njulia> 1 + ε()*x + ε()*y\n1 + ε[2]*y + ε[1]*x\n\nSee also\n\npolynomial_ring @ring!\n\n\n\n"
+    "text": "@polyvar var [var...]\n\nDefine a polynomial ring in the given variables, and inject them into the surrounding scope.\n\nThis is equivalent to @ring! Int[var...].\n\nIf you need different coefficient rings, or need to specify a non-default monomial order or exponent integer type, use @ring! or polynomial_ring instead.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> @polyvar x y;\n\njulia> x + 3y\nx + 3*y\n\njulia> @polyvar ε[];\n\njulia> 1 + ε()*x + ε()*y\nε[1]*x + ε[2]*y + 1\n\nSee also\n\npolynomial_ring @ring!\n\n\n\n"
 },
 
 {
@@ -277,7 +277,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Polynomials.polynomial_ring",
     "category": "function",
-    "text": "polynomial_ring(symbols::Symbol...; basering=Rational{BigInt}, exptype=UInt16, monomialorder=:degrevlex)\n\nCreate a type for the polynomial ring over basering in variables with names specified by symbols, and return the type and a tuple of these variables.\n\nThe exptype parameter defines the integer type for the exponents.\n\nThe monomialorder defines an order for the monomials for e.g. Gröbner basis computations; it also defines the internal sort order. Built-in values are :degrevlex, :deglex and :lex. This function will accept any symbol, though, and you can define your own monomial order by implementing\n\nBase.Order.lt(::MonomialOrder{:myorder}, a::M, b::M) where M <: AbstractMonomial\n\nSee PolynomialRings.MonomialOrderings for examples.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R,(x,y,z) = polynomial_ring(:x, :y, :z);\n\njulia> x*y + z\nx*y + -z\n\n\n\n"
+    "text": "polynomial_ring(symbols::Symbol...; basering=Rational{BigInt}, exptype=UInt16, monomialorder=:degrevlex)\n\nCreate a type for the polynomial ring over basering in variables with names specified by symbols, and return the type and a tuple of these variables.\n\nThe exptype parameter defines the integer type for the exponents.\n\nThe monomialorder defines an order for the monomials for e.g. Gröbner basis computations; it also defines the internal sort order. Built-in values are :degrevlex, :deglex and :lex. This function will accept any symbol, though, and you can define your own monomial order by implementing\n\nBase.Order.lt(::MonomialOrder{:myorder}, a::M, b::M) where M <: AbstractMonomial\n\nSee PolynomialRings.MonomialOrderings for examples.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R,(x,y,z) = polynomial_ring(:x, :y, :z);\n\njulia> x*y + z\nx*y + z\n\n\n\n"
 },
 
 {
@@ -293,7 +293,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "Base.rem",
     "category": "function",
-    "text": "f_red = rem(f, G)\n\nReturn the multivariate reduction of a polynomial f by a vector of polynomials G. By definition, this means that no leading term of a polynomial in G divides any monomial in f, and f_red + factors * G == f for some factors.\n\nIf you need to obtain the vector of factors, use divrem instead.\n\nExamples\n\nIn one variable, this is just the normal Euclidean algorithm:\n\njulia> R,(x,y) = polynomial_ring(:x, :y, basering=Complex{Int});\njulia> rem(x^1 + 1, [x-im])\n0\njulia> rem(x^2 + y^2 + 1, [x, y])\n1\n\n\n\n"
+    "text": "f_red = rem(f, G)\n\nReturn the multivariate reduction of a polynomial f by a vector of polynomials G. By definition, this means that no leading term of a polynomial in G divides any monomial in f, and f_red + factors * G == f for some factors.\n\nIf you need to obtain the vector of factors, use divrem instead.\n\nExamples\n\nIn one variable, this is just the normal Euclidean algorithm:\n\njulia> using PolynomialRings\n\njulia> R,(x,y) = polynomial_ring(:x, :y, basering=Complex{Int});\n\njulia> rem(x^2 + 1, [x-im])\n0\n\njulia> rem(x^2 + y^2 + 1, [x, y])\n1 + 0im\n\n\n\n"
 },
 
 {
@@ -301,7 +301,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "Base.divrem",
     "category": "function",
-    "text": "factors, f_red = divrem(f, G)\n\nReturn the multivariate reduction of a polynomial f by a vector of polynomials G, together with  row vector of factors. By definition, this means that no leading term of a polynomial in G divides any monomial in f, and f_red + factors * G == f.\n\nExamples\n\nIn one variable, this is just the normal Euclidean algorithm:\n\njulia> R,(x,y) = polynomial_ring(:x, :y, basering=Complex{Int});\njulia> divrem(x^1 + 1, [x-im])\n(0, [x + im]\')\njulia> divrem(x^2 + y^2 + 1, [x, y])\n(1, [x,y]\')\n\n\n\n"
+    "text": "factors, f_red = divrem(f, G)\n\nReturn the multivariate reduction of a polynomial f by a vector of polynomials G, together with  row vector of factors. By definition, this means that no leading term of a polynomial in G divides any monomial in f, and f_red + factors * G == f.\n\nExamples\n\nIn one variable, this is just the normal Euclidean algorithm:\n\njulia> using PolynomialRings\n\njulia> R,(x,y) = polynomial_ring(:x, :y, basering=Complex{Int});\n\njulia> divrem(x^2 + 1, [x-im])\n(Complex{Int64}[x,y][x + 0 + 1im], 0)\n\njulia> divrem(x^2 + y^2 + 1, [x, y])\n(Complex{Int64}[x,y][x y], 1 + 0im)\n\n\n\n\n"
 },
 
 {
@@ -341,7 +341,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Expansions.@expansion",
     "category": "macro",
-    "text": "@expansion(f, var, [var...])\n\nReturn a collection of (exponent tuple, coefficient) tuples decomposing f into its consituent parts.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> collect(@expansion(x^3 + y^2, y))\n[((0,), x^3), ((2,), 1)]\n\njulia> collect(@expansion(x^3 + y^2, x, y))\n[((3,0), 1), ((0,2), 1)]\n\nSee also\n\n@expand, expansion(...), @coefficient and coefficient\n\n\n\n"
+    "text": "@expansion(f, var, [var...])\n\nReturn a collection of (exponent tuple, coefficient) tuples decomposing f into its consituent parts.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> collect(@expansion(x^3 + y^2, y))\n2-element Array{Tuple{Tuple{UInt16},ℤ[x]},1}:\n ((0x0000,), x^3)\n ((0x0002,), 1)\n\njulia> collect(@expansion(x^3 + y^2, x, y))\n2-element Array{Tuple{Tuple{UInt16,UInt16},BigInt},1}:\n ((0x0000, 0x0002), 1)\n ((0x0003, 0x0000), 1)\n\nSee also\n\n@expand, expansion(...), @coefficient and coefficient\n\n\n\n"
 },
 
 {
@@ -349,7 +349,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Expansions.expansion",
     "category": "function",
-    "text": "expansion(f, symbol, [symbol...])\n\nReturn a collection of (exponent_tuple, coefficient) tuples decomposing f into its consituent parts.\n\nIn the REPL, you likely want to use the friendlier version @expansion instead.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> collect(expansion(x^3 + y^2, :y))\n[((0,), x^3), ((2,), 1)]\n\njulia> collect(expansion(x^3 + y^2, :x, :y))\n[((3,0), 1), ((0,2), 1)]\n\nSee also\n\n@expansion(...), @coefficient and coefficient\n\n\n\n"
+    "text": "expansion(f, symbol, [symbol...])\n\nReturn a collection of (exponent_tuple, coefficient) tuples decomposing f into its consituent parts.\n\nIn the REPL, you likely want to use the friendlier version @expansion instead.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> collect(expansion(x^3 + y^2, :y))\n2-element Array{Tuple{Tuple{UInt16},ℤ[x]},1}:\n ((0x0000,), x^3)\n ((0x0002,), 1)\n\njulia> collect(expansion(x^3 + y^2, :x, :y))\n2-element Array{Tuple{Tuple{UInt16,UInt16},BigInt},1}:\n ((0x0000, 0x0002), 1)\n ((0x0003, 0x0000), 1)\n\nSee also\n\n@expansion(...), @coefficient and coefficient\n\n\n\n"
 },
 
 {
@@ -357,7 +357,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Expansions.@expand",
     "category": "macro",
-    "text": "@expand(f, var, [var...])\n\nReturn a collection of (monomial, coefficient) tuples decomposing f into its consituent parts.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> collect(@expand(x^3 + y^2, y))\n[(1, x^3), (y^2, 1)]\n\njulia> collect(@expand(x^3 + y^2, x, y))\n[(x^3, 1), (y^2, 1)]\n\nSee also\n\nexpansion(...), @coefficient and coefficient\n\n\n\n"
+    "text": "@expand(f, var, [var...])\n\nReturn a collection of (monomial, coefficient) tuples decomposing f into its consituent parts.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> collect(@expand(x^3 + y^2, y))\n2-element Array{Tuple{Int64[y],ℤ[x]},1}:\n (1, x^3)\n (y^2, 1)\n\njulia> collect(@expand(x^3 + y^2, x, y))\n2-element Array{Tuple{Int64[x,y],BigInt},1}:\n (y^2, 1)\n (x^3, 1)\n\nSee also\n\nexpansion(...), @coefficient and coefficient\n\n\n\n"
 },
 
 {
@@ -381,7 +381,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Expansions.@coefficients",
     "category": "macro",
-    "text": "@coefficients(f, vars...)\n\nReturn the coefficients of f when expanded as a polynomial in the given variables.\n\nnote: Note\nvars need to be literal variable names; it cannot be a variable containing it.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> collect(@coefficients(x^3 + y^2, y))\n[x^3, 1]\n\njulia> collect(@coefficients(x^3 + y^2, x, y))\n[1, 1]\n\nSee also\n\ncoefficients, @expansion, expansion, @coefficient and coefficient\n\n\n\n"
+    "text": "@coefficients(f, vars...)\n\nReturn the coefficients of f when expanded as a polynomial in the given variables.\n\nnote: Note\nvars need to be literal variable names; it cannot be a variable containing it.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> collect(@coefficients(x^3 + y^2, y))\n2-element Array{ℤ[x],1}:\n x^3\n 1\n\njulia> collect(@coefficients(x^3 + y^2, x, y))\n2-element Array{BigInt,1}:\n 1\n 1\n\nSee also\n\ncoefficients, @expansion, expansion, @coefficient and coefficient\n\n\n\n"
 },
 
 {
@@ -389,7 +389,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Expansions.coefficients",
     "category": "function",
-    "text": "coefficients(f, symbol, [symbol...])\n\nReturn the coefficients of f when expanded as a polynomial in the given variables.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> collect(coefficients(x^3 + y^2, :y))\n[x^3, 1]\n\njulia> collect(coefficients(x^3 + y^2, :x, :y))\n[1, 1]\n\nSee also\n\n@coefficients, @expansion, expansion, @coefficient and coefficient\n\n\n\n"
+    "text": "coefficients(f, symbol, [symbol...])\n\nReturn the coefficients of f when expanded as a polynomial in the given variables.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> collect(coefficients(x^3 + y^2, :y))\n2-element Array{ℤ[x],1}:\n x^3\n 1\n\njulia> collect(coefficients(x^3 + y^2, :x, :y))\n2-element Array{BigInt,1}:\n 1\n 1\n\nSee also\n\n@coefficients, @expansion, expansion, @coefficient and coefficient\n\n\n\n"
 },
 
 {
@@ -397,7 +397,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Expansions.@deg",
     "category": "macro",
-    "text": "@deg(f, vars...)\n\nReturn the total degree of f when expanded as a polynomial in the given variables.\n\nnote: Note\nvars need to be literal variable names; it cannot be a variable containing it.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> @deg (x^2 + x*y - 1) x\n2\n\njulia> @deg (x^2 + x*y - 1) y\n1\n\nSee also\n\ndeg, @expansion\n\n\n\n"
+    "text": "@deg(f, vars...)\n\nReturn the total degree of f when expanded as a polynomial in the given variables.\n\nnote: Note\nvars need to be literal variable names; it cannot be a variable containing it.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> @deg (x^2 + x*y - 1) x\n0x0002\n\njulia> @deg (x^2 + x*y - 1) y\n0x0001\n\nSee also\n\ndeg, @expansion\n\n\n\n"
 },
 
 {
@@ -405,7 +405,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Expansions.deg",
     "category": "function",
-    "text": "deg(f, vars...)\n\nReturn the total degree of f when regarded as a polynomial in vars. Returns -1 for the zero polynomial.\n\njulia> using PolynomialRings\n\njulia> R = @ring ℤ[x,y];\n\njulia> deg(x^2, :x)\n2\n\njulia> deg(x^2, :x, :y)\n2\n\njulia> deg(x^2, :y)\n0\n\n\n\n"
+    "text": "deg(f, vars...)\n\nReturn the total degree of f when regarded as a polynomial in vars. Returns -1 for the zero polynomial.\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> deg(x^2, :x)\n0x0002\n\njulia> deg(x^2, :x, :y)\n0x0002\n\njulia> deg(x^2, :y)\n0x0000\n\n\n\n"
 },
 
 {
@@ -413,7 +413,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Expansions.@linear_coefficients",
     "category": "macro",
-    "text": "@linear_coefficient(f, vars...)\nlinear_coefficients(f, vars...)\n\nReturn the linear coefficients of f as a function of vars.\n\nnote: Note\nvars need to be symbols; e.g. they cannot be the polynomial x.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> @linear_coefficients(x^3*y + x + y + 1, x)\n[1]\n\njulia> @linear_coefficients(x^3*y + x + y + 1, x, y)\n[1,x^3 + 1]\n\nSee also\n\n@constant_coefficient, @coefficient, and @expansion\n\n\n\n"
+    "text": "@linear_coefficient(f, vars...)\nlinear_coefficients(f, vars...)\n\nReturn the linear coefficients of f as a function of vars.\n\nnote: Note\nvars need to be symbols; e.g. they cannot be the polynomial x.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> @linear_coefficients(x^3*y + x + y + 1, x)\n1-element Array{ℤ[y],1}:\n 1\n\njulia> @linear_coefficients(x^3*y + x + y + 1, x, y)\n2-element Array{BigInt,1}:\n 1\n 1\n\nSee also\n\n@constant_coefficient, @coefficient, and @expansion\n\n\n\n"
 },
 
 {
@@ -421,7 +421,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Expansions.linear_coefficients",
     "category": "function",
-    "text": "linear_coefficients(f, vars...)\n\nReturn the linear coefficients of f as a function of vars.\n\nnote: Note\nvars need to be symbols; e.g. they cannot be the polynomial x.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> linear_coefficients(x^3*y + x + y + 1, :x)\n[1]\n\njulia> linear_coefficients(x^3*y + x + y + 1, :x, :y)\n[1,x^3 + 1]\n\nSee also\n\n@constant_coefficient, @coefficient, and @expansion\n\n\n\n"
+    "text": "linear_coefficients(f, vars...)\n\nReturn the linear coefficients of f as a function of vars.\n\nnote: Note\nvars need to be symbols; e.g. they cannot be the polynomial x.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> linear_coefficients(x^3*y + x + y + 1, :x)\n1-element Array{ℤ[y],1}:\n 1\n\njulia> linear_coefficients(x^3*y + x + y + 1, :x, :y)\n2-element Array{BigInt,1}:\n 1\n 1\n\nSee also\n\n@constant_coefficient, @coefficient, and @expansion\n\n\n\n"
 },
 
 {
@@ -429,7 +429,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Expansions.@constant_coefficient",
     "category": "macro",
-    "text": "@constant_coefficient(f, vars...)\n\nReturn the constant coefficient of f as a function of vars.\n\nnote: Note\nvars need to be literal variable names; it cannot be a variable containing it.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> @constant_coefficient(x^3*y + x + y + 1, x)\ny + -1\n\njulia> @constant_coefficient(x^3*y + x + y + 1, x, y)\n1\n\nSee also\n\nconstant_coefficient, @coefficient, and @expansion\n\n\n\n"
+    "text": "@constant_coefficient(f, vars...)\n\nReturn the constant coefficient of f as a function of vars.\n\nnote: Note\nvars need to be literal variable names; it cannot be a variable containing it.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> @constant_coefficient(x^3*y + x + y + 1, x)\ny + 1\n\njulia> @constant_coefficient(x^3*y + x + y + 1, x, y)\n1\n\nSee also\n\nconstant_coefficient, @coefficient, and @expansion\n\n\n\n"
 },
 
 {
@@ -437,7 +437,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Expansions.constant_coefficient",
     "category": "function",
-    "text": "constant_coefficient(f, vars...)\n\nReturn the constant coefficient of f as a function of vars.\n\nnote: Note\nvars need to be symbols; e.g. they cannot be the polynomial x.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> constant_coefficient(x^3*y + x + y + 1, :x)\ny + -1\n\njulia> constant_coefficient(x^3*y + x + y + 1, :x, :y)\n1\n\nSee also\n\n@constant_coefficient, @coefficient, and @expansion\n\n\n\n"
+    "text": "constant_coefficient(f, vars...)\n\nReturn the constant coefficient of f as a function of vars.\n\nnote: Note\nvars need to be symbols; e.g. they cannot be the polynomial x.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> constant_coefficient(x^3*y + x + y + 1, :x)\ny + 1\n\njulia> constant_coefficient(x^3*y + x + y + 1, :x, :y)\n1\n\nSee also\n\n@constant_coefficient, @coefficient, and @expansion\n\n\n\n"
 },
 
 {
@@ -445,7 +445,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Arrays.@flat_coefficients",
     "category": "macro",
-    "text": "@flat_coefficients(a, var, [var...])\n\nReturn the polynomial coefficients of the matrix coefficients of a, when those matrix coefficients are regarded as polynomials in the given variables.\n\nExamples\n\njulia> R = @ring! ℤ[x,y];\njulia> collect(flat_coefficients([x^3 + y^2; y^5], :y))\n[x^3, 1, 1]\njulia> collect(flat_coefficients([x^3 + y^2, y^5], :x, :y))\n[1, 1, 1]\n\nSee also\n\nflat_coefficients, @expansion, expansion, @coefficient and coefficient\n\n\n\n"
+    "text": "@flat_coefficients(a, var, [var...])\n\nReturn the polynomial coefficients of the matrix coefficients of a, when those matrix coefficients are regarded as polynomials in the given variables.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> collect(flat_coefficients([x^3 + y^2; y^5], :y))\n3-element Array{ℤ[x],1}:\n x^3\n 1\n 1\n\njulia> collect(flat_coefficients([x^3 + y^2, y^5], :x, :y))\n3-element Array{BigInt,1}:\n 1\n 1\n 1\n\nSee also\n\nflat_coefficients, @expansion, expansion, @coefficient and coefficient\n\n\n\n"
 },
 
 {
@@ -453,7 +453,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.Arrays.flat_coefficients",
     "category": "function",
-    "text": "flat_coefficients(a, symbol, [symbol...])\n\nReturn the polynomial coefficients of the matrix coefficients of a, when those matrix coefficients are regarded as polynomials in the given variables.\n\nExamples\n\njulia> R = @ring! ℤ[x,y];\njulia> collect(flat_coefficients([x^3 + y^2; y^5], :y))\n[x^3, 1, 1]\njulia> collect(flat_coefficients([x^3 + y^2, y^5], :x, :y))\n[1, 1, 1]\n\nSee also\n\n@coefficients, @expansion, expansion, @coefficient and coefficient\n\n\n\n"
+    "text": "flat_coefficients(a, symbol, [symbol...])\n\nReturn the polynomial coefficients of the matrix coefficients of a, when those matrix coefficients are regarded as polynomials in the given variables.\n\nExamples\n\njulia> using PolynomialRings\n\njulia> R = @ring! ℤ[x,y];\n\njulia> collect(flat_coefficients([x^3 + y^2; y^5], :y))\n3-element Array{ℤ[x],1}:\n x^3\n 1\n 1\n\njulia> collect(flat_coefficients([x^3 + y^2, y^5], :x, :y))\n3-element Array{BigInt,1}:\n 1\n 1\n 1\n\nSee also\n\n@coefficients, @expansion, expansion, @coefficient and coefficient\n\n\n\n"
 },
 
 {
