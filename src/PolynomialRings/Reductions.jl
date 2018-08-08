@@ -27,11 +27,15 @@ If you need to obtain the vector of factors, use `divrem` instead.
 # Examples
 In one variable, this is just the normal Euclidean algorithm:
 ```jldoctest
+julia> using PolynomialRings
+
 julia> R,(x,y) = polynomial_ring(:x, :y, basering=Complex{Int});
-julia> rem(x^1 + 1, [x-im])
+
+julia> rem(x^2 + 1, [x-im])
 0
+
 julia> rem(x^2 + y^2 + 1, [x, y])
-1
+1 + 0im
 ```
 """
 function rem(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
@@ -74,11 +78,16 @@ means that no leading term of a polynomial in `G` divides any monomial in
 # Examples
 In one variable, this is just the normal Euclidean algorithm:
 ```jldoctest
+julia> using PolynomialRings
+
 julia> R,(x,y) = polynomial_ring(:x, :y, basering=Complex{Int});
-julia> divrem(x^1 + 1, [x-im])
-(0, [x + im]')
+
+julia> divrem(x^2 + 1, [x-im])
+(Complex{Int64}[x,y][x + 0 + 1im], 0)
+
 julia> divrem(x^2 + y^2 + 1, [x, y])
-(1, [x,y]')
+(Complex{Int64}[x,y][x y], 1 + 0im)
+
 ```
 """
 function divrem(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement

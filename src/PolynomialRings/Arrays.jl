@@ -130,11 +130,21 @@ those matrix coefficients are regarded as polynomials in the given variables.
 
 # Examples
 ```jldoctest
+julia> using PolynomialRings
+
 julia> R = @ring! ℤ[x,y];
+
 julia> collect(flat_coefficients([x^3 + y^2; y^5], :y))
-[x^3, 1, 1]
+3-element Array{ℤ[x],1}:
+ x^3
+ 1
+ 1
+
 julia> collect(flat_coefficients([x^3 + y^2, y^5], :x, :y))
-[1, 1, 1]
+3-element Array{BigInt,1}:
+ 1
+ 1
+ 1
 ```
 # See also
 `@coefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
@@ -151,11 +161,21 @@ those matrix coefficients are regarded as polynomials in the given variables.
 
 # Examples
 ```jldoctest
+julia> using PolynomialRings
+
 julia> R = @ring! ℤ[x,y];
+
 julia> collect(flat_coefficients([x^3 + y^2; y^5], :y))
-[x^3, 1, 1]
+3-element Array{ℤ[x],1}:
+ x^3
+ 1
+ 1
+
 julia> collect(flat_coefficients([x^3 + y^2, y^5], :x, :y))
-[1, 1, 1]
+3-element Array{BigInt,1}:
+ 1
+ 1
+ 1
 ```
 # See also
 `flat_coefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`

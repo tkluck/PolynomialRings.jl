@@ -378,12 +378,12 @@ julia> using PolynomialRings
 julia> @polyvar x y;
 
 julia> x + 3y
-3*y + x
+x + 3*y
 
 julia> @polyvar ε[];
 
 julia> 1 + ε()*x + ε()*y
-1 + ε[2]*y + ε[1]*x
+ε[1]*x + ε[2]*y + 1
 ```
 
 # See also

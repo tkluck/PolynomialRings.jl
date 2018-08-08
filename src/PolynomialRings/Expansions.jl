@@ -80,10 +80,14 @@ julia> using PolynomialRings
 julia> R = @ring! ℤ[x,y];
 
 julia> collect(expansion(x^3 + y^2, :y))
-[((0,), x^3), ((2,), 1)]
+2-element Array{Tuple{Tuple{UInt16},ℤ[x]},1}:
+ ((0x0000,), x^3)
+ ((0x0002,), 1)
 
 julia> collect(expansion(x^3 + y^2, :x, :y))
-[((3,0), 1), ((0,2), 1)]
+2-element Array{Tuple{Tuple{UInt16,UInt16},BigInt},1}:
+ ((0x0000, 0x0002), 1)
+ ((0x0003, 0x0000), 1)
 ```
 # See also
 `@expansion(...)`, `@coefficient` and `coefficient`
@@ -208,10 +212,14 @@ julia> using PolynomialRings
 julia> R = @ring! ℤ[x,y];
 
 julia> collect(coefficients(x^3 + y^2, :y))
-[x^3, 1]
+2-element Array{ℤ[x],1}:
+ x^3
+ 1
 
 julia> collect(coefficients(x^3 + y^2, :x, :y))
-[1, 1]
+2-element Array{BigInt,1}:
+ 1
+ 1
 ```
 # See also
 `@coefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
@@ -390,7 +398,7 @@ julia> using PolynomialRings
 julia> R = @ring! ℤ[x,y];
 
 julia> constant_coefficient(x^3*y + x + y + 1, :x)
-y + -1
+y + 1
 
 julia> constant_coefficient(x^3*y + x + y + 1, :x, :y)
 1
@@ -423,10 +431,13 @@ julia> using PolynomialRings
 julia> R = @ring! ℤ[x,y];
 
 julia> linear_coefficients(x^3*y + x + y + 1, :x)
-[1]
+1-element Array{ℤ[y],1}:
+ 1
 
 julia> linear_coefficients(x^3*y + x + y + 1, :x, :y)
-[1,x^3 + 1]
+2-element Array{BigInt,1}:
+ 1
+ 1
 ```
 # See also
 `@constant_coefficient`, `@coefficient`, and `@expansion`
@@ -471,16 +482,16 @@ Return the total degree of `f` when regarded as a polynomial in `vars`. Returns
 ```jldoctest
 julia> using PolynomialRings
 
-julia> R = @ring ℤ[x,y];
+julia> R = @ring! ℤ[x,y];
 
 julia> deg(x^2, :x)
-2
+0x0002
 
 julia> deg(x^2, :x, :y)
-2
+0x0002
 
 julia> deg(x^2, :y)
-0
+0x0000
 ```
 """
 function deg(f::Polynomial, args...)
@@ -577,7 +588,7 @@ julia> using PolynomialRings
 julia> R = @ring! ℤ[x,y];
 
 julia> @constant_coefficient(x^3*y + x + y + 1, x)
-y + -1
+y + 1
 
 julia> @constant_coefficient(x^3*y + x + y + 1, x, y)
 1
@@ -608,10 +619,13 @@ julia> using PolynomialRings
 julia> R = @ring! ℤ[x,y];
 
 julia> @linear_coefficients(x^3*y + x + y + 1, x)
-[1]
+1-element Array{ℤ[y],1}:
+ 1
 
 julia> @linear_coefficients(x^3*y + x + y + 1, x, y)
-[1,x^3 + 1]
+2-element Array{BigInt,1}:
+ 1
+ 1
 ```
 # See also
 `@constant_coefficient`, `@coefficient`, and `@expansion`
@@ -636,10 +650,14 @@ julia> using PolynomialRings
 julia> R = @ring! ℤ[x,y];
 
 julia> collect(@expansion(x^3 + y^2, y))
-[((0,), x^3), ((2,), 1)]
+2-element Array{Tuple{Tuple{UInt16},ℤ[x]},1}:
+ ((0x0000,), x^3)
+ ((0x0002,), 1)
 
 julia> collect(@expansion(x^3 + y^2, x, y))
-[((3,0), 1), ((0,2), 1)]
+2-element Array{Tuple{Tuple{UInt16,UInt16},BigInt},1}:
+ ((0x0000, 0x0002), 1)
+ ((0x0003, 0x0000), 1)
 ```
 # See also
 `@expand`, `expansion(...)`, `@coefficient` and `coefficient`
@@ -664,10 +682,14 @@ julia> using PolynomialRings
 julia> R = @ring! ℤ[x,y];
 
 julia> collect(@expand(x^3 + y^2, y))
-[(1, x^3), (y^2, 1)]
+2-element Array{Tuple{Int64[y],ℤ[x]},1}:
+ (1, x^3)
+ (y^2, 1)
 
 julia> collect(@expand(x^3 + y^2, x, y))
-[(x^3, 1), (y^2, 1)]
+2-element Array{Tuple{Int64[x,y],BigInt},1}:
+ (y^2, 1)
+ (x^3, 1)
 ```
 # See also
 `expansion(...)`, `@coefficient` and `coefficient`
@@ -706,10 +728,14 @@ julia> using PolynomialRings
 julia> R = @ring! ℤ[x,y];
 
 julia> collect(@coefficients(x^3 + y^2, y))
-[x^3, 1]
+2-element Array{ℤ[x],1}:
+ x^3
+ 1
 
 julia> collect(@coefficients(x^3 + y^2, x, y))
-[1, 1]
+2-element Array{BigInt,1}:
+ 1
+ 1
 ```
 # See also
 `coefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
@@ -738,10 +764,10 @@ julia> using PolynomialRings
 julia> R = @ring! ℤ[x,y];
 
 julia> @deg (x^2 + x*y - 1) x
-2
+0x0002
 
 julia> @deg (x^2 + x*y - 1) y
-1
+0x0001
 ```
 # See also
 `deg`, `@expansion`
