@@ -116,5 +116,37 @@ length(::TrivialIter) = 1
 
 include("LinAlgUtil.jl")
 
+# -----------------------------------------------------------------------------
+#
+# Parallel iteration of two iterators
+#
+# -----------------------------------------------------------------------------
+import Base: iterate, last, findlast, length
+struct ParallelIter{I,J,key,value,lt,l0,r0}
+    left::I
+    right::J
+end
+
+struct Start end
+iterate(a, b::Start) = iterate(a)
+iterate(a::Array, b::Start) = iterate(a)
+iterate(i::ParallelIter) = iterate(i, (Start(), Start()))
+function iterate(i::ParallelIter{I,J,key,value,lt,l0,r0}, state) where {I,J,key,value,lt,l0,r0}
+    lstate, rstate = state
+    liter = iterate(i.left, lstate)
+    riter = iterate(i.right, rstate)
+    if liter == nothing && riter == nothing
+        return nothing
+    elseif liter == nothing || (riter != nothing && lt(key(riter[1]), key(liter[1])))
+        return (key(riter[1]), l0, value(riter[1])), (lstate, riter[2])
+    elseif riter == nothing || (liter != nothing && lt(key(liter[1]), key(riter[1])))
+        return (key(liter[1]), value(liter[1]), r0), (liter[2], rstate)
+    elseif key(liter[1]) == key(riter[1])
+        return (key(liter[1]), value(liter[1]), value(riter[1])), (liter[2], riter[2])
+    else
+        @assert(false) # unreachable?
+    end
+end
+
 
 end

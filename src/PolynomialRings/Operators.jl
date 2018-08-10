@@ -6,6 +6,7 @@ import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.Terms: Term, monomial, coefficient
 import PolynomialRings.Polynomials: Polynomial, termtype, terms, monomialorder
 import PolynomialRings.Polynomials: PolynomialBy
+using PolynomialRings.Util: ParallelIter
 
 # -----------------------------------------------------------------------------
 #
@@ -90,84 +91,42 @@ end
 # -----------------------------------------------------------------------------
 function +(a::PolynomialBy{Order,C1}, b::PolynomialBy{Order,C2}) where {C1, C2, Order}
     P = promote_type(typeof(a), typeof(b))
-    C = basering(P)
     T = termtype(P)
     res = _uninitialized_vec(Vector{T},length(a.terms) + length(b.terms))
     n = 0
 
-    state_a = start(terms(a))
-    state_b = start(terms(b))
-    while !done(terms(a), state_a) && !done(terms(b), state_b)
-        (term_a, next_state_a) = next(terms(a), state_a)
-        (term_b, next_state_b) = next(terms(b), state_b)
-        exponent_a, coefficient_a = monomial(term_a), coefficient(term_a)
-        exponent_b, coefficient_b = monomial(term_b), coefficient(term_b)
-
-        if Base.Order.lt(Order(), exponent_a, exponent_b)
-            @inbounds res[n+=1] = T(exponent_a, coefficient_a)
-            state_a = next_state_a
-        elseif Base.Order.lt(Order(), exponent_b, exponent_a)
-            @inbounds res[n+=1] = T(exponent_b, coefficient_b)
-            state_b = next_state_b
-        else
-            coeff = coefficient_a + coefficient_b
-            if !iszero(coeff)
-                @inbounds res[n+=1] = T(exponent_a, coeff)
-            end
-            state_b = next_state_b
-            state_a = next_state_a
+    for (m, cleft, cright) in ParallelIter{typeof(terms(a)), typeof(terms(b)),
+        monomial,
+        coefficient,
+        (l,r)->Base.Order.lt(Order(), l,r),
+        zero(exptype(a)), zero(exptype(b))
+        }(terms(a), terms(b))
+        coeff = cleft + cright
+        if !iszero(coeff)
+            @inbounds res[n+=1] = T(m, coeff)
         end
     end
-
-    for t in Iterators.rest(terms(a), state_a)
-        @inbounds res[n+=1] = base_extend(t, C)
-    end
-    for t in Iterators.rest(terms(b), state_b)
-        @inbounds res[n+=1] = base_extend(t, C)
-    end
-
     resize!(res, n)
     return P(res)
 end
 
 function -(a::PolynomialBy{Order,C1}, b::PolynomialBy{Order,C2}) where {C1, C2, Order}
     P = promote_type(typeof(a), typeof(b))
-    C = basering(P)
     T = termtype(P)
-    res = _uninitialized_vec(Vector{T}, length(a.terms) + length(b.terms))
+    res = _uninitialized_vec(Vector{T},length(a.terms) + length(b.terms))
     n = 0
 
-    state_a = start(terms(a))
-    state_b = start(terms(b))
-    while !done(terms(a), state_a) && !done(terms(b), state_b)
-        (term_a, next_state_a) = next(terms(a), state_a)
-        (term_b, next_state_b) = next(terms(b), state_b)
-        exponent_a, coefficient_a = monomial(term_a), coefficient(term_a)
-        exponent_b, coefficient_b = monomial(term_b), coefficient(term_b)
-
-        if Base.Order.lt(Order(), exponent_a, exponent_b)
-            @inbounds res[n+=1] = T(exponent_a, coefficient_a)
-            state_a = next_state_a
-        elseif Base.Order.lt(Order(), exponent_b, exponent_a)
-            @inbounds res[n+=1] = -T(exponent_b, coefficient_b)
-            state_b = next_state_b
-        else
-            coeff = coefficient_a - coefficient_b
-            if !iszero(coeff)
-                @inbounds res[n+=1] = Term(exponent_a, coeff)
-            end
-            state_b = next_state_b
-            state_a = next_state_a
+    for (m, cleft, cright) in ParallelIter{typeof(terms(a)), typeof(terms(b)),
+        monomial,
+        coefficient,
+        (l,r)->Base.Order.lt(Order(), l,r),
+        zero(exptype(a)), zero(exptype(b))
+        }(terms(a), terms(b))
+        coeff = cleft - cright
+        if !iszero(coeff)
+            @inbounds res[n+=1] = T(m, coeff)
         end
     end
-
-    for t in Iterators.rest(terms(a), state_a)
-        @inbounds res[n+=1] = base_extend(t, C)
-    end
-    for t in Iterators.rest(terms(b), state_b)
-        @inbounds res[n+=1] = -base_extend(t, C)
-    end
-
     resize!(res, n)
     return P(res)
 end
