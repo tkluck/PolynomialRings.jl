@@ -95,9 +95,9 @@ one(::Type{Foo}) = Foo()
     end
 
     @testset "zero comparison in Base" begin
-        @test findfirst([x-x, x, x-x, 0, x]) == 2
-        @test findfirst([0, x, x-x, 0, x]) == 2
-        @test findfirst([0*x, x-x, 0, x]) == 4
+        @test findfirst(!iszero, [x-x, x, x-x, 0, x]) == 2
+        @test findfirst(!iszero, [0, x, x-x, 0, x]) == 2
+        @test findfirst(!iszero, [0*x, x-x, 0, x]) == 4
     end
 
     @testset "degrees" begin

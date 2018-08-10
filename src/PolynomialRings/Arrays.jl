@@ -98,7 +98,7 @@ function linear_coefficients(a::AbstractArray{P}, args...) where P <: Polynomial
     MonomialType, CoeffType =_expansion_types(P, args...)
     zero_element = issparse(a) ? spzeros(CoeffType, size(a)...) : zeros(CoeffType, size(a))
 
-    nonzero_indices = find(!iszero,a)
+    nonzero_indices = LinearIndices(a)[findall(!iszero,a)]
     items = _joint_iteration(map(a_i->linear_coefficients(a_i, args...), collect(a[nonzero_indices])), i->1, identity)
     return map(items) do item
         (_,indices,coefficients) = item
@@ -119,7 +119,7 @@ end
 
 function deg(a::AbstractArray{P}, args...) where P <: Polynomial
     iszero(a) && return -1
-    return maximum(a_i->deg(a_i, args...), a[find(!iszero,a)])
+    return maximum(a_i->deg(a_i, args...), a[findall(!iszero,a)])
 end
 
 """

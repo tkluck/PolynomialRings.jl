@@ -456,7 +456,7 @@ function linear_coefficients(f::Polynomial, ::Type{Named{Names}}) where Names
     res = zeros(CoeffType, length(Names))
     for (w, p) in expansion(f, Named{Names})
         if sum(w) == 1
-            res[findfirst(w)] = p
+            res[findfirst(!iszero,w)] = p
         end
     end
 
@@ -469,7 +469,7 @@ function linear_coefficients(f::Polynomial, ::Type{Numbered{Name}}) where Name
     res = spzeros(CoeffType, 0)
     for (w, p) in expansion(f, Numbered{Name})
         if sum(w) == 1
-            ix = findfirst(w)
+            ix = findfirst(!iszero,w)
             newlength = max(ix, length(res))
             # there is no resize!() because SparseVector is an
             # immutable struct
