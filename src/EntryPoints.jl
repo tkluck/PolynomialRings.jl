@@ -345,7 +345,7 @@ end
 
 macro numberfield(definition)
     quote
-        R = $(esc(macroexpand(:(@ring $definition))))
+        R = @ring $definition
         $NumberField(R)
     end
 
@@ -353,7 +353,7 @@ end
 
 macro numberfield!(definition)
     quote
-        R = $(esc(macroexpand(:(@ring $definition))))
+        R = @ring $definition
         S = $NumberField(R)
         $(_inject_vars(:S,definition))
         S
