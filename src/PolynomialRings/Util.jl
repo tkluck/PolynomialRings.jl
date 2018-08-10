@@ -108,11 +108,13 @@ delete!(pq::PriorityQueue{K}, k::K) where K = dequeue!(pq, k)
 struct TrivialIter{X}
     item::X
 end
-import Base: start, done, next, length
+import Base: start, done, next, length, iterate
 start(::TrivialIter) = false
 done(::TrivialIter, state) = state
 next(t::TrivialIter, state) = (t.item, true)
 length(::TrivialIter) = 1
+iterate(i::TrivialIter) = (i.item, nothing)
+iterate(i::TrivialIter, ::Nothing) = nothing
 
 include("LinAlgUtil.jl")
 
