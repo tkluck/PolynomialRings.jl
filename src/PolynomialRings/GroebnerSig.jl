@@ -18,8 +18,10 @@ import PolynomialRings.Modules: AbstractModuleElement, modulebasering
 import PolynomialRings.Operators: Lead, Full
 import PolynomialRings: leadrem
 if VERSION >= v"0.7-"
-    using LinearAlgebra: RowVector
+    using LinearAlgebra: Transpose
     using SparseArrays: SparseVector
+else
+    Transpose = RowVector
 end
 
 reduction_rem(::Arri, o, m, G) = semi_complete_reduction_rem(o, m, G)
@@ -109,7 +111,7 @@ function gröbner_basis_sig_incremental(alg::Backend, o::MonomialOrder, polynomi
     R = base_extend(PP)
     M = monomialtype(PP)
     Degree = exptype(PP)
-    Rm = RowVector{R, SparseVector{R,Int}}
+    Rm = Transpose{R, SparseVector{R,Int}}
     Signature = monomialtype(polynomials)
 
     signature(m) = m[1]
