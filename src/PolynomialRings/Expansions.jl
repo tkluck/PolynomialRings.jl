@@ -271,9 +271,13 @@ function _substitute(p::Polynomial, ::Type{Named{Names}}, values) where Names
     if !isconcretetype(ReturnType)
         throw(ArgumentError("Cannot substitute $SubstitutionType for $(Named{Names}) into $p; result no more specific than $ReturnType"))
     end
-    return reduce(+, zero(ReturnType),
-        reduce(*, c, v^k for (v,k) in zip(values,w))
-        for (w,c) in expansion(p, Named{Names})
+    return reduce(
+        +,
+        (
+            reduce(*, (v^k for (v,k) in zip(values,w)), init=c)
+            for (w,c) in expansion(p, Named{Names})
+        ),
+        init=zero(ReturnType)
     )
 end
 
@@ -284,9 +288,13 @@ function _substitute(p::Polynomial, ::Type{Numbered{Name}}, values) where Name
     if !isconcretetype(ReturnType)
         throw(ArgumentError("Cannot substitute $SubstitutionType for $(Numbered{Name}) into $p; result no more specific than $ReturnType"))
     end
-    return reduce(+, zero(ReturnType),
-        reduce(*, c, values(i)^k for (i,k) in enumeratenz(m))
-        for (m,c) in _expansion(p, Numbered{Name})
+    return reduce(
+        +,
+        (
+            reduce(*, (values(i)^k for (i,k) in enumeratenz(m)), init=c)
+            for (m,c) in _expansion(p, Numbered{Name})
+        ),
+        init=zero(ReturnType)
     )
 end
 

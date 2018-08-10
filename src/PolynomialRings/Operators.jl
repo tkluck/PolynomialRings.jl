@@ -397,8 +397,8 @@ end
 # gcds and content
 #
 # -----------------------------------------------------------------------------
-gcd(f::Polynomial, g::Integer) = gcd(g, reduce(gcd, 0, (coefficient(t) for t in terms(f))))
-gcd(g::Integer, f::Polynomial) = gcd(g, reduce(gcd, 0, (coefficient(t) for t in terms(f))))
+gcd(f::Polynomial, g::Integer) = gcd(g, reduce(gcd, (coefficient(t) for t in terms(f)),init=0))
+gcd(g::Integer, f::Polynomial) = gcd(g, reduce(gcd, (coefficient(t) for t in terms(f)),init=0))
 
 function div(f::Polynomial, g::Integer)
     T = termtype(f)
