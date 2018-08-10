@@ -67,7 +67,7 @@ function expansion(a::AbstractArray{P}, args...) where P <: Polynomial
     MonomialType, CoeffType =_expansion_types(P, args...)
     zero_element = issparse(a) ? spzeros(CoeffType, size(a)...) : zeros(CoeffType, size(a))
     return Channel(ctype=Tuple{expstype(MonomialType),typeof(zero_element)}) do ch
-        nonzero_indices = find(!iszero,a)
+        nonzero_indices = LinearIndices(a)[findall(!iszero,a)]
         # needs collect even though I was hoping to do this lazily. A channel
         # can't deal with holding onto the state for a few iterations
         for (monomial, indices, coefficients) in _joint_iteration(map(a_i->collect(expansion(a_i, args...)), collect(a[nonzero_indices])), i->i[1], i->i[2])
