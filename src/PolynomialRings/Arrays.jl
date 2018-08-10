@@ -217,10 +217,10 @@ function det(m::M) where M <: AbstractMatrix{P} where P <: Polynomial
 end
 
 _PT = Union{Polynomial,Term,AbstractMonomial}
-*(A::_PT, B::AbstractArray) = broadcast(*, A, B)
-*(A::AbstractArray, B::_PT) = broadcast(*, A, B)
-*(A::_PT, B::Transpose) = Transpose(broadcast(*, A, transpose(B)))
-*(A::Transpose, B::_PT) = Transpose(broadcast(*, transpose(A), B))
+*(A::_PT, B::AbstractArray) = broadcast(*, Ref(A), B)
+*(A::AbstractArray, B::_PT) = broadcast(*, A, Ref(B))
+*(A::_PT, B::Transpose) = Transpose(broadcast(*, Ref(A), transpose(B)))
+*(A::Transpose, B::_PT) = Transpose(broadcast(*, transpose(A), Ref(B)))
 
 transpose(a::_PT) = a
 
