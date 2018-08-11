@@ -422,9 +422,9 @@ function getindex(g::NumberedVariableGenerator{Outer,Inner}, i::Integer) where {
     return Outer(construct_monomial(Inner, e))
 end
 
-getindex(g::NumberedVariableGenerator{Outer,Inner}, j::Integer...) where {Outer,Inner} = getindex.(g, j)
+getindex(g::NumberedVariableGenerator{Outer,Inner}, j::Integer...) where {Outer,Inner} = getindex.(Ref(g), j)
 
-getindex(g::NumberedVariableGenerator{Outer,Inner}, ix) where {Outer,Inner} = getindex.(g, ix)
+getindex(g::NumberedVariableGenerator{Outer,Inner}, ix) where {Outer,Inner} = getindex.(Ref(g), ix)
 
 getindex(g::NumberedVariableGenerator) = Channel() do ch
     for i in 1:typemax(Int)
