@@ -127,13 +127,14 @@ function monomial_basis(::Type{Q}) where Q<:QuotientRing
         throw("$Q is infinite dimensional and does not have a finite monomial basis")
     end
 
-    divisible = BitArray(rectangular_bounds...)
+    divisible = BitArray(undef, rectangular_bounds...)
+    divisible .= false
     for m in leading_monomials
         block = [(m[i]+1):b for (i,b) in enumerate(rectangular_bounds)]
-        setindex!(divisible, true, block...)
+        divisible[block...] .= true
     end
 
-    return [tuple([i-1 for i in ind2sub(divisible,i)]...) for i in eachindex(divisible) if !divisible[i]]
+    return map(i->i.-1, map(Tuple, findall(!, divisible)))
 end
 
 function representation_matrix(::Type{Q}, x::Symbol) where Q<:QuotientRing
