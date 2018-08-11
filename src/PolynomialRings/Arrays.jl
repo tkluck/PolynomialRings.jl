@@ -44,38 +44,46 @@ monomialorder(::Type{<:AbstractArray{P}}) where P <: Polynomial = monomialorder(
 # Helpers for wrapping 'expansion' like things
 #
 # -----------------------------------------------------------------------------
-_softnext(iter, state) = done(iter, state) ? (nothing, state) : next(iter, state)
+function _joint_iteration(f, iters, groupby, value)
+    it = iterate.(iters)
+    active = it .!= nothing
+    while any(active)
+        activeix = findall(active)
+        activeit = it[activeix]
+        items = getindex.(activeit, Ref(1))
 
-_joint_iteration(iters, groupby, value) = Channel() do ch
-    states = start.(iters)
-    while !all(done.(iters, states))
-        items_and_states = _softnext.(iters, states)
-        items            = getindex.(items_and_states, 1)
-        next_states      = getindex.(items_and_states, 2)
+        cur_key = minimum(groupby, items)
+        cur_ix = findall(isequal(cur_key)∘groupby, items)
+        cur_indices = activeix[cur_ix]
+        cur_values = value.(items[cur_ix])
 
-        cur_key = minimum(groupby, filter(i->i!==nothing, items))
-        cur_indices = map(i->i!==nothing && groupby(i)==cur_key, items)
-        cur_values = value.(items[cur_indices])
+        f(cur_key, cur_indices, cur_values)
 
-        push!(ch, (cur_key, cur_indices, cur_values))
-
-        states[cur_indices] = next_states[cur_indices]
+        for ix in cur_indices
+            x = iterate(iters[ix], it[ix][2])
+            # for some reason, type inference doesn't see that `it` may contain `nothing`,
+            # so we cannot assign it. This works around that.
+            if x == nothing
+                active[ix] = false
+            else
+                it[ix] = x
+            end
+        end
+        activeix = findall(active)
     end
 end
 
 function expansion(a::AbstractArray{P}, args...) where P <: Polynomial
     MonomialType, CoeffType =_expansion_types(P, args...)
     zero_element = issparse(a) ? spzeros(CoeffType, size(a)...) : zeros(CoeffType, size(a))
-    return Channel(ctype=Tuple{expstype(MonomialType),typeof(zero_element)}) do ch
-        nonzero_indices = LinearIndices(a)[findall(!iszero,a)]
-        # needs collect even though I was hoping to do this lazily. A channel
-        # can't deal with holding onto the state for a few iterations
-        for (monomial, indices, coefficients) in _joint_iteration(map(a_i->collect(expansion(a_i, args...)), collect(a[nonzero_indices])), i->i[1], i->i[2])
-            el = copy(zero_element)
-            el[nonzero_indices[indices]] = coefficients
-            push!(ch, (monomial,el))
-        end
+    res = Tuple{expstype(MonomialType), typeof(zero_element)}[]
+    nonzero_indices = LinearIndices(a)[findall(!iszero,a)]
+    _joint_iteration(map(a_i->collect(expansion(a_i, args...)), collect(a[nonzero_indices])), i->i[1], i->i[2]) do monomial, indices, coefficients
+        el = copy(zero_element)
+        el[nonzero_indices[indices]] = coefficients
+        push!(res, (monomial,el))
     end
+    return res
 end
 
 function coefficients(a::AbstractArray{P}, args...) where P <: Polynomial
@@ -99,13 +107,13 @@ function linear_coefficients(a::AbstractArray{P}, args...) where P <: Polynomial
     zero_element = issparse(a) ? spzeros(CoeffType, size(a)...) : zeros(CoeffType, size(a))
 
     nonzero_indices = LinearIndices(a)[findall(!iszero,a)]
-    items = _joint_iteration(map(a_i->linear_coefficients(a_i, args...), collect(a[nonzero_indices])), i->1, identity)
-    return map(items) do item
-        (_,indices,coefficients) = item
+    res = typeof(zero_element)[]
+    _joint_iteration(map(a_i->linear_coefficients(a_i, args...), collect(a[nonzero_indices])), i->1, identity) do _,indices,coefficients
         el = copy(zero_element)
         el[nonzero_indices[indices]] = coefficients
-        el
+        push!(res, el)
     end
+    return res
 end
 
 function expansion_terms(a::AbstractArray{P}, symbols...) where P <: Polynomial
