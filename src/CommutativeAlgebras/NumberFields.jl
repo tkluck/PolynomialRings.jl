@@ -36,7 +36,7 @@ end
 
 struct NumberField{P<:Polynomial,C,Q} <: AbstractExactNumber
     coeffs::Vector{C}
-    NumberField{P,C,Q}(coeffs::Vector{C}) where {P,C,Q} = new(coeffs)
+    NumberField{P,C,Q}(coeffs::Vector{C}) where {P<:Polynomial,C,Q} = new(coeffs)
 end
 ring(::Type{F}) where F<:NumberField{P} where P = P
 basering(::Type{F}) where F<:NumberField{P} where P = basering(P)
@@ -85,7 +85,7 @@ function NumberField(::Type{Q}) where Q<:QuotientRing
     push!(possible_α, sum(generators(P)))
     found = false
     α = zero(P)
-    M = Matrix{C}(0,0)
+    M = Matrix{C}(undef,0,0)
     for α₁ in possible_α
         M = hcat((coeffs(α₁^n) for n=0:N)...)
 
@@ -133,6 +133,14 @@ end
 
 convert(::Type{F}, f::P) where F<:NumberField{P, C} where {P<:Polynomial, C} =
     f(;_named_values(F)...)
+
+# -----------------------------------------------------------------------------
+#
+# Fallback for v0.7
+#
+# -----------------------------------------------------------------------------
+(::Type{F})(a::F) where F<:NumberField = a
+(::Type{F})(a) where F<:NumberField = convert(F, a)
 
 # -----------------------------------------------------------------------------
 #
