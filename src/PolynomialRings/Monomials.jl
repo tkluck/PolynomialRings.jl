@@ -53,7 +53,7 @@ import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namesty
 # Utility: iterate over the union of two index sets
 #
 # -----------------------------------------------------------------------------
-import Base: start, done, next, last, findlast, length
+import Base: last, findlast, length
 struct IndexUnion{I,J,lt}
     left::I
     right::J
@@ -79,30 +79,6 @@ function iterate(i::IndexUnion{I,J,lt}, state) where {I,J,lt}
         @assert(false) # unreachable?
     end
 end
-
-start(i::IndexUnion) = (start(i.left), start(i.right))
-function next(i::IndexUnion{I,J,lt}, state) where {I,J,lt}
-    lstate, rstate = state
-    ldone = done(i.left, lstate)
-    rdone = done(i.right, rstate)
-
-    if !ldone
-        (litem, lnextstate) = next(i.left, lstate)
-    end
-    if !rdone
-        (ritem, rnextstate) = next(i.right, rstate)
-    end
-    if rdone || (!ldone && lt(litem, ritem))
-        return (litem, (lnextstate, rstate))
-    elseif ldone || (!rdone && lt(ritem, litem))
-        return (ritem, (lstate, rnextstate))
-    elseif litem == ritem
-        return (litem, (lnextstate, rnextstate))
-    else
-        @assert(false) # unreachable?
-    end
-end
-done(i::IndexUnion, state) = done(i.left, state[1]) && done(i.right, state[2])
 
 findlast(i::IndexUnion) = max(findlast(i.left), findlast(i.right))
 
