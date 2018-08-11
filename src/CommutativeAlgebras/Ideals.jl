@@ -13,7 +13,7 @@ using PolynomialRings.Gröbner: gröbner_basis, gröbner_transformation
 # -----------------------------------------------------------------------------
 import Base: promote_rule, convert
 import Base: zero, one, in, div, rem, divrem, rem, issubset, inv
-import Base: +,-,*,/,//,==,!=, hash
+import Base: +,-,*,^,/,//,==,!=, hash
 import Base: show
 import PolynomialRings: generators, expansion
 import PolynomialRings: allvariablesymbols, fraction_field
@@ -77,6 +77,7 @@ issubset(I::Ideal{P}, J::Ideal{P}) where P<:Polynomial = all(g in J for g in gen
 *(I::Ideal{P}, J::Ideal{P}) where P<:Polynomial = Ideal([
     i*j for i in generators(I) for j in generators(J)
 ])
+^(I::Ideal, n) = Base.power_by_squaring(I,n)
 
 hash(I::Ideal, h::UInt) = hash(I.generators, h)
 

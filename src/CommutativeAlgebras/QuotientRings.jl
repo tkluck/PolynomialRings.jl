@@ -14,7 +14,7 @@ using PolynomialRings: construct_monomial, variablesymbols
 import Base: promote_rule, convert
 import Base: zero, one, rem, copy
 import Base: show
-import Base: +,-,*,/,//,==,!=
+import Base: +,-,*,/,//,^,==,!=
 import PolynomialRings: allvariablesymbols
 import PolynomialRings.Ideals: ring
 
@@ -58,6 +58,7 @@ copy(a::QuotientRing) = a
 +(a::Q, b::Q)  where Q<:QuotientRing = Q(a.f+b.f)
 -(a::Q, b::Q)  where Q<:QuotientRing = Q(a.f-b.f)
 *(a::Q, b::Q)  where Q<:QuotientRing = Q(a.f*b.f)
+^(a::Q, n)     where Q<:QuotientRing = Base.power_by_squaring(a, n)
 ==(a::Q, b::Q) where Q<:QuotientRing = a.f == b.f
 !=(a::Q, b::Q) where Q<:QuotientRing = a.f != b.f
 allvariablesymbols(::Type{Q}) where Q<:QuotientRing = allvariablesymbols(ring(Q))
