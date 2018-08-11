@@ -114,7 +114,7 @@ function monomial_basis(::Type{Q}) where Q<:QuotientRing
 
     # lattice computation: find the monomials that are not divisible
     # by any of the leading terms
-    nvars = nfields(eltype(leading_monomials))
+    nvars = fieldcount(eltype(leading_monomials))
     rectangular_bounds = fill(MAX, nvars)
     for m in leading_monomials
         if count(!iszero, m) == 1

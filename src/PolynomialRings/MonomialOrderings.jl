@@ -79,7 +79,7 @@ end
 # f.g. module which is a tuple (index, monomial). That's in use in Gröbner,
 # and maybe this implementation detail should move there.
 function lt(m::MonomialOrder, a::T, b::T) where T <: Tuple
-    for i = 1:nfields(T)
+    for i = 1:fieldcount(T)
         if fieldtype(T,i) <: AbstractMonomial
             if lt(m, a[i], b[i])
                 return true
