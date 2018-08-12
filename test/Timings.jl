@@ -8,7 +8,7 @@ PolynomialRings.Backends.Gröbner.set_default(PolynomialRings.GröbnerGWV.GWV())
 macro showtime(expr)
     rep = sprint(print, expr)
     quote
-        info("Timing: $( $rep )")
+        @info "Timing: $( $rep )"
         @time $expr
     end
 end

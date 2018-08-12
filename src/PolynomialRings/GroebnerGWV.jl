@@ -95,7 +95,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
             l = length(G)
             k = length(JP)
             h = sum(length, values(H))
-            info("GWV: After $loops loops: $l elements in basis; $considered J-pairs considered; |JP|=$k, |H|=$h; $divisor_considerations considerations of divisors ($(divisors_considered/divisor_considerations) divisors on average).")
+            @info("GWV: After $loops loops: $l elements in basis; $considered J-pairs considered; |JP|=$k, |H|=$h; $divisor_considerations considerations of divisors ($(divisors_considered/divisor_considerations) divisors on average).")
             progress_logged = true
         end
 
@@ -195,12 +195,12 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
     # --------------------------------------------------------------------------
     result = getindex.(G, 2)
     k = length(result)
-    progress_logged && info("Done; interreducing the $k result polynomials")
+    progress_logged && @info("Done; interreducing the $k result polynomials")
     for i in 1:k
         result[i] = rem(o, result[i], result[[1:i-1; i+1:k]])
     end
     filter!(!iszero, result)
-    progress_logged && info("Done. Returning a Gröbner basis of length $(length(result))")
+    progress_logged && @info("Done. Returning a Gröbner basis of length $(length(result))")
     # --------------------------------------------------------------------------
     # Return the result
     # --------------------------------------------------------------------------

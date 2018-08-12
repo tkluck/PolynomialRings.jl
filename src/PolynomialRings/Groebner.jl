@@ -244,7 +244,7 @@ function buchberger(o::MonomialOrder, polynomials::AbstractVector{M}, ::Val{with
         if loops % 100 == 0
             l = length(result)
             k = length(pairs_to_consider)
-            info("Gröbner: After about $loops loops: $l elements in basis; $considered S-polynomials considered; at most $k pairs left to consider.")
+            @info("Gröbner: After about $loops loops: $l elements in basis; $considered S-polynomials considered; at most $k pairs left to consider.")
         end
 
         p = pop_pair()

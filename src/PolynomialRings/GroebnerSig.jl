@@ -160,7 +160,7 @@ function gröbner_basis_sig_incremental(alg::Backend, o::MonomialOrder, polynomi
                 l = length(G)
                 k = length(P)
                 h = length(Syz)
-                info("$alg: After $loops loops: $l elements in basis; $considered pairs considered; |P|=$k, |Syz|=$h")
+                @info("$alg: After $loops loops: $l elements in basis; $considered pairs considered; |P|=$k, |Syz|=$h")
                 progress_logged = true
             end
             # prune S w.r.t. Syz
@@ -234,19 +234,19 @@ function gröbner_basis_sig_incremental(alg::Backend, o::MonomialOrder, polynomi
 
     result = getindex.(G, 2)
     filter!(!iszero, result)
-    progress_logged && info("Done. Returning a Gröbner basis of length $(length(result))")
+    progress_logged && @info("Done. Returning a Gröbner basis of length $(length(result))")
 
     return result
 end
 
 function interreduce!(o, H)
-    info("Interreducing $(length(H)) polynomials")
+    @info("Interreducing $(length(H)) polynomials")
     for i in 1:length(H)
-        info("$i/$(length(H))")
+        @info("$i/$(length(H))")
         H[i] = leadrem(o, H[i], H[[1:i-1; i+1:end]])
     end
     filter!(!iszero, H)
-    info("After interreduction, $(length(H)) polynomials left")
+    @info("After interreduction, $(length(H)) polynomials left")
 end
 
 function gröbner_basis(alg::Arri, o::MonomialOrder, G::AbstractArray{<:Polynomial}; kwds...)
