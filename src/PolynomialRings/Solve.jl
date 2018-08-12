@@ -1,7 +1,7 @@
 module Solve
 
 if VERSION >= v"0.7-"
-    import SparseArrays: sparse
+    import SparseArrays: sparse, issparse
 end
 
 using PolynomialRings: lift
