@@ -178,6 +178,18 @@ enumeratenz(a::M) where M <: AbstractMonomial = EnumerateNZ(a)
 
 exptype(a::AbstractMonomial) = exptype(typeof(a))
 
+"""
+    hash(monomial)
+
+This hash function is carefully designed to give the same answer
+for sparse and dense representations. This is necessary for a
+typical `any_divisor` use-case: `any_divisor` loops over the
+possible divisors in-place in an array, but its function `f` might
+operate on tuple monomials. They should compare equal and hash
+equal.
+
+TODO: add test cases for that!
+"""
 function hash(a::AbstractMonomial, h::UInt)
     for (i,e) in enumeratenz(a)
         if !iszero(e)
