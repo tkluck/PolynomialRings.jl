@@ -1,6 +1,6 @@
 module Modules
 
-import PolynomialRings.Polynomials: Polynomial, monomialorder
+import PolynomialRings.Polynomials: Polynomial, monomialorder, basering
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.Monomials: AbstractMonomial
 import PolynomialRings.Terms: Term
@@ -159,6 +159,9 @@ if VERSION < v"0.7-"
             end
         end
     end
+else
+    import LinearAlgebra: mul!
+    mul!(A, B, C, α::Polynomial, β::Polynomial) = mul!(A, B, C, convert(basering(α),α), convert(basering(β), β))
 end
 
 end

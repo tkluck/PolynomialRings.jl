@@ -332,6 +332,7 @@ end
 
         @test [x 0; 0 x] == sparse([x 0; 0 x])
         @test [x 0; 0 x] * sparse([x 0; 0 x]) == [x^2 0; 0 x^2]
+        @test sparse([x 0; 0 x]) * [x 0; 0 x] == [x^2 0; 0 x^2]
 
         @test eltype(eltype(@linear_coefficients([x+y, -x-y], x, y))) == Rational{BigInt}
         @test eltype(eltype(@linear_coefficients([x+y, -x-y], x))) == @ring(ℚ[y])
