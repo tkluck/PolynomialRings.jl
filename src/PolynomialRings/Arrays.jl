@@ -50,7 +50,7 @@ function _joint_iteration(f, iters, groupby, value)
     while any(active)
         activeix = findall(active)
         activeit = it[activeix]
-        items = getindex.(activeit, Ref(1))
+        items = getindex.(activeit, 1)
 
         cur_key = minimum(groupby, items)
         cur_ix = findall(isequal(cur_key)∘groupby, items)
@@ -225,10 +225,10 @@ function det(m::M) where M <: AbstractMatrix{P} where P <: Polynomial
 end
 
 _PT = Union{Polynomial,Term,AbstractMonomial}
-*(A::_PT, B::AbstractArray) = broadcast(*, Ref(A), B)
-*(A::AbstractArray, B::_PT) = broadcast(*, A, Ref(B))
-*(A::_PT, B::Transpose) = Transpose(broadcast(*, Ref(A), transpose(B)))
-*(A::Transpose, B::_PT) = Transpose(broadcast(*, transpose(A), Ref(B)))
+*(A::_PT, B::AbstractArray) = broadcast(*, A, B)
+*(A::AbstractArray, B::_PT) = broadcast(*, A, B)
+*(A::_PT, B::Transpose) = Transpose(broadcast(*, A, transpose(B)))
+*(A::Transpose, B::_PT) = Transpose(broadcast(*, transpose(A), B))
 
 transpose(a::_PT) = a
 
