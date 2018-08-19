@@ -1,5 +1,1 @@
-julia 0.6
-IterTools
-DataStructures
-Documenter
-Combinatorics
+julia 0.7
