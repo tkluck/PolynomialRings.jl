@@ -63,7 +63,7 @@ function _joint_iteration(f, iters, groupby, value)
             x = iterate(iters[ix], it[ix][2])
             # for some reason, type inference doesn't see that `it` may contain `nothing`,
             # so we cannot assign it. This works around that.
-            if x == nothing
+            if x === nothing
                 active[ix] = false
             else
                 it[ix] = x

@@ -67,11 +67,11 @@ function iterate(i::IndexUnion{I,J,lt}, state) where {I,J,lt}
     lstate, rstate = state
     liter = iterate(i.left, lstate)
     riter = iterate(i.right, rstate)
-    if liter == nothing && riter == nothing
+    if liter === nothing && riter === nothing
         return nothing
-    elseif liter == nothing || (riter != nothing && lt(riter[1], liter[1]))
+    elseif liter === nothing || (riter !== nothing && lt(riter[1], liter[1]))
         return riter[1], (lstate, riter[2])
-    elseif riter == nothing || (liter != nothing && lt(liter[1], riter[1]))
+    elseif riter === nothing || (liter !== nothing && lt(liter[1], riter[1]))
         return liter[1], (liter[2], rstate)
     elseif liter[1] == riter[1]
         return liter[1], (liter[2], riter[2])
@@ -126,13 +126,13 @@ struct EnumerateNZ{M<:AbstractMonomial}
 end
 function iterate(enz::EnumerateNZ)
     it = iterate(nzindices(enz.a))
-    it == nothing && return nothing
+    it === nothing && return nothing
     i, next_state = it
     (i,enz.a[i]), next_state
 end
 function iterate(enz::EnumerateNZ, state)
     it = iterate(nzindices(enz.a), state)
-    it == nothing && return nothing
+    it === nothing && return nothing
     i, next_state = it
     (i,enz.a[i]), next_state
 end

@@ -137,11 +137,11 @@ function iterate(i::ParallelIter{I,J,key,value,lt,l0,r0}, state) where {I,J,key,
     lstate, rstate = state
     liter = iterate(i.left, lstate)
     riter = iterate(i.right, rstate)
-    if liter == nothing && riter == nothing
+    if liter === nothing && riter === nothing
         return nothing
-    elseif liter == nothing || (riter != nothing && lt(key(riter[1]), key(liter[1])))
+    elseif liter === nothing || (riter !== nothing && lt(key(riter[1]), key(liter[1])))
         return (key(riter[1]), l0, value(riter[1])), (lstate, riter[2])
-    elseif riter == nothing || (liter != nothing && lt(key(liter[1]), key(riter[1])))
+    elseif riter === nothing || (liter !== nothing && lt(key(liter[1]), key(riter[1])))
         return (key(liter[1]), value(liter[1]), r0), (liter[2], rstate)
     elseif key(liter[1]) == key(riter[1])
         return (key(liter[1]), value(liter[1]), value(riter[1])), (liter[2], riter[2])

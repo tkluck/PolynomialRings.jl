@@ -186,8 +186,8 @@ function _gcdx(a::AbstractVector{C}, b::AbstractVector{C}) where C
     len_a = findlast(!iszero, a)
     len_b = findlast(!iszero, b)
     if VERSION >= v"0.7-"
-        len_a == nothing && (len_a = 0)
-        len_b == nothing && (len_b = 0)
+        len_a === nothing && (len_a = 0)
+        len_b === nothing && (len_b = 0)
     end
     m = max(len_a, len_b)
     s0, s1 = zeros(C, m), zeros(C, m)
