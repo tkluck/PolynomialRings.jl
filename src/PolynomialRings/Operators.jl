@@ -191,7 +191,6 @@ struct Lead <: RedType end
 struct Full <: RedType end
 struct Tail <: RedType end
 
-# XXX TODO: verify monomial order semantics
 function one_step_divrem(::Full, o::MonomialOrder, f::PolynomialBy{Order}, g::PolynomialBy{Order}) where Order
     if iszero(f)
         return zero(g), f
@@ -209,7 +208,6 @@ function one_step_divrem(::Full, o::MonomialOrder, f::PolynomialBy{Order}, g::Po
     return zero(g), f
 end
 
-# XXX TODO: verify monomial order semantics
 function one_step_divrem(::Lead, o::MonomialOrder, f::PolynomialBy{Order}, g::PolynomialBy{Order}) where Order
     if iszero(f)
         return zero(g), f
@@ -226,7 +224,6 @@ function one_step_divrem(::Lead, o::MonomialOrder, f::PolynomialBy{Order}, g::Po
     return zero(g), f
 end
 
-# XXX TODO: verify monomial order semantics
 function one_step_divrem(::Tail, o::MonomialOrder, f::PolynomialBy{Order}, g::PolynomialBy{Order}) where Order
     if iszero(f)
         return zero(g), f
@@ -235,7 +232,6 @@ function one_step_divrem(::Tail, o::MonomialOrder, f::PolynomialBy{Order}, g::Po
         throw(DivideError())
     end
     lt_g = leading_term(o, g)
-    # FIXME: when o != monomialorder(f), this is not correct!
     for t in @view terms(f)[end-1:-1:1]
         factor = maybe_div(t, lt_g)
         if factor !== nothing
@@ -287,7 +283,6 @@ function one_step_rem(::Tail, o::MonomialOrder, f::PolynomialBy{Order}, g::Polyn
         throw(DivideError())
     end
     lt_g = leading_term(o, g)
-    # FIXME: when o != monomialorder(f), this is not correct!
     for t in @view terms(f)[end-1:-1:1]
         factor = maybe_div(t, lt_g)
         if factor !== nothing
