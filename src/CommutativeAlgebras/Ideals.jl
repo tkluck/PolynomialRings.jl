@@ -77,7 +77,7 @@ issubset(I::Ideal{P}, J::Ideal{P}) where P<:Polynomial = all(g in J for g in gen
 *(I::Ideal{P}, J::Ideal{P}) where P<:Polynomial = Ideal([
     i*j for i in generators(I) for j in generators(J)
 ])
-^(I::Ideal, n) = Base.power_by_squaring(I,n)
+^(I::Ideal, n::Integer) = Base.power_by_squaring(I,n)
 
 hash(I::Ideal, h::UInt) = hash(I.generators, h)
 

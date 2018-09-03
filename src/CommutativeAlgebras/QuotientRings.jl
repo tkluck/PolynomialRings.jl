@@ -54,13 +54,13 @@ one(a::QuotientRing)  = one(typeof(a))
 copy(a::QuotientRing) = a
 
 +(a::QuotientRing) = a
--(a::Q) where Q<:QuotientRing = Q(-a.f)
-+(a::Q, b::Q)  where Q<:QuotientRing = Q(a.f+b.f)
--(a::Q, b::Q)  where Q<:QuotientRing = Q(a.f-b.f)
-*(a::Q, b::Q)  where Q<:QuotientRing = Q(a.f*b.f)
-^(a::Q, n)     where Q<:QuotientRing = Base.power_by_squaring(a, n)
-==(a::Q, b::Q) where Q<:QuotientRing = a.f == b.f
-!=(a::Q, b::Q) where Q<:QuotientRing = a.f != b.f
+-(a::Q)                       where Q<:QuotientRing = Q(-a.f)
++(a::Q, b::Q)                 where Q<:QuotientRing = Q(a.f+b.f)
+-(a::Q, b::Q)                 where Q<:QuotientRing = Q(a.f-b.f)
+*(a::Q, b::Q)                 where Q<:QuotientRing = Q(a.f*b.f)
+^(a::Q, n::Integer)           where Q<:QuotientRing = Base.power_by_squaring(a, n)
+==(a::Q, b::Q)                where Q<:QuotientRing = a.f == b.f
+!=(a::Q, b::Q)                where Q<:QuotientRing = a.f != b.f
 allvariablesymbols(::Type{Q}) where Q<:QuotientRing = allvariablesymbols(ring(Q))
 
 # -----------------------------------------------------------------------------
