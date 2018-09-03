@@ -105,8 +105,9 @@ _allfreevars(x::Type{P}) where P<:NamedPolynomial = _allfreevars(termtype(P))
 _allothervars(x::Type) = setdiff(allvariablesymbols(x), _allfreevars(x))
 _coeff(x::Type) = x
 _coeff(::Type{T}) where T<:Term = _coeff(basering(T))
+_coeff(::Type{P}) where P<:NamedPolynomial = _coeff(basering(P))
 _monomialtype(x::Type) = One
-_monomialtype(x::Type{P}) where P<:Polynomial = promote_type(monomialtype(P), _monomialtype(basering(P)))
+_monomialtype(x::Type{P}) where P<:NamedPolynomial = promote_type(monomialtype(P), _monomialtype(basering(P)))
 
 function remove_variables(::Type{N}, vars...) where N <: Named
     result = [x for x in variablesymbols(N) if !(x in vars)]

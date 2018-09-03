@@ -183,6 +183,15 @@ one(::Type{Foo}) = Foo()
         @test base_extend(a[1], Float64) == 1.0 * a[1]
         @test convert(@ring(ℚ[a[]]), a[1]+a[2]) == a[1]+a[2]
     end
+
+    @testset "promotions" begin
+        @test promote_type(@ring(ℤ[x]), @ring(ℚ[y])) == @ring(ℚ[x,y])
+        @test promote_type(@ring(ℤ[a[]][x]), @ring(ℚ[y])) == @ring(ℚ[a[]][x,y])
+        @test promote_type(@ring(ℤ[a[]][x]), @ring(ℚ[a[]][y])) == @ring(ℚ[a[]][x,y])
+
+        @test promote_type(@ring(ℤ[y][x]), @ring(ℚ[y])) == @ring(ℚ[x,y])
+        @test promote_type(@ring(ℤ[y][x]), @ring(ℚ[x])) == @ring(ℚ[y][x])
+    end
 end
 
 @testset "Expansions" begin
