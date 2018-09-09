@@ -1,12 +1,7 @@
 module Monomials
 
-if VERSION >= v"0.7-"
-    import Base: iterate
-    using SparseArrays: SparseVector, sparsevec
-    _mapreduce(f, op, v0, itr) = mapreduce(f, op, itr; init=v0)
-else
-    _mapreduce(f, op, v0, itr) = mapreduce(f, op, v0, itr)
-end
+import Base: iterate
+using SparseArrays: SparseVector, sparsevec
 
 """
     AbstractMonomial{Order}
@@ -40,11 +35,7 @@ abstract type AbstractMonomial{Order} end
 import Base: getindex, gcd, lcm, one, *, ^, ==, diff, isless
 import Base: hash
 import Base: promote_rule
-if VERSION < v"0.7-"
-    import Base.SparseArrays: nonzeroinds
-else
-    import SparseArrays: nonzeroinds
-end
+import SparseArrays: nonzeroinds
 import PolynomialRings: generators, to_dense_monomials, max_variable_index
 import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namestype, monomialorder
 
@@ -147,7 +138,7 @@ length(enz::EnumerateNZ) = length(nzindices(enz.a))
 #
 # -----------------------------------------------------------------------------
 @inline _construct(::Type{M}, f, nzindices, deg) where M <: AbstractMonomial = _construct(M, f, nzindices)
-@inline _construct(::Type{M}, f, nzindices) where M <: AbstractMonomial = _construct(M, f, nzindices, exptype(M)(_mapreduce(f, +, zero(exptype(M)), nzindices)))
+@inline _construct(::Type{M}, f, nzindices) where M <: AbstractMonomial = _construct(M, f, nzindices, exptype(M)(mapreduce(f, +, nzindices, init=zero(exptype(M)))))
 
 one(::Type{M}) where M <: AbstractMonomial = _construct(M, i->0, 1:0)
 one(::M) where M <: AbstractMonomial = one(M)
@@ -155,7 +146,7 @@ one(::M) where M <: AbstractMonomial = one(M)
 *(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _construct(promote_type(typeof(a), typeof(b)),i -> a[i] + b[i], index_union(a,b), total_degree(a) + total_degree(b))
 ^(a::M, n::Integer) where M <: AbstractMonomial = _construct(M,i -> a[i]*n, nzindices(a), total_degree(a)*n)
 
-total_degree(a::A) where A <: AbstractMonomial = _mapreduce(i->a[i], +, zero(exptype(a)), nzindices(a))
+total_degree(a::A) where A <: AbstractMonomial = mapreduce(i->a[i], +, nzindices(a), init=zero(exptype(a)))
 
 lcm(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _construct(promote_type(typeof(a), typeof(b)),i -> max(a[i], b[i]), index_union(a,b))
 gcd(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _construct(promote_type(typeof(a), typeof(b)),i -> min(a[i], b[i]), index_union(a,b))

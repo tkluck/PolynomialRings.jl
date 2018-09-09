@@ -12,11 +12,7 @@ import PolynomialRings.Constants: One
 
 import IterTools: groupby
 
-if VERSION < v"0.7-"
-    isconcretetype(x) = isleaftype(x)
-else
-    using SparseArrays: spzeros, SparseVector
-end
+using SparseArrays: spzeros, SparseVector
 
 # -----------------------------------------------------------------------------
 #

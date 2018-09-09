@@ -6,15 +6,9 @@ import PolynomialRings.Monomials: AbstractMonomial
 import PolynomialRings.Terms: Term
 import PolynomialRings.Operators: RedType, Lead, Full, Tail
 
-if VERSION >= v"0.7-"
-    import Base: keytype
-    keytype(a::AbstractArray) = CartesianIndex{ndims(a)}
-    keytype(a::AbstractVector) = Int
-else
-    keytype(a::AbstractArray) = CartesianIndex{ndims(a)}
-    keytype(a::AbstractVector) = Int
-end
-
+import Base: keytype
+keytype(a::AbstractArray) = CartesianIndex{ndims(a)}
+keytype(a::AbstractVector) = Int
 
 # -----------------------------------------------------------------------------
 #
@@ -87,7 +81,7 @@ leading_coefficient(o::MonomialOrder, x::AbstractArray{P}) where P<:Polynomial =
 
 function one_step_divrem(redtype::RedType, o::MonomialOrder, a::A, b::A) where A<:AbstractArray{<:Polynomial}
     i = findfirst(!iszero, b)
-    if VERSION >= v"0.7-" ? (i != nothing) : (i > 0)
+    if i !== nothing
         (q,r) = divrem(redtype, o, a[i], b[i])
         if iszero(q)
             # make sure to maintain object identity for a
@@ -116,52 +110,7 @@ div(f::A,g::AbstractVector{A})        where A<:AbstractArray{P} where P<:Polynom
 leading_row(x::Polynomial) = 1
 
 # Work around sparse-dense multiplication in Base only working for eltype() <: Number
-# The following code is copied from base/sparse/linalg.jl
-# (https://github.com/JuliaLang/julia/blob/93168a68268a2023c0da5f14e75ccb807cc4fc35/base/sparse/linalg.jl#L50)
-# except ::Number has been replaced by ::Polynomial
-if VERSION < v"0.7-"
-    import Base: A_mul_B!, Ac_mul_B!, At_mul_B!
-    for (f, op, transp) in ((:A_mul_B, :identity, false),
-                            (:Ac_mul_B, :ctranspose, true),
-                            (:At_mul_B, :transpose, true))
-        @eval begin
-            function $(Symbol(f,:!))(α::Polynomial, A::SparseMatrixCSC, B::StridedVecOrMat, β::Polynomial, C::StridedVecOrMat)
-                if $transp
-                    A.n == size(C, 1) || throw(DimensionMismatch())
-                    A.m == size(B, 1) || throw(DimensionMismatch())
-                else
-                    A.n == size(B, 1) || throw(DimensionMismatch())
-                    A.m == size(C, 1) || throw(DimensionMismatch())
-                end
-                size(B, 2) == size(C, 2) || throw(DimensionMismatch())
-                nzv = A.nzval
-                rv = A.rowval
-                if β != 1
-                    β != 0 ? scale!(C, β) : fill!(C, zero(eltype(C)))
-                end
-                for k = 1:size(C, 2)
-                    for col = 1:A.n
-                        if $transp
-                            tmp = zero(eltype(C))
-                            @inbounds for j = A.colptr[col]:(A.colptr[col + 1] - 1)
-                                tmp += $(op)(nzv[j])*B[rv[j],k]
-                            end
-                            C[col,k] += α*tmp
-                        else
-                            αxj = α*B[col,k]
-                            @inbounds for j = A.colptr[col]:(A.colptr[col + 1] - 1)
-                                C[rv[j], k] += nzv[j]*αxj
-                            end
-                        end
-                    end
-                end
-                C
-            end
-        end
-    end
-else
-    import LinearAlgebra: mul!
-    mul!(A, B, C, α::Polynomial, β::Polynomial) = mul!(A, B, C, convert(basering(α),α), convert(basering(β), β))
-end
+import LinearAlgebra: mul!
+mul!(A, B, C, α::Polynomial, β::Polynomial) = mul!(A, B, C, convert(basering(α),α), convert(basering(β), β))
 
 end

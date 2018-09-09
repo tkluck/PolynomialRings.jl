@@ -1,8 +1,5 @@
 module Ideals
 
-if VERSION < v"v0.7-"
-    Nothing = Void
-end
 using PolynomialRings.Polynomials: Polynomial
 using PolynomialRings.Gröbner: gröbner_basis, gröbner_transformation
 

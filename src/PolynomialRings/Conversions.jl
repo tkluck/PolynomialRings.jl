@@ -185,11 +185,7 @@ function convert(::Type{C}, a::P) where P <: PolynomialOver{C} where C
     elseif length(terms(a)) == 1 && total_degree(monomial(terms(a)[1])) == 0
         return coefficient(terms(a)[1])
     else
-        if VERSION < v"0.7-"
-            throw(InexactError())
-        else
-            throw(InexactError(:convert, C, a))
-        end
+        throw(InexactError(:convert, C, a))
     end
 end
 

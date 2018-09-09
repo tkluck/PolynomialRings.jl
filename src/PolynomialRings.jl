@@ -42,12 +42,8 @@ export matrix_solve_affine
 
 # TODO: needs a better place
 import .Monomials: _construct
-if VERSION < v"0.7-"
-    import Base.SparseArrays: nonzeroinds
-else
-    import SparseArrays: nonzeroinds
-    using SparseArrays: SparseVector
-end
+import SparseArrays: nonzeroinds
+using SparseArrays: SparseVector
 _nzindices(t::Tuple) = 1:length(t)
 _nzindices(t::AbstractVector) = eachindex(t)
 _nzindices(t::SparseVector) = nonzeroinds(t)

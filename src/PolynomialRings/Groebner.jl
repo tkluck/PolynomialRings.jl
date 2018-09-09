@@ -13,13 +13,8 @@ import PolynomialRings.Polynomials: Polynomial, monomialorder, terms
 import PolynomialRings.Terms: monomial
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering, leading_row
 import PolynomialRings.Operators: Lead, Full, Tail
-if VERSION >= v"0.7-"
-    using LinearAlgebra: Transpose
-    using SparseArrays: spzeros, sparsevec, SparseVector
-else
-    Transpose = RowVector
-    findall(f, A) = find(f, A)
-end
+using LinearAlgebra: Transpose
+using SparseArrays: spzeros, sparsevec, SparseVector
 
 """
     gröbner_basis = buchberger(monomialorder, polynomials, Val{false}())

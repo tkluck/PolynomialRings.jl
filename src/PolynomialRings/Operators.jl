@@ -8,6 +8,7 @@ import PolynomialRings.Polynomials: Polynomial, termtype, terms, monomialorder
 import PolynomialRings.Polynomials: PolynomialBy
 using PolynomialRings.Util: ParallelIter
 using PolynomialRings.Constants: Zero
+using Base.GMP.MPZ: add!
 
 # -----------------------------------------------------------------------------
 #
@@ -56,15 +57,6 @@ function _collect_summands!(summands::AbstractVector{T}) where T <: Term{M,C} wh
     end
 end
 
-if VERSION < v"0.7-"
-    const mpz_t = Ref{BigInt}
-    add!(x::BigInt, a::BigInt, b::BigInt) = (ccall((:__gmpz_add, :libgmp), Void, (mpz_t, mpz_t, mpz_t), x, a, b); x)
-    add!(x::BigInt, b::BigInt) = add!(x, x, b)
-    _uninitialized_vec(::Type{V}, size) where V <: Vector = V(size)
-else
-    using Base.GMP.MPZ: add!
-    _uninitialized_vec(::Type{V}, size) where V <: Vector = V(undef, size)
-end
 
 function _collect_summands!(summands::AbstractVector{T}) where T <: Term{M, BigInt} where M
     if !isempty(summands)
@@ -93,7 +85,7 @@ end
 function _map(op, a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
     P = promote_type(typeof(a), typeof(b))
     T = termtype(P)
-    res = _uninitialized_vec(Vector{T},length(a.terms) + length(b.terms))
+    res = Vector{T}(undef, length(a.terms) + length(b.terms))
     n = 0
 
     for (m, cleft, cright) in ParallelIter{typeof(terms(a)), typeof(terms(b)),
@@ -131,7 +123,7 @@ function *(a::PolynomialBy{Order,C1}, b::PolynomialBy{Order,C2}) where {C1, C2, 
         return zero(P)
     end
 
-    summands = _uninitialized_vec(Vector{T}, length(terms(a)) * length(terms(b)))
+    summands = Vector{T}(undef, length(terms(a)) * length(terms(b)))
     k = 0
 
     row_indices= zeros(Int, length(terms(a)))
@@ -319,7 +311,7 @@ function ^(f::Polynomial, n::Integer)
     i = zeros(BigInt, N)
     i[N] = bign
 
-    summands = _uninitialized_vec(Vector{T}, Int( multinomial(bign+N-1, N-1, bign) ))
+    summands = Vector{T}(undef, Int( multinomial(bign+N-1, N-1, bign) ))
     s = 0
 
     while true

@@ -5,9 +5,7 @@ using PolynomialRings.Polynomials: Polynomial, basering, variablesymbols
 using PolynomialRings.Monomials: AbstractMonomial
 using PolynomialRings.Terms: Term, monomial, coefficient
 using PolynomialRings.QuotientRings: QuotientRing, monomial_basis
-if VERSION >= v"0.7-"
-    using LinearAlgebra: nullspace
-end
+using LinearAlgebra: nullspace
 
 # -----------------------------------------------------------------------------
 #
@@ -22,11 +20,7 @@ import PolynomialRings: allvariablesymbols, fraction_field, basering
 import PolynomialRings.Ideals: ring
 import PolynomialRings.QuotientRings: _ideal
 import PolynomialRings.Util.LinAlgUtil: AbstractExactNumber
-if VERSION >= v"0.7-"
-    import LinearAlgebra: tr, norm
-else
-    import Base: norm
-end
+import LinearAlgebra: tr, norm
 
 # -----------------------------------------------------------------------------
 #
@@ -185,10 +179,8 @@ function _gcdx(a::AbstractVector{C}, b::AbstractVector{C}) where C
     b = copy(b)
     len_a = findlast(!iszero, a)
     len_b = findlast(!iszero, b)
-    if VERSION >= v"0.7-"
-        len_a === nothing && (len_a = 0)
-        len_b === nothing && (len_b = 0)
-    end
+    len_a === nothing && (len_a = 0)
+    len_b === nothing && (len_b = 0)
     m = max(len_a, len_b)
     s0, s1 = zeros(C, m), zeros(C, m)
     t0, t1 = zeros(C, m), zeros(C, m)
@@ -207,7 +199,7 @@ function _gcdx(a::AbstractVector{C}, b::AbstractVector{C}) where C
             t2[deg_diff+1:end] .-= q .* t1[1:end-deg_diff]
 
             len_a = findprev(!iszero, a, len_a-1)
-            VERSION >= v"0.7-" && len_a == nothing && (len_a = 0)
+            len_a == nothing && (len_a = 0)
         end
         a, b = b, a
         len_a, len_b = len_b, len_a

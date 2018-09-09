@@ -6,12 +6,8 @@ import PolynomialRings.Polynomials: Polynomial
 import IterTools: groupby
 import PolynomialRings.Expansions: _expansion_expr, _expansion_types
 import PolynomialRings: base_restrict
-if VERSION >= v"0.7-"
-    import SparseArrays: issparse, spzeros
-    import LinearAlgebra: Transpose
-else
-    Transpose = RowVector
-end
+import SparseArrays: issparse, spzeros
+import LinearAlgebra: Transpose
 
 # -----------------------------------------------------------------------------
 #
@@ -24,11 +20,7 @@ import PolynomialRings: to_dense_monomials, max_variable_index, monomialorder
 import PolynomialRings.Operators: common_denominator, integral_fraction
 import PolynomialRings.Expansions: expansion, coefficients, coefficient, deg
 import PolynomialRings.Expansions: constant_coefficient, linear_coefficients, expansion_terms
-if VERSION < v"0.7-"
-    import Base: det
-else
-    import LinearAlgebra: det
-end
+import LinearAlgebra: det
 
 max_variable_index(a::AbstractArray{<:Polynomial}) = isempty(a) ? 0 : maximum(max_variable_index(a_i) for a_i in a)
 

@@ -1,9 +1,5 @@
-if VERSION < v"0.7-"
-    using Base.Test
-else
-    using Test
-    import SparseArrays: sparse, spzeros
-end
+using Test
+import SparseArrays: sparse, spzeros
 using PolynomialRings
 
 struct Foo end

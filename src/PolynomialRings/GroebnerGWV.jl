@@ -15,14 +15,8 @@ import PolynomialRings.Polynomials: Polynomial, monomialorder, monomialtype
 import PolynomialRings.Terms: monomial, coefficient
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering
 import PolynomialRings.Operators: Lead, Full
-if VERSION >= v"0.7-"
-    using LinearAlgebra: Transpose
-    using SparseArrays: SparseVector, sparsevec
-    _filter!(f, d::AbstractDict) = filter!(f, d)
-else
-    Transpose = RowVector
-    _filter!(f, d::Associative) = filter!((k,v)->f(k=>v), d)
-end
+using LinearAlgebra: Transpose
+using SparseArrays: SparseVector, sparsevec
 
 function regular_topreduce_rem(o, m, G)
     u1,v1 = m
@@ -125,7 +119,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
         if iszero(v)
             newh = T
             push!(H[newh.i], newh.m)
-            _filter!(JP) do key_value
+            filter!(JP) do key_value
                 sig, jp = key_value
                 T2, v2 = jp
                 divisible = maybe_div(T2, newh) !== nothing

@@ -7,10 +7,6 @@ import PolynomialRings.Monomials: AbstractMonomial, enumeratenz
 import PolynomialRings.VariableNames: Named, Numbered
 import PolynomialRings.MonomialOrderings: MonomialOrder
 
-if VERSION < v"0.7-"
-    occursin(needle, haystack) = contains(haystack, needle)
-end
-
 import Base: show
 
 # -----------------------------------------------------------------------------

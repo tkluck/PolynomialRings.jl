@@ -1,9 +1,6 @@
 module Solve
 
-if VERSION >= v"0.7-"
-    import SparseArrays: sparse, issparse
-end
-
+import SparseArrays: sparse, issparse
 using PolynomialRings: lift
 
 """

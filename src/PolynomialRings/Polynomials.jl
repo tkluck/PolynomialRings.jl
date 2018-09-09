@@ -5,9 +5,7 @@ import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.VariableNames: Named, Numbered
 import PolynomialRings.Terms: Term, monomial, coefficient
 
-if VERSION >= v"0.7-"
-    import SparseArrays: SparseVector
-end
+import SparseArrays: SparseVector
 
 # -----------------------------------------------------------------------------
 #
