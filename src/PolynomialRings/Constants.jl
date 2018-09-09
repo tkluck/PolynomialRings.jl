@@ -56,4 +56,13 @@ promote_rule(::Type{P}, ::Type{C}) where {P<:Polynomial,C<:Constant} = P
 promote_rule(::Type{T}, ::Type{C}) where {T<:Term,C<:Constant} = T
 promote_rule(::Type{M}, ::Type{C}) where {M<:AbstractMonomial,C<:Constant} = M
 
++(x::Number, ::Zero) = x
+-(x::Number, ::Zero) = x
++(::Zero, x::Number) = x
+-(::Zero, x::Number) = -x
++(x::Polynomial, ::Zero) = x
+-(x::Polynomial, ::Zero) = x
++(::Zero, x::Polynomial) = x
+-(::Zero, x::Polynomial) = -x
+
 end
