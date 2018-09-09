@@ -41,10 +41,10 @@ convert(::Type{N}, ::MinusOne) where N <: _N = -one(N)
 -(x::_N, ::Zero) = x
 *(x::_N, ::Zero) = zero(x)
 +(::Zero, x) = x
--(::Zero, x) = x
+-(::Zero, x) = -x
 *(::Zero, x) = zero(x)
 +(::Zero, x::_N) = x
--(::Zero, x::_N) = x
+-(::Zero, x::_N) = -x
 *(::Zero, x::_N) = zero(x)
 
 zero(::Type{C}) where C <: Constant = Zero()
