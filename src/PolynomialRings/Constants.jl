@@ -7,6 +7,7 @@ module Constants
 using PolynomialRings.Monomials: AbstractMonomial
 using PolynomialRings.Terms: Term
 using PolynomialRings.Polynomials: Polynomial
+using PolynomialRings.Util: @foreach
 
 abstract type Constant <: Number end
 
@@ -14,55 +15,44 @@ struct One <: Constant end
 struct Zero <: Constant end
 struct MinusOne <: Constant end
 
-_N = Union{Number,AbstractMonomial,Term,Polynomial}
-
 import Base: promote_rule, convert, +, *, -, zero, one
-
-promote_rule(::Type{N}, ::Type{C}) where N <: _N where C <: Constant = N
-
-convert(::Type{N}, ::One) where N <: _N = one(N)
-convert(::Type{N}, ::Zero) where N <: _N = zero(N)
-convert(::Type{N}, ::MinusOne) where N <: _N = -one(N)
 
 *(x, ::One) = x
 *(::One, x) = x
-*(x::_N, ::One) = x
-*(::One, x::_N) = x
-
-*(x, ::MinusOne) = -x
-*(::MinusOne, x) = -x
-*(x::_N, ::MinusOne) = -x
-*(::MinusOne, x::_N) = -x
 
 +(x, ::Zero) = x
 -(x, ::Zero) = x
 *(x, ::Zero) = zero(x)
-+(x::_N, ::Zero) = x
--(x::_N, ::Zero) = x
-*(x::_N, ::Zero) = zero(x)
+
+*(x, ::MinusOne) = -x
+*(::MinusOne, x) = -x
+
 +(::Zero, x) = x
 -(::Zero, x) = -x
 *(::Zero, x) = zero(x)
-+(::Zero, x::_N) = x
--(::Zero, x::_N) = -x
-*(::Zero, x::_N) = zero(x)
 
 zero(::Type{C}) where C <: Constant = Zero()
 one(::Type{C})  where C <: Constant = One()
 
-# fix some ambiguities
+@foreach N = [Number, AbstractMonomial, Term, Polynomial] begin
+    promote_rule(::Type{T}, ::Type{C}) where {T<:N, C <: Constant} = T
 
-promote_rule(::Type{P}, ::Type{C}) where {P<:Polynomial,C<:Constant} = P
-promote_rule(::Type{T}, ::Type{C}) where {T<:Term,C<:Constant} = T
-promote_rule(::Type{M}, ::Type{C}) where {M<:AbstractMonomial,C<:Constant} = M
+    convert(::Type{T}, ::One)      where T<:N = one(T)
+    convert(::Type{T}, ::Zero)     where T<:N = zero(T)
+    convert(::Type{T}, ::MinusOne) where T<:N = -one(T)
 
-+(x::Number, ::Zero) = x
--(x::Number, ::Zero) = x
-+(::Zero, x::Number) = x
--(::Zero, x::Number) = -x
-+(x::Polynomial, ::Zero) = x
--(x::Polynomial, ::Zero) = x
-+(::Zero, x::Polynomial) = x
--(::Zero, x::Polynomial) = -x
+    # fix method ambiguities
+    *(x::N, ::One) = x
+    *(::One, x::N) = x
+    *(x::N, ::MinusOne) = -x
+    *(::MinusOne, x::N) = -x
+
+    +(x::N, ::Zero) = x
+    -(x::N, ::Zero) = x
+    *(x::N, ::Zero) = zero(x)
+    +(::Zero, x::N) = x
+    -(::Zero, x::N) = -x
+    *(::Zero, x::N) = zero(x)
+end
 
 end
