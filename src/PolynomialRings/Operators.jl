@@ -318,7 +318,7 @@ function ^(f::Polynomial, n::Integer)
         c = try
             C(multinomial(bign, i...))
         catch
-            # FIXME: what's the Julian way of doing a typeassert e::IneactError
+            # FIXME: what's the Julian way of doing a typeassert e::InexactError
             # and bubble up all other exceptions?
             throw(OverflowError("Coefficient overflow while doing exponentiation; suggested fix is replacing `f^n` by `base_extend(f, BigInt)^n`"))
         end
@@ -352,7 +352,7 @@ end
 
 # -----------------------------------------------------------------------------
 #
-# differentation
+# differentiation
 #
 # -----------------------------------------------------------------------------
 function diff(f::Polynomial, i::Integer)
