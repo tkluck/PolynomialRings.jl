@@ -7,6 +7,7 @@ import PolynomialRings.Terms: Term, monomial, coefficient
 import PolynomialRings.Polynomials: Polynomial, termtype, terms, monomialorder
 import PolynomialRings.Polynomials: PolynomialBy
 using PolynomialRings.Util: ParallelIter
+using PolynomialRings.Constants: Zero
 
 # -----------------------------------------------------------------------------
 #
@@ -89,7 +90,7 @@ end
 # addition, subtraction
 #
 # -----------------------------------------------------------------------------
-function +(a::PolynomialBy{Order,C1}, b::PolynomialBy{Order,C2}) where {C1, C2, Order}
+function _map(op, a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
     P = promote_type(typeof(a), typeof(b))
     T = termtype(P)
     res = _uninitialized_vec(Vector{T},length(a.terms) + length(b.terms))
@@ -99,9 +100,9 @@ function +(a::PolynomialBy{Order,C1}, b::PolynomialBy{Order,C2}) where {C1, C2, 
         monomial,
         coefficient,
         (l,r)->Base.Order.lt(Order(), l,r),
-        zero(exptype(a)), zero(exptype(b))
+        Zero(), Zero(),
         }(terms(a), terms(b))
-        coeff = cleft + cright
+        coeff = op(cleft, cright)
         if !iszero(coeff)
             @inbounds res[n+=1] = T(m, coeff)
         end
@@ -110,26 +111,8 @@ function +(a::PolynomialBy{Order,C1}, b::PolynomialBy{Order,C2}) where {C1, C2, 
     return P(res)
 end
 
-function -(a::PolynomialBy{Order,C1}, b::PolynomialBy{Order,C2}) where {C1, C2, Order}
-    P = promote_type(typeof(a), typeof(b))
-    T = termtype(P)
-    res = _uninitialized_vec(Vector{T},length(a.terms) + length(b.terms))
-    n = 0
-
-    for (m, cleft, cright) in ParallelIter{typeof(terms(a)), typeof(terms(b)),
-        monomial,
-        coefficient,
-        (l,r)->Base.Order.lt(Order(), l,r),
-        zero(exptype(a)), zero(exptype(b))
-        }(terms(a), terms(b))
-        coeff = cleft - cright
-        if !iszero(coeff)
-            @inbounds res[n+=1] = T(m, coeff)
-        end
-    end
-    resize!(res, n)
-    return P(res)
-end
++(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order = _map(+, a, b)
+-(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order = _map(-, a, b)
 
 # -----------------------------------------------------------------------------
 #
