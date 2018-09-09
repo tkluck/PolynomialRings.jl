@@ -407,13 +407,15 @@ end
 
 # -----------------------------------------------------------------------------
 #
-# Use Term/Monomial as a polynomial
+# Use Term/Monomial/Coefficient as a scalar
 #
 # -----------------------------------------------------------------------------
 function *(a::T, b::P) where P<:Polynomial{T} where T<:Term
+    iszero(a) && return zero(P)
     P(map(t->a*t, terms(b)))
 end
 function *(a::P, b::T) where P<:Polynomial{T} where T<:Term
+    iszero(b) && return zero(P)
     P(map(t->t*b, terms(a)))
 end
 function *(a::M, b::P) where P<:Polynomial{<:Term{M}} where M<:AbstractMonomial
