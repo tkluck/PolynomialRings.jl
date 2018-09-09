@@ -114,7 +114,7 @@ end
 import PolynomialRings.Util: BoundedHeap
 import DataStructures: enqueue!, dequeue!, peek
 
-function *(a::PolynomialBy{Order,C1}, b::PolynomialBy{Order,C2}) where {C1, C2, Order}
+function *(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
     P = promote_type(typeof(a), typeof(b))
     C = basering(P)
     T = termtype(P)
