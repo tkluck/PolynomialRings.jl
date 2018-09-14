@@ -31,20 +31,25 @@ function regular_topreduce_rem(o, m, G)
         elseif !iszero(v1)
             t = maybe_div(leading_monomial(o,v1), leading_monomial(o,v2))
             if t !== nothing
-                c = leading_coefficient(o,v1) // leading_coefficient(o,v2)
+                c1 = leading_coefficient(o,v1)
+                c2 = leading_coefficient(o,v2)
+                M = lcm(c1, c2)
+                m1, m2 = M÷c1, M÷c2
                 if Base.Order.lt(o, t * u2, u1)
                     # new_u1 = u1 - c*(t*u2)
-                    v1 = v1 - c*(t*v2)
+                    v1 = m1*v1 - m2*(t*v2)
                     supertopreducible = false
                     i = 1
                     continue
-                elseif t * u2 == u1 && c == one(c)
+                elseif t * u2 == u1 && c1 == c2
                     supertopreducible = true
                 end
             end
         end
         i += 1
     end
+
+    v1 = v1 ÷ content(v1)
 
     return (m[1],v1), supertopreducible ? :supertopreducible : :notsupertopreducible
 end
@@ -57,7 +62,9 @@ An implementation of the GWV algorithm as popularized by
 > Groebner bases." IACR Cryptology ePrint Archive 2010 (2010): 641.
 """
 function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polynomial
-    R = base_extend(P)
+    R = base_restrict(P)
+    polynomials = map(f->integral_fraction(f)[1], polynomials)
+
     Rm = Transpose{R, SparseVector{R,Int}}
     Signature = monomialtype(polynomials)
     M = Tuple{Signature, R}
@@ -146,10 +153,11 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
                 # T , the one with v-part minimal), and
                 for (Tj, vj) in G
                     t1, t2 = lcm_multipliers(leading_monomial(o,v), leading_monomial(o,vj))
-                    c = leading_coefficient(o,v) // leading_coefficient(o,vj)
+                    c = leading_coefficient(o,v)
+                    cj = leading_coefficient(o,vj)
                     lhs = t1*T
                     rhs = t2*Tj
-                    if !(c == one(c) && lhs == rhs)
+                    if !(c == cj && lhs == rhs)
                         if Base.Order.lt(o, lhs, rhs)
                             Jsig = rhs
                             Jpair = (t2*Tj, t2*vj)
@@ -192,8 +200,10 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
     progress_logged && @info("Done; interreducing the $k result polynomials")
     for i in 1:k
         result[i] = rem(o, result[i], result[[1:i-1; i+1:k]])
+        result[i] ÷= content(result[i])
     end
     filter!(!iszero, result)
+    result = map(p->base_extend(p, P), result)
     progress_logged && @info("Done. Returning a Gröbner basis of length $(length(result))")
     # --------------------------------------------------------------------------
     # Return the result

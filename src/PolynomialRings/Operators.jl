@@ -373,7 +373,7 @@ gcd(g::Integer, f::Polynomial) = gcd(g, reduce(gcd, (coefficient(t) for t in ter
 function div(f::Polynomial, g::Integer)
     T = termtype(f)
     P = typeof(f)
-    new_terms = [T(monomial(t),div(coefficient(t),g)) for t in terms(f)]
+    new_terms = T[T(monomial(t),div(coefficient(t),g)) for t in terms(f)]
     filter!(!iszero, new_terms)
     return P(new_terms)
 end
