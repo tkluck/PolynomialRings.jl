@@ -1,25 +1,104 @@
 module GröbnerGWV
 
 using DataStructures: SortedDict, DefaultDict
-using IterTools: chain
 
 import PolynomialRings
 import PolynomialRings: gröbner_basis
 import PolynomialRings.Backends.Gröbner: GWV
 
-import PolynomialRings: leading_term, leading_monomial, lcm_multipliers, lcm_degree, fraction_field, basering, base_extend
+import PolynomialRings: leading_term, leading_monomial, lcm_multipliers, lcm_degree, fraction_field, basering, base_extend, base_restrict
 import PolynomialRings: maybe_div, termtype, monomialtype, leading_row, leading_coefficient
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.Monomials: total_degree, any_divisor
-import PolynomialRings.Polynomials: Polynomial, monomialorder, monomialtype
+import PolynomialRings.Polynomials: Polynomial, monomialorder, monomialtype, PolynomialBy
 import PolynomialRings.Terms: monomial, coefficient
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering
-import PolynomialRings.Operators: Lead, Full
+import PolynomialRings.Operators: Lead, Full, content, integral_fraction
 using LinearAlgebra: Transpose
 using SparseArrays: SparseVector, sparsevec
 
+"""
+    v1 := m1*v1 - m2*(t*v2)
+"""
+inplace_reduce!(v1, m1, m2, t, v2) = (v1 = m1*v1 - m2*(t*v2); v1)
+
+function inplace_reduce!(v1::P, m1::BigInt, m2::BigInt, t, v2::P) where P<:PolynomialBy{Order, BigInt} where Order
+    T = termtype(P)
+    tgt = v1.terms
+    src1 = copy(v1.terms)
+    src2 = map(s->t*s, v2.terms)
+
+    # they cancel under this operation
+    usable_coeff = src1[end].c
+    pop!(src1); pop!(src2)
+    resize!(tgt, length(src1) + length(src2))
+    n = 0
+
+    ix1 = 1; ix2 = 1
+    while ix1 <= length(src1) && ix2 <= length(src2)
+        if Base.Order.lt(Order(), src2[ix2], src1[ix1])
+            tgt[n+=1] = -m2*src2[ix2]
+            ix2 += 1
+        elseif Base.Order.lt(Order(), src1[ix1], src2[ix2])
+            coeff, usable_coeff = usable_coeff, src1[ix1].c
+            Base.GMP.MPZ.mul!(coeff, m1, src1[ix1].c)
+            tgt[n+=1] = T(src1[ix1].m, coeff)
+            ix1 += 1
+        else
+            coeff, usable_coeff = usable_coeff, src1[ix1].c
+            Base.GMP.MPZ.sub!(coeff, m1*src1[ix1].c, m2*src2[ix2].c)
+
+            if !iszero(coeff)
+                tgt[n+=1] = T(src1[ix1].m, coeff)
+            end
+
+            ix1 += 1
+            ix2 += 1
+        end
+    end
+    while ix1 <= length(src1)
+        coeff, usable_coeff = usable_coeff, src1[ix1].c
+        Base.GMP.MPZ.mul!(coeff, m1, src1[ix1].c)
+        tgt[n+=1] = T(src1[ix1].m, coeff)
+        ix1 += 1
+    end
+    while ix2 <= length(src2)
+        tgt[n+=1] = -m2*src2[ix2]
+        ix2 += 1
+    end
+
+    resize!(tgt, n)
+    v1
+end
+
+function inplace_reduce(o, f::P, G::AbstractVector{P}) where P<:Polynomial
+    f = deepcopy(f)
+    i = 1
+    while i <= length(G) && !iszero(f)
+        g = G[i]
+        if !iszero(g)
+            f1 = leading_monomial(o, f)
+            g1 = leading_monomial(o, g)
+
+            t = maybe_div(f1, g1)
+            if t !== nothing
+                c1 = leading_coefficient(o, f)
+                c2 = leading_coefficient(o, g)
+                M = lcm(c1, c2)
+                m1, m2 = M÷c1, M÷c2
+                f = inplace_reduce!(f, m1, m2, t, g)
+                i = 1
+                continue
+            end
+        end
+        i += 1
+    end
+    f
+end
+
 function regular_topreduce_rem(o, m, G)
     u1,v1 = m
+    v1 = deepcopy(v1)
     i = 1
     supertopreducible = false
     while i <= length(G)
@@ -37,7 +116,7 @@ function regular_topreduce_rem(o, m, G)
                 m1, m2 = M÷c1, M÷c2
                 if Base.Order.lt(o, t * u2, u1)
                     # new_u1 = u1 - c*(t*u2)
-                    v1 = m1*v1 - m2*(t*v2)
+                    v1 = inplace_reduce!(v1, m1, m2, t, v2)
                     supertopreducible = false
                     i = 1
                     continue
@@ -199,7 +278,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
     k = length(result)
     progress_logged && @info("Done; interreducing the $k result polynomials")
     for i in 1:k
-        result[i] = rem(o, result[i], result[[1:i-1; i+1:k]])
+        result[i] = inplace_reduce(o, result[i], result[[1:i-1; i+1:k]])
         result[i] ÷= content(result[i])
     end
     filter!(!iszero, result)
