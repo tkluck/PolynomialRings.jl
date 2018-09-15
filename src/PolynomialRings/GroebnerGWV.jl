@@ -24,6 +24,8 @@ inplace_reduce!(v1, m1, m2, t, v2) = (v1 = m1*v1 - m2*(t*v2); v1)
 
 function inplace_reduce!(v1::P, m1::BigInt, m2::BigInt, t, v2::P) where P<:PolynomialBy{Order, BigInt} where Order
     T = termtype(P)
+    ≺(a,b) = Base.Order.lt(Order(), a, b)
+
     tgt = v1.terms
     src1 = copy(v1.terms)
     src2 = map(s->t*s, v2.terms)
@@ -36,10 +38,10 @@ function inplace_reduce!(v1::P, m1::BigInt, m2::BigInt, t, v2::P) where P<:Polyn
 
     ix1 = 1; ix2 = 1
     while ix1 <= length(src1) && ix2 <= length(src2)
-        if Base.Order.lt(Order(), src2[ix2], src1[ix1])
+        if src2[ix2] ≺ src1[ix1]
             tgt[n+=1] = -m2*src2[ix2]
             ix2 += 1
-        elseif Base.Order.lt(Order(), src1[ix1], src2[ix2])
+        elseif src1[ix1] ≺ src2[ix2]
             coeff, usable_coeff = usable_coeff, src1[ix1].c
             Base.GMP.MPZ.mul!(coeff, m1, src1[ix1].c)
             tgt[n+=1] = T(src1[ix1].m, coeff)
@@ -97,6 +99,7 @@ function inplace_reduce(o, f::P, G::AbstractVector{P}) where P<:Polynomial
 end
 
 function regular_topreduce_rem(o, m, G)
+    ≺(a,b) = Base.Order.lt(o, a, b)
     u1,v1 = m
     v1 = deepcopy(v1)
     i = 1
@@ -114,7 +117,7 @@ function regular_topreduce_rem(o, m, G)
                 c2 = leading_coefficient(o,v2)
                 M = lcm(c1, c2)
                 m1, m2 = M÷c1, M÷c2
-                if Base.Order.lt(o, t * u2, u1)
+                if t * u2 ≺ u1
                     # new_u1 = u1 - c*(t*u2)
                     v1 = inplace_reduce!(v1, m1, m2, t, v2)
                     supertopreducible = false
@@ -142,6 +145,8 @@ An implementation of the GWV algorithm as popularized by
 """
 function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polynomial
     R = base_restrict(P)
+    ≺(a,b) = Base.Order.lt(o, a, b)
+
     polynomials = map(f->integral_fraction(f)[1], polynomials)
 
     Rm = Transpose{R, SparseVector{R,Int}}
@@ -191,7 +196,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
             u2,v2 = m2
             t = maybe_div(T, u2)
             if t !== nothing
-                if Base.Order.lt(o, t * leading_monomial(o,v2), leading_monomial(o,v1))
+                if t * leading_monomial(o, v2) ≺ leading_monomial(o, v1)
                     return true
                 end
             end
@@ -237,7 +242,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
                     lhs = t1*T
                     rhs = t2*Tj
                     if !(c == cj && lhs == rhs)
-                        if Base.Order.lt(o, lhs, rhs)
+                        if lhs ≺ rhs
                             Jsig = rhs
                             Jpair = (t2*Tj, t2*vj)
                         else
@@ -252,7 +257,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
                             if Jsig in keys(JP)
                                 oldu,oldv = JP[Jsig]
                                 newv = Jpair[2]
-                                if Base.Order.lt(o, newv, oldv)
+                                if newv ≺ oldv
                                     JP[Jsig] = Jpair
                                 end
                             else
