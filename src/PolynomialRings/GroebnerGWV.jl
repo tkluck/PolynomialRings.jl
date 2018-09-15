@@ -86,8 +86,12 @@ function inplace_reduce(o, f::P, G::AbstractVector{P}) where P<:Polynomial
             if t !== nothing
                 c1 = leading_coefficient(o, f)
                 c2 = leading_coefficient(o, g)
-                M = lcm(c1, c2)
-                m1, m2 = M÷c1, M÷c2
+                if basering(P) <: Integer
+                    M = lcm(c1, c2)
+                    m1, m2 = M÷c1, M÷c2
+                else
+                    m1, m2 = c2, c1
+                end
                 f = inplace_reduce!(f, m1, m2, t, g)
                 i = 1
                 continue
@@ -115,8 +119,12 @@ function regular_topreduce_rem(o, m, G)
             if t !== nothing
                 c1 = leading_coefficient(o,v1)
                 c2 = leading_coefficient(o,v2)
-                M = lcm(c1, c2)
-                m1, m2 = M÷c1, M÷c2
+                if basering(v1) <: Integer
+                    M = lcm(c1, c2)
+                    m1, m2 = M÷c1, M÷c2
+                else
+                    m1, m2 = c2, c1
+                end
                 if t * u2 ≺ u1
                     # new_u1 = u1 - c*(t*u2)
                     v1 = inplace_reduce!(v1, m1, m2, t, v2)
@@ -131,7 +139,9 @@ function regular_topreduce_rem(o, m, G)
         i += 1
     end
 
-    v1 = v1 ÷ content(v1)
+    if basering(v1) <: Integer
+        v1 = v1 ÷ content(v1)
+    end
 
     return (m[1],v1), supertopreducible ? :supertopreducible : :notsupertopreducible
 end
@@ -147,7 +157,9 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
     R = base_restrict(P)
     ≺(a,b) = Base.Order.lt(o, a, b)
 
-    polynomials = map(f->integral_fraction(f)[1], polynomials)
+    if basering(P) <: Rational
+        polynomials = map(f->integral_fraction(f)[1], polynomials)
+    end
 
     Rm = Transpose{R, SparseVector{R,Int}}
     Signature = monomialtype(polynomials)
@@ -284,7 +296,9 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
     progress_logged && @info("Done; interreducing the $k result polynomials")
     for i in 1:k
         result[i] = inplace_reduce(o, result[i], result[[1:i-1; i+1:k]])
-        result[i] ÷= content(result[i])
+        if basering(eltype(result)) <: Integer
+            result[i] ÷= content(result[i])
+        end
     end
     filter!(!iszero, result)
     result = map(p->base_extend(p, P), result)
