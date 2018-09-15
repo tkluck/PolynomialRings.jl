@@ -192,7 +192,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
             l = length(G)
             k = length(JP)
             h = sum(length, values(H))
-            @info("GWV: After $loops loops: $l elements in basis; $considered J-pairs considered; |JP|=$k, |H|=$h; $divisor_considerations considerations of divisors ($(divisors_considered/divisor_considerations) divisors on average).")
+            @info("GWV: After $loops loops: $l elements in basis; $considered J-pairs considered; |JP|=$k, |H|=$h; $divisor_considerations considerations of divisors ($(round(divisors_considered/divisor_considerations, digits=1)) divisors on average).")
             progress_logged = true
         end
 
