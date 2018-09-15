@@ -45,7 +45,7 @@ function rem(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) whe
         @assert false "unreachable: didn't expect $redtype"
     end
     i = 1
-    while i<=length(G)
+    while i<=length(G) && !iszero(f_red)
         g = G[i]
         if iszero(g)
             i += 1
@@ -58,9 +58,6 @@ function rem(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) whe
             i += 1
         end
         f_red = reduced
-        if iszero(f_red)
-            return f_red
-        end
     end
     return f_red
 end
@@ -98,7 +95,7 @@ function divrem(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) 
         @assert false "unreachable: didn't expect $redtype"
     end
     i = 1
-    while i<=length(G)
+    while i<=length(G) && !iszero(f_red)
         g = G[i]
         if iszero(g)
             i += 1
@@ -110,9 +107,6 @@ function divrem(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) 
             i = 1
         else
             i += 1
-        end
-        if iszero(f_red)
-            return factors, f_red
         end
     end
     return factors, f_red
