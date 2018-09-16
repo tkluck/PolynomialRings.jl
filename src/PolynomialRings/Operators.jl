@@ -85,15 +85,16 @@ end
 function _map(op, a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
     P = promote_type(typeof(a), typeof(b))
     T = termtype(P)
+    ≺(a,b) = Base.Order.lt(Order(), a, b)
+
     res = Vector{T}(undef, length(a.terms) + length(b.terms))
     n = 0
 
-    for (m, cleft, cright) in ParallelIter{typeof(terms(a)), typeof(terms(b)),
-        monomial,
-        coefficient,
-        (l,r)->Base.Order.lt(Order(), l,r),
-        Zero(), Zero(),
-        }(terms(a), terms(b))
+    for (m, cleft, cright) in ParallelIter(
+            monomial, coefficient, ≺,
+            Zero(), Zero(),
+            terms(a), terms(b),
+        )
         coeff = op(cleft, cright)
         if !iszero(coeff)
             @inbounds res[n+=1] = T(m, coeff)

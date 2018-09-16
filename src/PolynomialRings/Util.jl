@@ -90,12 +90,17 @@ struct ParallelIter{I,J,key,value,lt,l0,r0}
     left::I
     right::J
 end
+ParallelIter(key, value, lt, l0, r0, left, right) = ParallelIter{
+        typeof(left), typeof(right),
+        key, value, lt,
+        l0, r0,
+    }(left, right)
 
 struct Start end
 iterate(a, b::Start) = iterate(a)
 iterate(a::Array, b::Start) = iterate(a)
 iterate(i::ParallelIter) = iterate(i, (Start(), Start()))
-function iterate(i::ParallelIter{I,J,key,value,lt,l0,r0}, state) where {I,J,key,value,lt,l0,r0}
+@inline function iterate(i::ParallelIter{I,J,key,value,lt,l0,r0}, state) where {I,J,key,value,lt,l0,r0}
     lstate, rstate = state
     liter = iterate(i.left, lstate)
     riter = iterate(i.right, rstate)
