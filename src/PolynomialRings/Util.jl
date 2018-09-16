@@ -83,13 +83,13 @@ include("LinAlgUtil.jl")
 #
 # -----------------------------------------------------------------------------
 import Base: iterate, last, findlast, length
-struct ParallelIter{I,J,key,value,lt,l0,r0}
+struct ParallelIter{I,J,key,value,≺,l0,r0}
     left::I
     right::J
 end
-ParallelIter(key, value, lt, l0, r0, left, right) = ParallelIter{
+ParallelIter(key, value, ≺, l0, r0, left, right) = ParallelIter{
         typeof(left), typeof(right),
-        key, value, lt,
+        key, value, ≺,
         l0, r0,
     }(left, right)
 
@@ -97,15 +97,15 @@ struct Start end
 iterate(a, b::Start) = iterate(a)
 iterate(a::Array, b::Start) = iterate(a)
 iterate(i::ParallelIter) = iterate(i, (Start(), Start()))
-@inline function iterate(i::ParallelIter{I,J,key,value,lt,l0,r0}, state) where {I,J,key,value,lt,l0,r0}
+@inline function iterate(i::ParallelIter{I,J,key,value,≺,l0,r0}, state) where {I,J,key,value,≺,l0,r0}
     lstate, rstate = state
     liter = iterate(i.left, lstate)
     riter = iterate(i.right, rstate)
     if liter === nothing && riter === nothing
         return nothing
-    elseif liter === nothing || (riter !== nothing && lt(key(riter[1]), key(liter[1])))
+    elseif liter === nothing || (riter !== nothing && key(riter[1]) ≺ key(liter[1]))
         return (key(riter[1]), l0, value(riter[1])), (lstate, riter[2])
-    elseif riter === nothing || (liter !== nothing && lt(key(liter[1]), key(riter[1])))
+    elseif riter === nothing || (liter !== nothing && key(liter[1]) ≺ key(riter[1]))
         return (key(liter[1]), value(liter[1]), r0), (liter[2], rstate)
     elseif key(liter[1]) == key(riter[1])
         return (key(liter[1]), value(liter[1]), value(riter[1])), (liter[2], riter[2])
