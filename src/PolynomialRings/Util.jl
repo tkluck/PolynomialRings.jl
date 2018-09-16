@@ -71,9 +71,6 @@ struct TrivialIter{X}
     item::X
 end
 import Base: length, iterate
-start(::TrivialIter) = false
-done(::TrivialIter, state) = state
-next(t::TrivialIter, state) = (t.item, true)
 length(::TrivialIter) = 1
 iterate(i::TrivialIter) = (i.item, nothing)
 iterate(i::TrivialIter, ::Nothing) = nothing
