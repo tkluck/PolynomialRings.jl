@@ -67,13 +67,13 @@ delete!(pq::PriorityQueue{K}, k::K) where K = dequeue!(pq, k)
 # One-element iterator
 #
 # -----------------------------------------------------------------------------
-struct TrivialIter{X}
+struct SingleItemIter{X}
     item::X
 end
 import Base: length, iterate
-length(::TrivialIter) = 1
-iterate(i::TrivialIter) = (i.item, nothing)
-iterate(i::TrivialIter, ::Nothing) = nothing
+length(::SingleItemIter) = 1
+iterate(i::SingleItemIter) = (i.item, nothing)
+iterate(i::SingleItemIter, ::Nothing) = nothing
 
 include("LinAlgUtil.jl")
 
