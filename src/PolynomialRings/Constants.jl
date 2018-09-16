@@ -7,7 +7,6 @@ module Constants
 using PolynomialRings.Monomials: AbstractMonomial
 using PolynomialRings.Terms: Term
 using PolynomialRings.Polynomials: Polynomial
-using PolynomialRings.Util: @foreach
 
 abstract type Constant <: Number end
 
@@ -34,25 +33,27 @@ import Base: promote_rule, convert, +, *, -, zero, one
 zero(::Type{C}) where C <: Constant = Zero()
 one(::Type{C})  where C <: Constant = One()
 
-@foreach N = [Number, AbstractMonomial, Term, Polynomial] begin
-    promote_rule(::Type{T}, ::Type{C}) where {T<:N, C <: Constant} = T
+for N = [Number, AbstractMonomial, Term, Polynomial]
+    @eval begin
+        promote_rule(::Type{T}, ::Type{C}) where {T<:$N, C <: Constant} = T
 
-    convert(::Type{T}, ::One)      where T<:N = one(T)
-    convert(::Type{T}, ::Zero)     where T<:N = zero(T)
-    convert(::Type{T}, ::MinusOne) where T<:N = -one(T)
+        convert(::Type{T}, ::One)      where T<:$N = one(T)
+        convert(::Type{T}, ::Zero)     where T<:$N = zero(T)
+        convert(::Type{T}, ::MinusOne) where T<:$N = -one(T)
 
-    # fix method ambiguities
-    *(x::N, ::One) = x
-    *(::One, x::N) = x
-    *(x::N, ::MinusOne) = -x
-    *(::MinusOne, x::N) = -x
+        # fix method ambiguities
+        *(x::$N, ::One) = x
+        *(::One, x::$N) = x
+        *(x::$N, ::MinusOne) = -x
+        *(::MinusOne, x::$N) = -x
 
-    +(x::N, ::Zero) = x
-    -(x::N, ::Zero) = x
-    *(x::N, ::Zero) = zero(x)
-    +(::Zero, x::N) = x
-    -(::Zero, x::N) = -x
-    *(::Zero, x::N) = zero(x)
+        +(x::$N, ::Zero) = x
+        -(x::$N, ::Zero) = x
+        *(x::$N, ::Zero) = zero(x)
+        +(::Zero, x::$N) = x
+        -(::Zero, x::$N) = -x
+        *(::Zero, x::$N) = zero(x)
+    end
 end
 
 end

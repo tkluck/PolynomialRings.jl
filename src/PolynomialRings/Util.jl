@@ -114,26 +114,4 @@ iterate(i::ParallelIter) = iterate(i, (Start(), Start()))
     end
 end
 
-# -----------------------------------------------------------------------------
-#
-# Re-use code with a few different substitutions
-#
-# -----------------------------------------------------------------------------
-subst((x,e)::Pair{Symbol}, expr::Symbol) = expr == x ? e : expr
-function subst(s::Pair, expr::Expr)
-    Expr(expr.head, map(ex->subst(s, ex), expr.args)...)
-end
-subst(s::Pair, expr) = expr
-
-macro foreach(substitutions, expr)
-    @assert substitutions.head == :(=)
-    @assert substitutions.args[2].head == :vect
-    block = quote
-    end
-    for val in substitutions.args[2].args
-        push!(block.args, subst(substitutions.args[1] => val, expr))
-    end
-    esc(block)
-end
-
 end
