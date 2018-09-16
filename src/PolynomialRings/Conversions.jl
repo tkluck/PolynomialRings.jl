@@ -220,9 +220,6 @@ _P = Union{Term,Polynomial}
 ==(a::AbstractMonomial,b::Number) = ==(promote(a,b)...)
 ==(a::Number,b::AbstractMonomial) = ==(promote(a,b)...)
 
-Broadcast.broadcastable(p::AbstractMonomial) = Ref(p)
-Broadcast.broadcastable(p::Term) = Ref(p)
-Broadcast.broadcastable(p::Polynomial) = Ref(p)
 # -----------------------------------------------------------------------------
 #
 # Polynomials with polynomial coefficients
