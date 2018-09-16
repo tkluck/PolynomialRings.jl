@@ -60,8 +60,9 @@ coefficient(a::Term) = a.c
 
 hash(a::Term, h::UInt) = hash(a.m, hash(a.c, h))
 
-import PolynomialRings.Util: lazymap
-generators(::Type{Term{M,C}}) where {M, C} = lazymap(g -> Term{M,C}(g, one(C)), generators(M))
+generators(::Type{Term{M,C}}) where {M, C} = (
+    Term{M,C}(g, one(C)) for g in generators(M)
+)
 
 iszero(a::Term) = coefficient(a) == 0
 

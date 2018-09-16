@@ -7,7 +7,7 @@ import PolynomialRings: basering, namestype, variablesymbols
 import PolynomialRings.Monomials: AbstractMonomial, TupleMonomial, exptype, expstype, enumeratenz
 import PolynomialRings.VariableNames: Named, Numbered
 import PolynomialRings.MonomialOrderings: MonomialOrder
-import PolynomialRings.Util: lazymap, SingleItemIter
+import PolynomialRings.Util: SingleItemIter
 import PolynomialRings.Constants: One
 
 import IterTools: groupby

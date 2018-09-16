@@ -7,7 +7,6 @@ import PolynomialRings.NamedPolynomials: NamedPolynomial, NumberedPolynomial
 import PolynomialRings.VariableNames: Numbered, numberedvariablename
 import PolynomialRings.Terms: Term, basering
 import PolynomialRings.Monomials: TupleMonomial, VectorMonomial
-import PolynomialRings.Util: lazymap
 import PolynomialRings.Ideals: Ideal
 import PolynomialRings.QuotientRings: QuotientRing
 import PolynomialRings.NumberFields: NumberField
