@@ -16,17 +16,17 @@ struct MinusOne <: Constant end
 
 import Base: promote_rule, convert, +, *, -, zero, one
 
-*(x, ::One) = x
-*(::One, x) = x
+*(x, ::One) = deepcopy(x)
+*(::One, x) = deepcopy(x)
 
-+(x, ::Zero) = x
--(x, ::Zero) = x
++(x, ::Zero) = deepcopy(x)
+-(x, ::Zero) = deepcopy(x)
 *(x, ::Zero) = zero(x)
 
 *(x, ::MinusOne) = -x
 *(::MinusOne, x) = -x
 
-+(::Zero, x) = x
++(::Zero, x) = deepcopy(x)
 -(::Zero, x) = -x
 *(::Zero, x) = zero(x)
 
@@ -42,15 +42,15 @@ for N = [Number, AbstractMonomial, Term, Polynomial]
         convert(::Type{T}, ::MinusOne) where T<:$N = -one(T)
 
         # fix method ambiguities
-        *(x::$N, ::One) = x
-        *(::One, x::$N) = x
+        *(x::$N, ::One) = deepcopy(x)
+        *(::One, x::$N) = deepcopy(x)
         *(x::$N, ::MinusOne) = -x
         *(::MinusOne, x::$N) = -x
 
-        +(x::$N, ::Zero) = x
-        -(x::$N, ::Zero) = x
+        +(x::$N, ::Zero) = deepcopy(x)
+        -(x::$N, ::Zero) = deepcopy(x)
         *(x::$N, ::Zero) = zero(x)
-        +(::Zero, x::$N) = x
+        +(::Zero, x::$N) = deepcopy(x)
         -(::Zero, x::$N) = -x
         *(::Zero, x::$N) = zero(x)
     end

@@ -47,7 +47,7 @@ monomialorder(::Type{T}) where T <: Term = monomialorder(monomialtype(T))
 *(a::Term{M, C1}, b::Term{M, C2}) where M <: AbstractMonomial where {C1,C2} = Term(a.m*b.m, a.c*b.c)
 *(a::Term{M, C}, b::C) where M <: AbstractMonomial where C = Term(a.m, a.c*b)
 *(a::C, b::Term{M, C}) where M <: AbstractMonomial where C = Term(b.m, a*b.c)
-+(a::T)                where T <: Term = a
++(a::T)                where T <: Term = deepcopy(a)
 -(a::T)                where T <: Term = T(a.m, -a.c)
 ==(a::T,b::T)          where T <: Term = a.m == b.m && a.c == b.c
 ^(a::T, n::Integer)    where T <: Term = T(a.m^n, a.c^n)
@@ -65,7 +65,7 @@ generators(::Type{Term{M,C}}) where {M, C} = lazymap(g -> Term{M,C}(g, one(C)), 
 
 iszero(a::Term) = iszero(coefficient(a))
 
-to_dense_monomials(n, a::Term) = Term( to_dense_monomials(n, monomial(a)), coefficient(a) )
+to_dense_monomials(n, a::Term) = Term( to_dense_monomials(n, monomial(a)), deepcopy(coefficient(a)) )
 max_variable_index(a::Term) = max_variable_index(monomial(a))
 
 function maybe_div(a::T, b::T) where T<:Term
@@ -79,7 +79,7 @@ end
 
 function lcm_multipliers(a::T, b::T)::Tuple{T,T} where T<:Term
     m_a,m_b = lcm_multipliers(monomial(a), monomial(b))
-    return T(m_a, coefficient(b)), T(m_b, coefficient(a))
+    return T(m_a, deepcopy(coefficient(b))), T(m_b, deepcopy(coefficient(a)))
 end
 
 (t::Term)(args...) = coefficient(t) * monomial(t)(args...)

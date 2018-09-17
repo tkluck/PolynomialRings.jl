@@ -30,7 +30,7 @@ one(::P)        where P <: Polynomial = one(P)
 
 iszero(a::P)        where P <: Polynomial = length(terms(a)) == 0
 ==(a::P,b::P)       where P <: Polynomial = a.terms == b.terms
-+(a::P)             where P <: Polynomial = a
++(a::P)             where P <: Polynomial = deepcopy(a)
 -(a::P)             where P <: Polynomial = P([-t for t in terms(a)])
 
 # -----------------------------------------------------------------------------
@@ -68,7 +68,7 @@ function _collect_summands!(summands::AbstractVector{T}) where T <: Term{M, BigI
                 cur_coef = coefficient(summands[n])
                 add!(cur_coef, coef)
             else
-                summands[n+=1] = T(exponent, copy(coef))
+                summands[n+=1] = T(exponent, deepcopy(coef))
                 last_exp = exponent
             end
         end
@@ -390,7 +390,8 @@ Apply a function `f` to all coefficients of `q`, and return the result.
 """
 function map_coefficients(f, a::Polynomial)
     T = termtype(a)
-    new_terms = map(t->T(monomial(t), f(coefficient(t))), terms(a))
+    op(c) = (res = f(c); res === c ? deepcopy(res) : res)
+    new_terms = map(t->T(monomial(t), op(coefficient(t))), terms(a))
     # work around type inference issue
     new_terms = collect(T, new_terms)
     filter!(!iszero, new_terms)

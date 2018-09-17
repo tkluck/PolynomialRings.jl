@@ -34,6 +34,14 @@ convert(::Type{P}, x::P) where P <: Polynomial = x
 
 # -----------------------------------------------------------------------------
 #
+# Convert and un-alias when necessary
+#
+# -----------------------------------------------------------------------------
+unalias(::Type{T}, a::T) where T = deepcopy(a)
+unalias(::Type{T}, a::S) where {T,S} = T(a)
+
+# -----------------------------------------------------------------------------
+#
 # Promoting coefficients to polynomials
 #
 # -----------------------------------------------------------------------------
@@ -46,7 +54,7 @@ function convert(::Type{P}, a::C) where P<:PolynomialOver{C} where C
     else
         T = termtype(P)
         M = monomialtype(P)
-        return P([T(one(M),a)])
+        return P([T(one(M),deepcopy(a))])
     end
 end
 
@@ -61,7 +69,7 @@ base_restrict(::Type{Polynomial{T}}, ::Type{C}) where {T,C} = Polynomial{base_re
 function base_restrict(t::T, ::Type{C}) where T<:Term where C
     TT = base_restrict(T, C)
     CC = basering(TT)
-    return TT(monomial(t), CC(coefficient(t)))
+    return TT(monomial(t), unalias(CC, coefficient(t)))
 end
 
 function base_restrict(p::P, ::Type{C}) where P<:Polynomial where C
@@ -83,7 +91,7 @@ base_extend(::Type{Polynomial{T}}, ::Type{C}) where {T,C} = Polynomial{base_exte
 function base_extend(t::T, ::Type{C}) where T<:Term where C
     TT = base_extend(T, C)
     CC = basering(TT)
-    return TT(monomial(t), CC(coefficient(t)))
+    return TT(monomial(t), unalias(CC, coefficient(t)))
 end
 
 function base_extend(p::P, ::Type{C}) where P<:Polynomial where C
@@ -121,7 +129,7 @@ function convert(::Type{P}, a::C)  where P<:PolynomialOver{C} where C<:Number
     else
         T = termtype(P)
         M = monomialtype(P)
-        return P([T(one(M),a)])
+        return P([T(one(M),deepcopy(a))])
     end
 end
 
@@ -133,7 +141,7 @@ end
 
 promote_rule(::Type{T}, ::Type{C}) where T <: Term where C<:Number = base_extend(T,C)
 
-convert(::Type{T}, a::C) where T <: Term{M} where M where C<:Number = base_extend(T,C)(one(M), a)
+convert(::Type{T}, a::C) where T <: Term{M} where M where C<:Number = base_extend(T,C)(one(M), deepcopy(a))
 
 # -----------------------------------------------------------------------------
 #
@@ -151,7 +159,7 @@ promote_rule(::Type{M}, ::Type{C}) where M <: AbstractMonomial where C<:Number =
 
 promote_rule(::Type{P}, ::Type{T}) where P <: Polynomial{T} where T <: Term = P
 
-convert(::Type{P}, a::T) where P <: Polynomial{T} where T <: Term = iszero(a) ? zero(P) : P([a])
+convert(::Type{P}, a::T) where P <: Polynomial{T} where T <: Term = iszero(a) ? zero(P) : P([deepcopy(a)])
 
 
 # -----------------------------------------------------------------------------
@@ -183,7 +191,7 @@ function convert(::Type{C}, a::P) where P <: PolynomialOver{C} where C
     if length(terms(a)) == 0
         return zero(C)
     elseif length(terms(a)) == 1 && total_degree(monomial(terms(a)[1])) == 0
-        return coefficient(terms(a)[1])
+        return deepcopy(coefficient(terms(a)[1]))
     else
         throw(InexactError(:convert, C, a))
     end
@@ -255,7 +263,7 @@ function convert(::Type{P}, a::C) where P <: NamedPolynomial{C} where C<:Polynom
     else
         T = termtype(P)
         M = monomialtype(P)
-        return P([T(one(M),a)])
+        return P([T(one(M),deepcopy(a))])
     end
 end
 
