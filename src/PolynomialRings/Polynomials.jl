@@ -16,7 +16,7 @@ import PolynomialRings: generators, to_dense_monomials, max_variable_index, base
 import PolynomialRings: leading_term, termtype, monomialorder, terms, exptype, namestype
 import PolynomialRings: leading_coefficient, leading_monomial
 import PolynomialRings: variablesymbols, allvariablesymbols
-import Base: copy, hash
+import Base: first, last, copy, hash
 import Base.Order: lt
 import PolynomialRings.MonomialOrderings: MonomialOrder
 
@@ -93,7 +93,10 @@ leading_monomial(p::Polynomial) = monomial(leading_term(p))
 leading_coefficient(o::MonomialOrder, p::Polynomial) = coefficient(leading_term(o, p))
 leading_coefficient(p::Polynomial) = coefficient(leading_term(p))
 
-copy(p::Polynomial) = typeof(p)(copy(p.terms))
+# match the behaviour for Number
+first(p::Polynomial) = p
+last(p::Polynomial) = p
+copy(p::Polynomial) = p
 
 lt(o::MonomialOrder, a::P, b::P) where P <: Polynomial = lt(o, leading_monomial(o, a), leading_monomial(o, b))
 
