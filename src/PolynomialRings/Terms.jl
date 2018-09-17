@@ -64,7 +64,7 @@ generators(::Type{Term{M,C}}) where {M, C} = (
     Term{M,C}(g, one(C)) for g in generators(M)
 )
 
-iszero(a::Term) = coefficient(a) == 0
+iszero(a::Term) = iszero(coefficient(a))
 
 to_dense_monomials(n, a::Term) = Term( to_dense_monomials(n, monomial(a)), coefficient(a) )
 max_variable_index(a::Term) = max_variable_index(monomial(a))
