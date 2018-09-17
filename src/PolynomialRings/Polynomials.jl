@@ -72,8 +72,9 @@ allvariablesymbols(::Type{P}) where P <: Polynomial = union(allvariablesymbols(b
 
 hash(p::Polynomial, h::UInt) = hash(p.terms, h)
 
-generators(::Type{P}) where P <: Polynomial = (
-    P([g]) for g in generators(termtype(P))
+import PolynomialRings.Util: lazymap
+generators(::Type{P}) where P <: Polynomial = lazymap(
+    g->P([g]), generators(termtype(P))
 )
 
 function to_dense_monomials(n, p::Polynomial)

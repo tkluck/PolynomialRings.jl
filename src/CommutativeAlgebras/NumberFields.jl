@@ -73,11 +73,10 @@ function NumberField(::Type{Q}) where Q<:QuotientRing
 
     K = Vector{C}()
     # let's hope one of these is a primitive element
-    gens = [α for α in generators(P)]
-    possible_α = copy(gens)
-    append!(possible_α, α+β for (α,β) in zip(gens[2:end], gens[1:end-1]))
-    append!(possible_α, α*β for (α,β) in zip(gens[2:end], gens[1:end-1]))
-    push!(possible_α, sum(gens))
+    possible_α = collect(generators(P))
+    append!(possible_α, α+β for (α,β) in zip(generators(P)[2:end], generators(P)[1:end-1]))
+    append!(possible_α, α*β for (α,β) in zip(generators(P)[2:end], generators(P)[1:end-1]))
+    push!(possible_α, sum(generators(P)))
     found = false
     α = zero(P)
     M = Matrix{C}(undef,0,0)
