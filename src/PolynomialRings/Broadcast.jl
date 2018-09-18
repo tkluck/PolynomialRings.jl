@@ -289,17 +289,7 @@ inplace!(::typeof(-), a::BigInt, b::BigInt, c::BigInt) = (Base.GMP.MPZ.sub!(a,b,
 inplace!(::typeof(-), a::BigInt, b::BigInt, c::Zero) = (Base.GMP.MPZ.set!(a,b); a)
 inplace!(::typeof(-), a::BigInt, b::Zero, c::BigInt) = (Base.GMP.MPZ.neg!(a,c); a)
 function iterterms(op::PlusMinus, a::TermsMap{Order,true}, b::TermsMap{Order,true}) where Order
-    ≺(a,b) = Base.Order.lt(Order(), a, b)
-
-    summands = ParallelIter(
-        monomial, coefficient, ≺,
-        Zero(), Zero(),
-        a, b,
-    )
-    TermsMap(Order(), summands, true) do (m, cleft, cright)
-        cleft = inplace!(op, cleft, cleft, cright)
-        iszero(cleft) ? nothing : Term(m, cleft)
-    end
+    invoke(iterterms, Tuple{PlusMinus, TermsMap{Order,true}, TermsMap{Order}}, op, a, b)
 end
 function iterterms(op::PlusMinus, a::TermsMap{Order,true}, b::TermsMap{Order}) where Order
     ≺(a,b) = Base.Order.lt(Order(), a, b)
