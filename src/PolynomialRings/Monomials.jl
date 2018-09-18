@@ -54,7 +54,7 @@ struct Start end
 iterate(a, b::Start) = iterate(a)
 iterate(a::Array, b::Start) = iterate(a)
 iterate(i::IndexUnion) = iterate(i, (Start(), Start()))
-function iterate(i::IndexUnion{I,J,lt}, state) where {I,J,lt}
+@inline function iterate(i::IndexUnion{I,J,lt}, state) where {I,J,lt}
     lstate, rstate = state
     liter = iterate(i.left, lstate)
     riter = iterate(i.right, rstate)
