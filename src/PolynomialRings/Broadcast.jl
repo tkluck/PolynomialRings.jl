@@ -372,11 +372,11 @@ function _materialize!(x::Polynomial, bc::BrTermwise{Order,P}) where {Order,P}
     n = 0
     it = iterterms(bc)
     if is_inplace(it)
-        for t in iterterms(bc)
+        for t in it
             @inbounds x.terms[n+=1] = t
         end
     else
-        for t in iterterms(bc)
+        for t in it
             @inbounds x.terms[n+=1] = deepcopy(t)
         end
     end
