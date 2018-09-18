@@ -32,7 +32,7 @@ abstract type AbstractMonomial{Order} end
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: getindex, gcd, lcm, one, *, ^, ==, diff, isless
+import Base: getindex, gcd, lcm, one, *, ^, ==, diff, isless, iszero
 import Base: hash
 import Base: promote_rule
 import SparseArrays: nonzeroinds
@@ -154,6 +154,7 @@ gcd(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _const
 monomialorder(::Type{M}) where M <: AbstractMonomial{Order} where Order = Order()
 namestype(::Type{M}) where M <: AbstractMonomial = namestype(monomialorder(M))
 isless(a::M, b::M) where M <: AbstractMonomial = Base.Order.lt(monomialorder(M), a, b)
+iszero(a::AbstractMonomial) = false
 
 """
     enumeratenz(monomial)
