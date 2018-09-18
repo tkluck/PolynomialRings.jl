@@ -154,6 +154,7 @@ struct TermsMap{Order,Inplace,Terms,Op}
     op::Op
 end
 Base.getindex(t::TermsMap) = t
+is_inplace(::TermsMap{Order,Inplace}) where {Order,Inplace} = Inplace
 
 TermsMap(op::Op, o::Order, terms::Terms, inplace=false) where {Op, Order,Terms} = TermsMap{Order,inplace,Terms,Op}(terms, op)
 @inline function Base.iterate(t::TermsMap)
@@ -199,9 +200,12 @@ broadcasted(st::Termwise{Order}, op::PlusMinus, a::TermsBy{Order}, b::TermsBy{Or
 
 # we also know how to lazily do * when scaling by a Number or base ring element
 broadcasted(st::Termwise{Order}, op::typeof(*), a::RefValue{<:PolynomialOver{C,Order}}, b::RefValue{C}) where {Order,C} = Broadcasted{typeof(st)}(op, (a, b))
-broadcasted(st::Termwise{Order}, op::typeof(*), a::RefValue{<:PolynomialBy{Order}}, b::Number) where Order = Broadcasted{typeof(st)}(op, (a,b))
+broadcasted(st::Termwise{Order}, op::typeof(*), a::TermsBy{Order}, b::Number) where Order = Broadcasted{typeof(st)}(op, (a,b))
 broadcasted(st::Termwise{Order}, op::typeof(*), a::RefValue{C}, b::RefValue{<:PolynomialOver{C,Order}}) where {Order,C} = Broadcasted{typeof(st)}(op, (a,b))
-broadcasted(st::Termwise{Order}, op::typeof(*), a::Number, b::RefValue{<:PolynomialBy{Order}}) where Order = Broadcasted{typeof(st)}(op, (a,b))
+broadcasted(st::Termwise{Order}, op::typeof(*), a::Number, b::TermsBy{Order}) where Order = Broadcasted{typeof(st)}(op, (a,b))
+
+# also when scaling by a monomial
+broadcasted(st::Termwise{Order}, op::typeof(*), a::RefValue{<:AbstractMonomial}, b::RefValue{<:PolynomialBy{Order}}) where Order = Broadcasted{typeof(st)}(op, (a,b))
 
 iterterms(x) = x
 iterterms(bc::Broadcasted{<:Termwise}) = iterterms(bc.f, map(iterterms, bc.args)...)
@@ -220,17 +224,17 @@ function iterterms(op::PlusMinus, a::TermsMap{Order}, b::TermsMap{Order}) where 
     end
 end
 
-for T = [Number, RefValue{<:AbstractMonomial}, RefValue{<:Term}]
-    @eval function iterterms(op::typeof(*), a::TermsMap{Order}, b::$T) where Order
-        TermsMap(Order(), a) do t
-            iszero(b) ? nothing : t*b
-        end
+function iterterms(op::typeof(*), a::TermsMap{Order}, b::Number) where Order
+    b = deepcopy(b)
+    TermsMap(Order(), a) do t
+        iszero(b) ? nothing : Term(monomial(t), coefficient(t)*b)
     end
+end
 
-    @eval function iterterms(op::typeof(*), a::$T, b::TermsMap{Order}) where Order
-        TermsMap(Order(), b) do t
-            iszero(a) ? nothing : a*t
-        end
+function iterterms(op::typeof(*), a::Number, b::TermsMap{Order}) where Order
+    a = deepcopy(a)
+    TermsMap(Order(), b) do t
+        iszero(a) ? nothing : Term(monomial(t), a*coefficient(t))
     end
 end
 
@@ -240,31 +244,50 @@ mul!(a::BigInt, b::BigInt, c::Int) = Base.GMP.MPZ.mul_si!(a, b, c)
 mul!(a::BigInt, b::Int, c::BigInt) = Base.GMP.MPZ.mul_si!(a, c, b)
 # TODO: b should have BigInt coeffs
 function iterterms(op::typeof(*), a::PossiblyBigInt, b::TermsMap{Order,true}) where Order
+    a = deepcopy(a)
     TermsMap(Order(), b, true) do t
         if iszero(a)
             return nothing
         else
-            t = deepcopy(t)
             mul!(t.c, a, t.c)
-            t
+            return t
         end
     end
 end
 # TODO: a should have BigInt coeffs
 function iterterms(op::typeof(*), a::TermsMap{Order,true}, b::PossiblyBigInt) where Order
+    b = deepcopy(b)
     TermsMap(Order(), a, true) do t
         if iszero(b)
             return nothing
         else
-            t = deepcopy(t)
             mul!(t.c, t.c, b)
-            t
+            return t
         end
     end
 end
+
+function iterterms(op::typeof(*), a::RefValue{<:AbstractMonomial}, b::TermsMap{Order}) where Order
+    TermsMap(Order(), b, is_inplace(b)) do t
+        # NOTE: we are not deepcopying the coefficient, but materialize!() will
+        # take care of that if the end result is not transient
+        return typeof(t)(a[]*monomial(t), coefficient(t))
+    end
+end
+
+function iterterms(op::typeof(*), a::TermsMap{Order}, b::RefValue{<:AbstractMonomial}) where Order
+    TermsMap(Order(), a, is_inplace(a)) do t
+        # NOTE: we are not deepcopying the coefficient, but materialize!() will
+        # take care of that if the end result is not transient
+        return typeof(t)(monomial(t)*b[], coefficient(t))
+    end
+end
+
 inplace!(op, a, b, c) = (a = op(b,c); a)
 inplace!(::typeof(+), a::BigInt, b::BigInt, c::BigInt) = (Base.GMP.MPZ.add!(a,b,c); a)
 inplace!(::typeof(-), a::BigInt, b::BigInt, c::BigInt) = (Base.GMP.MPZ.sub!(a,b,c); a)
+inplace!(::typeof(-), a::BigInt, b::BigInt, c::Zero) = (Base.GMP.MPZ.set!(a,b); a)
+inplace!(::typeof(-), a::BigInt, b::Zero, c::BigInt) = (Base.GMP.MPZ.neg!(a,c); a)
 function iterterms(op::PlusMinus, a::TermsMap{Order,true}, b::TermsMap{Order,true}) where Order
     ≺(a,b) = Base.Order.lt(Order(), a, b)
 
@@ -273,7 +296,7 @@ function iterterms(op::PlusMinus, a::TermsMap{Order,true}, b::TermsMap{Order,tru
         Zero(), Zero(),
         a, b,
     )
-    TermsMap(Order(), summands) do (m, cleft, cright)
+    TermsMap(Order(), summands, true) do (m, cleft, cright)
         cleft = inplace!(op, cleft, cleft, cright)
         iszero(cleft) ? nothing : Term(m, cleft)
     end
@@ -286,7 +309,7 @@ function iterterms(op::PlusMinus, a::TermsMap{Order,true}, b::TermsMap{Order}) w
         Zero(), Zero(),
         a, b,
     )
-    TermsMap(Order(), summands) do (m, cleft, cright)
+    TermsMap(Order(), summands, true) do (m, cleft, cright)
         cleft = inplace!(op, cleft, cleft, cright)
         iszero(cleft) ? nothing : Term(m, cleft)
     end
@@ -299,7 +322,7 @@ function iterterms(op::PlusMinus, a::TermsMap{Order}, b::TermsMap{Order,true}) w
         Zero(), Zero(),
         a, b,
     )
-    TermsMap(Order(), summands) do (m, cleft, cright)
+    TermsMap(Order(), summands, true) do (m, cleft, cright)
         cright = inplace!(op, cright, cleft, cright)
         iszero(cright) ? nothing : Term(m, cright)
     end
@@ -352,8 +375,15 @@ end
 function _materialize!(x::Polynomial, bc::BrTermwise{Order,P}) where {Order,P}
     resize!(x.terms, termsbound(bc))
     n = 0
-    for t in iterterms(bc)
-        @inbounds x.terms[n+=1] = t
+    it = iterterms(bc)
+    if is_inplace(it)
+        for t in iterterms(bc)
+            @inbounds x.terms[n+=1] = t
+        end
+    else
+        for t in iterterms(bc)
+            @inbounds x.terms[n+=1] = deepcopy(t)
+        end
     end
     resize!(x.terms, n)
     x
