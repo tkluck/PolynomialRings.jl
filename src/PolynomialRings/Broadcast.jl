@@ -108,18 +108,28 @@ using Base: RefValue
 using Base.Broadcast: Style, AbstractArrayStyle, BroadcastStyle, Broadcasted, broadcasted
 using PolynomialRings: monomialorder
 using PolynomialRings.Constants: Zero, One
-using PolynomialRings.Util: ParallelIter, Start
+using PolynomialRings.Util: ParallelIter
 using PolynomialRings.MonomialOrderings: MonomialOrder
 using PolynomialRings.Monomials: AbstractMonomial
 using PolynomialRings.Terms: Term, monomial, coefficient
 using PolynomialRings.Polynomials: Polynomial, PolynomialOver, PolynomialBy, terms, termtype
 
+# -----------------------------------------------------------------------------
+#
+# Imports for overloading
+#
+# -----------------------------------------------------------------------------
 import Base.Broadcast: broadcastable, broadcasted, materialize, materialize!
 
 broadcastable(p::AbstractMonomial) = Ref(p)
 broadcastable(p::Term) = Ref(p)
 broadcastable(p::Polynomial) = Ref(p)
 
+# -----------------------------------------------------------------------------
+#
+# Defining the broadcast style
+#
+# -----------------------------------------------------------------------------
 struct Termwise{Order, P} <: BroadcastStyle end
 
 BroadcastStyle(::Type{<:RefValue{P}}) where P<:Polynomial = Termwise{typeof(monomialorder(P)), P}()
@@ -127,6 +137,11 @@ BroadcastStyle(s::Termwise{Order, P}, t::Termwise{Order, Q}) where {Order,P,Q} =
 BroadcastStyle(s::Termwise, t::AbstractArrayStyle{0}) = s
 BroadcastStyle(s::Termwise, t::BroadcastStyle) = t
 
+# -----------------------------------------------------------------------------
+#
+# Handling polynomials that may be edited in-place
+#
+# -----------------------------------------------------------------------------
 const BrTermwise{Order,P} = Broadcasted{Termwise{Order,P}}
 const PlusMinus = Union{typeof(+), typeof(-)}
 
@@ -141,17 +156,26 @@ BroadcastStyle(::Type{<:InPlace{P}}) where P<:Polynomial = Termwise{typeof(monom
 # Eagerly evaluate all expressions involving polynomials, except for the
 # ones we explicitly know how to do. This ensures that e.g. operations
 # with different variables/orders get eagerly evaluated.
-# Note that by the time this function gets called, all the BroadcastStyles
-# have already been bubbled up, so if we still have Termwise as the
-# first argument, we are sure we only have polynomials and scalars.
 eager(a) = a
 eager(a::InPlace) = a[]
 eager(a::RefValue) = a[]
 eager(a::Broadcasted) = materialize(a)
+# Note that by the time this function gets called, all the BroadcastStyles
+# have already been bubbled up, so if we still have Termwise as the
+# first argument, we are sure we only have polynomials and scalars.
 # Note that if we've evaluated eagerly, then we own the resulting Polynomial,
 # so we may apply in-place operations to it.
 broadcasted(::Termwise, op, a, b) = InPlace(op(eager(a), eager(b)))
 
+"""
+    TermsMap{Order,Inplace,Terms,Op}
+
+Represents a lazily evaluated generator of terms. `Inplace` is either
+true or false, and represents whether the consumer is allowed to modify the
+coefficients in-place. This is e.g. true if we are iterating over an
+`InPlace{<:Polynomial}` or if the generator has allocated its own
+`Term`.
+"""
 struct TermsMap{Order,Inplace,Terms,Op}
     terms::Terms
     op::Op
@@ -182,17 +206,32 @@ end
     end
     return nothing
 end
-@inline Base.iterate(t::TermsMap, state::Start) = iterate(t)
 
-termsbound(a::RefValue{<:Polynomial}) = length(terms(a[]))
+# -----------------------------------------------------------------------------
+#
+#  Leaf cases for `iterterms`
+#
+# -----------------------------------------------------------------------------
 iterterms(a::RefValue{<:Polynomial}) = TermsMap(identity, monomialorder(a[]), terms(a[]), false)
-termsbound(a::InPlace{<:Polynomial}) = length(terms(a[]))
 iterterms(a::InPlace{<:Polynomial}) = TermsMap(identity, monomialorder(a[]), terms(a[]), true)
+
+# -----------------------------------------------------------------------------
+#
+#  termsbound base case and recursion
+#
+# -----------------------------------------------------------------------------
+termsbound(a::RefValue{<:Polynomial}) = length(terms(a[]))
+termsbound(a::InPlace{<:Polynomial}) = length(terms(a[]))
 termsbound(a::RefValue) = 1
 termsbound(a::Number) = 1
 termsbound(bc::Broadcasted{<:Termwise, Nothing, <:PlusMinus}) = sum(termsbound, bc.args)
 termsbound(bc::Broadcasted{<:Termwise, Nothing, typeof(*)}) = prod(termsbound, bc.args)
 
+# -----------------------------------------------------------------------------
+#
+#  Decide which broadcasts can be done lazily
+#
+# -----------------------------------------------------------------------------
 const TermsBy{Order} = Union{
     BrTermwise{Order},
     RefValue{<:PolynomialBy{Order}},
@@ -210,23 +249,19 @@ broadcasted(st::Termwise{Order}, op::typeof(*), a::Number, b::TermsBy{Order}) wh
 # also when scaling by a monomial
 broadcasted(st::Termwise{Order}, op::typeof(*), a::RefValue{<:AbstractMonomial}, b::RefValue{<:PolynomialBy{Order}}) where Order = Broadcasted{typeof(st)}(op, (a,b))
 
+# -----------------------------------------------------------------------------
+#
+#  Lazy implementations of these broadcasts
+#
+# -----------------------------------------------------------------------------
 iterterms(x) = x
 iterterms(bc::Broadcasted{<:Termwise}) = iterterms(bc.f, map(iterterms, bc.args)...)
 
-function iterterms(op::PlusMinus, a::TermsMap{Order}, b::TermsMap{Order}) where Order
-    ≺(a,b) = Base.Order.lt(Order(), a, b)
-
-    summands = ParallelIter(
-        monomial, coefficient, ≺,
-        Zero(), Zero(),
-        a, b,
-    )
-    TermsMap(Order(), summands) do (m, cleft, cright)
-        coeff = op(cleft, cright)
-        iszero(coeff) ? nothing : Term(m, coeff)
-    end
-end
-
+# -----------------------------------------------------------------------------
+#
+#  Lazy implementations of scalar multiplication
+#
+# -----------------------------------------------------------------------------
 function iterterms(op::typeof(*), a::TermsMap{Order}, b::Number) where Order
     b = deepcopy(b)
     TermsMap(Order(), a) do t
@@ -286,6 +321,11 @@ function iterterms(op::typeof(*), a::TermsMap{Order}, b::RefValue{<:AbstractMono
     end
 end
 
+# -----------------------------------------------------------------------------
+#
+#  Lazy implementations of addition/substraction
+#
+# -----------------------------------------------------------------------------
 inplace!(op, a, b, c) = (a = op(b,c); a)
 inplace!(::typeof(+), a::BigInt, b::BigInt, c::BigInt) = (Base.GMP.MPZ.add!(a,b,c); a)
 inplace!(::typeof(+), a::BigInt, b::BigInt, c::Zero) = (Base.GMP.MPZ.set!(a,b); a)
@@ -322,6 +362,25 @@ function iterterms(op::PlusMinus, a::TermsMap{Order}, b::TermsMap{Order,true}) w
         iszero(cright) ? nothing : Term(m, cright)
     end
 end
+function iterterms(op::PlusMinus, a::TermsMap{Order}, b::TermsMap{Order}) where Order
+    ≺(a,b) = Base.Order.lt(Order(), a, b)
+
+    summands = ParallelIter(
+        monomial, coefficient, ≺,
+        Zero(), Zero(),
+        a, b,
+    )
+    TermsMap(Order(), summands, true) do (m, cleft, cright)
+        coeff = op(cleft, cright)
+        iszero(coeff) ? nothing : Term(m, coeff)
+    end
+end
+
+# -----------------------------------------------------------------------------
+#
+#  Materializing the lazily computed results
+#
+# -----------------------------------------------------------------------------
 
 materialize(bc::InPlace) = bc[]
 
