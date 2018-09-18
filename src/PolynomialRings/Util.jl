@@ -82,7 +82,7 @@ include("LinAlgUtil.jl")
 # Parallel iteration of two iterators
 #
 # -----------------------------------------------------------------------------
-import Base: iterate, last, findlast, length
+import Base: iterate
 struct ParallelIter{I,J,key,value,≺,l0,r0}
     left::I
     right::J
