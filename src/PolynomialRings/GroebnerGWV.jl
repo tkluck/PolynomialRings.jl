@@ -31,7 +31,6 @@ function inplace_reduce!(v1::P, m1::BigInt, m2::BigInt, t, v2::P) where P<:Polyn
     src2 = map(s->t*s, v2.terms)
 
     # they cancel under this operation
-    usable_coeff = src1[end].c
     pop!(src1); pop!(src2)
     resize!(tgt, length(src1) + length(src2))
     n = 0
@@ -42,16 +41,13 @@ function inplace_reduce!(v1::P, m1::BigInt, m2::BigInt, t, v2::P) where P<:Polyn
             tgt[n+=1] = -m2*src2[ix2]
             ix2 += 1
         elseif src1[ix1] ≺ src2[ix2]
-            coeff, usable_coeff = usable_coeff, src1[ix1].c
-            Base.GMP.MPZ.mul!(coeff, m1, src1[ix1].c)
-            tgt[n+=1] = T(src1[ix1].m, coeff)
+            Base.GMP.MPZ.mul!(src1[ix1].c, m1, src1[ix1].c)
+            tgt[n+=1] = src1[ix1]
             ix1 += 1
         else
-            coeff, usable_coeff = usable_coeff, src1[ix1].c
-            Base.GMP.MPZ.sub!(coeff, m1*src1[ix1].c, m2*src2[ix2].c)
-
-            if !iszero(coeff)
-                tgt[n+=1] = T(src1[ix1].m, coeff)
+            Base.GMP.MPZ.sub!(src1[ix1].c, m1*src1[ix1].c, m2*src2[ix2].c)
+            if !iszero(src1[ix1])
+                tgt[n+=1] = src1[ix1]
             end
 
             ix1 += 1
@@ -59,9 +55,8 @@ function inplace_reduce!(v1::P, m1::BigInt, m2::BigInt, t, v2::P) where P<:Polyn
         end
     end
     while ix1 <= length(src1)
-        coeff, usable_coeff = usable_coeff, src1[ix1].c
-        Base.GMP.MPZ.mul!(coeff, m1, src1[ix1].c)
-        tgt[n+=1] = T(src1[ix1].m, coeff)
+        Base.GMP.MPZ.mul!(src1[ix1].c, m1, src1[ix1].c)
+        tgt[n+=1] = src1[ix1]
         ix1 += 1
     end
     while ix2 <= length(src2)
