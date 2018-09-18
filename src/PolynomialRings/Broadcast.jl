@@ -43,11 +43,14 @@ In order to define our own behaviour, we override `broadcasted` and `materialize
 The function `broadcasted` decides on a `BroadcastStyle` based on its arguments.
 This is typically used to decide the shape of the output, but we re-use this feature
 to:
+
 - use the `Termwise` style if all arguments are Polynomials or scalars;
 - use the default behaviour otherwise.
+
+This is achieved by overriding `BroadcastStyle(...)`.
+
 In particular, this means that e.g. `f .* [1,2]` works exactly as you'd
 expect by distributing over the vector elements.
-This is achieved by overriding `BroadcastStyle(...)`.
 
 ### Eager evaluation
 
