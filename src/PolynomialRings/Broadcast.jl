@@ -184,6 +184,11 @@ Base.getindex(t::TermsMap) = t
 is_inplace(::TermsMap{Order,Inplace}) where {Order,Inplace} = Inplace
 
 TermsMap(op::Op, o::Order, terms::Terms, inplace=false) where {Op, Order,Terms} = TermsMap{Order,inplace,Terms,Op}(terms, op)
+
+# keeping the method with and without state separate instead of unifying
+# through e.g. iterate(t, state...) because that seems to have a moderate
+# performance benefit.
+# Other than that, the method bodies are identical.
 @inline function Base.iterate(t::TermsMap)
     it = iterate(t.terms)
     while it !== nothing
