@@ -94,11 +94,11 @@ ParallelIter(key, value, ≺, l0, r0, left, right) = ParallelIter{
     }(left, right)
 
 struct Start end
-struct LeftWaiting{T,S}
+struct LeftReady{T,S}
     liter::T
     rstate::S
 end
-struct RightWaiting{T,S}
+struct RightReady{T,S}
     riter::T
     lstate::S
 end
@@ -106,14 +106,38 @@ struct NextTwo{T,S}
     lstate::T
     rstate::S
 end
+# LeftDone could be represented by LeftReady{Nothing}, but Julia's type
+# inference seems happier with a slightly flatter type tree. I checked
+# that by adding
+#     return it
+# to _materialize!, allowing me to obtain the TermsMap from
+#     @ring! ℤ[x,y]
+#     t = x.terms[1].m
+#     it = @. BigInt(1)*x - BigInt(1)*(t*x);
+# and then inspecting
+#     @code_warntype iterate(it, PolynomialRings.Util.Start())
+struct LeftDone{S}
+    rstate::S
+end
+struct RightDone{S}
+    lstate::S
+end
 
-function iterate2(i::ParallelIter, state::LeftWaiting)
+function iterate2(i::ParallelIter, state::LeftReady)
     riter = iterate(i.right, state.rstate)
     state.liter, riter
 end
-function iterate2(i::ParallelIter, state::RightWaiting)
+function iterate2(i::ParallelIter, state::LeftDone)
+    riter = iterate(i.right, state.rstate)
+    nothing, riter
+end
+function iterate2(i::ParallelIter, state::RightReady)
     liter = iterate(i.left, state.lstate)
     liter, state.riter
+end
+function iterate2(i::ParallelIter, state::RightDone)
+    liter = iterate(i.left, state.lstate)
+    liter, nothing
 end
 function iterate2(i::ParallelIter, state::NextTwo)
     iterate(i.left, state.lstate), iterate(i.right, state.rstate)
@@ -126,10 +150,14 @@ end
     liter, riter = iterate2(i, state)
     if liter === nothing && riter === nothing
         return nothing
-    elseif liter === nothing || (riter !== nothing && key(riter[1]) ≺ key(liter[1]))
-        return (key(riter[1]), l0, value(riter[1])), LeftWaiting(liter, riter[2])
-    elseif riter === nothing || (liter !== nothing && key(liter[1]) ≺ key(riter[1]))
-        return (key(liter[1]), value(liter[1]), r0), RightWaiting(riter, liter[2])
+    elseif liter === nothing
+        return (key(riter[1]), l0, value(riter[1])), LeftDone(riter[2])
+    elseif riter === nothing
+        return (key(liter[1]), value(liter[1]), r0), RightDone(liter[2])
+    elseif key(riter[1]) ≺ key(liter[1])
+        return (key(riter[1]), l0, value(riter[1])), LeftReady(liter, riter[2])
+    elseif key(liter[1]) ≺ key(riter[1])
+        return (key(liter[1]), value(liter[1]), r0), RightReady(riter, liter[2])
     elseif key(liter[1]) == key(riter[1])
         return (key(liter[1]), value(liter[1]), value(riter[1])), NextTwo(liter[2], riter[2])
     else
