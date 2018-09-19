@@ -263,16 +263,16 @@ iterterms(bc::Broadcasted{<:Termwise}) = iterterms(bc.f, map(iterterms, bc.args)
 #
 # -----------------------------------------------------------------------------
 function iterterms(op::typeof(*), a::TermsMap{Order}, b::Number) where Order
-    b = deepcopy(b)
+    b′ = deepcopy(b)
     TermsMap(Order(), a) do t
-        iszero(b) ? nothing : Term(monomial(t), coefficient(t)*b)
+        iszero(b) ? nothing : Term(monomial(t), coefficient(t)*b′)
     end
 end
 
 function iterterms(op::typeof(*), a::Number, b::TermsMap{Order}) where Order
-    a = deepcopy(a)
+    a′ = deepcopy(a)
     TermsMap(Order(), b) do t
-        iszero(a) ? nothing : Term(monomial(t), a*coefficient(t))
+        iszero(a) ? nothing : Term(monomial(t), a′*coefficient(t))
     end
 end
 
@@ -282,24 +282,24 @@ mul!(a::BigInt, b::BigInt, c::Int) = Base.GMP.MPZ.mul_si!(a, b, c)
 mul!(a::BigInt, b::Int, c::BigInt) = Base.GMP.MPZ.mul_si!(a, c, b)
 # TODO: b should have BigInt coeffs
 function iterterms(op::typeof(*), a::PossiblyBigInt, b::TermsMap{Order,true}) where Order
-    a = deepcopy(a)
+    a′ = deepcopy(a)
     TermsMap(Order(), b, true) do t
         if iszero(a)
             return nothing
         else
-            mul!(t.c, a, t.c)
+            mul!(t.c, a′, t.c)
             return t
         end
     end
 end
 # TODO: a should have BigInt coeffs
 function iterterms(op::typeof(*), a::TermsMap{Order,true}, b::PossiblyBigInt) where Order
-    b = deepcopy(b)
+    b′ = deepcopy(b)
     TermsMap(Order(), a, true) do t
         if iszero(b)
             return nothing
         else
-            mul!(t.c, t.c, b)
+            mul!(t.c, t.c, b′)
             return t
         end
     end
