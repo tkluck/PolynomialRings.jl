@@ -133,7 +133,7 @@ broadcastable(p::Polynomial) = Ref(p)
 struct Termwise{Order, P} <: BroadcastStyle end
 
 BroadcastStyle(::Type{<:RefValue{P}}) where P<:Polynomial = Termwise{typeof(monomialorder(P)), P}()
-BroadcastStyle(s::Termwise{Order, P}, t::Termwise{Order, Q}) where {Order,P,Q} = Termwise{Order, promote_type(P, Q)}
+BroadcastStyle(s::Termwise{Order, P}, t::Termwise{Order, Q}) where {Order,P,Q} = Termwise{Order, promote_type(P, Q)}()
 BroadcastStyle(s::Termwise, t::AbstractArrayStyle{0}) = s
 BroadcastStyle(s::Termwise, t::BroadcastStyle) = t
 
