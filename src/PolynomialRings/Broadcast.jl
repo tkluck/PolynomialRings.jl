@@ -112,7 +112,7 @@ using PolynomialRings.Util: ParallelIter
 using PolynomialRings.MonomialOrderings: MonomialOrder
 using PolynomialRings.Monomials: AbstractMonomial
 using PolynomialRings.Terms: Term, monomial, coefficient
-using PolynomialRings.Polynomials: Polynomial, PolynomialOver, PolynomialBy, terms, termtype
+using PolynomialRings.Polynomials: Polynomial, TermOver, PolynomialOver, PolynomialBy, terms, termtype
 
 # -----------------------------------------------------------------------------
 #
@@ -282,29 +282,27 @@ function iterterms(op::typeof(*), a::Number, b::TermsMap{Order}) where Order
 end
 
 const PossiblyBigInt = Union{Int, BigInt}
-mul!(a::BigInt, b::BigInt, c::BigInt) = Base.GMP.MPZ.mul!(a, b, c)
-mul!(a::BigInt, b::BigInt, c::Int) = Base.GMP.MPZ.mul_si!(a, b, c)
-mul!(a::BigInt, b::Int, c::BigInt) = Base.GMP.MPZ.mul_si!(a, c, b)
-# TODO: b should have BigInt coeffs
+mul!(a::Term, b::Integer) = a*b
+mul!(a::TermOver{BigInt}, b::Int) = (Base.GMP.MPZ.mul_si!(a.c, b); a)
+mul!(a::TermOver{BigInt}, b::BigInt) = (Base.GMP.MPZ.mul!(a.c, b); a)
 function iterterms(op::typeof(*), a::PossiblyBigInt, b::TermsMap{Order,true}) where Order
     a′ = deepcopy(a)
     TermsMap(Order(), b, true) do t
         if iszero(a)
             return nothing
         else
-            mul!(t.c, a′, t.c)
+            t = mul!(t, a′)
             return t
         end
     end
 end
-# TODO: a should have BigInt coeffs
 function iterterms(op::typeof(*), a::TermsMap{Order,true}, b::PossiblyBigInt) where Order
     b′ = deepcopy(b)
     TermsMap(Order(), a, true) do t
         if iszero(b)
             return nothing
         else
-            mul!(t.c, t.c, b′)
+            t = mul!(t, b′)
             return t
         end
     end
