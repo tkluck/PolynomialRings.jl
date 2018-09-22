@@ -52,6 +52,10 @@ monomialorder(::Type{T}) where T <: Term = monomialorder(monomialtype(T))
 ==(a::T,b::T)          where T <: Term = a.m == b.m && a.c == b.c
 ^(a::T, n::Integer)    where T <: Term = T(a.m^n, a.c^n)
 
+# resolve ambiguity if C is also a Number
+*(a::Term{M, C}, b::C) where M <: AbstractMonomial where C<:Number = Term(a.m, a.c*b)
+*(a::C, b::Term{M, C}) where M <: AbstractMonomial where C<:Number = Term(b.m, a*b.c)
+
 one(::Type{Term{M,C}}) where {M, C} = Term{M,C}(one(M), one(C))
 one(t::T) where T <: Term = one(typeof(t))
 
