@@ -368,13 +368,7 @@ end
 gcd(f::Polynomial, g::Integer) = gcd(g, reduce(gcd, (coefficient(t) for t in terms(f)),init=0))
 gcd(g::Integer, f::Polynomial) = gcd(g, reduce(gcd, (coefficient(t) for t in terms(f)),init=0))
 
-function div(f::Polynomial, g::Integer)
-    T = termtype(f)
-    P = typeof(f)
-    new_terms = T[T(monomial(t),div(coefficient(t),g)) for t in terms(f)]
-    filter!(!iszero, new_terms)
-    return P(new_terms)
-end
+div(f::Polynomial, g::Integer) = map_coefficients(c -> c÷g, f)
 
 content(f::Polynomial) = gcd(f, 0)
 
