@@ -292,11 +292,8 @@ function ^(f::Polynomial, n::Integer)
     if n == 0
         return one(f)
     end
-    if n == 1
-        return f
-    end
-    if iszero(f)
-        return f
+    if n == 1 || iszero(f)
+        return deepcopy(f)
     end
 
     T = termtype(f)
