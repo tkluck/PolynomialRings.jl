@@ -45,7 +45,8 @@ end
 
 function s_poly_lm(o, p, q)
     (m_p, m_q) = lcm_multipliers(leading_monomial(o,p), leading_monomial(o,q))
-    (c_p, c_q) = leading_coefficient.(o, (p,q))
+    c_p = leading_coefficient(o, p)
+    c_q = leading_coefficient(o, q)
     S_pq = m_p * p - c_p//c_q * m_q * q
     leading_monomial(o, S_pq)
 end
@@ -173,18 +174,21 @@ function gröbner_basis_sig_incremental(alg::Backend, o::MonomialOrder, polynomi
             considered += 1
 
             (m_p, m_q) = lcm_multipliers(leading_monomial(o,p), leading_monomial(o,q))
-            (c_p, c_q) = leading_coefficient.(o,(p,q))
+            c_p = leading_coefficient(o, p)
+            c_q = leading_coefficient(o, q)
             S_pq = m_p * p - c_p//c_q * m_q * q
             (σ, r) = reduction_rem(alg, o, (σ, S_pq), G)
 
             if iszero(r)
-                filter!(S) do k,v
+                filter!(S) do k_v
+                    k,v = k_v
                     (τ, _, _) = k
                     divisible = maybe_div(τ, σ) !== nothing
                     !divisible
                 end
                 for SS in values(P)
-                    filter!(SS) do k,v
+                    filter!(SS) do k_v
+                        k,v = k_v
                         (τ, _, _) = k
                         divisible = maybe_div(τ, σ) !== nothing
                         !divisible
@@ -250,7 +254,7 @@ function gröbner_basis(alg::Arri, o::MonomialOrder, G::AbstractArray{<:Polynomi
     # the signature is the _first_ nonzero leading monomial in a vector, not the _last_.
     H = G[end:end]
     for g in G[end-1:-1:1]
-        unshift!(H, g)
+        pushfirst!(H, g)
         H = gröbner_basis_sig_incremental(alg, o, H, kwds...)
         interreduce!(o, H)
     end
