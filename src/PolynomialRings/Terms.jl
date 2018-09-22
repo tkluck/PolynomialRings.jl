@@ -79,7 +79,8 @@ end
 
 function lcm_multipliers(a::T, b::T)::Tuple{T,T} where T<:Term
     m_a,m_b = lcm_multipliers(monomial(a), monomial(b))
-    return T(m_a, deepcopy(coefficient(b))), T(m_b, deepcopy(coefficient(a)))
+    c_a,c_b = lcm_multipliers(coefficient(a), coefficient(b))
+    return T(m_a, c_a), T(m_b, c_b)
 end
 
 (t::Term)(args...) = coefficient(t) * monomial(t)(args...)

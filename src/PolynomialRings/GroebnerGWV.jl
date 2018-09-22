@@ -3,7 +3,7 @@ module GröbnerGWV
 using DataStructures: SortedDict, DefaultDict
 
 import PolynomialRings
-import PolynomialRings: gröbner_basis
+import PolynomialRings: gröbner_basis, xrem!
 import PolynomialRings.Backends.Gröbner: GWV
 
 import PolynomialRings: leading_term, leading_monomial, lcm_multipliers, lcm_degree, fraction_field, basering, base_extend, base_restrict
