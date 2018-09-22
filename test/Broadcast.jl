@@ -38,5 +38,12 @@ using PolynomialRings
             g′ = deepcopy(g)
             @test 3*(t*g) - 4h == @. g′ = 3*(t*g′) - 4h
         end
+
+        # corner case of HandOptimizedBroadcast
+        g1′ = deepcopy(g1)
+        @test BigInt(0)*g1 - BigInt(4)*(t1.m*h1) == (g1′ .= BigInt(0).*g1′ .- BigInt(4).*(t1.m.*h1))
+        g1′ = deepcopy(g1)
+        @test BigInt(4)*g1 - BigInt(0)*(t1.m*h1) == (g1′ .= BigInt(4).*g1′ .- BigInt(0).*(t1.m.*h1))
+
     end
 end

@@ -485,17 +485,26 @@ function _materialize!(x::Polynomial, bc::HandOptimizedBroadcast)
     src1 = v1.terms
     src2 = map(s->t*s, v2.terms)
 
+    # I could dispatch to a much simpler version in case these
+    # scalar vanish, but that gives relatively little gain.
+    m1_vanishes = iszero(m1)
+    m2_vanishes = iszero(m2)
+
     resize!(tgt, length(src1) + length(src2))
     n = 0
 
     ix1 = 1; ix2 = 1
     while ix1 <= length(src1) && ix2 <= length(src2)
         if src2[ix2] ≺ src1[ix1]
-            tgt[n+=1] = -m2*src2[ix2]
+            if !m2_vanishes
+                tgt[n+=1] = -m2*src2[ix2]
+            end
             ix2 += 1
         elseif src1[ix1] ≺ src2[ix2]
-            Base.GMP.MPZ.mul!(src1[ix1].c, m1, src1[ix1].c)
-            tgt[n+=1] = src1[ix1]
+            if !m1_vanishes
+                Base.GMP.MPZ.mul!(src1[ix1].c, m1, src1[ix1].c)
+                tgt[n+=1] = src1[ix1]
+            end
             ix1 += 1
         else
             Base.GMP.MPZ.sub!(src1[ix1].c, m1*src1[ix1].c, m2*src2[ix2].c)
@@ -507,12 +516,16 @@ function _materialize!(x::Polynomial, bc::HandOptimizedBroadcast)
         end
     end
     while ix1 <= length(src1)
-        Base.GMP.MPZ.mul!(src1[ix1].c, m1, src1[ix1].c)
-        tgt[n+=1] = src1[ix1]
+        if !m1_vanishes
+            Base.GMP.MPZ.mul!(src1[ix1].c, m1, src1[ix1].c)
+            tgt[n+=1] = src1[ix1]
+        end
         ix1 += 1
     end
     while ix2 <= length(src2)
-        tgt[n+=1] = -m2*src2[ix2]
+        if !m2_vanishes
+            tgt[n+=1] = -m2*src2[ix2]
+        end
         ix2 += 1
     end
 
