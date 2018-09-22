@@ -12,6 +12,7 @@ import PolynomialRings.Operators: RedType, Lead, Full, Tail
 # imports for overloading
 import Base: div, rem, divrem
 import PolynomialRings: div!, rem!, xdiv!, xrem!, xdiv, xrem, xdivrem
+import PolynomialRings: leaddiv, leaddivrem, leadrem
 
 """
     f_red = rem(f, G)
