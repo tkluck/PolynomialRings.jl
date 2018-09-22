@@ -17,86 +17,6 @@ import PolynomialRings.Operators: Lead, Full, content, integral_fraction
 using LinearAlgebra: Transpose
 using SparseArrays: SparseVector, sparsevec
 
-"""
-    v1 := m1*v1 - m2*(t*v2)
-"""
-inplace_reduce!(v1, m1, m2, t, v2) = (v1 = m1*v1 - m2*(t*v2); v1)
-
-function inplace_reduce!(v1::P, m1::BigInt, m2::BigInt, t, v2::P) where P<:PolynomialBy{Order, BigInt} where Order
-    T = termtype(P)
-    ≺(a,b) = Base.Order.lt(Order(), a, b)
-
-    tgt = v1.terms
-    src1 = copy(v1.terms)
-    src2 = map(s->t*s, v2.terms)
-
-    # they cancel under this operation
-    pop!(src1); pop!(src2)
-    resize!(tgt, length(src1) + length(src2))
-    n = 0
-
-    ix1 = 1; ix2 = 1
-    while ix1 <= length(src1) && ix2 <= length(src2)
-        if src2[ix2] ≺ src1[ix1]
-            tgt[n+=1] = -m2*src2[ix2]
-            ix2 += 1
-        elseif src1[ix1] ≺ src2[ix2]
-            Base.GMP.MPZ.mul!(src1[ix1].c, m1, src1[ix1].c)
-            tgt[n+=1] = src1[ix1]
-            ix1 += 1
-        else
-            Base.GMP.MPZ.sub!(src1[ix1].c, m1*src1[ix1].c, m2*src2[ix2].c)
-            if !iszero(src1[ix1])
-                tgt[n+=1] = src1[ix1]
-            end
-
-            ix1 += 1
-            ix2 += 1
-        end
-    end
-    while ix1 <= length(src1)
-        Base.GMP.MPZ.mul!(src1[ix1].c, m1, src1[ix1].c)
-        tgt[n+=1] = src1[ix1]
-        ix1 += 1
-    end
-    while ix2 <= length(src2)
-        tgt[n+=1] = -m2*src2[ix2]
-        ix2 += 1
-    end
-
-    resize!(tgt, n)
-    v1
-end
-
-function inplace_reduce(o, f::P, G::AbstractVector{P}) where P<:Polynomial
-    f = deepcopy(f)
-    i = 1
-    while i <= length(G) && !iszero(f)
-        g = G[i]
-        if !iszero(g)
-            f1 = leading_monomial(o, f)
-            g1 = leading_monomial(o, g)
-
-            t = maybe_div(f1, g1)
-            if t !== nothing
-                c1 = leading_coefficient(o, f)
-                c2 = leading_coefficient(o, g)
-                if basering(P) <: Integer
-                    M = lcm(c1, c2)
-                    m1, m2 = M÷c1, M÷c2
-                else
-                    m1, m2 = c2, c1
-                end
-                f = inplace_reduce!(f, m1, m2, t, g)
-                i = 1
-                continue
-            end
-        end
-        i += 1
-    end
-    f
-end
-
 function regular_topreduce_rem(o, m, G)
     ≺(a,b) = Base.Order.lt(o, a, b)
     u1,v1 = m
@@ -114,15 +34,10 @@ function regular_topreduce_rem(o, m, G)
             if t !== nothing
                 c1 = leading_coefficient(o,v1)
                 c2 = leading_coefficient(o,v2)
-                if basering(v1) <: Integer
-                    M = lcm(c1, c2)
-                    m1, m2 = M÷c1, M÷c2
-                else
-                    m1, m2 = c2, c1
-                end
+                m1, m2 = lcm_multipliers(c1, c2)
                 if t * u2 ≺ u1
                     # new_u1 = u1 - c*(t*u2)
-                    v1 = inplace_reduce!(v1, m1, m2, t, v2)
+                    @. v1 = m1*v1 - m2*(t*v2)
                     supertopreducible = false
                     i = 1
                     continue
@@ -290,7 +205,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
     k = length(result)
     progress_logged && @info("Done; interreducing the $k result polynomials")
     for i in 1:k
-        result[i] = inplace_reduce(o, result[i], result[[1:i-1; i+1:k]])
+        xrem!(result[i], result[[1:i-1; i+1:k]])
         if basering(eltype(result)) <: Integer
             result[i] ÷= content(result[i])
         end
