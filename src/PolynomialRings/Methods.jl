@@ -46,6 +46,19 @@ function lcm_degree end
 function leaddiv end
 function leadrem end
 function leaddivrem end
+function div! end
+function rem! end
+function xdiv! end
+function xrem! end
+function xdiv end
+function xrem end
+function xdivrem end
+
+lcm_multipliers(a, b) = deepcopy(b), deepcopy(a)
+function lcm_multipliers(a::Integer, b::Integer)
+    N = lcm(a, b)
+    N÷a, N÷b
+end
 
 # -----------------------------------------------------------------------------
 #

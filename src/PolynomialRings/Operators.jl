@@ -1,6 +1,8 @@
 module Operators
 
-import PolynomialRings: leading_term, basering, exptype, base_extend, base_restrict
+import PolynomialRings: leading_monomial, leading_coefficient, leading_term
+import PolynomialRings: lcm_multipliers
+import PolynomialRings: basering, exptype, base_extend, base_restrict
 import PolynomialRings.Monomials: AbstractMonomial
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.Terms: Term, monomial, coefficient
@@ -30,7 +32,7 @@ one(::P)        where P <: Polynomial = one(P)
 
 iszero(a::P)        where P <: Polynomial = length(terms(a)) == 0
 ==(a::P,b::P)       where P <: Polynomial = a.terms == b.terms
-+(a::P)             where P <: Polynomial = a
++(a::P)             where P <: Polynomial = deepcopy(a)
 -(a::P)             where P <: Polynomial = P([-t for t in terms(a)])
 
 # -----------------------------------------------------------------------------
@@ -68,7 +70,7 @@ function _collect_summands!(summands::AbstractVector{T}) where T <: Term{M, BigI
                 cur_coef = coefficient(summands[n])
                 add!(cur_coef, coef)
             else
-                summands[n+=1] = T(exponent, copy(coef))
+                summands[n+=1] = T(exponent, deepcopy(coef))
                 last_exp = exponent
             end
         end
@@ -167,109 +169,47 @@ struct Lead <: RedType end
 struct Full <: RedType end
 struct Tail <: RedType end
 
-function one_step_divrem(::Full, o::MonomialOrder, f::PolynomialBy{Order}, g::PolynomialBy{Order}) where Order
+terms_to_reduce(::Lead, f) = terms(f)[end:end]
+terms_to_reduce(::Full, f) = @view terms(f)[end:-1:1]
+terms_to_reduce(::Tail, f) = @view terms(f)[end-1:-1:1]
+
+function one_step_div!(redtype::RedType, o::MonomialOrder, f::PolynomialBy{Order}, g::PolynomialBy{Order}) where Order
     if iszero(f)
-        return zero(g), f
+        return nothing
     end
     if iszero(g)
         throw(DivideError())
     end
     lt_g = leading_term(o, g)
-    for t in @view terms(f)[end:-1:1]
+    for t in terms_to_reduce(redtype, f)
         factor = maybe_div(t, lt_g)
         if factor !== nothing
-            return typeof(f)([factor]), f - factor*g
+            @. f -= factor * g
+            return factor
         end
     end
-    return zero(g), f
+    return nothing
 end
 
-function one_step_divrem(::Lead, o::MonomialOrder, f::PolynomialBy{Order}, g::PolynomialBy{Order}) where Order
+function one_step_xdiv!(redtype::RedType, o::MonomialOrder, f::PolynomialBy{Order}, g::PolynomialBy{Order}) where Order
     if iszero(f)
-        return zero(g), f
+        return nothing
     end
     if iszero(g)
         throw(DivideError())
     end
-    lt_f = leading_term(o, f)
-    lt_g = leading_term(o, g)
-    factor = maybe_div(lt_f, lt_g)
-    if factor !== nothing
-        return typeof(f)([factor]), f - factor*g
-    end
-    return zero(g), f
-end
-
-function one_step_divrem(::Tail, o::MonomialOrder, f::PolynomialBy{Order}, g::PolynomialBy{Order}) where Order
-    if iszero(f)
-        return zero(g), f
-    end
-    if iszero(g)
-        throw(DivideError())
-    end
-    lt_g = leading_term(o, g)
-    for t in @view terms(f)[end-1:-1:1]
-        factor = maybe_div(t, lt_g)
+    lt_g = leading_monomial(o, g)
+    m2 = leading_coefficient(o, g)
+    for t in terms_to_reduce(redtype, f)
+        factor = maybe_div(monomial(t), lt_g)
         if factor !== nothing
-            return typeof(f)([factor]), f - factor*g
+            m1 = coefficient(t)
+            k1, k2 = lcm_multipliers(m1, m2)
+            @. f = k1 * f - k2 * (factor * g)
+            return k1, k2 * factor
         end
     end
-    return zero(g), f
-end
-
-
-function one_step_rem(::Full, o::MonomialOrder, f::PolynomialBy{Order}, g::PolynomialBy{Order}) where Order
-    if iszero(f)
-        return f
-    end
-    if iszero(g)
-        throw(DivideError())
-    end
-    lt_g = leading_term(o, g)
-    for t in @view terms(f)[end:-1:1]
-        factor = maybe_div(t, lt_g)
-        if factor !== nothing
-            return f - factor*g
-        end
-    end
-    return f
-end
-
-function one_step_rem(::Lead, o::MonomialOrder, f::PolynomialBy{Order}, g::PolynomialBy{Order}) where Order
-    if iszero(f)
-        return f
-    end
-    if iszero(g)
-        throw(DivideError())
-    end
-    lt_f = leading_term(o, f)
-    lt_g = leading_term(o, g)
-    factor = maybe_div(lt_f, lt_g)
-    if factor !== nothing
-        return f - factor*g
-    end
-    return f
-end
-
-function one_step_rem(::Tail, o::MonomialOrder, f::PolynomialBy{Order}, g::PolynomialBy{Order}) where Order
-    if iszero(f)
-        return f
-    end
-    if iszero(g)
-        throw(DivideError())
-    end
-    lt_g = leading_term(o, g)
-    for t in @view terms(f)[end-1:-1:1]
-        factor = maybe_div(t, lt_g)
-        if factor !== nothing
-            return f - factor*g
-        end
-    end
-    return f
-end
-
-function one_step_div(redtype::RedType, o::MonomialOrder, f::PolynomialBy{Order}, g::PolynomialBy{Order}) where Order
-    one_step_divrem(redtype, o, f, g)[1]
+    return nothing
 end
 
 # -----------------------------------------------------------------------------
@@ -390,7 +330,8 @@ Apply a function `f` to all coefficients of `q`, and return the result.
 """
 function map_coefficients(f, a::Polynomial)
     T = termtype(a)
-    new_terms = map(t->T(monomial(t), f(coefficient(t))), terms(a))
+    op(c) = (res = f(c); res === c ? deepcopy(res) : res)
+    new_terms = map(t->T(monomial(t), op(coefficient(t))), terms(a))
     # work around type inference issue
     new_terms = collect(T, new_terms)
     filter!(!iszero, new_terms)
