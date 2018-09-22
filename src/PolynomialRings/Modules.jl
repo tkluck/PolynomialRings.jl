@@ -87,11 +87,12 @@ function one_step_div!(redtype::RedType, o::MonomialOrder, a::A, b::A) where A<:
         factor = maybe_div(lt_a, lt_b)
         if factor !== nothing
             for i in eachindex(a)
-                if iszero(a[i]) # possibly a sparse zero, so don't try in-place
-                    a[i] -= factor * b[i]
-                else
-                    @. a[i] -= factor * b[i]
-                end
+                a[i] -= factor * b[i]
+                #if iszero(a[i]) # possibly a sparse zero, so don't try in-place
+                #    a[i] -= factor * b[i]
+                #else
+                #    @. a[i] -= factor * b[i]
+                #end
             end
         end
         return factor
