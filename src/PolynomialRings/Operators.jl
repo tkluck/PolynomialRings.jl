@@ -375,7 +375,7 @@ content(f::Polynomial) = gcd(f, 0)
 common_denominator(a) = denominator(a)
 common_denominator(a, b) = lcm(denominator(a), denominator(b))
 common_denominator(a, b...) = lcm(denominator(a), denominator.(b)...)
-common_denominator(f::Polynomial) = iszero(f) ? 1 : lcm([common_denominator(coefficient(t)) for t in terms(f)]...)
+common_denominator(f::Polynomial) = iszero(f) ? 1 : lcm(map(common_denominator∘coefficient, terms(f))...)
 
 function integral_fraction(f::Polynomial)
     D = common_denominator(f)
