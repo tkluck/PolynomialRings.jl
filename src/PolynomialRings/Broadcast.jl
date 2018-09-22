@@ -62,9 +62,9 @@ e.g. we may as well evaluate
 as `g * h` if `g` and `h` are polynomials. In this case, the allocation is probably
 negligible compared to the time spent multiplying.
 
-To achieve this, we override the function `broadcasted` with an eager implementation.
-Only those operations that we _know_ to work term-wise efficiently get a more
-specific override.
+To achieve this, the default implementation for `iterterms` eagerly evaluates
+the broadcast operation. Only those operations that we _know_ to work term-wise
+efficiently get a more specific override.
 
 ### Lazy evaluation
 
@@ -153,20 +153,6 @@ Base.getindex(x::InPlace) = x.x
 broadcastable(x::InPlace) = x
 BroadcastStyle(::Type{<:InPlace{P}}) where P<:Polynomial = Termwise{typeof(monomialorder(P)), P}()
 
-# Eagerly evaluate all expressions involving polynomials, except for the
-# ones we explicitly know how to do. This ensures that e.g. operations
-# with different variables/orders get eagerly evaluated.
-eager(a) = a
-eager(a::InPlace) = a[]
-eager(a::RefValue) = a[]
-eager(a::Broadcasted) = materialize(a)
-# Note that by the time this function gets called, all the BroadcastStyles
-# have already been bubbled up, so if we still have Termwise as the
-# first argument, we are sure we only have polynomials and scalars.
-# Note that if we've evaluated eagerly, then we own the resulting Polynomial,
-# so we may apply in-place operations to it.
-broadcasted(::Termwise, op, a, b) = InPlace(op(eager(a), eager(b)))
-
 """
     TermsMap{Order,Inplace,Terms,Op}
 
@@ -179,11 +165,12 @@ coefficients in-place. This is e.g. true if we are iterating over an
 struct TermsMap{Order,Inplace,Terms,Op}
     terms::Terms
     op::Op
+    bound::Int
 end
 Base.getindex(t::TermsMap) = t
 is_inplace(::TermsMap{Order,Inplace}) where {Order,Inplace} = Inplace
 
-TermsMap(op::Op, o::Order, terms::Terms, inplace=false) where {Op, Order,Terms} = TermsMap{Order,inplace,Terms,Op}(terms, op)
+TermsMap(op::Op, o::Order, terms::Terms, bound::Int, inplace=false) where {Op, Order,Terms} = TermsMap{Order,inplace,Terms,Op}(terms, op, bound)
 
 # keeping the method with and without state separate instead of unifying
 # through e.g. iterate(t, state...) because that seems to have a moderate
@@ -211,14 +198,16 @@ end
     end
     return nothing
 end
+Base.IteratorSize(::TermsMap) = Base.SizeUnknown()
+Base.eltype(t::TermsMap) = Base._return_type(t.op, Tuple{eltype(t.terms)})
 
 # -----------------------------------------------------------------------------
 #
 #  Leaf cases for `iterterms`
 #
 # -----------------------------------------------------------------------------
-iterterms(a::RefValue{<:Polynomial}) = TermsMap(identity, monomialorder(a[]), terms(a[]), false)
-iterterms(a::InPlace{<:Polynomial}) = TermsMap(identity, monomialorder(a[]), terms(a[]), true)
+iterterms(a::RefValue{<:PolynomialBy{Order}}) where Order = TermsMap(identity, Order(), terms(a[]), length(terms(a[])), false)
+iterterms(a::InPlace{<:PolynomialBy{Order}}) where Order = TermsMap(identity, Order(), terms(a[]), length(terms(a[])), true)
 
 # -----------------------------------------------------------------------------
 #
@@ -234,49 +223,50 @@ termsbound(bc::Broadcasted{<:Termwise, Nothing, typeof(*)}) = prod(termsbound, b
 
 # -----------------------------------------------------------------------------
 #
-#  Decide which broadcasts can be done lazily
-#
-# -----------------------------------------------------------------------------
-const TermsBy{Order} = Union{
-    BrTermwise{Order},
-    RefValue{<:PolynomialBy{Order}},
-    InPlace{<:PolynomialBy{Order}},
-}
-# We know how to lazily do +/- if the orders are the same
-broadcasted(st::Termwise{Order}, op::PlusMinus, a::TermsBy{Order}, b::TermsBy{Order}) where Order = Broadcasted{typeof(st)}(op, (a,b))
-
-# we also know how to lazily do * when scaling by a Number or base ring element
-broadcasted(st::Termwise{Order}, op::typeof(*), a::RefValue{<:PolynomialOver{C,Order}}, b::RefValue{C}) where {Order,C} = Broadcasted{typeof(st)}(op, (a, b))
-broadcasted(st::Termwise{Order}, op::typeof(*), a::TermsBy{Order}, b::Number) where Order = Broadcasted{typeof(st)}(op, (a,b))
-broadcasted(st::Termwise{Order}, op::typeof(*), a::RefValue{C}, b::RefValue{<:PolynomialOver{C,Order}}) where {Order,C} = Broadcasted{typeof(st)}(op, (a,b))
-broadcasted(st::Termwise{Order}, op::typeof(*), a::Number, b::TermsBy{Order}) where Order = Broadcasted{typeof(st)}(op, (a,b))
-
-# also when scaling by a monomial
-broadcasted(st::Termwise{Order}, op::typeof(*), a::RefValue{<:AbstractMonomial}, b::RefValue{<:PolynomialBy{Order}}) where Order = Broadcasted{typeof(st)}(op, (a,b))
-
-# -----------------------------------------------------------------------------
-#
-#  Lazy implementations of these broadcasts
+#  Recurse into the broadcasting operation tree
 #
 # -----------------------------------------------------------------------------
 iterterms(x) = x
-iterterms(bc::Broadcasted{<:Termwise}) = iterterms(bc.f, map(iterterms, bc.args)...)
+iterterms(bc::Broadcasted{<:Termwise{Order}}) where Order = iterterms(Order(), bc.f, map(iterterms, bc.args)...)
+
+# -----------------------------------------------------------------------------
+#
+#  Default implementation for these broadcasts is eager evaluation
+#
+# -----------------------------------------------------------------------------
+eager(a) = a
+eager(a::InPlace) = a[]
+eager(a::RefValue) = a[]
+eager(a::Broadcasted) = materialize(a)
+function eager(a::TermsMap)
+    T = eltype(a)
+    P = Polynomial{T}
+    terms = Vector{T}(undef, a.bound)
+    n = 0
+    for t in a
+        terms[n+=1] = t
+    end
+    resize!(terms, n)
+    P(terms)
+end
+# XXX ensure right order
+iterterms(order, op, a, b) = iterterms(InPlace(op(eager(a), eager(b))))
 
 # -----------------------------------------------------------------------------
 #
 #  Lazy implementations of scalar multiplication
 #
 # -----------------------------------------------------------------------------
-function iterterms(op::typeof(*), a::TermsMap{Order}, b::Number) where Order
+function iterterms(::Order, op::typeof(*), a::TermsMap{Order}, b::Number) where Order
     b′ = deepcopy(b)
-    TermsMap(Order(), a) do t
+    TermsMap(Order(), a, a.bound) do t
         iszero(b) ? nothing : Term(monomial(t), coefficient(t)*b′)
     end
 end
 
-function iterterms(op::typeof(*), a::Number, b::TermsMap{Order}) where Order
+function iterterms(::Order, op::typeof(*), a::Number, b::TermsMap{Order}) where Order
     a′ = deepcopy(a)
-    TermsMap(Order(), b) do t
+    TermsMap(Order(), b, b.bound) do t
         iszero(a) ? nothing : Term(monomial(t), a′*coefficient(t))
     end
 end
@@ -285,9 +275,9 @@ const PossiblyBigInt = Union{Int, BigInt}
 mul!(a::Term, b::Integer) = a*b
 mul!(a::TermOver{BigInt}, b::Int) = (Base.GMP.MPZ.mul_si!(a.c, b); a)
 mul!(a::TermOver{BigInt}, b::BigInt) = (Base.GMP.MPZ.mul!(a.c, b); a)
-function iterterms(op::typeof(*), a::PossiblyBigInt, b::TermsMap{Order,true}) where Order
+function iterterms(::Order, op::typeof(*), a::PossiblyBigInt, b::TermsMap{Order,true}) where Order
     a′ = deepcopy(a)
-    TermsMap(Order(), b, true) do t
+    TermsMap(Order(), b, b.bound, true) do t
         if iszero(a)
             return nothing
         else
@@ -296,9 +286,9 @@ function iterterms(op::typeof(*), a::PossiblyBigInt, b::TermsMap{Order,true}) wh
         end
     end
 end
-function iterterms(op::typeof(*), a::TermsMap{Order,true}, b::PossiblyBigInt) where Order
+function iterterms(::Order, op::typeof(*), a::TermsMap{Order,true}, b::PossiblyBigInt) where Order
     b′ = deepcopy(b)
-    TermsMap(Order(), a, true) do t
+    TermsMap(Order(), a, a.bound, true) do t
         if iszero(b)
             return nothing
         else
@@ -308,16 +298,16 @@ function iterterms(op::typeof(*), a::TermsMap{Order,true}, b::PossiblyBigInt) wh
     end
 end
 
-function iterterms(op::typeof(*), a::RefValue{<:AbstractMonomial}, b::TermsMap{Order}) where Order
-    TermsMap(Order(), b, is_inplace(b)) do t
+function iterterms(::Order, op::typeof(*), a::RefValue{<:AbstractMonomial}, b::TermsMap{Order}) where Order
+    TermsMap(Order(), b, b.bound, is_inplace(b)) do t
         # NOTE: we are not deepcopying the coefficient, but materialize!() will
         # take care of that if the end result is not transient
         return typeof(t)(a[]*monomial(t), coefficient(t))
     end
 end
 
-function iterterms(op::typeof(*), a::TermsMap{Order}, b::RefValue{<:AbstractMonomial}) where Order
-    TermsMap(Order(), a, is_inplace(a)) do t
+function iterterms(::Order, op::typeof(*), a::TermsMap{Order}, b::RefValue{<:AbstractMonomial}) where Order
+    TermsMap(Order(), a, a.bound, is_inplace(a)) do t
         # NOTE: we are not deepcopying the coefficient, but materialize!() will
         # take care of that if the end result is not transient
         return typeof(t)(monomial(t)*b[], coefficient(t))
@@ -336,10 +326,10 @@ inplace!(::typeof(+), a::BigInt, b::Zero, c::BigInt) = (Base.GMP.MPZ.set!(a,c); 
 inplace!(::typeof(-), a::BigInt, b::BigInt, c::BigInt) = (Base.GMP.MPZ.sub!(a,b,c); a)
 inplace!(::typeof(-), a::BigInt, b::BigInt, c::Zero) = (Base.GMP.MPZ.set!(a,b); a)
 inplace!(::typeof(-), a::BigInt, b::Zero, c::BigInt) = (Base.GMP.MPZ.neg!(a,c); a)
-function iterterms(op::PlusMinus, a::TermsMap{Order,true}, b::TermsMap{Order,true}) where Order
-    invoke(iterterms, Tuple{PlusMinus, TermsMap{Order,true}, TermsMap{Order}}, op, a, b)
+function iterterms(::Order, op::PlusMinus, a::TermsMap{Order,true}, b::TermsMap{Order,true}) where Order
+    invoke(iterterms, Tuple{Order, PlusMinus, TermsMap{Order,true}, TermsMap{Order}}, Order(), op, a, b)
 end
-function iterterms(op::PlusMinus, a::TermsMap{Order,true}, b::TermsMap{Order}) where Order
+function iterterms(::Order, op::PlusMinus, a::TermsMap{Order,true}, b::TermsMap{Order}) where Order
     ≺(a,b) = Base.Order.lt(Order(), a, b)
 
     summands = ParallelIter(
@@ -347,12 +337,12 @@ function iterterms(op::PlusMinus, a::TermsMap{Order,true}, b::TermsMap{Order}) w
         Zero(), Zero(),
         a, b,
     )
-    TermsMap(Order(), summands, true) do (m, cleft, cright)
+    TermsMap(Order(), summands, a.bound + b.bound, true) do (m, cleft, cright)
         cleft = inplace!(op, cleft, cleft, cright)
         iszero(cleft) ? nothing : Term(m, cleft)
     end
 end
-function iterterms(op::PlusMinus, a::TermsMap{Order}, b::TermsMap{Order,true}) where Order
+function iterterms(::Order, op::PlusMinus, a::TermsMap{Order}, b::TermsMap{Order,true}) where Order
     ≺(a,b) = Base.Order.lt(Order(), a, b)
 
     summands = ParallelIter(
@@ -360,12 +350,12 @@ function iterterms(op::PlusMinus, a::TermsMap{Order}, b::TermsMap{Order,true}) w
         Zero(), Zero(),
         a, b,
     )
-    TermsMap(Order(), summands, true) do (m, cleft, cright)
+    TermsMap(Order(), summands, a.bound + b.bound, true) do (m, cleft, cright)
         cright = inplace!(op, cright, cleft, cright)
         iszero(cright) ? nothing : Term(m, cright)
     end
 end
-function iterterms(op::PlusMinus, a::TermsMap{Order}, b::TermsMap{Order}) where Order
+function iterterms(::Order, op::PlusMinus, a::TermsMap{Order}, b::TermsMap{Order}) where Order
     ≺(a,b) = Base.Order.lt(Order(), a, b)
 
     summands = ParallelIter(
@@ -373,7 +363,7 @@ function iterterms(op::PlusMinus, a::TermsMap{Order}, b::TermsMap{Order}) where 
         Zero(), Zero(),
         a, b,
     )
-    TermsMap(Order(), summands, true) do (m, cleft, cright)
+    TermsMap(Order(), summands, a.bound + b.bound, true) do (m, cleft, cright)
         coeff = op(cleft, cright)
         iszero(coeff) ? nothing : Term(m, coeff)
     end
