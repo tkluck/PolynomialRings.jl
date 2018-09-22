@@ -424,7 +424,7 @@ function materialize!(x::Polynomial, bc::BrTermwise{Order,P}) where {Order,P}
     elseif found == :notfound
         _materialize!(x, bc′)
     else
-        @assert "unreachable"
+        @assert false "unreachable"
     end
     x
 end
