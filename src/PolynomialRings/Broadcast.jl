@@ -436,4 +436,87 @@ function _materialize!(x::Polynomial, bc::BrTermwise{Order,P}) where {Order,P}
     x
 end
 
+# this is the inner loop for many reduction operations:
+#    @. f = m1*f - m2*t*g
+const HandOptimizedBroadcast = Broadcasted{
+    Termwise{Order,P},
+    Nothing,
+    typeof(-),
+    Tuple{
+        Broadcasted{
+            Termwise{Order,P},
+            Nothing,
+            typeof(*),
+            Tuple{
+                BigInt,
+                InPlace{P},
+            },
+        },
+        Broadcasted{
+            Termwise{Order,P},
+            Nothing,
+            typeof(*),
+            Tuple{
+                BigInt,
+                Broadcasted{
+                    Termwise{Order,P},
+                    Nothing,
+                    typeof(*),
+                    Tuple{
+                        RefValue{M},
+                        RefValue{P},
+                    },
+                },
+            },
+        },
+    },
+} where P<:Polynomial{<:Term{M,BigInt}} where M<:AbstractMonomial{Order} where Order
+
+function _materialize!(x::Polynomial, bc::HandOptimizedBroadcast)
+    ≺(a,b) = Base.Order.lt(monomialorder(x), a, b)
+
+    m1 = bc.args[1].args[1]
+    v1 = bc.args[1].args[2][]
+    m2 = bc.args[2].args[1]
+    t  = bc.args[2].args[2].args[1][]
+    v2 = bc.args[2].args[2].args[2][]
+
+    tgt = x.terms
+    src1 = v1.terms
+    src2 = map(s->t*s, v2.terms)
+
+    resize!(tgt, length(src1) + length(src2))
+    n = 0
+
+    ix1 = 1; ix2 = 1
+    while ix1 <= length(src1) && ix2 <= length(src2)
+        if src2[ix2] ≺ src1[ix1]
+            tgt[n+=1] = -m2*src2[ix2]
+            ix2 += 1
+        elseif src1[ix1] ≺ src2[ix2]
+            Base.GMP.MPZ.mul!(src1[ix1].c, m1, src1[ix1].c)
+            tgt[n+=1] = src1[ix1]
+            ix1 += 1
+        else
+            Base.GMP.MPZ.sub!(src1[ix1].c, m1*src1[ix1].c, m2*src2[ix2].c)
+            if !iszero(src1[ix1])
+                tgt[n+=1] = src1[ix1]
+            end
+            ix1 += 1
+            ix2 += 1
+        end
+    end
+    while ix1 <= length(src1)
+        Base.GMP.MPZ.mul!(src1[ix1].c, m1, src1[ix1].c)
+        tgt[n+=1] = src1[ix1]
+        ix1 += 1
+    end
+    while ix2 <= length(src2)
+        tgt[n+=1] = -m2*src2[ix2]
+        ix2 += 1
+    end
+
+    resize!(tgt, n)
+end
+
 end
