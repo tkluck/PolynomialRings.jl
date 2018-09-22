@@ -259,15 +259,17 @@ iterterms(order, op, a, b) = iterterms(InPlace(op(eager(a), eager(b))))
 # -----------------------------------------------------------------------------
 function iterterms(::Order, op::typeof(*), a::TermsMap{Order}, b::Number) where Order
     b′ = deepcopy(b)
+    b_vanishes = iszero(b)
     TermsMap(Order(), a, a.bound) do t
-        iszero(b) ? nothing : Term(monomial(t), coefficient(t)*b′)
+        b_vanishes ? nothing : Term(monomial(t), coefficient(t)*b′)
     end
 end
 
 function iterterms(::Order, op::typeof(*), a::Number, b::TermsMap{Order}) where Order
     a′ = deepcopy(a)
+    a_vanishes = iszero(a)
     TermsMap(Order(), b, b.bound) do t
-        iszero(a) ? nothing : Term(monomial(t), a′*coefficient(t))
+        a_vanishes ? nothing : Term(monomial(t), a′*coefficient(t))
     end
 end
 
@@ -277,8 +279,9 @@ mul!(a::TermOver{BigInt}, b::Int) = (Base.GMP.MPZ.mul_si!(a.c, b); a)
 mul!(a::TermOver{BigInt}, b::BigInt) = (Base.GMP.MPZ.mul!(a.c, b); a)
 function iterterms(::Order, op::typeof(*), a::PossiblyBigInt, b::TermsMap{Order,true}) where Order
     a′ = deepcopy(a)
+    a_vanishes = iszero(a)
     TermsMap(Order(), b, b.bound, true) do t
-        if iszero(a)
+        if a_vanishes
             return nothing
         else
             t = mul!(t, a′)
@@ -288,8 +291,9 @@ function iterterms(::Order, op::typeof(*), a::PossiblyBigInt, b::TermsMap{Order,
 end
 function iterterms(::Order, op::typeof(*), a::TermsMap{Order,true}, b::PossiblyBigInt) where Order
     b′ = deepcopy(b)
+    b_vanishes = iszero(b)
     TermsMap(Order(), a, a.bound, true) do t
-        if iszero(b)
+        if b_vanishes
             return nothing
         else
             t = mul!(t, b′)
