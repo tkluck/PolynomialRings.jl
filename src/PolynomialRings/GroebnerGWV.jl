@@ -187,6 +187,8 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{M}; with_transformati
                             divisors_considered += 1
                             d in H[Jsig.i]
                         end
+                            # (storing only one J-pair for each distinct signature
+                            # T , the one with v-part minimal)
                             if Jsig in keys(JP)
                                 oldu,oldv = JP[Jsig]
                                 newv = Jpair[2]
