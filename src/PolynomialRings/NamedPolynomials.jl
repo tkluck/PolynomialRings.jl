@@ -42,10 +42,20 @@ end
 # separate versions for N<:Named and N<:Numbered to resolve method ambiguity
 # with the version for which P and p do not have the same names.
 function convert(P::Type{<:PolynomialOver{C,O}}, p::PolynomialOver{D,O}) where {C,D,O<:NamedOrder}
-    return P(map(t->termtype(P)(monomial(t), convert(C, coefficient(t))), terms(p)))
+    T = termtype(P)
+    newterms = T[T(monomial(t), convert(C, coefficient(t))) for t in terms(p)]
+    # in positive charactestic (e.g. C = ℤ/5ℤ), we may need to filter
+    # terms that are zero from conversion.
+    filter!(!iszero, newterms)
+    P(newterms)
 end
 function convert(P::Type{<:PolynomialOver{C,O}}, p::PolynomialOver{D,O}) where {C,D,O<:NumberedOrder}
-    return P(map(t->termtype(P)(monomial(t), convert(C, coefficient(t))), terms(p)))
+    T = termtype(P)
+    newterms = T[T(monomial(t), convert(C, coefficient(t))) for t in terms(p)]
+    # in positive charactestic (e.g. C = ℤ/5ℤ), we may need to filter
+    # terms that are zero from conversion.
+    filter!(!iszero, newterms)
+    P(newterms)
 end
 # and short-circuit the non-conversions
 convert(P::Type{<:PolynomialOver{C,O}}, p::PolynomialOver{C,O}) where {C,O<:NamedOrder} = p
