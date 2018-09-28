@@ -361,7 +361,7 @@ Some operations need a field for a base ring. For example:
 R = @ring! ℤ[x]
 rem(2x^2, 3x + 1)
 ```
-gives an error because we have to substract $x^2 + \frac{2}{3}x$, which is
+gives an error because we have to subtract $x^2 + \frac{2}{3}x$, which is
 not representable in $R$. We offer a convenience function `base_extend` to
 extend to ℚ:
 ```@repl getting-started
