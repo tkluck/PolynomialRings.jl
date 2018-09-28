@@ -1,7 +1,7 @@
 module Ideals
 
 using PolynomialRings.Polynomials: Polynomial
-using PolynomialRings.Gröbner: gröbner_basis, gröbner_transformation
+using PolynomialRings: gröbner_basis, gröbner_transformation
 
 # -----------------------------------------------------------------------------
 #

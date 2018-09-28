@@ -2,7 +2,6 @@ module Backends
 
 module Gröbner
     abstract type Backend end
-    struct Buchberger <: Backend end
     struct GWV <: Backend end
     struct F5C <: Backend end
     struct Arri <: Backend end
@@ -16,7 +15,7 @@ module Gröbner
 
     # fallback in case a backend only provides a subset of these
     gröbner_basis(b::Backend, args...; kwds...)         = gröbner_transformation(b, args...; kwds...)[1]
-    gröbner_transformation(::Backend, args...; kwds...) = gröbner_transformation(Buchberger(), args...; kwds...)
+    gröbner_transformation(::Backend, args...; kwds...) = gröbner_transformation(GWV(), args...; kwds...)
     lift(b::Backend, G, y; kwds...)                     = lift(b, G, (y,); kwds...)[1]
     function lift(b::Backend, G, y::Tuple; kwds...)
         gr, tr = gröbner_transformation(b, G; kwds...)
@@ -36,8 +35,8 @@ module Gröbner
     `transformation` that proves that each element in `basis` is in that ideal (i.e.
     `basis == transformation * polynomials`).
 
-    This is computed using the Buchberger algorithm with a few standard
-    optmizations; see [`PolynomialRings.Gröbner.buchberger`](@ref) for details.
+    This is computed using the GWV algorithm with a few standard
+    optmizations; see [`PolynomialRings.GröbnerGWV.gwv`](@ref) for details.
     """
     gröbner_transformation(G::AbstractVector, args...; kwds...) = gröbner_transformation(cur_default, G, args...; kwds...)
     """
