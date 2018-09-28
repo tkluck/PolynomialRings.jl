@@ -16,7 +16,7 @@ import PolynomialRings.Modules: AbstractModuleElement, modulebasering
 import PolynomialRings.Modules: withtransformations, separatetransformation
 import PolynomialRings.Operators: Lead, Full, content, integral_fraction
 using LinearAlgebra: Transpose
-using SparseArrays: SparseVector, sparsevec
+using SparseArrays: SparseVector, sparsevec, sparse
 
 function regular_topreduce_rem(o, m, G)
     ≺(a,b) = Base.Order.lt(o, a, b)
@@ -50,7 +50,7 @@ function regular_topreduce_rem(o, m, G)
         i += 1
     end
 
-    if modulebasering(v1) <: Integer
+    if basering(modulebasering(v1)) <: Integer
         v1 = v1 ÷ content(v1)
     end
 
@@ -64,10 +64,10 @@ An implementation of the GWV algorithm as popularized by
 > Shuhong Gao, Frank Volny, and Mingsheng Wang. "A new algorithm for computing
 > Groebner bases." IACR Cryptology ePrint Archive 2010 (2010): 641.
 """
-function gwv(o::MonomialOrder, polynomials::AbstractVector{P}; with_transformation=false) where P <: Polynomial
+function gwv(o::MonomialOrder, polynomials::AbstractVector{M}; with_transformation=false) where M <: AbstractModuleElement
     ≺(a,b) = Base.Order.lt(o, a, b)
 
-    if basering(P) <: Rational
+    if basering(modulebasering(M)) <: Rational
         polynomials = map(f->integral_fraction(f)[1], polynomials)
     end
 
@@ -75,10 +75,11 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}; with_transformati
         polynomials = withtransformations(polynomials)
     end
 
+    P = modulebasering(M)
     R = base_restrict(P)
-    S = with_transformation ? eltype(polynomials) : R
+    S = eltype(polynomials)
     Signature = monomialtype(R[])
-    M = Tuple{Signature, S}
+    MM = Tuple{Signature, S}
 
     signature(m) = m[1]
     # --------------------------------------------------------------------------
@@ -86,7 +87,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}; with_transformati
     # --------------------------------------------------------------------------
     G = Tuple{Signature, S}[]
     H = DefaultDict{Int, Set{monomialtype(R)}}(Set{monomialtype(R)})
-    JP = SortedDict{Signature, M}(o)
+    JP = SortedDict{Signature, MM}(o)
 
     n = length(polynomials)
     for (i,p) in enumerate(polynomials)
@@ -149,13 +150,16 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}; with_transformati
             elseif status == :notsupertopreducible
                 # i) Add the leading terms of the principle syzygies, vT j − v j T for
                 # 1 ≤ j ≤ |U |, to H,
-                for (Tj, vj) in G
-                    # syzygy = v*Tj - vj*T
-                    lhs = leading_monomial(o,v)*Tj
-                    rhs = leading_monomial(o,vj)*T
-                    if lhs != rhs
-                        newh = max(o, lhs, rhs)
-                        push!(H[newh.i], newh.m)
+                if M <: Polynomial # TODO: I don't understand what the equivalent of
+                                   # this syzygy should be in the case of modules.
+                    for (Tj, vj) in G
+                        # syzygy = v*Tj - vj*T
+                        lhs = leading_monomial(o,v)*Tj
+                        rhs = leading_monomial(o,vj)*T
+                        if lhs != rhs
+                            newh = max(o, lhs, rhs)
+                            push!(H[newh.i], newh.m)
+                        end
                     end
                 end
                 # ii) Form new J-pairs of (T, v) and (T j , v j ), 1 ≤ j ≤ |U |,
@@ -163,7 +167,9 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}; with_transformati
                 # ducible by H (storing only one J-pair for each distinct signature
                 # T , the one with v-part minimal), and
                 for (Tj, vj) in G
-                    t1, t2 = lcm_multipliers(leading_monomial(o,v), leading_monomial(o,vj))
+                    t1_t2 = lcm_multipliers(leading_monomial(o,v), leading_monomial(o,vj))
+                    t1_t2 === nothing && continue
+                    t1, t2 = t1_t2
                     c = leading_coefficient(o,v)
                     cj = leading_coefficient(o,vj)
                     lhs = t1*T
@@ -211,7 +217,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}; with_transformati
     progress_logged && @info("Done; interreducing the $k result polynomials")
     for i in 1:k
         xrem!(Full(), o, result[i], result[[1:i-1; i+1:k]])
-        if modulebasering(eltype(result)) <: Integer
+        if basering(modulebasering(eltype(result))) <: Integer
             result[i] ÷= content(result[i])
         end
     end
@@ -224,15 +230,31 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}; with_transformati
     # --------------------------------------------------------------------------
     if with_transformation
         result, transformation = separatetransformation(result)
-        result = map(p->base_extend(p, P), result)
+        result = map(p->base_extend(p, basering(P)), result)
         return result, transformation
     else
-        result = map(p->base_extend(p, P), result)
+        result = map(p->base_extend(p, basering(P)), result)
         return result
     end
 end
 
-gröbner_basis(::GWV, o::MonomialOrder, G::AbstractArray{<:Polynomial}; kwds...) = gwv(o, G, with_transformation=false, kwds...)
-gröbner_transformation(::GWV, o::MonomialOrder, G::AbstractArray{<:Polynomial}; kwds...) = gwv(o, G, with_transformation=true, kwds...)
+function gröbner_basis(::GWV, o::MonomialOrder, G::AbstractArray{<:AbstractModuleElement}; kwds...)
+    # GWV chokes on empty arrays mainly because it tries to modify the input
+    # array a few times (restrict to integers, possibly add the transformation)
+    # so lets short-circuit that case.
+    isempty(G) && return copy(G)
+    return gwv(o, G, with_transformation=false, kwds...)
+end
+
+function gröbner_transformation(::GWV, o::MonomialOrder, G::AbstractArray{<:AbstractModuleElement}; kwds...)
+    # GWV chokes on empty arrays mainly because it tries to modify the input
+    # array a few times (restrict to integers, possibly add the transformation)
+    # so lets short-circuit that case.
+    P = modulebasering(eltype(G))
+    if isempty(G)
+        return copy(G), sparse(Matrix{P}(undef, 0, 0))
+    end
+    return gwv(o, G, with_transformation=true, kwds...)
+end
 
 end

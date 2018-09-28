@@ -23,7 +23,7 @@ import PolynomialRings: leading_row, leading_term, leading_monomial, leading_coe
 import PolynomialRings: termtype, monomialtype
 import PolynomialRings: maybe_div, lcm_degree, lcm_multipliers
 import PolynomialRings: leaddiv, leadrem, leaddivrem
-import PolynomialRings.Operators: one_step_div!, one_step_xdiv!
+import PolynomialRings.Operators: one_step_div!, one_step_xdiv!, content
 import PolynomialRings.Terms: coefficient, monomial
 import PolynomialRings.Monomials: total_degree
 
@@ -31,6 +31,8 @@ iszero(x::AbstractArray{P}) where P<:Polynomial = all(iszero, x)
 
 base_extend(x::AbstractArray{P}, ::Type{C}) where P<:Polynomial where C = map(p->base_extend(p,C), x)
 base_extend(x::AbstractArray{P})            where P<:Polynomial         = map(base_extend, x)
+
+content(x::AbstractArray{P}) where P<:Polynomial = gcd(map(content, x))
 
 # -----------------------------------------------------------------------------
 #
@@ -55,7 +57,7 @@ maybe_div(s::Signature, t::Signature)            = s.i == t.i ? maybe_div(s.m, t
 lcm_degree(s::Signature, t::Signature)           = s.i == t.i ? lcm_degree(s.m, t.m) : nothing
 lcm_multipliers(s::Signature, t::Signature)      = s.i == t.i ? lcm_multipliers(s.m, t.m) : nothing
 total_degree(s::Signature)                       = total_degree(s.m)
-lt(o::MonomialOrder, s::Signature, t::Signature) = s.i > t.i || (s.i == t.i && lt(o, s.m, t.m))
+Base.Order.lt(o::MonomialOrder, s::Signature, t::Signature) = s.i > t.i || (s.i == t.i && lt(o, s.m, t.m))
 ==(s::S, t::S) where S <: Signature = s.i == t.i && s.m == t.m
 iszero(s::Signature{<:Term}) = iszero(s.m)
 
@@ -70,6 +72,7 @@ leading_monomial(x::AbstractArray{P}) where P<:Polynomial = leading_monomial(mon
 leading_monomial(o::MonomialOrder, x::AbstractArray{P}) where P<:Polynomial = Signature(leading_row(x), leading_monomial(o, x[leading_row(x)]))
 leading_coefficient(x::AbstractArray{P}) where P<:Polynomial = leading_coefficient(monomialorder(P), x)
 leading_coefficient(o::MonomialOrder, x::AbstractArray{P}) where P<:Polynomial = leading_coefficient(o, x[leading_row(x)])
+Base.Order.lt(o::MonomialOrder, s::A, t::A) where A<:AbstractArray{P} where P<:Polynomial = Base.Order.lt(o, leading_monomial(o, s), leading_monomial(o, t))
 
 function one_step_div!(redtype::RedType, o::MonomialOrder, a::A, b::A) where A<:AbstractArray{<:Polynomial}
     i = findfirst(!iszero, b)
@@ -88,6 +91,33 @@ function one_step_div!(redtype::RedType, o::MonomialOrder, a::A, b::A) where A<:
             end
         end
         return factor
+    else
+        return nothing
+    end
+end
+
+function one_step_xdiv!(redtype::RedType, o::MonomialOrder, a::A, b::A) where A<:AbstractArray{<:Polynomial}
+    i = findfirst(!iszero, b)
+    if i !== nothing && !iszero(a[i])
+        lt_a = leading_monomial(o, a[i])
+        lt_b = leading_monomial(o, b[i])
+        factor = maybe_div(lt_a, lt_b)
+        if factor !== nothing
+            c1 = leading_coefficient(o, a[i])
+            c2 = leading_coefficient(o, b[i])
+            m1, m2 = lcm_multipliers(c1, c2)
+            for i in eachindex(a)
+                a[i] = m1 * a[i] - m2 * (factor * b[i])
+                #if iszero(a[i]) # possibly a sparse zero, so don't try in-place
+                #    a[i] -= factor * b[i]
+                #else
+                #    @. a[i] -= factor * b[i]
+                #end
+            end
+            return m1, factor
+        else
+            return nothing
+        end
     else
         return nothing
     end
@@ -128,11 +158,9 @@ The role of the integer `n` is to avoid needing rationals in `tr`.
 """
 mutable struct TransformedModuleElement{P,M,I}
     p::M
-    tr::SparseVector{M, Int}
+    tr::SparseVector{P, Int}
     n::I
 end
-TransformedModuleElement(f::P, tr::AbstractArray{P}, n::I) where P<:Polynomial where I = TransformedModuleElement{P, P, basering(P)}(f, tr, n)
-TransformedModuleElement(f::M, tr::AbstractArray{M}, n::I) where M<:AbstractArray{P} where P<:Polynomial where I = TransformedModuleElement{P, M, basering(P)}(f, tr, n)
 # gathering leading terms etc
 leading_monomial(o, m::TransformedModuleElement) = leading_monomial(o, m.p)
 leading_coefficient(o, m::TransformedModuleElement) = leading_coefficient(o, m.p)
@@ -182,7 +210,8 @@ function one_step_xdiv!(redtype::RedType, o::MonomialOrder, a::A, b::A) where A<
     return res
 end
 
-function withtransformations(x::AbstractVector{P}) where P<:Polynomial
+function withtransformations(x::AbstractVector{M}) where M
+    P = modulebasering(M)
     n = length(x)
     map(enumerate(x)) do (i,x_i)
         tr = sparsevec(Dict(i=>one(P)), n)
@@ -190,16 +219,15 @@ function withtransformations(x::AbstractVector{P}) where P<:Polynomial
     end
 end
 
-function separatetransformation(x::AbstractVector{<:TransformedModuleElement})
-    P = modulebasering(eltype(x))
+function separatetransformation(x::AbstractVector{<:TransformedModuleElement{P}}) where P
     result         = map(a->a.p,       x)
     transformation = map(a->a.tr//a.n, x)
 
     columns = isempty(transformation) ? 0 : length(transformation[1])
 
     flat_tr = spzeros(base_extend(P), length(result), columns)
-    for (i,x) in enumerate(transformation)
-        flat_tr[i,:] = x
+    for (i,t) in enumerate(transformation)
+        flat_tr[i,:] = t
     end
     return result, flat_tr
 end

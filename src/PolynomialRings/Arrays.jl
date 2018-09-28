@@ -2,7 +2,7 @@ module Arrays
 
 import PolynomialRings.Monomials: AbstractMonomial, expstype
 import PolynomialRings.Terms: Term
-import PolynomialRings.Polynomials: Polynomial
+import PolynomialRings.Polynomials: Polynomial, PolynomialOver
 import IterTools: groupby
 import PolynomialRings.Expansions: _expansion_expr, _expansion_types
 import PolynomialRings: base_restrict
@@ -14,10 +14,10 @@ import LinearAlgebra: Transpose
 # Imports for overloading
 #
 # -----------------------------------------------------------------------------
-import Base: *, transpose, diff
+import Base: *, transpose, diff, div
 import PolynomialRings: monomialorder
 import PolynomialRings: to_dense_monomials, max_variable_index, monomialorder
-import PolynomialRings.Operators: common_denominator, integral_fraction
+import PolynomialRings.Operators: common_denominator, integral_fraction, map_coefficients
 import PolynomialRings.Expansions: expansion, coefficients, coefficient, deg
 import PolynomialRings.Expansions: constant_coefficient, linear_coefficients, expansion_terms
 import LinearAlgebra: det
@@ -221,7 +221,7 @@ _PT = Union{Polynomial,Term,AbstractMonomial}
 *(A::AbstractArray, B::_PT) = broadcast(*, A, B)
 *(A::_PT, B::Transpose) = Transpose(broadcast(*, A, transpose(B)))
 *(A::Transpose, B::_PT) = Transpose(broadcast(*, transpose(A), B))
-
+div(a::A, s::Integer) where A <: AbstractArray{P} where P<:PolynomialOver{<:Integer} = map(a_i->map_coefficients(c->div(c,s), a_i), a)
 transpose(a::_PT) = a
 
 diff(a::A, s::Symbol) where A <: AbstractArray{P} where P <: Polynomial = broadcast(a_i->diff(a_i, s), a)
