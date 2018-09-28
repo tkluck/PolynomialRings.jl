@@ -37,7 +37,7 @@ For a mathematically more pleasing look, try
 R = @ring! ℤ[x,y]
 ```
 
-For entering ℤ, type `\BbbZ<tab>` in the Julia command line.
+For entering ℤ, type `\bbZ<tab>` in the Julia command line.
 ([Juno](http://junolab.org/) and
 [`julia-vim`](https://github.com/JuliaEditorSupport/julia-vim) support this as
 well.) We support ℤ (arbitrary precision integers), ℚ (fractions of
