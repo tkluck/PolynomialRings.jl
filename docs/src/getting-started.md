@@ -375,6 +375,17 @@ f = base_extend(x^2 + 1, Complex{Rational{Int}})
 div(f, [x - im])
 ```
 
+By the way, if you are looking for an operation like `rem` that stays in the integers,
+have a look at `xrem` and friends. For example:
+```@repl getting-started
+xdiv(2x^2, 3x + 1)
+xrem(2x^2, 3x + 1)
+```
+This output signifies that `3` times the first argument plus XXX times the second
+argument is equal to YYY. The `x` in the names is intended to represent
+cross-multiplying the leading coefficients.
+
+
 ### Implementation of named and numbered variables
 
 The difference between `@ring Int[x1,x2,x3]` and `@ring Int[x[]]` is not just
