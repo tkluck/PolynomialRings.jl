@@ -3,7 +3,7 @@ module GröbnerGWV
 using DataStructures: SortedDict, DefaultDict
 
 import PolynomialRings
-import PolynomialRings: gröbner_basis, xrem!
+import PolynomialRings: gröbner_basis, gröbner_transformation, xrem!
 import PolynomialRings.Backends.Gröbner: GWV
 
 import PolynomialRings: leading_term, leading_monomial, lcm_multipliers, lcm_degree, fraction_field, basering, base_extend, base_restrict
@@ -13,6 +13,7 @@ import PolynomialRings.Monomials: total_degree, any_divisor
 import PolynomialRings.Polynomials: Polynomial, monomialorder, monomialtype, PolynomialBy
 import PolynomialRings.Terms: monomial, coefficient
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering
+import PolynomialRings.Modules: withtransformations, separatetransformation
 import PolynomialRings.Operators: Lead, Full, content, integral_fraction
 using LinearAlgebra: Transpose
 using SparseArrays: SparseVector, sparsevec
@@ -49,7 +50,7 @@ function regular_topreduce_rem(o, m, G)
         i += 1
     end
 
-    if basering(v1) <: Integer
+    if modulebasering(v1) <: Integer
         v1 = v1 ÷ content(v1)
     end
 
@@ -63,23 +64,27 @@ An implementation of the GWV algorithm as popularized by
 > Shuhong Gao, Frank Volny, and Mingsheng Wang. "A new algorithm for computing
 > Groebner bases." IACR Cryptology ePrint Archive 2010 (2010): 641.
 """
-function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polynomial
-    R = base_restrict(P)
+function gwv(o::MonomialOrder, polynomials::AbstractVector{P}; with_transformation=false) where P <: Polynomial
     ≺(a,b) = Base.Order.lt(o, a, b)
 
     if basering(P) <: Rational
         polynomials = map(f->integral_fraction(f)[1], polynomials)
     end
 
-    Rm = Transpose{R, SparseVector{R,Int}}
-    Signature = monomialtype(polynomials)
-    M = Tuple{Signature, R}
+    if with_transformation
+        polynomials = withtransformations(polynomials)
+    end
+
+    R = base_restrict(P)
+    S = with_transformation ? eltype(polynomials) : R
+    Signature = monomialtype(R[])
+    M = Tuple{Signature, S}
 
     signature(m) = m[1]
     # --------------------------------------------------------------------------
     # Declare the variables where we'll accumulate the result
     # --------------------------------------------------------------------------
-    G = Tuple{Signature, R}[]
+    G = Tuple{Signature, S}[]
     H = DefaultDict{Int, Set{monomialtype(R)}}(Set{monomialtype(R)})
     JP = SortedDict{Signature, M}(o)
 
@@ -205,20 +210,29 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{P}) where P <: Polyno
     k = length(result)
     progress_logged && @info("Done; interreducing the $k result polynomials")
     for i in 1:k
-        xrem!(result[i], result[[1:i-1; i+1:k]])
-        if basering(eltype(result)) <: Integer
+        xrem!(Full(), o, result[i], result[[1:i-1; i+1:k]])
+        if modulebasering(eltype(result)) <: Integer
             result[i] ÷= content(result[i])
         end
     end
+    # what we filter out is probably a Gröbner basis for the syzygies, and
+    # maybe the caller wants to have it?
     filter!(!iszero, result)
-    result = map(p->base_extend(p, P), result)
     progress_logged && @info("Done. Returning a Gröbner basis of length $(length(result))")
     # --------------------------------------------------------------------------
     # Return the result
     # --------------------------------------------------------------------------
-    return result
+    if with_transformation
+        result, transformation = separatetransformation(result)
+        result = map(p->base_extend(p, P), result)
+        return result, transformation
+    else
+        result = map(p->base_extend(p, P), result)
+        return result
+    end
 end
 
-gröbner_basis(::GWV, o::MonomialOrder, G::AbstractArray{<:Polynomial}; kwds...) = gwv(o, G, kwds...)
+gröbner_basis(::GWV, o::MonomialOrder, G::AbstractArray{<:Polynomial}; kwds...) = gwv(o, G, with_transformation=false, kwds...)
+gröbner_transformation(::GWV, o::MonomialOrder, G::AbstractArray{<:Polynomial}; kwds...) = gwv(o, G, with_transformation=true, kwds...)
 
 end

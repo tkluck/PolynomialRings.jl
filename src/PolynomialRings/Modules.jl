@@ -6,6 +6,8 @@ import PolynomialRings.Monomials: AbstractMonomial
 import PolynomialRings.Terms: Term
 import PolynomialRings.Operators: RedType, Lead, Full, Tail
 
+using SparseArrays: SparseVector, sparsevec, spzeros
+
 import Base: keytype
 keytype(a::AbstractArray) = CartesianIndex{ndims(a)}
 keytype(a::AbstractVector) = Int
@@ -21,19 +23,9 @@ import PolynomialRings: leading_row, leading_term, leading_monomial, leading_coe
 import PolynomialRings: termtype, monomialtype
 import PolynomialRings: maybe_div, lcm_degree, lcm_multipliers
 import PolynomialRings: leaddiv, leadrem, leaddivrem
-import PolynomialRings.Operators: one_step_div!
+import PolynomialRings.Operators: one_step_div!, one_step_xdiv!
 import PolynomialRings.Terms: coefficient, monomial
 import PolynomialRings.Monomials: total_degree
-
-# -----------------------------------------------------------------------------
-#
-# An abstract module element is either a ring element (module over itself) or
-# an array.
-#
-# -----------------------------------------------------------------------------
-AbstractModuleElement{P<:Polynomial} = Union{P, AbstractArray{P}}
-modulebasering(::Type{A}) where A <: AbstractModuleElement{P} where P<:Polynomial = P
-modulebasering(::A)       where A <: AbstractModuleElement{P} where P<:Polynomial = modulebasering(A)
 
 iszero(x::AbstractArray{P}) where P<:Polynomial = all(iszero, x)
 
@@ -116,5 +108,111 @@ leading_row(x::Polynomial) = 1
 # Work around sparse-dense multiplication in Base only working for eltype() <: Number
 import LinearAlgebra: mul!
 mul!(A, B, C, α::Polynomial, β::Polynomial) = mul!(A, B, C, convert(basering(α),α), convert(basering(β), β))
+
+"""
+
+    TransformedModuleElement
+
+A combination of a module element and a transformation that yielded
+it through linear operations. This is a utility type for keeping track
+of all transformations happening during e.g. a Gröbner basis transformation.
+
+The invariant is that
+
+    n*p = tr*inputs
+
+where `inputs` is the array that was passed to `withtransformations()`.
+
+The role of the integer `n` is to avoid needing rationals in `tr`.
+
+"""
+mutable struct TransformedModuleElement{P,M,I}
+    p::M
+    tr::SparseVector{M, Int}
+    n::I
+end
+TransformedModuleElement(f::P, tr::AbstractArray{P}, n::I) where P<:Polynomial where I = TransformedModuleElement{P, P, basering(P)}(f, tr, n)
+TransformedModuleElement(f::M, tr::AbstractArray{M}, n::I) where M<:AbstractArray{P} where P<:Polynomial where I = TransformedModuleElement{P, M, basering(P)}(f, tr, n)
+# gathering leading terms etc
+leading_monomial(o, m::TransformedModuleElement) = leading_monomial(o, m.p)
+leading_coefficient(o, m::TransformedModuleElement) = leading_coefficient(o, m.p)
+leading_term(o, m::TransformedModuleElement) = leading_term(o, m.p)
+content(m::TransformedModuleElement) = content(m.p)
+Base.Order.lt(o::MonomialOrder, a::T, b::T) where T<:TransformedModuleElement = Base.Order.lt(o, a.p, b.p)
+# linear operations
+import Base: *, +, -, ÷
+*(f, g::TransformedModuleElement) = TransformedModuleElement(f*g.p, f*g.tr, g.n)
+*(f::TransformedModuleElement, g) = TransformedModuleElement(f.p*g, f.tr*g, f.n)
+# TODO: reduce the tr/n fraction
+÷(f::TransformedModuleElement, g) = TransformedModuleElement(f.p÷g, f.tr, f.n*g)
+function +(f::T, g::T) where T<:TransformedModuleElement
+    m1, m2 = lcm_multipliers(f.n, g.n)
+    N = m1*f.n
+    TransformedModuleElement(f.p + g.p, m1*f.tr + m2*g.tr, N)
+end
+function -(f::T, g::T) where T<:TransformedModuleElement
+    m1, m2 = lcm_multipliers(f.n, g.n)
+    N = m1*f.n
+    TransformedModuleElement(f.p - g.p, m1*f.tr - m2*g.tr, N)
+end
++(f::T) where T<:TransformedModuleElement = TransformedModuleElement(+f.p, +f.tr, +f.n)
+-(f::T) where T<:TransformedModuleElement = TransformedModuleElement(-f.p, -f.tr, +f.n)
+Base.iszero(f::TransformedModuleElement) = iszero(f.p)
+# broadcasting: just evaluate it all eagerly
+struct TransformedStyle <: Base.Broadcast.BroadcastStyle end
+Base.Broadcast.broadcastable(f::TransformedModuleElement) = f
+Base.Broadcast.BroadcastStyle(::Type{<:TransformedModuleElement}) = TransformedStyle()
+Base.Broadcast.BroadcastStyle(::TransformedStyle, ::Base.Broadcast.BroadcastStyle) = TransformedStyle()
+eager(x) = x
+eager(x::Base.RefValue) = x[]
+Base.Broadcast.broadcasted(::TransformedStyle, op, args...) = op(map(eager, args)...)
+function Base.Broadcast.materialize!(tgt::TransformedModuleElement, src::TransformedModuleElement)
+    tgt.p = src.p
+    tgt.tr = src.tr
+    tgt.n = src.n
+end
+
+function one_step_xdiv!(redtype::RedType, o::MonomialOrder, a::A, b::A) where A<:TransformedModuleElement
+    res = one_step_xdiv!(redtype, o, a.p, b.p)
+    if res !== nothing
+        m, factor = res
+        a.tr = m * b.n * a.tr - factor * b.tr
+        a.n *= b.n
+    end
+    return res
+end
+
+function withtransformations(x::AbstractVector{P}) where P<:Polynomial
+    n = length(x)
+    map(enumerate(x)) do (i,x_i)
+        tr = sparsevec(Dict(i=>one(P)), n)
+        TransformedModuleElement(x_i, tr, one(basering(P)))
+    end
+end
+
+function separatetransformation(x::AbstractVector{<:TransformedModuleElement})
+    P = modulebasering(eltype(x))
+    result         = map(a->a.p,       x)
+    transformation = map(a->a.tr//a.n, x)
+
+    columns = isempty(transformation) ? 0 : length(transformation[1])
+
+    flat_tr = spzeros(base_extend(P), length(result), columns)
+    for (i,x) in enumerate(transformation)
+        flat_tr[i,:] = x
+    end
+    return result, flat_tr
+end
+
+# -----------------------------------------------------------------------------
+#
+# An abstract module element is either a ring element (module over itself) or
+# an array. It may also include the transformation that yielded it, so
+# TransformedModuleElement is also an option.
+#
+# -----------------------------------------------------------------------------
+AbstractModuleElement{P<:Polynomial} = Union{P, AbstractArray{P}, TransformedModuleElement{P}}
+modulebasering(::Type{A}) where A <: AbstractModuleElement{P} where P<:Polynomial = P
+modulebasering(::A)       where A <: AbstractModuleElement{P} where P<:Polynomial = modulebasering(A)
 
 end
