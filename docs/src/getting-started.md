@@ -381,9 +381,10 @@ have a look at `xrem` and friends. For example:
 xdiv(2x^2, 3x + 1)
 xrem(2x^2, 3x + 1)
 ```
-This output signifies that `3` times the first argument plus XXX times the second
-argument is equal to YYY. The `x` in the names is intended to represent
-cross-multiplying the leading coefficients.
+This output signifies that ```-9``` times the first argument is equal
+to ```-6x + 2``` times the second argument plus ```-2```. The `x` in the names
+`xdiv` and `xrem` is intended to represent cross-multiplying the leading
+coefficients.
 
 
 ### Implementation of named and numbered variables
