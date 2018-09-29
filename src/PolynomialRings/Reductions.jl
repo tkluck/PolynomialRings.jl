@@ -40,6 +40,48 @@ julia> rem(x^2 + y^2 + 1, [x, y])
 """
 function rem end
 
+"""
+    any_reductions = rem!(f, G)
+
+Compute the multivariate reduction of a polynomial `f` by a vector of
+polynomials `G`, in-place. By definition, this means that after applying
+`rem!` no, leading term of a polynomial in `G` divides any monomial in `f`, and
+`f + factors * G` is equal to the original value of `f` for some row
+vector `factors`.
+
+The return value `any_reductions` is `true` if and only if `factors` is nonzero.
+Note that `factors` itself is not actually computed and not returned. If you
+need to obtain it, use `div!`.
+
+If you want to allow clearing denominators, e.g. reduce ```2x^2``` by ```3x```
+even though your base ring is ℤ, use `xrem!` instead.
+
+# Examples
+In one variable, this is just the normal Euclidean algorithm:
+```jldoctest
+julia> using PolynomialRings
+
+julia> R,(x,y) = polynomial_ring(:x, :y, basering=Complex{Int});
+
+julia> f = x^2 + 1
+x^2 + 1
+
+julia> rem!(f, [x-im])
+true
+
+julia> f
+0
+
+julia> g = x^2 + y^2 + 1
+x^2 + y^2 + 1
+
+julia> rem!(g, [x, y])
+true
+
+julia> g
+1
+```
+"""
 function rem!(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
     if typeof(redtype) <: Full
         any_reductions = rem!(Lead(), o, f, G)
@@ -66,6 +108,48 @@ function rem!(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) wh
     return any_reductions
 end
 
+"""
+    any_reductions = xrem!(f, G)
+
+Compute the multivariate reduction of a polynomial `f` by a vector of
+polynomials `G`, in-place. By definition, this means that after applying
+`rem!` no, leading term of a polynomial in `G` divides any monomial in `f`, and
+`f + factors * G` is equal to `m` times the original value of `f` for some
+scalar `m` and for some row vector `factors`.
+
+The return value `any_reductions` is `true` if and only if `factors` is nonzero.
+Note that `factors` itself is not actually computed and not returned. If you
+need to obtain it, use `xdiv!`. The same holds for `m`.
+
+The difference between `xdiv!` and `div` is that the former allows clearing
+denominators, e.g. reduce ```2x^2``` by ```3x``` even when the base ring is ℤ.
+
+# Examples
+In one variable, this is just the normal Euclidean algorithm:
+```jldoctest
+julia> using PolynomialRings
+
+julia> R,(x,y) = polynomial_ring(:x, :y, basering=Complex{Int});
+
+julia> f = x^2 + 1
+x^2 + 1
+
+julia> xrem!(f, [x-im])
+true
+
+julia> f
+0
+
+julia> g = x^2 + y^2 + 1
+x^2 + y^2 + 1
+
+julia> xrem!(g, [x, y])
+true
+
+julia> g
+1
+```
+"""
 function xrem!(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
     if typeof(redtype) <: Full
         any_reductions = xrem!(Lead(), o, f, G)
@@ -117,6 +201,45 @@ julia> divrem(x^2 + y^2 + 1, [x, y])
 """
 function divrem end
 
+"""
+    factors = div!(f, G)
+
+Compute the multivariate reduction of a polynomial `f` by a vector of
+polynomials `G`, in-place. By definition, this means that after applying
+`rem!` no, leading term of a polynomial in `G` divides any monomial in `f`, and
+`f + factors * G` is equal to the original value of `f`.
+
+The return value is `nothing` if no reduction has taken place. This situation
+could also be represented by the zero vector, but we choose `nothing` for
+efficiency.
+
+If you want to allow clearing denominators, e.g. reduce ```2x^2``` by ```3x```
+even though your base ring is ℤ, use `xdiv!` instead.
+
+# Examples
+In one variable, this is just the normal Euclidean algorithm:
+```jldoctest
+julia> using PolynomialRings
+
+julia> R,(x,y) = polynomial_ring(:x, :y, basering=Complex{Int});
+
+julia> f = x^2 + 1
+x^2 + 1
+
+julia> collect(div!(f, [x-im]))
+
+julia> f
+0
+
+julia> g = x^2 + y^2 + 1
+x^2 + y^2 + 1
+
+julia> collect(div!(g, [x, y]))
+
+julia> g
+1
+```
+"""
 function div!(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
     if typeof(redtype) <: Full
         factors = div!(Lead(), o, f, G)
@@ -143,6 +266,41 @@ function div!(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) wh
     return factors
 end
 
+"""
+    m, factors = xdiv!(f, G)
+
+Compute the multivariate reduction of a polynomial `f` by a vector of
+polynomials `G`, in-place. By definition, this means that after applying
+`rem!` no, leading term of a polynomial in `G` divides any monomial in `f`, and
+`f + factors * G` is equal to `m` times the original value of `f`.
+
+The difference between `xdiv!` and `div` is that the former allows clearing
+denominators, e.g. reduce ```2x^2``` by ```3x``` even when the base ring is ℤ.
+
+# Examples
+In one variable, this is just the normal Euclidean algorithm:
+```jldoctest
+julia> using PolynomialRings
+
+julia> R,(x,y) = polynomial_ring(:x, :y, basering=Complex{Int});
+
+julia> f = x^2 + 1
+x^2 + 1
+
+julia> xdiv!(f, [x-im])
+
+julia> f
+0
+
+julia> g = x^2 + y^2 + 1
+x^2 + y^2 + 1
+
+julia> xdiv!(g, [x, y])
+
+julia> g
+1
+```
+"""
 function xdiv!(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
     if typeof(redtype) <: Full
         m, factors = xdiv!(Lead(), o, f, G)
@@ -194,6 +352,30 @@ function xdiv(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) wh
     return xdiv!(redtype, o, f′, G)
 end
 
+"""
+    f_red = xrem(f, G)
+
+Return the multivariate reduction of a polynomial `f` by a vector of
+polynomials `G`. By definition, this means that no leading term of a polynomial
+in `G` divides any monomial in `f`, and `f_red + factors * G == m * f` for some
+factors and for some integer `m`.
+
+If you need to obtain the vector of factors, use `xdivrem` instead.
+
+# Examples
+In one variable, this is just the normal Euclidean algorithm:
+```jldoctest
+julia> using PolynomialRings
+
+julia> R,(x,y) = polynomial_ring(:x, :y, basering=Complex{Int});
+
+julia> xrem(x^2 + 1, [x-im])
+0
+
+julia> xrem(x^2 + y^2 + 1, [x, y])
+1 + 0im
+```
+"""
 function xrem(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
     f′ = deepcopy(f)
     any_reductions = xrem!(redtype, o, f′, G)
