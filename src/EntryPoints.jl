@@ -46,9 +46,13 @@ Return an object representing formal coefficients for the polynomial ring `R`.
 
 # Examples
 ```jldoctest
+julia> using PolynomialRings
+
 julia> R = @ring! ℤ[x];
 
+
 julia> c = formal_coefficients(R, :c);
+
 
 julia> c[1:3]
 3-element Array{ℤ[c[]][x],1}:

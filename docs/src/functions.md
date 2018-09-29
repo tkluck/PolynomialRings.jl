@@ -8,6 +8,7 @@
 @polyvar
 @polynomial
 polynomial_ring
+formal_coefficients
 ```
 
 ## Arithmetic
@@ -18,10 +19,10 @@ divrem
 PolynomialRings.Expansions.diff
 div!
 rem!
-xdiv
 xrem
 xdiv!
 xrem!
+map_coefficients
 ```
 
 ### Monomial orderings
@@ -55,6 +56,7 @@ flat_coefficients
 gröbner_basis
 gröbner_transformation
 syzygies
+lift
 matrix_solve_affine
 PolynomialRings.GröbnerGWV.gwv
 ```

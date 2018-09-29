@@ -65,7 +65,7 @@ julia> using PolynomialRings
 julia> R,(x,y) = polynomial_ring(:x, :y, basering=Complex{Int});
 
 julia> f = x^2 + 1
-x^2 + 1
+x^2 + 1 + 0im
 
 julia> rem!(f, [x-im])
 true
@@ -74,13 +74,13 @@ julia> f
 0
 
 julia> g = x^2 + y^2 + 1
-x^2 + y^2 + 1
+x^2 + y^2 + 1 + 0im
 
 julia> rem!(g, [x, y])
 true
 
 julia> g
-1
+1 + 0im
 ```
 """
 function rem!(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
@@ -133,7 +133,7 @@ julia> using PolynomialRings
 julia> R,(x,y) = polynomial_ring(:x, :y, basering=Complex{Int});
 
 julia> f = x^2 + 1
-x^2 + 1
+x^2 + 1 + 0im
 
 julia> xrem!(f, [x-im])
 true
@@ -142,13 +142,13 @@ julia> f
 0
 
 julia> g = x^2 + y^2 + 1
-x^2 + y^2 + 1
+x^2 + y^2 + 1 + 0im
 
 julia> xrem!(g, [x, y])
 true
 
 julia> g
-1
+1 + 0im
 ```
 """
 function xrem!(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
@@ -224,21 +224,25 @@ julia> using PolynomialRings
 
 julia> R,(x,y) = polynomial_ring(:x, :y, basering=Complex{Int});
 
-julia> f = x^2 + 1
-x^2 + 1
+julia> f = x^2 + 1 + 0im
+x^2 + 1 + 0im
 
 julia> collect(div!(f, [x-im]))
+1×1 Array{Complex{Int64}[x,y],2}:
+ x + 0 + 1im
 
 julia> f
 0
 
 julia> g = x^2 + y^2 + 1
-x^2 + y^2 + 1
+x^2 + y^2 + 1 + 0im
 
 julia> collect(div!(g, [x, y]))
+1×2 Array{Complex{Int64}[x,y],2}:
+ x  y
 
 julia> g
-1
+1 + 0im
 ```
 """
 function div!(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
@@ -285,21 +289,23 @@ julia> using PolynomialRings
 
 julia> R,(x,y) = polynomial_ring(:x, :y, basering=Complex{Int});
 
-julia> f = x^2 + 1
-x^2 + 1
+julia> f = x^2 + y^2 + 1
+x^2 + y^2 + 1 + 0im
 
 julia> xdiv!(f, [x-im])
+(1 + 0im, Complex{Int64}[x,y][x + 0 + 1im])
 
 julia> f
-0
+y^2
 
 julia> g = x^2 + y^2 + 1
-x^2 + y^2 + 1
+x^2 + y^2 + 1 + 0im
 
 julia> xdiv!(g, [x, y])
+(1 + 0im, Complex{Int64}[x,y][x y])
 
 julia> g
-1
+1 + 0im
 ```
 """
 function xdiv!(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
