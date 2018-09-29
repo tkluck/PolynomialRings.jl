@@ -396,11 +396,13 @@ function xdivrem(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M})
 end
 
 # _unpack for div's result
-_unpack(a) = a[1]
+_unpack(a::AbstractArray) = a[1]
 # _unpack for divrem's result
-_unpack(a::Tuple{A,B}) where {A,B} = a[1][1], a[2]
+_unpack(a::Tuple{<:AbstractArray,<:Any}) = a[1][1], a[2]
 # _unpack for xdivrem's result
-_unpack(a::Tuple{A,B,C}) where {A,B,C} = a[1], a[2][1], a[3]
+_unpack(a::Tuple{<:Any,<:AbstractArray,<:Any}) = a[1], a[2][1], a[3]
+# _unpack for xdiv!'s result
+_unpack(a::Tuple{<:Any,<:AbstractArray}) = a[1], a[2][1]
 leaddivrem(f::PolynomialBy{Order}, g::PolynomialBy{Order}) where Order = divrem(Lead(), Order(), f, [g]) |> _unpack
 divrem(f::PolynomialBy{Order}, g::PolynomialBy{Order})     where Order = divrem(Full(), Order(), f, [g]) |> _unpack
 leadrem(f::PolynomialBy{Order}, g::PolynomialBy{Order})    where Order = rem(Lead(), Order(), f, [g])
@@ -409,11 +411,11 @@ leaddiv(f::PolynomialBy{Order}, g::PolynomialBy{Order})    where Order = div(Lea
 div(f::PolynomialBy{Order}, g::PolynomialBy{Order})        where Order = div(Full(), Order(), f, [g]) |> _unpack
 
 div!(f::PolynomialBy{Order}, g::PolynomialBy{Order})        where Order = div!(Full(), Order(), f, [g]) |> _unpack
-rem!(f::PolynomialBy{Order}, g::PolynomialBy{Order})        where Order = rem!(Full(), Order(), f, [g]) |> _unpack
+rem!(f::PolynomialBy{Order}, g::PolynomialBy{Order})        where Order = rem!(Full(), Order(), f, [g])
 xdiv!(f::PolynomialBy{Order}, g::PolynomialBy{Order})        where Order = xdiv!(Full(), Order(), f, [g]) |> _unpack
-xrem!(f::PolynomialBy{Order}, g::PolynomialBy{Order})        where Order = xrem!(Full(), Order(), f, [g]) |> _unpack
+xrem!(f::PolynomialBy{Order}, g::PolynomialBy{Order})        where Order = xrem!(Full(), Order(), f, [g])
 xdiv(f::PolynomialBy{Order}, g::PolynomialBy{Order})        where Order = xdiv(Full(), Order(), f, [g]) |> _unpack
-xrem(f::PolynomialBy{Order}, g::PolynomialBy{Order})        where Order = xrem(Full(), Order(), f, [g]) |> _unpack
+xrem(f::PolynomialBy{Order}, g::PolynomialBy{Order})        where Order = xrem(Full(), Order(), f, [g])
 xdivrem(f::PolynomialBy{Order}, g::PolynomialBy{Order})        where Order = xdivrem(Full(), Order(), f, [g]) |> _unpack
 
 divrem(redtype::RedType, o::MonomialOrder, f::P, g::P) where P<:Polynomial = divrem(redtype, o, f, [g]) |> _unpack
