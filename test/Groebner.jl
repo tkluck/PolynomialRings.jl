@@ -26,6 +26,10 @@ using PolynomialRings
     f, G = (x^23 + y -x*43, [x^3*y^4, x^7])
     factors, f_red = divrem(f,G)
     @test f == f_red + (factors * G)
+
+    f, g = 2x^2, 3x+5
+    m, factors = xdiv(f, g)
+    @test m * f == xrem(f, g) + factors * g
 end
 
 @testset "Gröbner" begin

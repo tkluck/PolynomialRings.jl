@@ -330,6 +330,7 @@ function xdiv!(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) w
         else
             k, factor = result
             m *= k # TODO: in-place for BigInt
+            factors[1, :] *= k
             factors[1, i] += factor
             i = 1
         end
