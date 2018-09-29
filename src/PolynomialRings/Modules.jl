@@ -8,6 +8,8 @@ import PolynomialRings.Operators: RedType, Lead, Full, Tail
 
 using SparseArrays: SparseVector, sparsevec, spzeros
 
+# This should probably be in Base; see
+# https://github.com/JuliaLang/julia/pull/27749
 import Base: keytype
 keytype(a::AbstractArray) = CartesianIndex{ndims(a)}
 keytype(a::AbstractVector) = Int
