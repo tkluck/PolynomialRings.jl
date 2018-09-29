@@ -5,6 +5,7 @@ using PolynomialRings
 
     using PolynomialRings
     using PolynomialRings: basering, termtype
+    using PolynomialRings.Polynomials: NamedPolynomial
 
     R = @ring! ℚ[x,y]
     S = @ring! ℚ[q[]][x,y]
@@ -20,8 +21,9 @@ using PolynomialRings
 
         @test repr(termtype(R)) == "(Term over Rational{BigInt} in x,y)"
 
-        # test that this does not throw an error
+        # test that these do not throw an error
         @test repr(methods(^)) isa String
+        @test repr(NamedPolynomial) isa String
     end
 
     @testset "Polynomials" begin

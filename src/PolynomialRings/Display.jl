@@ -70,16 +70,38 @@ end
 #
 # -----------------------------------------------------------------------------
 
-function show(io::IO, ::MO) where MO <: MonomialOrder{Name} where Name
-    print(io, Name)
+function defaultshow(io, t)
+    if t isa DataType
+        invoke(show, Tuple{IO, DataType}, io, t)
+    elseif t isa UnionAll
+        invoke(show, Tuple{IO, UnionAll}, io, t)
+    else
+        print(io, "<undisplayable>")
+    end
 end
 
-function show(io::IO, ::Type{Named{Names}}) where Names
-    join(io, Names, ",")
+function show(io::IO, t::MO) where MO <: MonomialOrder{Name} where Name
+    if isconcretetype(t)
+        print(io, Name)
+    else
+        defaultshow(io, t)
+    end
 end
 
-function show(io::IO, ::Type{Numbered{Name}}) where Name
-    print(io, "$(Name)[]")
+function show(io::IO, t::Type{Named{Names}}) where Names
+    if isconcretetype(t)
+        join(io, Names, ",")
+    else
+        defaultshow(io, t)
+    end
+end
+
+function show(io::IO, t::Type{Numbered{Name}}) where Name
+    if isconcretetype(t)
+        print(io, "$(Name)[]")
+    else
+        defaultshow(io, t)
+    end
 end
 
 # keep in sync with Constructors.jl
@@ -89,12 +111,20 @@ _repr(::Type{BigFloat}) = :ℝ
 _repr(::Type{Complex{BigFloat}}) = :ℂ
 _repr(x) = x
 
-function show(io::IO, ::Type{Polynomial{T}}) where T
-    print(io, "$(_repr(basering(T)))[$(namestype(T))]")
+function show(io::IO, t::Type{Polynomial{T}}) where T
+    if isconcretetype(t)
+        print(io, "$(_repr(basering(T)))[$(namestype(T))]")
+    else
+        defaultshow(io, t)
+    end
 end
 
-function show(io::IO, ::Type{Term{M,C}}) where {M,C}
-    print(io, "(Term over $C in $(namestype(M)))")
+function show(io::IO, t::Type{Term{M,C}}) where {M,C}
+    if isconcretetype(t)
+        print(io, "(Term over $C in $(namestype(M)))")
+    else
+        defaultshow(io, t)
+    end
 end
 
 

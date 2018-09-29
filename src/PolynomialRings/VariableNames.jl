@@ -15,7 +15,7 @@ numberedvariablename(a) = numberedvariablename(namestype(a))
 # Finite enumeration of variable names
 #
 # -----------------------------------------------------------------------------
-abstract type Named{Names} end
+struct Named{Names} end
 variablesymbols(::Type{Named{Names}}) where Names = Names
 
 # -----------------------------------------------------------------------------
@@ -23,7 +23,7 @@ variablesymbols(::Type{Named{Names}}) where Names = Names
 # Infinite series of variable names
 #
 # -----------------------------------------------------------------------------
-abstract type Numbered{Name} end
+struct Numbered{Name} end
 variablesymbols(::Type{Numbered{Name}}) where Name = tuple()
 numberedvariablename(::Type{Numbered{Name}}) where Name = Name
 
