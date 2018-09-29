@@ -2,6 +2,7 @@ module Reductions
 
 import SparseArrays: spzeros
 
+import PolynomialRings: basering
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.Polynomials: Polynomial, monomialorder
 import PolynomialRings.Modules: AbstractModuleElement, modulebasering
@@ -317,7 +318,7 @@ function xdiv!(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) w
             i += 1
             continue
         end
-        restult = one_step_xdiv!(redtype, o, f, g)
+        result = one_step_xdiv!(redtype, o, f, g)
         if result === nothing
             i += 1
         else
