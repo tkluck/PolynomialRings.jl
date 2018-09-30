@@ -15,6 +15,7 @@ struct Zero <: Constant end
 struct MinusOne <: Constant end
 
 import Base: promote_rule, convert, +, *, -, zero, one
+import PolynomialRings.Util: inplace!
 
 *(x, ::One) = deepcopy(x)
 *(::One, x) = deepcopy(x)
@@ -55,5 +56,10 @@ for N = [Number, AbstractMonomial, Term, Polynomial]
         *(::Zero, x::$N) = zero(x)
     end
 end
+
+inplace!(::typeof(+), a::BigInt, b::BigInt, c::Zero) = (Base.GMP.MPZ.set!(a,b); a)
+inplace!(::typeof(+), a::BigInt, b::Zero, c::BigInt) = (Base.GMP.MPZ.set!(a,c); a)
+inplace!(::typeof(-), a::BigInt, b::BigInt, c::Zero) = (Base.GMP.MPZ.set!(a,b); a)
+inplace!(::typeof(-), a::BigInt, b::Zero, c::BigInt) = (Base.GMP.MPZ.neg!(a,c); a)
 
 end

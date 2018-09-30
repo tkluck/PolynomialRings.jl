@@ -6,11 +6,10 @@ import PolynomialRings: basering, exptype, base_extend, base_restrict
 import PolynomialRings.Monomials: AbstractMonomial
 import PolynomialRings.MonomialOrderings: MonomialOrder
 import PolynomialRings.Terms: Term, monomial, coefficient
-import PolynomialRings.Polynomials: Polynomial, termtype, terms, monomialorder
+import PolynomialRings.Polynomials: Polynomial, termtype, terms, monomialorder, monomialtype
 import PolynomialRings.Polynomials: PolynomialBy
-using PolynomialRings.Util: ParallelIter
+using PolynomialRings.Util: ParallelIter, add!, mul!
 using PolynomialRings.Constants: Zero
-using Base.GMP.MPZ: add!
 
 # -----------------------------------------------------------------------------
 #
@@ -115,47 +114,114 @@ end
 #
 # -----------------------------------------------------------------------------
 import PolynomialRings.Util: BoundedHeap
-import DataStructures: enqueue!, dequeue!, peek
+import DataStructures: enqueue!, dequeue!
 
+"""
+    f = g * h
+
+Return the product of two polynomials.
+
+The implementation is as follows.
+
+A naive implementation would have three steps: first, generate all the summands
+as the cartesian product of the terms of `g` and the terms of `h`. Second, sort
+the list by monomial order. Third, walk over the sorted list and sum the
+coefficients of any terms with equal monomial.
+
+A major improvement can be had if we avoid the sorting, and instead walk
+over the cartesian product in the right order.
+
+To understand this, let the following diagram represent the summands
+in the cartesian product, with monomial order of the factors increasing
+top to bottom and left to right:
+
+    . . . . . . . . . . .
+    . . . . . . . . . . .
+    . . . . . . . . . . .
+    . . . . . . . . . . .
+
+When a certain number of terms have been evaluated and added to the
+output (marked by `*` below), the situation may be as follows:
+
+    * * * * * * * ? . . .
+    * * * ? . . . . . . .
+    ? . . . . . . . . . .
+    . . . . . . . . . . .
+
+The key insight is that _the only possibility for the next minimal
+terms are the ones marked by `?`_. This is because of the multiplicative
+property of monomial orders (``m ≺ n ⇒ km ≺ kn``).
+
+We call these possible minimal terms the 'minimal corners'. In the
+implementation below, a `Heap` data structure keeps track of them.
+
+This allows us to avoid separate sorting and summing passes. In turn,
+this allows keeping running totals of the coefficients and do all these
+operations in-place for mutable types (e.g. BigInt).
+"""
 function *(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
+    ≺(a, b) = Base.Order.lt(Order(), a, b)
     P = promote_type(typeof(a), typeof(b))
     C = basering(P)
     T = termtype(P)
+    M = monomialtype(P)
 
     if iszero(a) || iszero(b)
         return zero(P)
     end
 
-    summands = Vector{T}(undef, length(terms(a)) * length(terms(b)))
+    t_a = terms(a)
+    t_b = terms(b)
+    l_a = length(t_a)
+    l_b = length(t_b)
+
+    summands = Vector{T}(undef, l_a * l_b)
     k = 0
 
-    row_indices= zeros(Int, length(terms(a)))
-    col_indices= zeros(Int, length(terms(b)))
+    done_until_col_at_row = zeros(Int, l_a)
+    done_until_row_at_col = zeros(Int, l_b)
 
     # using a bounded queue not to drop items when it gets too big, but to allocate it
     # once to its maximal theoretical size and never reallocate.
-    order = Base.Order.Lt((a,b)->Base.Order.lt(Order(), a[3], b[3]))
-    minimal_corners = BoundedHeap(Tuple{Int,Int,T}, min(length(terms(a)), length(terms(b))), order)
-    @inbounds t = terms(a)[1] * terms(b)[1]
-    enqueue!(minimal_corners, (1,1,t))
-    @inbounds while length(minimal_corners)>0
-        row, col, t = peek(minimal_corners)
-        dequeue!(minimal_corners)
-        summands[k+=1] = t
-        row_indices[row] = col
-        col_indices[col] = row
-        if row < length(terms(a)) && row_indices[row+1] == col - 1
-            @inbounds t = terms(a)[row+1] * terms(b)[col]
-            enqueue!(minimal_corners, (row+1,col, t))
+    order = Base.Order.Lt((a,b) -> a[3] ≺ b[3])
+    Key = Tuple{Int, Int, M}
+    minimal_corners = BoundedHeap(Key, min(l_a, l_b), order)
+
+    @inbounds m = monomial(t_a[1]) * monomial(t_b[1])
+    enqueue!(minimal_corners, (1, 1, m))
+
+    temp = zero(C)
+    cur_monom = nothing
+    cur_coeff = nothing
+
+    @inbounds while !isempty(minimal_corners)
+        row, col, m = dequeue!(minimal_corners)
+
+        if m == cur_monom
+            temp = mul!(temp, coefficient(t_a[row]), coefficient(t_b[col]))
+            cur_coeff = add!(cur_coeff, temp)
+        else
+            if cur_monom !== nothing && !iszero(cur_coeff)
+                summands[k+=1] = T(cur_monom, cur_coeff)
+            end
+            cur_coeff = coefficient(t_a[row]) * coefficient(t_b[col])
+            cur_monom = m
         end
-        if col < length(terms(b)) && col_indices[col+1] == row - 1
-            @inbounds t = terms(a)[row] * terms(b)[col+1]
-            enqueue!(minimal_corners, (row,col+1, t))
+        done_until_col_at_row[row] = col
+        done_until_row_at_col[col] = row
+        if row < l_a && done_until_col_at_row[row+1] == col - 1
+            r, c = row + 1, col
+            m = monomial(t_a[r]) * monomial(t_b[c])
+            enqueue!(minimal_corners, (r, c, m))
+        end
+        if col < l_b && done_until_row_at_col[col+1] == row - 1
+            r, c = row, col + 1
+            m = monomial(t_a[r]) * monomial(t_b[c])
+            enqueue!(minimal_corners, (r, c, m))
         end
     end
-
-    _collect_summands!(summands)
-
+    summands[k+=1] = T(cur_monom, cur_coeff)
+    resize!(summands, k)
     return P(summands)
 end
 

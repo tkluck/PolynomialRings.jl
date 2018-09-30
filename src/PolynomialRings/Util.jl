@@ -33,6 +33,7 @@ function dequeue!(x::BoundedHeap{T, O})::T where {T,O}
     x.values[1] = x.values[x.cur_length]
     x.cur_length -= 1
     percolate_down!(x.values, 1, x.order, x.cur_length)
+    return v
 end
 
 function peek(x::BoundedHeap{T,O})::T where {T,O}
@@ -42,8 +43,9 @@ function peek(x::BoundedHeap{T,O})::T where {T,O}
     return x.values[1]
 end
 
-import Base: length
+import Base: length, isempty
 length(x::BoundedHeap) = x.cur_length
+isempty(x::BoundedHeap) = iszero(x.cur_length)
 
 
 lazymap(f::Function, c) = map(f,c)
@@ -164,5 +166,19 @@ end
         @assert(false) # unreachable?
     end
 end
+
+# -----------------------------------------------------------------------------
+#
+# In-place operations that work for BigInt but also for immutable types
+#
+# -----------------------------------------------------------------------------
+inplace!(op, a, b, c) = (a = op(b,c); a)
+inplace!(::typeof(+), a::BigInt, b::BigInt, c::BigInt) = (Base.GMP.MPZ.add!(a,b,c); a)
+inplace!(::typeof(-), a::BigInt, b::BigInt, c::BigInt) = (Base.GMP.MPZ.sub!(a,b,c); a)
+inplace!(::typeof(*), a::BigInt, b::BigInt, c::BigInt) = (Base.GMP.MPZ.mul!(a,b,c); a)
+
+add!(a, b)    = inplace!(+, a, a, b)
+add!(a, b, c) = inplace!(+, a, b, c)
+mul!(a, b, c) = inplace!(*, a, b, c)
 
 end

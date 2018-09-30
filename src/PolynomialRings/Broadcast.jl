@@ -108,7 +108,7 @@ using Base: RefValue
 using Base.Broadcast: Style, AbstractArrayStyle, BroadcastStyle, Broadcasted, broadcasted
 using PolynomialRings: monomialorder
 using PolynomialRings.Constants: Zero, One
-using PolynomialRings.Util: ParallelIter
+using PolynomialRings.Util: ParallelIter, inplace!
 using PolynomialRings.MonomialOrderings: MonomialOrder
 using PolynomialRings.Monomials: AbstractMonomial
 using PolynomialRings.Terms: Term, monomial, coefficient
@@ -323,13 +323,6 @@ end
 #  Lazy implementations of addition/substraction
 #
 # -----------------------------------------------------------------------------
-inplace!(op, a, b, c) = (a = op(b,c); a)
-inplace!(::typeof(+), a::BigInt, b::BigInt, c::BigInt) = (Base.GMP.MPZ.add!(a,b,c); a)
-inplace!(::typeof(+), a::BigInt, b::BigInt, c::Zero) = (Base.GMP.MPZ.set!(a,b); a)
-inplace!(::typeof(+), a::BigInt, b::Zero, c::BigInt) = (Base.GMP.MPZ.set!(a,c); a)
-inplace!(::typeof(-), a::BigInt, b::BigInt, c::BigInt) = (Base.GMP.MPZ.sub!(a,b,c); a)
-inplace!(::typeof(-), a::BigInt, b::BigInt, c::Zero) = (Base.GMP.MPZ.set!(a,b); a)
-inplace!(::typeof(-), a::BigInt, b::Zero, c::BigInt) = (Base.GMP.MPZ.neg!(a,c); a)
 function iterterms(::Order, op::PlusMinus, a::TermsMap{Order,true}, b::TermsMap{Order,true}) where Order
     invoke(iterterms, Tuple{Order, PlusMinus, TermsMap{Order,true}, TermsMap{Order}}, Order(), op, a, b)
 end
