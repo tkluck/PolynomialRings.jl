@@ -260,7 +260,7 @@ iterterms(order, op, a, b) = iterterms(InPlace(op(eager(a), eager(b))))
 function iterterms(::Order, op::typeof(*), a::TermsMap{Order}, b::Number) where Order
     b′ = deepcopy(b)
     b_vanishes = iszero(b)
-    TermsMap(Order(), a, a.bound) do t
+    TermsMap(Order(), a, a.bound, true) do t
         b_vanishes ? nothing : Term(monomial(t), coefficient(t)*b′)
     end
 end
@@ -268,7 +268,7 @@ end
 function iterterms(::Order, op::typeof(*), a::Number, b::TermsMap{Order}) where Order
     a′ = deepcopy(a)
     a_vanishes = iszero(a)
-    TermsMap(Order(), b, b.bound) do t
+    TermsMap(Order(), b, b.bound, true) do t
         a_vanishes ? nothing : Term(monomial(t), a′*coefficient(t))
     end
 end
