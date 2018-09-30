@@ -13,13 +13,13 @@ import PolynomialRings.Monomials: AbstractMonomial, VectorMonomial, total_degree
 
 For implementing your own monomial order, do the following:
 
-1. Choose a symbol to represent it, say `:myorder`;
-2. `import Base.Order: lt`;
+1. Choose a symbol to represent it, say `:myorder`
+2. `import Base.Order: lt`
 3. `lt(::MonomialOrder{:myorder}, a::M, b::M) where M <: AbstractMonomial = ...`
 
-A few useful functions are `enumeratenz`, `index_union`, and `rev_index_union`.
-See `PolynomialRings.Monomials` and `PolynomialRings.MonomialOrderings` for
-details.
+A few useful functions are [`enumeratenz`](@ref), [`index_union`](@ref), and
+[`rev_index_union`](@ref). See [`PolynomialRings.Monomials`](@ref) and
+[`PolynomialRings.MonomialOrderings`](@ref) for details.
 
 You can then create a ring that uses it by calling
 
