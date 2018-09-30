@@ -490,6 +490,8 @@ function _materialize!(x::Polynomial, bc::HandOptimizedBroadcast)
     resize!(tgt, length(src1) + length(src2))
     n = 0
 
+    temp = zero(BigInt)
+
     ix1 = 1; ix2 = 1
     while ix1 <= length(src1) && ix2 <= length(src2)
         if src2[ix2] ≺ src1[ix1]
@@ -504,7 +506,9 @@ function _materialize!(x::Polynomial, bc::HandOptimizedBroadcast)
             end
             ix1 += 1
         else
-            Base.GMP.MPZ.sub!(src1[ix1].c, m1*src1[ix1].c, m2*src2[ix2].c)
+            Base.GMP.MPZ.mul!(src1[ix1].c, m1)
+            Base.GMP.MPZ.mul!(temp, m2, src2[ix2].c)
+            Base.GMP.MPZ.sub!(src1[ix1].c, temp)
             if !iszero(src1[ix1])
                 tgt[n+=1] = src1[ix1]
             end
