@@ -113,6 +113,10 @@ base_extend(::Type{P}) where P <: Union{Term,Polynomial} = base_extend(P, fracti
 /(a::P,b::Number)   where P <: Polynomial = base_extend(P,   float(typeof(b)))([t/b  for t in terms(a)])
 //(a::P,b::Number)  where P <: Polynomial = base_extend(P,fraction_field(typeof(b)))([t//b for t in terms(a)])
 
+function convert(::Type{T1}, t::T2) where T1<:Term{M} where T2<:Term{M} where M
+    T1(monomial(t), convert(basering(T1), coefficient(t)))
+end
+
 # -----------------------------------------------------------------------------
 #
 # Promoting numbers to polynomials (possibly using base extension)

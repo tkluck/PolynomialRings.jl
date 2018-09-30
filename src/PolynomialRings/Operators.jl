@@ -70,7 +70,7 @@ function _collect_summands!(summands::AbstractVector{T}) where T <: Term{M, BigI
                 cur_coef = coefficient(summands[n])
                 add!(cur_coef, coef)
             else
-                summands[n+=1] = T(exponent, deepcopy(coef))
+                summands[n+=1] = summands[j]
                 last_exp = exponent
             end
         end
@@ -141,7 +141,7 @@ function *(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
     @inbounds while length(minimal_corners)>0
         row, col, t = peek(minimal_corners)
         dequeue!(minimal_corners)
-        summands[k+=1] = base_extend(t, C)
+        summands[k+=1] = t
         row_indices[row] = col
         col_indices[col] = row
         if row < length(terms(a)) && row_indices[row+1] == col - 1
