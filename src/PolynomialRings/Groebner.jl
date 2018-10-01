@@ -1,12 +1,14 @@
 module Gröbner
 
+import LinearAlgebra: Transpose
+import SparseArrays: SparseVector
+
+
+import ..Modules: AbstractModuleElement, modulebasering, leading_row
+import ..Polynomials: monomialorder
+import PolynomialRings: leading_term, lcm_multipliers
 import PolynomialRings: syzygies
 
-using PolynomialRings: leading_term, lcm_multipliers
-using PolynomialRings.Polynomials: monomialorder
-using PolynomialRings.Modules: AbstractModuleElement, modulebasering, leading_row
-using LinearAlgebra: Transpose
-using SparseArrays: SparseVector
 
 """
     syz = syzygies(G)

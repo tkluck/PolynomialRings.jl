@@ -1,21 +1,16 @@
 module NamedPolynomials
 
-import PolynomialRings: termtype, terms, namestype, variablesymbols, exptype, monomialtype, allvariablesymbols
-import PolynomialRings.Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolynomial, PolynomialBy, PolynomialIn
-import PolynomialRings.Polynomials:  NamedMonomial, NumberedPolynomial, monomialorder, NamedOrder, NumberedOrder
-
-import PolynomialRings.Terms: Term, basering, monomial, coefficient
-import PolynomialRings.Monomials: TupleMonomial, AbstractMonomial, _construct, exptype
-import PolynomialRings.VariableNames: Named, Numbered
-import PolynomialRings.MonomialOrderings: MonomialOrder, rulesymbol
-import PolynomialRings.Constants: One
-
-# -----------------------------------------------------------------------------
-#
-# Imports for overloading
-#
-# -----------------------------------------------------------------------------
 import Base: promote_rule, convert
+
+
+import ..Constants: One
+import ..MonomialOrderings: MonomialOrder, rulesymbol
+import ..Monomials: TupleMonomial, AbstractMonomial, _construct, exptype
+import ..Polynomials:  NamedMonomial, NumberedPolynomial, monomialorder, NamedOrder, NumberedOrder
+import ..Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolynomial, PolynomialBy, PolynomialIn
+import ..Terms: Term, basering, monomial, coefficient
+import ..VariableNames: Named, Numbered
+import PolynomialRings: termtype, terms, namestype, variablesymbols, exptype, monomialtype, allvariablesymbols
 
 # -----------------------------------------------------------------------------
 #

@@ -1,20 +1,16 @@
 module Ideals
 
-using PolynomialRings.Polynomials: Polynomial
-using PolynomialRings: gröbner_basis, gröbner_transformation
-
-# -----------------------------------------------------------------------------
-#
-# Imports for overloading
-#
-# -----------------------------------------------------------------------------
-import Base: promote_rule, convert
-import Base: zero, one, in, div, rem, divrem, rem, issubset, inv
 import Base: +,-,*,^,/,//,==,!=, hash
+import Base: promote_rule, convert
 import Base: show
-import PolynomialRings: generators, expansion
+import Base: zero, one, in, div, rem, divrem, rem, issubset, inv
+
+
+import ..Expansions: _expansion
+import ..Polynomials: Polynomial
 import PolynomialRings: allvariablesymbols, fraction_field
-import PolynomialRings.Expansions: _expansion
+import PolynomialRings: generators, expansion
+import PolynomialRings: gröbner_basis, gröbner_transformation
 
 # -----------------------------------------------------------------------------
 #

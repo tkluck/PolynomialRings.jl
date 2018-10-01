@@ -1,6 +1,16 @@
 module Terms
 
-import PolynomialRings.Monomials: AbstractMonomial
+import Base.Order: lt
+import Base: *, ^, +, -, one, ==, iszero, diff
+import Base: hash
+
+
+import ..MonomialOrderings: MonomialOrder
+import ..Monomials: AbstractMonomial
+import ..Monomials: total_degree
+import ..Util: lazymap
+import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering
+import PolynomialRings: maybe_div, lcm_multipliers, monomialtype, exptype, lcm_degree, namestype, monomialorder
 
 """
     Term{M, C} where M <: AbstractMonomial where C
@@ -14,19 +24,6 @@ struct Term{M <: AbstractMonomial, C}
     m::M
     c::C
 end
-
-# -----------------------------------------------------------------------------
-#
-# Imports for overloading
-#
-# -----------------------------------------------------------------------------
-import Base: *, ^, +, -, one, ==, iszero, diff
-import Base: hash
-import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering
-import PolynomialRings: maybe_div, lcm_multipliers, monomialtype, exptype, lcm_degree, namestype, monomialorder
-import Base.Order: lt
-import PolynomialRings.MonomialOrderings: MonomialOrder
-import PolynomialRings.Monomials: total_degree
 
 # -----------------------------------------------------------------------------
 #
@@ -64,7 +61,6 @@ coefficient(a::Term) = a.c
 
 hash(a::Term, h::UInt) = hash(a.m, hash(a.c, h))
 
-import PolynomialRings.Util: lazymap
 generators(::Type{Term{M,C}}) where {M, C} = lazymap(g -> Term{M,C}(g, one(C)), generators(M))
 
 iszero(a::Term) = iszero(coefficient(a))

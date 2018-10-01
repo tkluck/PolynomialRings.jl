@@ -1,26 +1,22 @@
 module Arrays
 
-import PolynomialRings.Monomials: AbstractMonomial, expstype
-import PolynomialRings.Terms: Term
-import PolynomialRings.Polynomials: Polynomial, PolynomialOver
-import IterTools: groupby
-import PolynomialRings.Expansions: _expansion_expr, _expansion_types
-import PolynomialRings: base_restrict
-import SparseArrays: issparse, spzeros
-import LinearAlgebra: Transpose
-
-# -----------------------------------------------------------------------------
-#
-# Imports for overloading
-#
-# -----------------------------------------------------------------------------
 import Base: *, transpose, diff, div
+import LinearAlgebra: Transpose
+import LinearAlgebra: det
+import SparseArrays: issparse, spzeros
+
+import IterTools: groupby
+
+import ..Expansions: _expansion_expr, _expansion_types
+import ..Expansions: constant_coefficient, linear_coefficients, expansion_terms
+import ..Expansions: expansion, coefficients, coefficient, deg
+import ..Monomials: AbstractMonomial, expstype
+import ..Operators: common_denominator, integral_fraction, map_coefficients
+import ..Polynomials: Polynomial, PolynomialOver
+import ..Terms: Term
+import PolynomialRings: base_restrict
 import PolynomialRings: monomialorder
 import PolynomialRings: to_dense_monomials, max_variable_index, monomialorder
-import PolynomialRings.Operators: common_denominator, integral_fraction, map_coefficients
-import PolynomialRings.Expansions: expansion, coefficients, coefficient, deg
-import PolynomialRings.Expansions: constant_coefficient, linear_coefficients, expansion_terms
-import LinearAlgebra: det
 
 max_variable_index(a::AbstractArray{<:Polynomial}) = isempty(a) ? 0 : maximum(max_variable_index(a_i) for a_i in a)
 

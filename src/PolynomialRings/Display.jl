@@ -1,13 +1,15 @@
 module Display
 
-import PolynomialRings: namestype
-import PolynomialRings.Polynomials: Polynomial, terms, basering
-import PolynomialRings.Terms: Term, coefficient, monomial
-import PolynomialRings.Monomials: AbstractMonomial, enumeratenz
-import PolynomialRings.VariableNames: Named, Numbered
-import PolynomialRings.MonomialOrderings: MonomialOrder
-
 import Base: show
+
+
+import ..MonomialOrderings: MonomialOrder
+import ..Monomials: AbstractMonomial, enumeratenz
+import ..Polynomials: Polynomial, terms, basering
+import ..Terms: Term, coefficient, monomial
+import ..VariableNames: Named, Numbered
+import PolynomialRings: namestype
+
 
 # -----------------------------------------------------------------------------
 #

@@ -1,22 +1,18 @@
 module QuotientRings
 
 using PolynomialRings
-using PolynomialRings.Polynomials: Polynomial, exptype, leading_term
-using PolynomialRings.Terms: Term, monomial, coefficient
-using PolynomialRings.Ideals: Ideal, _grb
-using PolynomialRings: construct_monomial, variablesymbols
-
-# -----------------------------------------------------------------------------
-#
-# Imports for overloading
-#
-# -----------------------------------------------------------------------------
-import Base: promote_rule, convert
-import Base: zero, one, rem, copy
-import Base: show
 import Base: +,-,*,/,//,^,==,!=
+import Base: promote_rule, convert
+import Base: show
+import Base: zero, one, rem, copy
+
+
+import ..Ideals: Ideal, _grb
+import ..Ideals: ring
+import ..Polynomials: Polynomial, exptype, leading_term
+import ..Terms: Term, monomial, coefficient
 import PolynomialRings: allvariablesymbols
-import PolynomialRings.Ideals: ring
+import PolynomialRings: construct_monomial, variablesymbols
 
 # -----------------------------------------------------------------------------
 #

@@ -1,17 +1,16 @@
 module Reductions
 
+import Base: div, rem, divrem
 import SparseArrays: spzeros
 
-import PolynomialRings: basering
-import PolynomialRings.MonomialOrderings: MonomialOrder
-import PolynomialRings.Polynomials: Polynomial, monomialorder
-import PolynomialRings.Modules: AbstractModuleElement, modulebasering
-import PolynomialRings.Polynomials: PolynomialBy
-import PolynomialRings.Operators: one_step_div!, one_step_xdiv!
-import PolynomialRings.Operators: RedType, Lead, Full, Tail
 
-# imports for overloading
-import Base: div, rem, divrem
+import ..Modules: AbstractModuleElement, modulebasering
+import ..MonomialOrderings: MonomialOrder
+import ..Operators: RedType, Lead, Full, Tail
+import ..Operators: one_step_div!, one_step_xdiv!
+import ..Polynomials: Polynomial, monomialorder
+import ..Polynomials: PolynomialBy
+import PolynomialRings: basering
 import PolynomialRings: div!, rem!, xdiv!, xrem!, xdiv, xrem, xdivrem
 import PolynomialRings: leaddiv, leaddivrem, leadrem
 

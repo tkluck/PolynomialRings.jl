@@ -1,25 +1,21 @@
 module Expansions
 
-import PolynomialRings.NamedPolynomials: NamedPolynomial, _lossy_convert_monomial
-import PolynomialRings.Polynomials: Polynomial, termtype, monomialtype, terms, polynomial_ring
-import PolynomialRings.Terms: Term, monomial, coefficient
-import PolynomialRings: basering, namestype, variablesymbols
-import PolynomialRings.Monomials: AbstractMonomial, TupleMonomial, exptype, expstype, enumeratenz
-import PolynomialRings.VariableNames: Named, Numbered
-import PolynomialRings.MonomialOrderings: MonomialOrder
-import PolynomialRings.Util: SingleItemIter
-import PolynomialRings.Constants: One
+import Base: diff
+import Base: promote_rule, convert
+import SparseArrays: spzeros, SparseVector
 
 import IterTools: groupby
 
-using SparseArrays: spzeros, SparseVector
+import ..Constants: One
+import ..MonomialOrderings: MonomialOrder
+import ..Monomials: AbstractMonomial, TupleMonomial, exptype, expstype, enumeratenz
+import ..NamedPolynomials: NamedPolynomial, _lossy_convert_monomial
+import ..Polynomials: Polynomial, termtype, monomialtype, terms, polynomial_ring
+import ..Terms: Term, monomial, coefficient
+import ..Util: SingleItemIter
+import ..VariableNames: Named, Numbered
+import PolynomialRings: basering, namestype, variablesymbols
 
-# -----------------------------------------------------------------------------
-#
-# Imports for overloading
-#
-# -----------------------------------------------------------------------------
-import Base: promote_rule, convert
 
 # -----------------------------------------------------------------------------
 #
@@ -314,7 +310,6 @@ function (p::Polynomial)(; kwargs...)
 
 end
 
-import Base: diff
 
 """
     diff(polynomial, variable)

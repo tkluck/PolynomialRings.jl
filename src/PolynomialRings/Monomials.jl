@@ -1,7 +1,17 @@
 module Monomials
 
+import Base: getindex, gcd, lcm, one, *, ^, ==, diff, isless, iszero
+import Base: hash
 import Base: iterate
-using SparseArrays: SparseVector, sparsevec
+import Base: last, findlast, length
+import Base: promote_rule
+import SparseArrays: SparseVector, sparsevec
+import SparseArrays: nonzeroinds
+
+
+import ..VariableNames: Named, Numbered, flatvariablesymbols
+import PolynomialRings: generators, to_dense_monomials, max_variable_index
+import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namestype, monomialorder
 
 """
     AbstractMonomial{Order}
@@ -29,22 +39,9 @@ abstract type AbstractMonomial{Order} end
 
 # -----------------------------------------------------------------------------
 #
-# Imports for overloading
-#
-# -----------------------------------------------------------------------------
-import Base: getindex, gcd, lcm, one, *, ^, ==, diff, isless, iszero
-import Base: hash
-import Base: promote_rule
-import SparseArrays: nonzeroinds
-import PolynomialRings: generators, to_dense_monomials, max_variable_index
-import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namestype, monomialorder
-
-# -----------------------------------------------------------------------------
-#
 # Utility: iterate over the union of two index sets
 #
 # -----------------------------------------------------------------------------
-import Base: last, findlast, length
 struct IndexUnion{I,J,lt}
     left::I
     right::J
@@ -389,7 +386,6 @@ nzindices(a::VectorMonomial{V,I,Order}) where {V <: SparseVector,I,Order} = nonz
 max_variable_index(m::TupleMonomial{N}) where N = N
 max_variable_index(m::VectorMonomial{V,I,Order}) where {V,I,Order} = length(m.e)
 
-import PolynomialRings.VariableNames: Named, Numbered, flatvariablesymbols
 to_dense_monomials(n::Integer, ::Type{Numbered{Name}}) where Name = (g = flatvariablesymbols(Numbered{Name}); Named{ tuple([take!(g) for _ = 1:n]...) })
 function to_dense_monomials(n::Integer, m::AbstractMonomial)
     Order = to_dense_monomials(n, monomialorder(m))

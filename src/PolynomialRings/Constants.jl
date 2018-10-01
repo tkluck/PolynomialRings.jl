@@ -4,9 +4,13 @@ recursions, e.g. in expansion().
 """
 module Constants
 
-using PolynomialRings.Monomials: AbstractMonomial
-using PolynomialRings.Terms: Term
-using PolynomialRings.Polynomials: Polynomial
+import Base: promote_rule, convert, +, *, -, zero, one
+
+
+import ..Monomials: AbstractMonomial
+import ..Polynomials: Polynomial
+import ..Terms: Term
+import ..Util: inplace!
 
 abstract type Constant <: Number end
 
@@ -14,8 +18,6 @@ struct One <: Constant end
 struct Zero <: Constant end
 struct MinusOne <: Constant end
 
-import Base: promote_rule, convert, +, *, -, zero, one
-import PolynomialRings.Util: inplace!
 
 *(x, ::One) = deepcopy(x)
 *(::One, x) = deepcopy(x)

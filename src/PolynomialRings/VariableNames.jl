@@ -1,10 +1,5 @@
 module VariableNames
 
-# -----------------------------------------------------------------------------
-#
-# Imports for overloading
-#
-# -----------------------------------------------------------------------------
 import PolynomialRings: variablesymbols, namestype
 
 variablesymbols(a) = variablesymbols(namestype(a))

@@ -1,33 +1,31 @@
 module Modules
 
-import PolynomialRings.Polynomials: Polynomial, monomialorder, basering
-import PolynomialRings.MonomialOrderings: MonomialOrder
-import PolynomialRings.Monomials: AbstractMonomial
-import PolynomialRings.Terms: Term
-import PolynomialRings.Operators: RedType, Lead, Full, Tail
+import Base.Order: lt
+import Base: *, +, -, ÷
+import Base: iszero, div, rem, divrem, *, ==
+import Base: keytype
+import LinearAlgebra: mul!
+import SparseArrays: SparseVector, sparsevec, spzeros
 
-using SparseArrays: SparseVector, sparsevec, spzeros
+
+import ..MonomialOrderings: MonomialOrder
+import ..Monomials: AbstractMonomial
+import ..Monomials: total_degree
+import ..Operators: RedType, Lead, Full, Tail
+import ..Operators: one_step_div!, one_step_xdiv!, content
+import ..Polynomials: Polynomial, monomialorder, basering
+import ..Terms: Term
+import ..Terms: coefficient, monomial
+import PolynomialRings: leaddiv, leadrem, leaddivrem
+import PolynomialRings: leading_row, leading_term, leading_monomial, leading_coefficient, base_extend
+import PolynomialRings: maybe_div, lcm_degree, lcm_multipliers
+import PolynomialRings: termtype, monomialtype
+
 
 # This should probably be in Base; see
 # https://github.com/JuliaLang/julia/pull/27749
-import Base: keytype
 keytype(a::AbstractArray) = CartesianIndex{ndims(a)}
 keytype(a::AbstractVector) = Int
-
-# -----------------------------------------------------------------------------
-#
-# Imports for overloading
-#
-# -----------------------------------------------------------------------------
-import Base: iszero, div, rem, divrem, *, ==
-import Base.Order: lt
-import PolynomialRings: leading_row, leading_term, leading_monomial, leading_coefficient, base_extend
-import PolynomialRings: termtype, monomialtype
-import PolynomialRings: maybe_div, lcm_degree, lcm_multipliers
-import PolynomialRings: leaddiv, leadrem, leaddivrem
-import PolynomialRings.Operators: one_step_div!, one_step_xdiv!, content
-import PolynomialRings.Terms: coefficient, monomial
-import PolynomialRings.Monomials: total_degree
 
 iszero(x::AbstractArray{P}) where P<:Polynomial = all(iszero, x)
 
@@ -138,7 +136,6 @@ div(f::A,g::AbstractVector{A})        where A<:AbstractArray{P} where P<:Polynom
 leading_row(x::Polynomial) = 1
 
 # Work around sparse-dense multiplication in Base only working for eltype() <: Number
-import LinearAlgebra: mul!
 mul!(A, B, C, α::Polynomial, β::Polynomial) = mul!(A, B, C, convert(basering(α),α), convert(basering(β), β))
 
 """
@@ -170,7 +167,6 @@ leading_term(o, m::TransformedModuleElement) = leading_term(o, m.p)
 content(m::TransformedModuleElement) = content(m.p)
 Base.Order.lt(o::MonomialOrder, a::T, b::T) where T<:TransformedModuleElement = Base.Order.lt(o, a.p, b.p)
 # linear operations
-import Base: *, +, -, ÷
 *(f, g::TransformedModuleElement) = TransformedModuleElement(f*g.p, f*g.tr, g.n)
 *(f::TransformedModuleElement, g) = TransformedModuleElement(f.p*g, f.tr*g, f.n)
 # TODO: reduce the tr/n fraction

@@ -104,22 +104,18 @@ bubbles up through the optree.
 """
 module Broadcast
 
-using Base: RefValue
-using Base.Broadcast: Style, AbstractArrayStyle, BroadcastStyle, Broadcasted, broadcasted
-using PolynomialRings: monomialorder
-using PolynomialRings.Constants: Zero, One
-using PolynomialRings.Util: ParallelIter, inplace!
-using PolynomialRings.MonomialOrderings: MonomialOrder
-using PolynomialRings.Monomials: AbstractMonomial
-using PolynomialRings.Terms: Term, monomial, coefficient
-using PolynomialRings.Polynomials: Polynomial, TermOver, PolynomialOver, PolynomialBy, terms, termtype
-
-# -----------------------------------------------------------------------------
-#
-# Imports for overloading
-#
-# -----------------------------------------------------------------------------
+import Base.Broadcast: Style, AbstractArrayStyle, BroadcastStyle, Broadcasted, broadcasted
 import Base.Broadcast: broadcastable, broadcasted, materialize, materialize!
+import Base: RefValue
+
+
+import ..Constants: Zero, One
+import ..MonomialOrderings: MonomialOrder
+import ..Monomials: AbstractMonomial
+import ..Polynomials: Polynomial, TermOver, PolynomialOver, PolynomialBy, terms, termtype
+import ..Terms: Term, monomial, coefficient
+import ..Util: ParallelIter, inplace!
+import PolynomialRings: monomialorder
 
 broadcastable(p::AbstractMonomial) = Ref(p)
 broadcastable(p::Term) = Ref(p)

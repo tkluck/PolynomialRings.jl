@@ -1,5 +1,14 @@
 module Util
 
+import Base: delete!
+import Base: iterate
+import Base: length, isempty
+import Base: length, iterate
+
+import DataStructures: PriorityQueue
+import DataStructures: percolate_down!, percolate_up!, enqueue!, dequeue!, peek
+
+
 # -----------------------------------------------------------------------------
 #
 # Bounded heap
@@ -15,7 +24,6 @@ end
 
 BoundedHeap(T::Type, max_length::Int, order::Base.Order.Ordering) = BoundedHeap{T, typeof(order)}(max_length, order)
 
-import DataStructures: percolate_down!, percolate_up!, enqueue!, dequeue!, peek
 
 function enqueue!(x::BoundedHeap{T, O}, v::T) where {T,O}
     x.values[x.cur_length+1] = v
@@ -43,7 +51,6 @@ function peek(x::BoundedHeap{T,O})::T where {T,O}
     return x.values[1]
 end
 
-import Base: length, isempty
 length(x::BoundedHeap) = x.cur_length
 isempty(x::BoundedHeap) = iszero(x.cur_length)
 
@@ -60,8 +67,6 @@ end
 # make filter! work for priority queues
 #
 # -----------------------------------------------------------------------------
-import Base: delete!
-import DataStructures: PriorityQueue
 delete!(pq::PriorityQueue{K}, k::K) where K = dequeue!(pq, k)
 
 # -----------------------------------------------------------------------------
@@ -72,7 +77,6 @@ delete!(pq::PriorityQueue{K}, k::K) where K = dequeue!(pq, k)
 struct SingleItemIter{X}
     item::X
 end
-import Base: length, iterate
 length(::SingleItemIter) = 1
 iterate(i::SingleItemIter) = (i.item, nothing)
 iterate(i::SingleItemIter, ::Nothing) = nothing
@@ -84,7 +88,6 @@ include("LinAlgUtil.jl")
 # Parallel iteration of two iterators
 #
 # -----------------------------------------------------------------------------
-import Base: iterate
 struct ParallelIter{I,J,key,value,≺,l0,r0}
     left::I
     right::J

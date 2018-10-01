@@ -1,22 +1,20 @@
 module Operators
 
-import PolynomialRings: leading_monomial, leading_coefficient, leading_term
-import PolynomialRings: lcm_multipliers
-import PolynomialRings: basering, exptype, base_extend, base_restrict
-import PolynomialRings.Monomials: AbstractMonomial
-import PolynomialRings.MonomialOrderings: MonomialOrder
-import PolynomialRings.Terms: Term, monomial, coefficient
-import PolynomialRings.Polynomials: Polynomial, termtype, terms, monomialorder, monomialtype
-import PolynomialRings.Polynomials: PolynomialBy
-using PolynomialRings.Util: ParallelIter, add!, mul!
-using PolynomialRings.Constants: Zero
-
-# -----------------------------------------------------------------------------
-#
-# Imports for overloading
-#
-# -----------------------------------------------------------------------------
 import Base: zero, one, +, -, *, ==, div, iszero, diff, ^, gcd
+
+import DataStructures: enqueue!, dequeue!
+
+import ..Constants: Zero
+import ..MonomialOrderings: MonomialOrder
+import ..Monomials: AbstractMonomial
+import ..Polynomials: Polynomial, termtype, terms, monomialorder, monomialtype
+import ..Polynomials: PolynomialBy
+import ..Terms: Term, monomial, coefficient
+import ..Util: BoundedHeap
+import ..Util: ParallelIter, add!, mul!
+import PolynomialRings: basering, exptype, base_extend, base_restrict
+import PolynomialRings: lcm_multipliers
+import PolynomialRings: leading_monomial, leading_coefficient, leading_term
 import PolynomialRings: maybe_div
 
 # -----------------------------------------------------------------------------
@@ -113,8 +111,6 @@ end
 # multiplication
 #
 # -----------------------------------------------------------------------------
-import PolynomialRings.Util: BoundedHeap
-import DataStructures: enqueue!, dequeue!
 
 """
     f = g * h

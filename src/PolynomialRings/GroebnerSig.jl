@@ -1,24 +1,26 @@
 module GröbnerSig
 
-using DataStructures: DefaultDict
-using DataStructures: PriorityQueue, enqueue!, dequeue!
-using IterTools: chain
 
 import PolynomialRings
-import PolynomialRings: gröbner_basis
-import PolynomialRings.Backends.Gröbner: Backend, F5C, Arri
+import LinearAlgebra: Transpose
+import SparseArrays: SparseVector
 
+import DataStructures: DefaultDict
+import DataStructures: PriorityQueue, enqueue!, dequeue!
+import IterTools: chain
+
+import ..Backends.Gröbner: Backend, F5C, Arri
+import ..Modules: AbstractModuleElement, modulebasering
+import ..MonomialOrderings: MonomialOrder, degreecompatible
+import ..Monomials: total_degree, any_divisor
+import ..Operators: Lead, Full, integral_fraction, content
+import ..Polynomials: Polynomial, monomialorder, monomialtype
+import ..Terms: monomial, coefficient
+import PolynomialRings: gröbner_basis
 import PolynomialRings: leading_term, leading_monomial, lcm_multipliers, lcm_degree, fraction_field, basering, base_extend, base_restrict
-import PolynomialRings: maybe_div, termtype, monomialtype, exptype, leading_row, leading_coefficient
-import PolynomialRings.MonomialOrderings: MonomialOrder, degreecompatible
-import PolynomialRings.Monomials: total_degree, any_divisor
-import PolynomialRings.Polynomials: Polynomial, monomialorder, monomialtype
-import PolynomialRings.Terms: monomial, coefficient
-import PolynomialRings.Modules: AbstractModuleElement, modulebasering
-import PolynomialRings.Operators: Lead, Full, integral_fraction, content
 import PolynomialRings: leadrem, xrem!
-using LinearAlgebra: Transpose
-using SparseArrays: SparseVector
+import PolynomialRings: maybe_div, termtype, monomialtype, exptype, leading_row, leading_coefficient
+
 
 reduction_rem(::Arri, o, m, G) = semi_complete_reduction_rem(o, m, G)
 

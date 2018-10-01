@@ -1,22 +1,24 @@
 module GröbnerGWV
 
-using DataStructures: SortedDict, DefaultDict
 
 import PolynomialRings
-import PolynomialRings: gröbner_basis, gröbner_transformation, xrem!
-import PolynomialRings.Backends.Gröbner: GWV
+import LinearAlgebra: Transpose
+import SparseArrays: SparseVector, sparsevec, sparse
 
+import DataStructures: SortedDict, DefaultDict
+
+import ..Backends.Gröbner: GWV
+import ..Modules: AbstractModuleElement, modulebasering
+import ..Modules: withtransformations, separatetransformation
+import ..MonomialOrderings: MonomialOrder
+import ..Monomials: total_degree, any_divisor
+import ..Operators: Lead, Full, content, integral_fraction
+import ..Polynomials: Polynomial, monomialorder, monomialtype, PolynomialBy
+import ..Terms: monomial, coefficient
+import PolynomialRings: gröbner_basis, gröbner_transformation, xrem!
 import PolynomialRings: leading_term, leading_monomial, lcm_multipliers, lcm_degree, fraction_field, basering, base_extend, base_restrict
 import PolynomialRings: maybe_div, termtype, monomialtype, leading_row, leading_coefficient
-import PolynomialRings.MonomialOrderings: MonomialOrder
-import PolynomialRings.Monomials: total_degree, any_divisor
-import PolynomialRings.Polynomials: Polynomial, monomialorder, monomialtype, PolynomialBy
-import PolynomialRings.Terms: monomial, coefficient
-import PolynomialRings.Modules: AbstractModuleElement, modulebasering
-import PolynomialRings.Modules: withtransformations, separatetransformation
-import PolynomialRings.Operators: Lead, Full, content, integral_fraction
-using LinearAlgebra: Transpose
-using SparseArrays: SparseVector, sparsevec, sparse
+
 
 function regular_topreduce_rem(o, m, G)
     ≺(a,b) = Base.Order.lt(o, a, b)

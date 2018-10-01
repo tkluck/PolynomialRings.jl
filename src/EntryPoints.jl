@@ -1,25 +1,21 @@
 module EntryPoints
 
-import PolynomialRings: generators, base_extend, variablesymbols, allvariablesymbols, ⊗
-import PolynomialRings: construct_monomial, exptype
-import PolynomialRings.Polynomials: Polynomial, polynomial_ring, numbered_polynomial_ring
-import PolynomialRings.NamedPolynomials: NamedPolynomial, NumberedPolynomial
-import PolynomialRings.VariableNames: Numbered, numberedvariablename
-import PolynomialRings.Terms: Term, basering
-import PolynomialRings.Monomials: TupleMonomial, VectorMonomial
-import PolynomialRings.Util: lazymap
-import PolynomialRings.Ideals: Ideal
-import PolynomialRings.QuotientRings: QuotientRing
-import PolynomialRings.NumberFields: NumberField
-import SparseArrays: spzeros
-
-# -----------------------------------------------------------------------------
-#
-# Imports for overloading
-#
-# -----------------------------------------------------------------------------
 import Base: convert
 import Base: getindex
+import SparseArrays: spzeros
+
+
+import ..Ideals: Ideal
+import ..Monomials: TupleMonomial, VectorMonomial
+import ..NamedPolynomials: NamedPolynomial, NumberedPolynomial
+import ..NumberFields: NumberField
+import ..Polynomials: Polynomial, polynomial_ring, numbered_polynomial_ring
+import ..QuotientRings: QuotientRing
+import ..Terms: Term, basering
+import ..Util: lazymap
+import ..VariableNames: Numbered, numberedvariablename
+import PolynomialRings: construct_monomial, exptype
+import PolynomialRings: generators, base_extend, variablesymbols, allvariablesymbols, ⊗
 
 # -----------------------------------------------------------------------------
 #

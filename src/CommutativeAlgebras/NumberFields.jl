@@ -1,26 +1,22 @@
 module NumberFields
 
 using PolynomialRings
-using PolynomialRings.Polynomials: Polynomial, basering, variablesymbols
-using PolynomialRings.Monomials: AbstractMonomial
-using PolynomialRings.Terms: Term, monomial, coefficient
-using PolynomialRings.QuotientRings: QuotientRing, monomial_basis
-using LinearAlgebra: nullspace
-
-# -----------------------------------------------------------------------------
-#
-# Imports for overloading
-#
-# -----------------------------------------------------------------------------
-import Base: promote_rule, convert
-import Base: zero, one, inv, copy
 import Base: +,-,*,/,//,==,!=
+import Base: promote_rule, convert
 import Base: show
-import PolynomialRings: allvariablesymbols, fraction_field, basering
-import PolynomialRings.Ideals: ring
-import PolynomialRings.QuotientRings: _ideal
-import PolynomialRings.Util.LinAlgUtil: AbstractExactNumber
+import Base: zero, one, inv, copy
+import LinearAlgebra: nullspace
 import LinearAlgebra: tr, norm
+
+
+import ..Ideals: ring
+import ..Monomials: AbstractMonomial
+import ..Polynomials: Polynomial, basering, variablesymbols
+import ..QuotientRings: QuotientRing, monomial_basis
+import ..QuotientRings: _ideal
+import ..Terms: Term, monomial, coefficient
+import ..Util.LinAlgUtil: AbstractExactNumber
+import PolynomialRings: allvariablesymbols, fraction_field, basering
 
 # -----------------------------------------------------------------------------
 #

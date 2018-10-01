@@ -1,24 +1,20 @@
 module Polynomials
 
-import PolynomialRings.Monomials: AbstractMonomial, TupleMonomial, VectorMonomial
-import PolynomialRings.MonomialOrderings: MonomialOrder
-import PolynomialRings.VariableNames: Named, Numbered
-import PolynomialRings.Terms: Term, monomial, coefficient
-
+import Base.Order: lt
+import Base: first, last, copy, hash
 import SparseArrays: SparseVector
 
-# -----------------------------------------------------------------------------
-#
-# Imports for overloading
-#
-# -----------------------------------------------------------------------------
+
+import ..MonomialOrderings: MonomialOrder
+import ..MonomialOrderings: MonomialOrder
+import ..Monomials: AbstractMonomial, TupleMonomial, VectorMonomial
+import ..Terms: Term, monomial, coefficient
+import ..Util: lazymap
+import ..VariableNames: Named, Numbered
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering, monomialtype
-import PolynomialRings: leading_term, termtype, monomialorder, terms, exptype, namestype
 import PolynomialRings: leading_coefficient, leading_monomial
+import PolynomialRings: leading_term, termtype, monomialorder, terms, exptype, namestype
 import PolynomialRings: variablesymbols, allvariablesymbols
-import Base: first, last, copy, hash
-import Base.Order: lt
-import PolynomialRings.MonomialOrderings: MonomialOrder
 
 # -----------------------------------------------------------------------------
 #
@@ -73,7 +69,6 @@ allvariablesymbols(::Type{P}) where P <: Polynomial = union(allvariablesymbols(b
 
 hash(p::Polynomial, h::UInt) = hash(p.terms, h)
 
-import PolynomialRings.Util: lazymap
 generators(::Type{P}) where P <: Polynomial = lazymap(
     g->P([g]), generators(termtype(P))
 )

@@ -1,21 +1,18 @@
 module Conversions
 
-import PolynomialRings.Polynomials: Polynomial, termtype, monomialtype, basering, terms
-import PolynomialRings.Polynomials: PolynomialOver, NamedPolynomial
-import PolynomialRings.Terms: Term, monomial, coefficient
-import PolynomialRings.Monomials: AbstractMonomial, total_degree
-import PolynomialRings.Operators: RedType
-import PolynomialRings: fraction_field, integers, base_extend, base_restrict, namestype
-
-# -----------------------------------------------------------------------------
-#
-# Imports for overloading
-#
-# -----------------------------------------------------------------------------
-import Base: promote_rule, convert
 import Base: +,*,-,==,/,//
-import PolynomialRings: ⊗, base_extend, base_restrict
 import Base: div, rem, divrem
+import Base: promote_op
+import Base: promote_rule, convert
+
+
+import ..Monomials: AbstractMonomial, total_degree
+import ..Operators: RedType
+import ..Polynomials: Polynomial, termtype, monomialtype, basering, terms
+import ..Polynomials: PolynomialOver, NamedPolynomial
+import ..Terms: Term, monomial, coefficient
+import PolynomialRings: fraction_field, integers, base_extend, base_restrict, namestype
+import PolynomialRings: ⊗, base_extend, base_restrict
 
 # -----------------------------------------------------------------------------
 #
@@ -308,7 +305,6 @@ divrem(a::Number, b::AbstractVector{<:Polynomial}) = divrem(promote_vector(a, b)
 # Base implementation
 #
 # -----------------------------------------------------------------------------
-import Base: promote_op
 promote_op(f, ::Type{P}, ::Type{Q}) where P<:Polynomial where Q<:Polynomial = promote_type(P,Q)
 
 end

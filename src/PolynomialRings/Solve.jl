@@ -1,7 +1,9 @@
 module Solve
 
 import SparseArrays: sparse, issparse
-using PolynomialRings: lift
+
+
+import PolynomialRings: lift
 
 """
     x = matrix_solve_affine(f, y, dims, Type=eltype(y))
