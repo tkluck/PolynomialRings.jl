@@ -77,6 +77,10 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{M}; with_transformati
         polynomials = withtransformations(polynomials)
     end
 
+    # experimentally, it seems much better to sort in
+    # decreasing monomial order
+    sort!(polynomials, order=o, rev=true)
+
     P = modulebasering(M)
     R = base_restrict(P)
     S = eltype(polynomials)
@@ -95,7 +99,14 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{M}; with_transformati
     for (i,p) in enumerate(polynomials)
         T = leading_monomial( sparsevec(Dict(i=>one(R)), n) )
         m = (T, p)
-        JP[signature(m)] = m
+        if T ∈ keys(JP)
+            oldu,oldp = JP[T]
+            if p ≺ oldp
+                JP[T] = m
+            end
+        else
+            JP[T] = m
+        end
     end
 
     loops = 0
