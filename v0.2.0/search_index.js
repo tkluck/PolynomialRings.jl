@@ -125,7 +125,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Getting Started",
     "title": "Base rings and base restriction / extension",
     "category": "section",
-    "text": "Some operations need a field for a base ring. For example:R = @ring! ℤ[x]\nrem(2x^2, 3x + 1)gives an error because we have to subtract x^2 + frac23x, which is not representable in R. We offer a convenience function base_extend to extend to ℚ:rem(base_extend(2x^2), base_extend(3x + 1))If you want, you can also extend to bigger base rings than the quotient field by passing that as an extra parameter. For example:f = base_extend(x^2 + 1, Complex{Rational{Int}})\ndiv(f, [x - im])By the way, if you are looking for an operation like rem that stays in the integers, have a look at xrem and friends. For example:xdiv(2x^2, 3x + 1)\nxrem(2x^2, 3x + 1)This output signifies that 3 times the first argument plus XXX times the second argument is equal to YYY. The x in the names is intended to represent cross-multiplying the leading coefficients."
+    "text": "Some operations need a field for a base ring. For example:R = @ring! ℤ[x]\nrem(2x^2, 3x + 1)gives an error because we have to subtract x^2 + frac23x, which is not representable in R. We offer a convenience function base_extend to extend to ℚ:rem(base_extend(2x^2), base_extend(3x + 1))If you want, you can also extend to bigger base rings than the quotient field by passing that as an extra parameter. For example:f = base_extend(x^2 + 1, Complex{Rational{Int}})\ndiv(f, [x - im])By the way, if you are looking for an operation like rem that stays in the integers, have a look at xrem and friends. For example:xdiv(2x^2, 3x + 1)\nxrem(2x^2, 3x + 1)This output signifies that -9 times the first argument is equal to -6x + 2 times the second argument plus -2. The x in the names xdiv and xrem is intended to represent cross-multiplying the leading coefficients."
 },
 
 {
@@ -381,7 +381,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Types and Functions",
     "title": "PolynomialRings.MonomialOrderings.MonomialOrder",
     "category": "type",
-    "text": "struct MonomialOrder{Rule, Names} <: Ordering end\n\nFor implementing your own monomial order, do the following:\n\nChoose a symbol to represent it, say :myorder;\nimport Base.Order: lt;\nlt(::MonomialOrder{:myorder}, a::M, b::M) where M <: AbstractMonomial = ...\n\nA few useful functions are enumeratenz, index_union, and rev_index_union. See PolynomialRings.Monomials and PolynomialRings.MonomialOrderings for details.\n\nYou can then create a ring that uses it by calling\n\nR,vars = polynomial_ring(vars...; monomialorder=:myorder)\n\nThere is no performance cost for using your own monomial order compared to a built-in one.\n\n\n\n\n\n"
+    "text": "struct MonomialOrder{Rule, Names} <: Ordering end\n\nFor implementing your own monomial order, do the following:\n\nChoose a symbol to represent it, say :myorder\nimport Base.Order: lt\nlt(::MonomialOrder{:myorder}, a::M, b::M) where M <: AbstractMonomial = ...\n\nA few useful functions are enumeratenz, index_union, and rev_index_union. See PolynomialRings.Monomials and PolynomialRings.MonomialOrderings for details.\n\nYou can then create a ring that uses it by calling\n\nR,vars = polynomial_ring(vars...; monomialorder=:myorder)\n\nThere is no performance cost for using your own monomial order compared to a built-in one.\n\n\n\n\n\n"
 },
 
 {
