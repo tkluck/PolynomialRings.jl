@@ -177,12 +177,14 @@ function *(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
     done_until_col_at_row = zeros(Int, l_a)
     done_until_row_at_col = zeros(Int, l_b)
 
-    # using a bounded queue not to drop items when it gets too big, but to allocate it
-    # once to its maximal theoretical size and never reallocate.
+    # We use a *bounded* queue not because we want to drop items when it
+    # gets to big, but because we want to allocate it once to its maximal
+    # theoretical size, and then never reallocate.
     order = Base.Order.Lt((a,b) -> a[3] ≺ b[3])
     Key = Tuple{Int, Int, M}
     minimal_corners = BoundedHeap(Key, min(l_a, l_b), order)
 
+    # initialize with the minimal term at (row, col) = (1, 1)
     @inbounds m = monomial(t_a[1]) * monomial(t_b[1])
     enqueue!(minimal_corners, (1, 1, m))
 
@@ -193,6 +195,7 @@ function *(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
     @inbounds while !isempty(minimal_corners)
         row, col, m = dequeue!(minimal_corners)
 
+        # compute the product of the product at (row, col)
         if m == cur_monom
             temp = mul!(temp, coefficient(t_a[row]), coefficient(t_b[col]))
             cur_coeff = add!(cur_coeff, temp)
@@ -203,8 +206,12 @@ function *(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
             cur_coeff = coefficient(t_a[row]) * coefficient(t_b[col])
             cur_monom = m
         end
+
+        # mark as done
         done_until_col_at_row[row] = col
         done_until_row_at_col[col] = row
+
+        # decide whether we just added new minimal corners
         if row < l_a && done_until_col_at_row[row+1] == col - 1
             r, c = row + 1, col
             m = monomial(t_a[r]) * monomial(t_b[c])
