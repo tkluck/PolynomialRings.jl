@@ -204,30 +204,21 @@ end
 # Implicit typecasts (like what we'd get if Polynomial <: Number)
 #
 # -----------------------------------------------------------------------------
-+(a::P1,b::P2) where {P1<:Polynomial,P2<:Polynomial} = +(promote(a,b)...)
-*(a::P1,b::P2) where {P1<:Polynomial,P2<:Polynomial} = *(promote(a,b)...)
--(a::P1,b::P2) where {P1<:Polynomial,P2<:Polynomial} = -(promote(a,b)...)
-==(a::P1,b::P2) where {P1<:Polynomial,P2<:Polynomial} = ==(promote(a,b)...)
-
-_C = Union{Number, AbstractMonomial, Term}
-_P = Union{Term,Polynomial}
-+(a::C,b::P) where P<:_P where C<:_C = +(promote(a,b)...)
-+(a::P,b::C) where P<:_P where C<:_C = +(promote(a,b)...)
-*(a::C,b::P) where P<:_P where C<:_C = *(promote(a,b)...)
-*(a::P,b::C) where P<:_P where C<:_C = *(promote(a,b)...)
--(a::C,b::P) where P<:_P where C<:_C = -(promote(a,b)...)
--(a::P,b::C) where P<:_P where C<:_C = -(promote(a,b)...)
-==(a::P,b::C) where P<:_P where C<:_C = ==(promote(a,b)...)
-==(a::C,b::P) where P<:_P where C<:_C = ==(promote(a,b)...)
-
-+(a::Number,b::AbstractMonomial) = +(promote(a,b)...)
-+(a::AbstractMonomial,b::Number) = +(promote(a,b)...)
-*(a::Number,b::AbstractMonomial) = *(promote(a,b)...)
-*(a::AbstractMonomial,b::Number) = *(promote(a,b)...)
--(a::Number,b::AbstractMonomial) = -(promote(a,b)...)
--(a::AbstractMonomial,b::Number) = -(promote(a,b)...)
-==(a::AbstractMonomial,b::Number) = ==(promote(a,b)...)
-==(a::Number,b::AbstractMonomial) = ==(promote(a,b)...)
+for op in [:+, :*, :-, :(==)]
+    for C in [Number, AbstractMonomial, Term] @eval begin
+        $op(a::$C,b::Polynomial)  = $op(promote(a,b)...)
+        $op(a::Polynomial,b::$C)  = $op(promote(a,b)...)
+    end end
+    for C in [Number, AbstractMonomial] @eval begin
+        $op(a::$C,b::Term)  = $op(promote(a,b)...)
+        $op(a::Term,b::$C)  = $op(promote(a,b)...)
+    end end
+    for C in [Number] @eval begin
+        $op(a::$C,b::AbstractMonomial)  = $op(promote(a,b)...)
+        $op(a::AbstractMonomial,b::$C)  = $op(promote(a,b)...)
+    end end
+    @eval $op(a::Polynomial, b::Polynomial) = $op(promote(a,b)...)
+end
 
 # -----------------------------------------------------------------------------
 #
