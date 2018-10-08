@@ -412,18 +412,18 @@ end
 # Use Term/Monomial/Coefficient as a scalar
 #
 # -----------------------------------------------------------------------------
-function *(a::T, b::P) where P<:Polynomial{T} where T<:Term
+function *(a::T, b::P) where P<:Polynomial{M,C} where T<:Term{M,C} where {M,C}
     iszero(a) && return zero(P)
     P(map(t->a*t, terms(b)))
 end
-function *(a::P, b::T) where P<:Polynomial{T} where T<:Term
+function *(a::P, b::T) where P<:Polynomial{M,C} where T<:Term{M,C} where {M,C}
     iszero(b) && return zero(P)
     P(map(t->t*b, terms(a)))
 end
-function *(a::M, b::P) where P<:Polynomial{<:Term{M}} where M<:AbstractMonomial
+function *(a::M, b::P) where P<:Polynomial{M} where M<:AbstractMonomial
     P(map(t->t*a, terms(b)))
 end
-function *(a::P, b::M) where P<:Polynomial{<:Term{M}} where M<:AbstractMonomial
+function *(a::P, b::M) where P<:Polynomial{M} where M<:AbstractMonomial
     P(map(t->t*b, terms(a)))
 end
 

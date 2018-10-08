@@ -115,7 +115,7 @@ import ..Monomials: AbstractMonomial
 import ..Polynomials: Polynomial, TermOver, PolynomialOver, PolynomialBy, terms, termtype
 import ..Terms: Term, monomial, coefficient
 import ..Util: ParallelIter, inplace!
-import PolynomialRings: monomialorder
+import PolynomialRings: monomialorder, monomialtype, basering
 
 broadcastable(p::AbstractMonomial) = Ref(p)
 broadcastable(p::Term) = Ref(p)
@@ -236,7 +236,7 @@ eager(a::RefValue) = a[]
 eager(a::Broadcasted) = materialize(a)
 function eager(a::TermsMap)
     T = eltype(a)
-    P = Polynomial{T}
+    P = Polynomial{monomialtype(T), basering(T)}
     terms = Vector{T}(undef, a.bound)
     n = 0
     for t in a
@@ -463,7 +463,7 @@ const HandOptimizedBroadcast = Broadcasted{
             },
         },
     },
-} where P<:Polynomial{<:Term{M,BigInt}} where M<:AbstractMonomial{Order} where Order
+} where P<:Polynomial{M,BigInt} where M<:AbstractMonomial{Order} where Order
 
 function _materialize!(x::Polynomial, bc::HandOptimizedBroadcast)
     ≺(a,b) = Base.Order.lt(monomialorder(x), a, b)

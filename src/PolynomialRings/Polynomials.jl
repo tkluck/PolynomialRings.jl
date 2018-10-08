@@ -29,9 +29,9 @@ This type represents a polynomial as a vector of terms. All methods guarantee an
 that the vector is sorted by increasing monomial order (see
 `PolynomialRings.MonomialOrderings`).
 """
-struct Polynomial{T<:Term}
-    terms::Vector{T}
-    Polynomial{T}(terms::Vector{T}) where T = new(terms)
+struct Polynomial{M,C}
+    terms::Vector{Term{M,C}}
+    Polynomial{M,C}(terms::Vector{Term{M,C}}) where {M,C} = new(terms)
 end
 
 # -----------------------------------------------------------------------------
@@ -45,11 +45,11 @@ const NumberedOrder           = MonomialOrder{Rule,<:Numbered} where Rule
 const NamedMonomial           = AbstractMonomial{<:NamedOrder}
 const NumberedMonomial        = AbstractMonomial{<:NumberedOrder}
 const TermOver{C,Order}       = Term{<:AbstractMonomial{Order}, C}
-const PolynomialOver{C,Order} = Polynomial{<:TermOver{C,Order}}
+const PolynomialOver{C,Order} = Polynomial{<:AbstractMonomial{Order}, C}
 const NamedPolynomial{C}      = PolynomialOver{C,<:NamedOrder}
 const NumberedPolynomial{C}   = PolynomialOver{C,<:NumberedOrder}
 const PolynomialBy{Order,C}   = PolynomialOver{C,Order}
-const PolynomialIn{M}         = Polynomial{<:Term{M}}
+const PolynomialIn{M}         = Polynomial{M}
 
 # -----------------------------------------------------------------------------
 #
@@ -59,7 +59,7 @@ const PolynomialIn{M}         = Polynomial{<:Term{M}}
 
 terms(p::Polynomial) = p.terms
 
-termtype(::Type{Polynomial{T}}) where T = T
+termtype(::Type{Polynomial{M,C}}) where {M,C}  = Term{M,C}
 exptype(::Type{P}) where P<:Polynomial = exptype(termtype(P))
 namestype(::Type{P}) where P<:Polynomial = namestype(termtype(P))
 monomialorder(::Type{P}) where P<:Polynomial = monomialorder(termtype(P))
@@ -75,7 +75,10 @@ generators(::Type{P}) where P <: Polynomial = lazymap(
 
 function to_dense_monomials(n, p::Polynomial)
     A = [ to_dense_monomials(n, t) for t in terms(p) ]
-    return Polynomial{eltype(A)}(A)
+    T = eltype(A)
+    M = monomialtype(T)
+    C = basering(T)
+    return Polynomial{M,C}(A)
 end
 
 max_variable_index(p::Polynomial) = iszero(p) ? 0 : maximum(max_variable_index(t) for t in terms(p))
@@ -135,7 +138,7 @@ function polynomial_ring(symbols::Symbol...; basering::Type=Rational{BigInt}, ex
         throw(ArgumentError("Duplicated symbols when extending $basering by $(Named{symbols})"))
     end
     M = MonomialOrder{monomialorder, Named{symbols}}
-    P = Polynomial{Term{TupleMonomial{length(symbols),exptype, M}, basering}}
+    P = Polynomial{TupleMonomial{length(symbols),exptype, M}, basering}
     return P, generators(P)
 end
 
@@ -145,7 +148,7 @@ function numbered_polynomial_ring(symbol::Symbol; basering::Type=Rational{BigInt
     end
 
     M = MonomialOrder{monomialorder, Numbered{symbol}}
-    P = Polynomial{Term{VectorMonomial{SparseVector{exptype,Int}, exptype, M}, basering}}
+    P = Polynomial{VectorMonomial{SparseVector{exptype,Int}, exptype, M}, basering}
     return P
 end
 

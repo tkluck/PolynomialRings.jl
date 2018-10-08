@@ -19,7 +19,7 @@ import PolynomialRings: ⊗, base_extend, base_restrict
 # Fallback for v0.7
 #
 # -----------------------------------------------------------------------------
-(::Type{P})(a) where P <: Polynomial{T} where T = convert(P, a)
+(::Type{P})(a) where P <: Polynomial = convert(P, a)
 
 # -----------------------------------------------------------------------------
 #
@@ -61,7 +61,7 @@ end
 #
 # -----------------------------------------------------------------------------
 base_restrict(::Type{Term{M,C1}}, ::Type{C2}) where {M,C1,C2} = Term{M, base_restrict(C1,C2)}
-base_restrict(::Type{Polynomial{T}}, ::Type{C}) where {T,C} = Polynomial{base_restrict(T,C)}
+base_restrict(::Type{Polynomial{M,C1}}, ::Type{C2}) where {M,C1,C2} = Polynomial{M, base_restrict(C1,C2)}
 
 function base_restrict(t::T, ::Type{C}) where T<:Term where C
     TT = base_restrict(T, C)
@@ -83,7 +83,7 @@ base_restrict(::Type{P}) where P <: Union{Term,Polynomial} = base_restrict(P, in
 #
 # -----------------------------------------------------------------------------
 base_extend(::Type{Term{M,C1}}, ::Type{C2}) where {M,C1,C2} = Term{M, base_extend(C1,C2)}
-base_extend(::Type{Polynomial{T}}, ::Type{C}) where {T,C} = Polynomial{base_extend(T,C)}
+base_extend(::Type{Polynomial{M,C1}}, ::Type{C2}) where {M,C1,C2} = Polynomial{M, base_extend(C1,C2)}
 
 function base_extend(t::T, ::Type{C}) where T<:Term where C
     TT = base_extend(T, C)
@@ -158,9 +158,9 @@ promote_rule(::Type{M}, ::Type{C}) where M <: AbstractMonomial where C<:Number =
 #
 # -----------------------------------------------------------------------------
 
-promote_rule(::Type{P}, ::Type{T}) where P <: Polynomial{T} where T <: Term = P
+promote_rule(::Type{P}, ::Type{T}) where P <: Polynomial{M,C} where T <: Term{M,C} where {M,C} = P
 
-convert(::Type{P}, a::T) where P <: Polynomial{T} where T <: Term = iszero(a) ? zero(P) : P([deepcopy(a)])
+convert(::Type{P}, a::T) where P <: Polynomial{M,C} where T <: Term{M,C} where {M,C}  = iszero(a) ? zero(P) : P([deepcopy(a)])
 
 
 # -----------------------------------------------------------------------------
@@ -179,9 +179,9 @@ convert(::Type{T}, a::M) where T <: Term{M,C} where {M<:AbstractMonomial,C} = T(
 #
 # -----------------------------------------------------------------------------
 
-promote_rule(::Type{P}, ::Type{M}) where P <: Polynomial{T} where T <: Term{M} where M = P
+promote_rule(::Type{P}, ::Type{M}) where P <: Polynomial{M} where M = P
 
-convert(::Type{P}, a::M) where P <: Polynomial{T} where T <: Term{M} where M = P([convert(T, a)])
+convert(::Type{P}, a::M) where P <: Polynomial{M} where M = P([convert(termtype(P), a)])
 
 # -----------------------------------------------------------------------------
 #
@@ -239,7 +239,7 @@ function ⊗(a::P1, b::P2) where P1 <: Polynomial where P2 <: Polynomial
     l * r
 end
 
-⊗(::Type{P1}, ::Type{P2}) where P1 <: Polynomial where P2 <: Polynomial{T} where T = base_extend(P2, P1)
+⊗(::Type{P1}, ::Type{P2}) where P1 <: Polynomial where P2 <: Polynomial = base_extend(P2, P1)
 
 # -----------------------------------------------------------------------------
 #

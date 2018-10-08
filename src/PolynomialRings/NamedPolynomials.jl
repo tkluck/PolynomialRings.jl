@@ -98,7 +98,9 @@ end
 
 function promote_rule(::Type{P1}, ::Type{P2}) where P1 <: Polynomial where P2 <: Polynomial
     T = promote_rule(termtype(P1), termtype(P2))
-    return Polynomial{T}
+    M = monomialtype(T)
+    C = basering(T)
+    return Polynomial{M, C}
 end
 
 _allfreevars(x::Type) = Set()

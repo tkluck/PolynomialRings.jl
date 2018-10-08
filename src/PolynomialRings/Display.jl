@@ -113,9 +113,9 @@ _repr(::Type{BigFloat}) = :ℝ
 _repr(::Type{Complex{BigFloat}}) = :ℂ
 _repr(x) = x
 
-function show(io::IO, t::Type{Polynomial{T}}) where T
+function show(io::IO, t::Type{P}) where P<:Polynomial
     if isconcretetype(t)
-        print(io, "$(_repr(basering(T)))[$(namestype(T))]")
+        print(io, "$(_repr(basering(P)))[$(namestype(P))]")
     else
         defaultshow(io, t)
     end
