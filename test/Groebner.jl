@@ -47,6 +47,15 @@ end
         GG, tr= gröbner_transformation(G)
         @test [a for a in tr]*G == GG
 
+        # also work if there's zeros in the input
+        G = [[x^5-y,x^4],[x^3+y,y^3],[0,0]]
+        GG, tr= gröbner_transformation(G)
+        @test [a for a in tr]*G == GG
+
+        GG = gröbner_basis(G)
+
+        # also work with zeros in the input
+        G = [x^5, x^2 + y, x*y + y^2, 0]
         GG = gröbner_basis(G)
 
         @test gröbner_basis(R[]) == R[]
