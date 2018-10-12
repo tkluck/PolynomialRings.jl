@@ -50,6 +50,7 @@ end
 struct Start end
 iterate(a, b::Start) = iterate(a)
 iterate(a::Array, b::Start) = iterate(a)
+iterate(a::OrdinalRange, b::Start) = iterate(a)
 iterate(i::IndexUnion) = iterate(i, (Start(), Start()))
 @inline function iterate(i::IndexUnion{I,J,lt}, state) where {I,J,lt}
     lstate, rstate = state
@@ -234,7 +235,7 @@ function any_divisor(f::Function, a::M) where M <: AbstractMonomial
     nonzeros = copy(nonzeros_a)
     e = SparseVector{exptype(M), Int}(n, nzinds, nonzeros)
 
-    N = VectorMonomial{typeof(e),exptype(M), namestype(M)}
+    N = VectorMonomial{typeof(e), exptype(M), typeof(monomialorder(M))}
 
     while true
         m = N(e, sum(e))
