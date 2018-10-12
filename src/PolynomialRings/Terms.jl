@@ -5,6 +5,7 @@ import Base: *, ^, +, -, one, ==, iszero, diff
 import Base: hash
 
 
+import ..AbstractMultivariatePolynomials
 import ..MonomialOrderings: MonomialOrder
 import ..Monomials: AbstractMonomial
 import ..Monomials: total_degree
@@ -20,7 +21,7 @@ that is, it represents the combination of a coefficient and a
 monomial.
 
 """
-struct Term{M <: AbstractMonomial, C}
+struct Term{M <: AbstractMonomial, C} <: AbstractMultivariatePolynomials.AbstractTerm{C}
     m::M
     c::C
 end

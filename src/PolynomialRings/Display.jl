@@ -63,8 +63,16 @@ function show(io::IO, p::Polynomial)
     if length(terms(p)) == 0
         print(io, "0")
     end
-    print(io, join((repr(t) for t in reverse(terms(p))), " + "))
+    join(io, (t for t in reverse(terms(p))), " + ")
+    #print(io, join((repr(t) for t in reverse(terms(p))), " + "))
 end
+
+Base.print(io::IO, p::Polynomial) = show(io, p)
+Base.print(io::IO, t::Term) = show(io, t)
+Base.print(io::IO, m::AbstractMonomial) = show(io, m)
+
+Base.show(io::IO, mime::MIME, p::Polynomial) = show(io, p)
+Base.display(p::Polynomial) = show(p)
 
 # -----------------------------------------------------------------------------
 #

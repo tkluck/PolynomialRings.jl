@@ -5,6 +5,7 @@ import Base: first, last, copy, hash
 import SparseArrays: SparseVector
 
 
+import ..AbstractMultivariatePolynomials
 import ..MonomialOrderings: MonomialOrder
 import ..MonomialOrderings: MonomialOrder
 import ..Monomials: AbstractMonomial, TupleMonomial, VectorMonomial
@@ -29,7 +30,7 @@ This type represents a polynomial as a vector of terms. All methods guarantee an
 that the vector is sorted by increasing monomial order (see
 `PolynomialRings.MonomialOrderings`).
 """
-struct Polynomial{M,C}
+struct Polynomial{M,C} <: AbstractMultivariatePolynomials.AbstractPolynomial{C}
     terms::Vector{Term{M,C}}
     Polynomial{M,C}(terms::Vector{Term{M,C}}) where {M,C} = new(terms)
 end

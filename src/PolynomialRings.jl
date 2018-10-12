@@ -3,6 +3,7 @@ module PolynomialRings
 include("PolynomialRings/Methods.jl")
 include("PolynomialRings/Util.jl")
 include("PolynomialRings/Backends.jl")
+include("AbstractMultivariatePolynomials.jl")
 
 include("PolynomialRings/VariableNames.jl")
 include("PolynomialRings/Monomials.jl")
@@ -23,6 +24,7 @@ include("PolynomialRings/GroebnerGWV.jl")
 include("PolynomialRings/GroebnerSig.jl")
 include("PolynomialRings/Conversions.jl")
 include("PolynomialRings/Solve.jl")
+include("MultivariatePolynomials.jl")
 
 import .Monomials: TupleMonomial, VectorMonomial
 import .Terms: Term

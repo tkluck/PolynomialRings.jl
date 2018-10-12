@@ -39,6 +39,7 @@ one(::Type{C})  where C <: Constant = One()
 for N = [Number, AbstractMonomial, Term, Polynomial]
     @eval begin
         promote_rule(::Type{T}, ::Type{C}) where {T<:$N, C <: Constant} = T
+        promote_rule(::Type{C}, ::Type{T}) where {T<:$N, C <: Constant} = T
 
         convert(::Type{T}, ::One)      where T<:$N = one(T)
         convert(::Type{T}, ::Zero)     where T<:$N = zero(T)

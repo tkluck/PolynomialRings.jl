@@ -167,10 +167,12 @@ leading_term(o, m::TransformedModuleElement) = leading_term(o, m.p)
 content(m::TransformedModuleElement) = content(m.p)
 Base.Order.lt(o::MonomialOrder, a::T, b::T) where T<:TransformedModuleElement = Base.Order.lt(o, a.p, b.p)
 # linear operations
-*(f, g::TransformedModuleElement) = TransformedModuleElement(f*g.p, f*g.tr, g.n)
-*(f::TransformedModuleElement, g) = TransformedModuleElement(f.p*g, f.tr*g, f.n)
-# TODO: reduce the tr/n fraction
-÷(f::TransformedModuleElement, g) = TransformedModuleElement(f.p÷g, f.tr, f.n*g)
+for N in [Polynomial, Term, AbstractMonomial, Number] @eval begin
+    *(f::$N, g::TransformedModuleElement) = TransformedModuleElement(f*g.p, f*g.tr, g.n)
+    *(f::TransformedModuleElement, g::$N) = TransformedModuleElement(f.p*g, f.tr*g, f.n)
+    # TODO: reduce the tr/n fraction
+    ÷(f::TransformedModuleElement, g::$N) = TransformedModuleElement(f.p÷g, f.tr, f.n*g)
+end end
 function +(f::T, g::T) where T<:TransformedModuleElement
     m1, m2 = lcm_multipliers(f.n, g.n)
     N = m1*f.n

@@ -9,6 +9,7 @@ import SparseArrays: SparseVector, sparsevec
 import SparseArrays: nonzeroinds
 
 
+import ..AbstractMultivariatePolynomials
 import ..VariableNames: Named, Numbered, flatvariablesymbols
 import PolynomialRings: generators, to_dense_monomials, max_variable_index
 import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namestype, monomialorder
@@ -35,7 +36,7 @@ Each concrete implementation `M` should implement for elements `m`:
 In addition, one may choose to add specific optimizations by overloading
 other functions, as well.
 """
-abstract type AbstractMonomial{Order} end
+abstract type AbstractMonomial{Order <: Base.Ordering} <: AbstractMultivariatePolynomials.AbstractMonomial end
 
 # -----------------------------------------------------------------------------
 #

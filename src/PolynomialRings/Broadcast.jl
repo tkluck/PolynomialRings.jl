@@ -270,7 +270,7 @@ function iterterms(::Order, op::typeof(*), a::Number, b::TermsMap{Order}) where 
 end
 
 const PossiblyBigInt = Union{Int, BigInt}
-mul!(a::Term, b::Integer) = a*b
+mul!(a, b) = a*b
 mul!(a::TermOver{BigInt}, b::Int) = (Base.GMP.MPZ.mul_si!(a.c, b); a)
 mul!(a::TermOver{BigInt}, b::BigInt) = (Base.GMP.MPZ.mul!(a.c, b); a)
 function iterterms(::Order, op::typeof(*), a::PossiblyBigInt, b::TermsMap{Order,true}) where Order

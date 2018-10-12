@@ -44,6 +44,7 @@ unalias(::Type{T}, a::S) where {T,S} = T(a)
 # -----------------------------------------------------------------------------
 
 promote_rule(::Type{P}, ::Type{C}) where P<:PolynomialOver{C} where C = P
+promote_rule(::Type{C}, ::Type{P}) where P<:PolynomialOver{C} where C = P
 
 function convert(::Type{P}, a::C) where P<:PolynomialOver{C} where C
     if iszero(a)
@@ -120,10 +121,12 @@ end
 #
 # -----------------------------------------------------------------------------
 promote_rule(::Type{P}, ::Type{C}) where {P <: Polynomial, C<:Number} = base_extend(P,C)
+promote_rule(::Type{C}, ::Type{P}) where {P <: Polynomial, C<:Number} = base_extend(P,C)
 convert(::Type{P}, a::C) where P <: Polynomial where C<:Number = P(basering(P)(a))
 
 # resolve ambiguity between C a coefficient and C a number
 promote_rule(::Type{P}, ::Type{C}) where P<:PolynomialOver{C} where C<:Number = P
+promote_rule(::Type{C}, ::Type{P}) where P<:PolynomialOver{C} where C<:Number = P
 function convert(::Type{P}, a::C)  where P<:PolynomialOver{C} where C<:Number
     if iszero(a)
         return zero(P)
@@ -141,6 +144,7 @@ end
 # -----------------------------------------------------------------------------
 
 promote_rule(::Type{T}, ::Type{C}) where T <: Term where C<:Number = base_extend(T,C)
+promote_rule(::Type{C}, ::Type{T}) where T <: Term where C<:Number = base_extend(T,C)
 
 convert(::Type{T}, a::C) where T <: Term{M} where M where C<:Number = base_extend(T,C)(one(M), deepcopy(a))
 
@@ -151,6 +155,7 @@ convert(::Type{T}, a::C) where T <: Term{M} where M where C<:Number = base_exten
 # -----------------------------------------------------------------------------
 
 promote_rule(::Type{M}, ::Type{C}) where M <: AbstractMonomial where C<:Number = Term{M,C}
+promote_rule(::Type{C}, ::Type{M}) where M <: AbstractMonomial where C<:Number = Term{M,C}
 
 # -----------------------------------------------------------------------------
 #
@@ -159,6 +164,7 @@ promote_rule(::Type{M}, ::Type{C}) where M <: AbstractMonomial where C<:Number =
 # -----------------------------------------------------------------------------
 
 promote_rule(::Type{P}, ::Type{T}) where P <: Polynomial{M,C} where T <: Term{M,C} where {M,C} = P
+promote_rule(::Type{T}, ::Type{P}) where P <: Polynomial{M,C} where T <: Term{M,C} where {M,C} = P
 
 convert(::Type{P}, a::T) where P <: Polynomial{M,C} where T <: Term{M,C} where {M,C}  = iszero(a) ? zero(P) : P([deepcopy(a)])
 
@@ -170,6 +176,7 @@ convert(::Type{P}, a::T) where P <: Polynomial{M,C} where T <: Term{M,C} where {
 # -----------------------------------------------------------------------------
 
 promote_rule(::Type{T}, ::Type{M}) where T <: Term{M,C} where {M<:AbstractMonomial,C} = T
+promote_rule(::Type{M}, ::Type{T}) where T <: Term{M,C} where {M<:AbstractMonomial,C} = T
 
 convert(::Type{T}, a::M) where T <: Term{M,C} where {M<:AbstractMonomial,C} = T(a,one(C))
 
@@ -179,9 +186,10 @@ convert(::Type{T}, a::M) where T <: Term{M,C} where {M<:AbstractMonomial,C} = T(
 #
 # -----------------------------------------------------------------------------
 
-promote_rule(::Type{P}, ::Type{M}) where P <: Polynomial{M} where M = P
+promote_rule(::Type{P}, ::Type{M}) where P <: Polynomial{M} where M <: AbstractMonomial = P
+promote_rule(::Type{M}, ::Type{P}) where P <: Polynomial{M} where M <: AbstractMonomial = P
 
-convert(::Type{P}, a::M) where P <: Polynomial{M} where M = P([convert(termtype(P), a)])
+convert(::Type{P}, a::M) where P <: Polynomial{M} where M <: AbstractMonomial = P([convert(termtype(P), a)])
 
 # -----------------------------------------------------------------------------
 #
