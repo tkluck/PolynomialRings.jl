@@ -99,7 +99,11 @@ first(p::Polynomial) = p
 last(p::Polynomial) = p
 copy(p::Polynomial) = p
 
-lt(o::MonomialOrder, a::P, b::P) where P <: Polynomial = lt(o, leading_monomial(o, a), leading_monomial(o, b))
+function lt(o::MonomialOrder, a::P, b::P) where P <: Polynomial
+    iszero(b) && return false
+    iszero(a) && return true
+    lt(o, leading_monomial(o, a), leading_monomial(o, b))
+end
 
 # -----------------------------------------------------------------------------
 #

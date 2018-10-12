@@ -72,7 +72,12 @@ leading_monomial(x::AbstractArray{P}) where P<:Polynomial = leading_monomial(mon
 leading_monomial(o::MonomialOrder, x::AbstractArray{P}) where P<:Polynomial = Signature(leading_row(x), leading_monomial(o, x[leading_row(x)]))
 leading_coefficient(x::AbstractArray{P}) where P<:Polynomial = leading_coefficient(monomialorder(P), x)
 leading_coefficient(o::MonomialOrder, x::AbstractArray{P}) where P<:Polynomial = leading_coefficient(o, x[leading_row(x)])
-Base.Order.lt(o::MonomialOrder, s::A, t::A) where A<:AbstractArray{P} where P<:Polynomial = Base.Order.lt(o, leading_monomial(o, s), leading_monomial(o, t))
+
+function Base.Order.lt(o::MonomialOrder, s::A, t::A) where A<:AbstractArray{P} where P<:Polynomial
+    iszero(t) && return false
+    iszero(s) && return true
+    Base.Order.lt(o, leading_monomial(o, s), leading_monomial(o, t))
+end
 
 function one_step_div!(redtype::RedType, o::MonomialOrder, a::A, b::A) where A<:AbstractArray{<:Polynomial}
     i = findfirst(!iszero, b)
