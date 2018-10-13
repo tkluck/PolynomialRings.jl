@@ -121,7 +121,14 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{M}; with_transformati
             l = length(G)
             k = length(JP)
             h = sum(length, values(H))
-            @info("GWV: After $loops loops: $l elements in basis; $considered J-pairs considered; |JP|=$k, |H|=$h; $divisor_considerations considerations of divisors ($(round(divisors_considered/divisor_considerations, digits=1)) divisors on average).")
+            @info("GWV progress update:",
+                loops,
+                J_pairs_considered = considered,
+                length(JP),
+                length_H = sum(length, values(H)),
+                divisor_considerations,
+                avg_divisors_considered = round(divisors_considered/divisor_considerations, digits=1),
+            )
             progress_logged = true
         end
 
@@ -228,8 +235,8 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{M}; with_transformati
     # Interreduce the result
     # --------------------------------------------------------------------------
     result = getindex.(G, 2)
+    progress_logged && @info("Main loop done; interreducing the result polynomials", length(result))
     k = length(result)
-    progress_logged && @info("Done; interreducing the $k result polynomials")
     for i in 1:k
         xrem!(Full(), o, result[i], result[[1:i-1; i+1:k]])
         if basering(modulebasering(eltype(result))) <: Integer
@@ -239,7 +246,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{M}; with_transformati
     # what we filter out is probably a Gröbner basis for the syzygies, and
     # maybe the caller wants to have it?
     filter!(!iszero, result)
-    progress_logged && @info("Done. Returning a Gröbner basis of length $(length(result))")
+    progress_logged && @info("Done. Returning a Gröbner basis", length(result))
     # --------------------------------------------------------------------------
     # Return the result
     # --------------------------------------------------------------------------
