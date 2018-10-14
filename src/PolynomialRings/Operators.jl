@@ -3,6 +3,7 @@ module Operators
 import Base: zero, one, +, -, *, ==, div, iszero, diff, ^, gcd
 
 import DataStructures: enqueue!, dequeue!
+import InPlace: @inplace
 
 import ..Constants: Zero
 import ..MonomialOrderings: MonomialOrder
@@ -11,7 +12,7 @@ import ..Polynomials: Polynomial, termtype, terms, monomialorder, monomialtype
 import ..Polynomials: PolynomialBy
 import ..Terms: Term, monomial, coefficient
 import ..Util: BoundedHeap
-import ..Util: ParallelIter, add!, mul!
+import ..Util: ParallelIter
 import PolynomialRings: basering, exptype, base_extend, base_restrict
 import PolynomialRings: lcm_multipliers
 import PolynomialRings: leading_monomial, leading_coefficient, leading_term
@@ -65,7 +66,7 @@ function _collect_summands!(summands::AbstractVector{T}) where T <: Term{M, BigI
             exponent, coef = monomial(summands[j]), coefficient(summands[j])
             if exponent == last_exp
                 cur_coef = coefficient(summands[n])
-                add!(cur_coef, coef)
+                @inplace cur_coef += coef
             else
                 summands[n+=1] = summands[j]
                 last_exp = exponent
@@ -197,8 +198,8 @@ function *(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
 
         # compute the product of the product at (row, col)
         if m == cur_monom
-            temp = mul!(temp, coefficient(t_a[row]), coefficient(t_b[col]))
-            cur_coeff = add!(cur_coeff, temp)
+            @inplace temp = coefficient(t_a[row]) * coefficient(t_b[col])
+            @inplace cur_coeff += temp
         else
             if cur_monom !== nothing && !iszero(cur_coeff)
                 summands[k+=1] = T(cur_monom, cur_coeff)

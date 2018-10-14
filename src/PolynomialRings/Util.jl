@@ -170,18 +170,4 @@ end
     end
 end
 
-# -----------------------------------------------------------------------------
-#
-# In-place operations that work for BigInt but also for immutable types
-#
-# -----------------------------------------------------------------------------
-inplace!(op, a, b, c) = (a = op(b,c); a)
-inplace!(::typeof(+), a::BigInt, b::BigInt, c::BigInt) = (Base.GMP.MPZ.add!(a,b,c); a)
-inplace!(::typeof(-), a::BigInt, b::BigInt, c::BigInt) = (Base.GMP.MPZ.sub!(a,b,c); a)
-inplace!(::typeof(*), a::BigInt, b::BigInt, c::BigInt) = (Base.GMP.MPZ.mul!(a,b,c); a)
-
-add!(a, b)    = inplace!(+, a, a, b)
-add!(a, b, c) = inplace!(+, a, b, c)
-mul!(a, b, c) = inplace!(*, a, b, c)
-
 end

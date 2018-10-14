@@ -6,11 +6,11 @@ module Constants
 
 import Base: promote_rule, convert, +, *, -, zero, one
 
+import InPlace: inplace!
 
 import ..Monomials: AbstractMonomial
 import ..Polynomials: Polynomial
 import ..Terms: Term
-import ..Util: inplace!
 
 abstract type Constant <: Number end
 

@@ -98,7 +98,7 @@ We can do in-place evaluation in two cases:
    eagerly as `f * g`. The resulting polynomial is transient, so we may apply the
    `... .+ h)` operation in-place.
 
-We represent both cases by wrapping these elements in an `InPlace` struct.
+We represent both cases by wrapping these elements in an `Owned` struct.
 These structs result in a `TermsMap` with `Inplace=true`, and this property
 bubbles up through the optree.
 """
@@ -108,13 +108,14 @@ import Base.Broadcast: Style, AbstractArrayStyle, BroadcastStyle, Broadcasted, b
 import Base.Broadcast: broadcastable, broadcasted, materialize, materialize!
 import Base: RefValue
 
+import InPlace: @inplace, inclusiveinplace!
 
 import ..Constants: Zero, One
 import ..MonomialOrderings: MonomialOrder
 import ..Monomials: AbstractMonomial
 import ..Polynomials: Polynomial, TermOver, PolynomialOver, PolynomialBy, terms, termtype
 import ..Terms: Term, monomial, coefficient
-import ..Util: ParallelIter, inplace!
+import ..Util: ParallelIter
 import PolynomialRings: monomialorder, monomialtype, basering
 
 broadcastable(p::AbstractMonomial) = Ref(p)
@@ -141,13 +142,13 @@ BroadcastStyle(s::Termwise, t::BroadcastStyle) = t
 const BrTermwise{Order,P} = Broadcasted{Termwise{Order,P}}
 const PlusMinus = Union{typeof(+), typeof(-)}
 
-struct InPlace{P}
+struct Owned{P}
     x::P
 end
-Base.getindex(x::InPlace) = x.x
+Base.getindex(x::Owned) = x.x
 
-broadcastable(x::InPlace) = x
-BroadcastStyle(::Type{<:InPlace{P}}) where P<:Polynomial = Termwise{typeof(monomialorder(P)), P}()
+broadcastable(x::Owned) = x
+BroadcastStyle(::Type{<:Owned{P}}) where P<:Polynomial = Termwise{typeof(monomialorder(P)), P}()
 
 """
     TermsMap{Order,Inplace,Terms,Op}
@@ -155,7 +156,7 @@ BroadcastStyle(::Type{<:InPlace{P}}) where P<:Polynomial = Termwise{typeof(monom
 Represents a lazily evaluated generator of terms. `Inplace` is either
 true or false, and represents whether the consumer is allowed to modify the
 coefficients in-place. This is e.g. true if we are iterating over an
-`InPlace{<:Polynomial}` or if the generator has allocated its own
+`Owned{<:Polynomial}` or if the generator has allocated its own
 `Term`.
 """
 struct TermsMap{Order,Inplace,Terms,Op}
@@ -203,7 +204,7 @@ Base.eltype(t::TermsMap) = Base._return_type(t.op, Tuple{eltype(t.terms)})
 #
 # -----------------------------------------------------------------------------
 iterterms(a::RefValue{<:PolynomialBy{Order}}) where Order = TermsMap(identity, Order(), terms(a[]), length(terms(a[])), false)
-iterterms(a::InPlace{<:PolynomialBy{Order}}) where Order = TermsMap(identity, Order(), terms(a[]), length(terms(a[])), true)
+iterterms(a::Owned{<:PolynomialBy{Order}}) where Order = TermsMap(identity, Order(), terms(a[]), length(terms(a[])), true)
 
 # -----------------------------------------------------------------------------
 #
@@ -211,7 +212,7 @@ iterterms(a::InPlace{<:PolynomialBy{Order}}) where Order = TermsMap(identity, Or
 #
 # -----------------------------------------------------------------------------
 termsbound(a::RefValue{<:Polynomial}) = length(terms(a[]))
-termsbound(a::InPlace{<:Polynomial}) = length(terms(a[]))
+termsbound(a::Owned{<:Polynomial}) = length(terms(a[]))
 termsbound(a::RefValue) = 1
 termsbound(a::Number) = 1
 termsbound(bc::Broadcasted{<:Termwise, Nothing, <:PlusMinus}) = sum(termsbound, bc.args)
@@ -231,7 +232,7 @@ iterterms(bc::Broadcasted{<:Termwise{Order}}) where Order = iterterms(Order(), b
 #
 # -----------------------------------------------------------------------------
 eager(a) = a
-eager(a::InPlace) = a[]
+eager(a::Owned) = a[]
 eager(a::RefValue) = a[]
 eager(a::Broadcasted) = materialize(a)
 function eager(a::TermsMap)
@@ -246,7 +247,7 @@ function eager(a::TermsMap)
     P(terms)
 end
 # XXX ensure right order
-iterterms(order, op, a, b) = iterterms(InPlace(op(eager(a), eager(b))))
+iterterms(order, op, a, b) = iterterms(Owned(op(eager(a), eager(b))))
 
 # -----------------------------------------------------------------------------
 #
@@ -269,10 +270,9 @@ function iterterms(::Order, op::typeof(*), a::Number, b::TermsMap{Order}) where 
     end
 end
 
+inclusiveinplace!(::typeof(*), a::TermOver{BigInt}, b::Int) = (Base.GMP.MPZ.mul_si!(a.c, b); a)
+inclusiveinplace!(::typeof(*), a::TermOver{BigInt}, b::BigInt) = (Base.GMP.MPZ.mul!(a.c, b); a)
 const PossiblyBigInt = Union{Int, BigInt}
-mul!(a::Term, b::Integer) = a*b
-mul!(a::TermOver{BigInt}, b::Int) = (Base.GMP.MPZ.mul_si!(a.c, b); a)
-mul!(a::TermOver{BigInt}, b::BigInt) = (Base.GMP.MPZ.mul!(a.c, b); a)
 function iterterms(::Order, op::typeof(*), a::PossiblyBigInt, b::TermsMap{Order,true}) where Order
     a′ = deepcopy(a)
     a_vanishes = iszero(a)
@@ -280,7 +280,7 @@ function iterterms(::Order, op::typeof(*), a::PossiblyBigInt, b::TermsMap{Order,
         if a_vanishes
             return nothing
         else
-            t = mul!(t, a′)
+            @inplace t *= a′
             return t
         end
     end
@@ -331,7 +331,7 @@ function iterterms(::Order, op::PlusMinus, a::TermsMap{Order,true}, b::TermsMap{
         a, b,
     )
     TermsMap(Order(), summands, a.bound + b.bound, true) do (m, cleft, cright)
-        cleft = inplace!(op, cleft, cleft, cright)
+        @inplace cleft = op(cleft, cright)
         iszero(cleft) ? nothing : Term(m, cleft)
     end
 end
@@ -344,7 +344,7 @@ function iterterms(::Order, op::PlusMinus, a::TermsMap{Order}, b::TermsMap{Order
         a, b,
     )
     TermsMap(Order(), summands, a.bound + b.bound, true) do (m, cleft, cright)
-        cright = inplace!(op, cright, cleft, cright)
+        @inplace cright = op(cleft, cright)
         iszero(cright) ? nothing : Term(m, cright)
     end
 end
@@ -368,7 +368,7 @@ end
 #
 # -----------------------------------------------------------------------------
 
-materialize(bc::InPlace) = bc[]
+materialize(bc::Owned) = bc[]
 
 function materialize(bc::BrTermwise{Order,P}) where {Order,P}
     x = deepcopy(zero(P))
@@ -376,7 +376,7 @@ function materialize(bc::BrTermwise{Order,P}) where {Order,P}
 end
 
 mark_inplace(y, x) = (y, :notfound)
-mark_inplace(bc::RefValue, x) = bc[] === x ? (InPlace(bc[]), :found) : (bc, :notfound)
+mark_inplace(bc::RefValue, x) = bc[] === x ? (Owned(bc[]), :found) : (bc, :notfound)
 """
 Mark at most a single occurrence of x as in-place in a Broadcasted tree. We
 iterate over the arguments last-to-first and depth-first, so we find the _last_
@@ -442,7 +442,7 @@ const HandOptimizedBroadcast = Broadcasted{
             typeof(*),
             Tuple{
                 BigInt,
-                InPlace{P},
+                Owned{P},
             },
         },
         Broadcasted{
