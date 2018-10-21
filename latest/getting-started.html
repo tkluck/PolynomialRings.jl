@@ -151,10 +151,10 @@ myderivative2 (generic function with 1 method)
 
 julia&gt; myderivative2(ε^3 + ε^2, :ε)
 3//1*ε^2 + 2//1*ε</code></pre><p>which gives the correct answer. Unfortunately, this is <em>very</em> inefficient:</p><pre><code class="language-julia-repl">julia&gt; @time myderivative2(ε^3 + ε^2, :ε);
-  2.515734 seconds (4.02 M allocations: 210.039 MiB, 5.59% gc time)
+  2.741716 seconds (4.02 M allocations: 210.004 MiB, 5.00% gc time)
 
 julia&gt; @time myderivative2(ε^3 + ε^2, :ε);
-  2.517879 seconds (4.02 M allocations: 210.343 MiB, 4.80% gc time)</code></pre><p>The reason is that variable names are part of the type definition, and Julia specializes functions based on the type of its arguments. In this case, that means that for evaluating the <code>@coefficient</code> call, and for the substitution call, all the code needs to be compiled <em>every time you call <code>myderivative</code></em>.</p><p>For this reason, we provide a function <code>formal_coefficient(R)</code> which yields a variable that&#39;s guaranteed not to clash with the ring that you pass as an argument:</p><pre><code class="language-julia-repl">julia&gt; function myderivative3(f::RR, varsymbol) where RR &lt;: Polynomial
+  2.608397 seconds (4.02 M allocations: 209.970 MiB, 4.43% gc time)</code></pre><p>The reason is that variable names are part of the type definition, and Julia specializes functions based on the type of its arguments. In this case, that means that for evaluating the <code>@coefficient</code> call, and for the substitution call, all the code needs to be compiled <em>every time you call <code>myderivative</code></em>.</p><p>For this reason, we provide a function <code>formal_coefficient(R)</code> which yields a variable that&#39;s guaranteed not to clash with the ring that you pass as an argument:</p><pre><code class="language-julia-repl">julia&gt; function myderivative3(f::RR, varsymbol) where RR &lt;: Polynomial
            varvalue = RR(varsymbol)
            ε_sym, ε_val = formal_coefficient(typeof(f))
            return coefficient(f(;varsymbol =&gt; varvalue + ε_val), (1,), ε_sym)
@@ -162,13 +162,13 @@ julia&gt; @time myderivative2(ε^3 + ε^2, :ε);
 myderivative3 (generic function with 1 method)
 
 julia&gt; @time myderivative3(ε^3 + ε^2, :ε);   # first time is still slow (compiling)
-  4.215394 seconds (7.19 M allocations: 383.152 MiB, 6.19% gc time)
+  4.229268 seconds (7.19 M allocations: 382.974 MiB, 6.74% gc time)
 
 julia&gt; @time myderivative3(ε^3 + ε^2, :ε);   # but much faster the second time
-  0.002389 seconds (5.85 k allocations: 221.438 KiB)
+  0.002400 seconds (5.85 k allocations: 221.438 KiB)
 
 julia&gt; @time myderivative3(ε^3 + ε^2, :ε);   # and the third
-  0.002099 seconds (5.85 k allocations: 221.438 KiB)</code></pre><h3><a class="nav-anchor" id="Free-modules-(arrays-of-polynomials)-1" href="#Free-modules-(arrays-of-polynomials)-1">Free modules (arrays of polynomials)</a></h3><p>For practical purposes, a <em>free module</em> (of finite rank) over a ring <span>$R$</span> is just an array of polynomials in <span>$R$</span>. Many algorithms that work for polynomial rings also work for modules. For example, the function <code>gröbner_basis</code> works just as well if we pass a vector of vectors of polynomials instead of a vector of polynomials:</p><pre><code class="language-julia-repl">julia&gt; G = [[x^5-y,x^4],[x^3+y,y^3]];
+  0.001947 seconds (5.85 k allocations: 221.438 KiB)</code></pre><h3><a class="nav-anchor" id="Free-modules-(arrays-of-polynomials)-1" href="#Free-modules-(arrays-of-polynomials)-1">Free modules (arrays of polynomials)</a></h3><p>For practical purposes, a <em>free module</em> (of finite rank) over a ring <span>$R$</span> is just an array of polynomials in <span>$R$</span>. Many algorithms that work for polynomial rings also work for modules. For example, the function <code>gröbner_basis</code> works just as well if we pass a vector of vectors of polynomials instead of a vector of polynomials:</p><pre><code class="language-julia-repl">julia&gt; G = [[x^5-y,x^4],[x^3+y,y^3]];
 
 julia&gt; GG = gröbner_basis(G)
 4-element Array{Array{ℤ[x,y],1},1}:
