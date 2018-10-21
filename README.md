@@ -6,7 +6,7 @@
 
 | **Build Status**                                                | **Test coverage**                                       |
 |:---------------------------------------------------------------:|:-------------------------------------------------------:|
-| [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] | [![Coverage Status][coveralls-img]][coveralls-url]      |
+| [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] | [![Coverage Status][codecov-img]][codecov-url]      |
 
 A library for arithmetic and algebra with multi-variable polynomials.
 
@@ -38,5 +38,5 @@ Currently, this library should be considered alpha quality.
 [appveyor-img]: https://ci.appveyor.com/api/projects/status/4g6ax1ni7ijx3rn4?svg=true
 [appveyor-url]: https://ci.appveyor.com/project/tkluck/polynomialrings-jl
 
-[coveralls-img]: https://coveralls.io/repos/github/tkluck/PolynomialRings.jl/badge.svg?branch=master
-[coveralls-url]: https://coveralls.io/github/tkluck/PolynomialRings.jl?branch=master
+[codecov-img]: https://codecov.io/gh/tkluck/PolynomialRings.jl/branch/master/graph/badge.svg
+[codecov-url]: https://codecov.io/gh/tkluck/PolynomialRings.jl
