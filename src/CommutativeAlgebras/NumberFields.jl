@@ -8,7 +8,6 @@ import Base: zero, one, inv, copy
 import LinearAlgebra: nullspace
 import LinearAlgebra: tr, norm
 
-
 import ..Ideals: ring
 import ..Monomials: AbstractMonomial
 import ..Polynomials: Polynomial, basering, variablesymbols

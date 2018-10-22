@@ -6,7 +6,6 @@ import Base: promote_rule, convert
 import Base: show
 import Base: zero, one, rem, copy
 
-
 import ..Ideals: Ideal, _grb
 import ..Ideals: ring
 import ..Polynomials: Polynomial, exptype, leading_term

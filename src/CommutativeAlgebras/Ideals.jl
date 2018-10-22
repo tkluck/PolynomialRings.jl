@@ -5,7 +5,6 @@ import Base: promote_rule, convert
 import Base: show
 import Base: zero, one, in, div, rem, divrem, rem, issubset, inv
 
-
 import ..Expansions: _expansion
 import ..Polynomials: Polynomial
 import PolynomialRings: allvariablesymbols, fraction_field

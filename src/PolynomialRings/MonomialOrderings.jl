@@ -4,11 +4,9 @@ import Base.Order: Ordering, lt
 import Base: min, max, minimum, maximum
 import Base: promote_rule
 
-
 import ..Monomials: AbstractMonomial, VectorMonomial, total_degree, index_union, rev_index_union
 import ..VariableNames: Named, Numbered
 import PolynomialRings: namestype, to_dense_monomials, variablesymbols
-
 
 """
     struct MonomialOrder{Rule, Names} <: Ordering end

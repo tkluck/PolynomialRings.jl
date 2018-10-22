@@ -19,7 +19,6 @@ import PolynomialRings: gröbner_basis, gröbner_transformation, xrem!
 import PolynomialRings: leading_term, leading_monomial, lcm_multipliers, lcm_degree, fraction_field, basering, base_extend, base_restrict
 import PolynomialRings: maybe_div, termtype, monomialtype, leading_row, leading_coefficient
 
-
 function regular_topreduce_rem(o, m, G)
     ≺(a,b) = Base.Order.lt(o, a, b)
     u1,v1 = m

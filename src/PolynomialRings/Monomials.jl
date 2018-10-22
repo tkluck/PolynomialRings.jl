@@ -8,7 +8,6 @@ import Base: promote_rule
 import SparseArrays: SparseVector, sparsevec
 import SparseArrays: nonzeroinds
 
-
 import ..VariableNames: Named, Numbered, flatvariablesymbols
 import PolynomialRings: generators, to_dense_monomials, max_variable_index
 import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namestype, monomialorder

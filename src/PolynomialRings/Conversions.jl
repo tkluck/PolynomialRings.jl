@@ -5,7 +5,6 @@ import Base: div, rem, divrem
 import Base: promote_op
 import Base: promote_rule, convert
 
-
 import ..Monomials: AbstractMonomial, total_degree
 import ..Operators: RedType
 import ..Polynomials: Polynomial, termtype, monomialtype, basering, terms

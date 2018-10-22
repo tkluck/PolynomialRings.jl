@@ -4,7 +4,6 @@ import Base.Order: lt
 import Base: first, last, copy, hash
 import SparseArrays: SparseVector
 
-
 import ..MonomialOrderings: MonomialOrder
 import ..MonomialOrderings: MonomialOrder
 import ..Monomials: AbstractMonomial, TupleMonomial, VectorMonomial

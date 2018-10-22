@@ -4,7 +4,6 @@ import Base.Order: lt
 import Base: *, ^, +, -, one, ==, iszero, diff
 import Base: hash
 
-
 import ..MonomialOrderings: MonomialOrder
 import ..Monomials: AbstractMonomial
 import ..Monomials: total_degree

@@ -7,7 +7,6 @@ import Base: keytype
 import LinearAlgebra: mul!
 import SparseArrays: SparseVector, sparsevec, spzeros
 
-
 import ..MonomialOrderings: MonomialOrder
 import ..Monomials: AbstractMonomial
 import ..Monomials: total_degree
@@ -20,7 +19,6 @@ import PolynomialRings: leaddiv, leadrem, leaddivrem
 import PolynomialRings: leading_row, leading_term, leading_monomial, leading_coefficient, base_extend
 import PolynomialRings: maybe_div, lcm_degree, lcm_multipliers
 import PolynomialRings: termtype, monomialtype
-
 
 # This should probably be in Base; see
 # https://github.com/JuliaLang/julia/pull/27749

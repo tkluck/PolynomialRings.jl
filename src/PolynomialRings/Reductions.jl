@@ -3,7 +3,6 @@ module Reductions
 import Base: div, rem, divrem
 import SparseArrays: spzeros
 
-
 import ..Modules: AbstractModuleElement, modulebasering
 import ..MonomialOrderings: MonomialOrder
 import ..Operators: RedType, Lead, Full, Tail

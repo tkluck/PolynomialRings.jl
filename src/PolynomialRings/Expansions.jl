@@ -16,7 +16,6 @@ import ..Util: SingleItemIter
 import ..VariableNames: Named, Numbered
 import PolynomialRings: basering, namestype, variablesymbols
 
-
 # -----------------------------------------------------------------------------
 #
 # Expansions: named variables

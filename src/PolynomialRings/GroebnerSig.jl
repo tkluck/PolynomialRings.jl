@@ -21,7 +21,6 @@ import PolynomialRings: leading_term, leading_monomial, lcm_multipliers, lcm_deg
 import PolynomialRings: leadrem, xrem!
 import PolynomialRings: maybe_div, termtype, monomialtype, exptype, leading_row, leading_coefficient
 
-
 reduction_rem(::Arri, o, m, G) = semi_complete_reduction_rem(o, m, G)
 
 function semi_complete_reduction_rem(o, m, G)

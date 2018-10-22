@@ -2,7 +2,6 @@ module Solve
 
 import SparseArrays: sparse, issparse
 
-
 import PolynomialRings: lift
 
 """

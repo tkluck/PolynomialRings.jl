@@ -8,7 +8,6 @@ import Base: length, iterate
 import DataStructures: PriorityQueue
 import DataStructures: percolate_down!, percolate_up!, enqueue!, dequeue!, peek
 
-
 # -----------------------------------------------------------------------------
 #
 # Bounded heap

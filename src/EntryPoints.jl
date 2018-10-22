@@ -4,7 +4,6 @@ import Base: convert
 import Base: getindex
 import SparseArrays: spzeros
 
-
 import ..Ideals: Ideal
 import ..Monomials: TupleMonomial, VectorMonomial
 import ..NamedPolynomials: NamedPolynomial, NumberedPolynomial

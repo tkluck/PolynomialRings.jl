@@ -2,7 +2,6 @@ module NamedPolynomials
 
 import Base: promote_rule, convert
 
-
 import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, rulesymbol
 import ..Monomials: TupleMonomial, AbstractMonomial, _construct, exptype
