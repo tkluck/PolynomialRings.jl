@@ -30,6 +30,9 @@ built-in one.
 """
 struct MonomialOrder{Rule, Names} <: Ordering end
 
+const NamedMonomialOrder    = MonomialOrder{Rule, <:Named}    where Rule
+const NumberedMonomialOrder = MonomialOrder{Rule, <:Numbered} where Rule
+
 rulesymbol(::O)       where O <: MonomialOrder{Rule, Names} where {Rule, Names} = Rule
 rulesymbol(::Type{O}) where O <: MonomialOrder{Rule, Names} where {Rule, Names} = Rule
 

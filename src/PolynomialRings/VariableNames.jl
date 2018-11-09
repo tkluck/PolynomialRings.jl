@@ -5,12 +5,14 @@ import PolynomialRings: variablesymbols, namestype
 variablesymbols(a) = variablesymbols(namestype(a))
 numberedvariablename(a) = numberedvariablename(namestype(a))
 
+abstract type AbstractVariableNames end
+
 # -----------------------------------------------------------------------------
 #
 # Finite enumeration of variable names
 #
 # -----------------------------------------------------------------------------
-struct Named{Names} end
+struct Named{Names} <: AbstractVariableNames end
 variablesymbols(::Type{Named{Names}}) where Names = Names
 
 # -----------------------------------------------------------------------------
@@ -18,7 +20,7 @@ variablesymbols(::Type{Named{Names}}) where Names = Names
 # Infinite series of variable names
 #
 # -----------------------------------------------------------------------------
-struct Numbered{Name} end
+struct Numbered{Name} <: AbstractVariableNames end
 variablesymbols(::Type{Numbered{Name}}) where Name = tuple()
 numberedvariablename(::Type{Numbered{Name}}) where Name = Name
 
