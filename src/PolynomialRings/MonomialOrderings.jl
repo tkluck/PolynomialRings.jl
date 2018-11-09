@@ -7,6 +7,7 @@ import Base: promote_rule
 import ..Monomials: AbstractMonomial, VectorMonomial, total_degree, index_union, rev_index_union
 import ..VariableNames: Named, Numbered
 import PolynomialRings: namestype, to_dense_monomials, variablesymbols
+import PolynomialRings: leading_monomial, leading_coefficient, leading_term
 
 """
     struct MonomialOrder{Rule, Names} <: Ordering end
@@ -125,6 +126,16 @@ function promote_rule(M1::Type{<:MonomialOrder}, M2::Type{<:MonomialOrder})
     else
         return Union{}
     end
+end
+
+macro withmonomialorder(order)
+    esc(quote
+        ≺(a, b) = Base.Order.lt($order, a, b)
+        ⪰(a,b) =  !Base.Order.lt($order, a, b)
+        leading_monomial(f) = $leading_monomial(f, order=$order)
+        leading_term(f) = $leading_term(f, order=$order)
+        leading_coefficient(f) = $leading_coefficient(f, order=$order)
+    end)
 end
 
 end

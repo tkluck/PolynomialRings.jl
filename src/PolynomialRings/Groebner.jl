@@ -30,7 +30,7 @@ true
 ```
 """
 function syzygies(polynomials::AbstractVector{M}) where M <: AbstractModuleElement
-    o = monomialorder(eltype(polynomials))
+    order = monomialorder(eltype(polynomials))
     pairs_to_consider = [
         (i,j) for i in eachindex(polynomials) for j in eachindex(polynomials)
         if i < j && leading_row(polynomials[i]) == leading_row(polynomials[j])
@@ -41,20 +41,20 @@ function syzygies(polynomials::AbstractVector{M}) where M <: AbstractModuleEleme
     for (i,j) in pairs_to_consider
         a = polynomials[i]
         b = polynomials[j]
-        lt_a = leading_term(o, a)
-        lt_b = leading_term(o, b)
+        lt_a = leading_term(a, order=order)
+        lt_b = leading_term(b, order=order)
 
         m_a, m_b = lcm_multipliers(lt_a, lt_b)
         S = m_a * a - m_b * b
 
-        (syzygy, S_red) = divrem(S, polynomials, order=o)
+        (syzygy, S_red) = divrem(S, polynomials, order=order)
         if !iszero(S_red)
             throw(ArgumentError("syzygies(...) expects a Gröbner basis, so S_red = $( S_red ) should be zero"))
         end
         syzygy[1,i] -= m_a
         syzygy[1,j] += m_b
 
-        syz_red = rem(syzygy, result, order=o)
+        syz_red = rem(syzygy, result, order=order)
         if !iszero(syz_red)
             push!(result, syz_red)
         end

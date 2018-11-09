@@ -10,7 +10,7 @@ import DataStructures: SortedDict, DefaultDict
 import ..Backends.Gröbner: GWV
 import ..Modules: AbstractModuleElement, modulebasering
 import ..Modules: withtransformations, separatetransformation
-import ..MonomialOrderings: MonomialOrder
+import ..MonomialOrderings: MonomialOrder, @withmonomialorder
 import ..Monomials: total_degree, any_divisor
 import ..Operators: Lead, Full, content, integral_fraction
 import ..Polynomials: Polynomial, monomialorder, monomialtype, PolynomialBy
@@ -19,8 +19,8 @@ import PolynomialRings: gröbner_basis, gröbner_transformation, xrem!
 import PolynomialRings: leading_term, leading_monomial, lcm_multipliers, lcm_degree, fraction_field, basering, base_extend, base_restrict
 import PolynomialRings: maybe_div, termtype, monomialtype, leading_row, leading_coefficient
 
-function regular_topreduce_rem(o, m, G)
-    ≺(a,b) = Base.Order.lt(o, a, b)
+function regular_topreduce_rem(m, G; order)
+    @withmonomialorder order
     u1,v1 = m
     v1 = deepcopy(v1)
     i = 1
@@ -32,10 +32,10 @@ function regular_topreduce_rem(o, m, G)
                 supertopreducible = true
             end
         elseif !iszero(v1)
-            t = maybe_div(leading_monomial(o,v1), leading_monomial(o,v2))
+            t = maybe_div(leading_monomial(v1), leading_monomial(v2))
             if t !== nothing
-                c1 = leading_coefficient(o,v1)
-                c2 = leading_coefficient(o,v2)
+                c1 = leading_coefficient(v1)
+                c2 = leading_coefficient(v2)
                 m1, m2 = lcm_multipliers(c1, c2)
                 if t * u2 ≺ u1
                     # new_u1 = u1 - c*(t*u2)
@@ -65,8 +65,8 @@ An implementation of the GWV algorithm as popularized by
 > Shuhong Gao, Frank Volny, and Mingsheng Wang. "A new algorithm for computing
 > Groebner bases." IACR Cryptology ePrint Archive 2010 (2010): 641.
 """
-function gwv(o::MonomialOrder, polynomials::AbstractVector{M}; with_transformation=false) where M <: AbstractModuleElement
-    ≺(a,b) = Base.Order.lt(o, a, b)
+function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transformation=false) where M <: AbstractModuleElement
+    @withmonomialorder order
 
     if basering(modulebasering(M)) <: Rational
         polynomials = map(f->integral_fraction(f)[1], polynomials)
@@ -78,7 +78,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{M}; with_transformati
 
     # experimentally, it seems much better to sort in
     # decreasing monomial order
-    sort!(polynomials, order=o, rev=true)
+    sort!(polynomials, order=order, rev=true)
 
     P = modulebasering(M)
     R = base_restrict(P)
@@ -92,7 +92,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{M}; with_transformati
     # --------------------------------------------------------------------------
     G = Tuple{Signature, S}[]
     H = DefaultDict{Int, Set{monomialtype(R)}}(Set{monomialtype(R)})
-    JP = SortedDict{Signature, MM}(o)
+    JP = SortedDict{Signature, MM}(order)
 
     n = length(polynomials)
     for (i,p) in enumerate(polynomials)
@@ -143,7 +143,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{M}; with_transformati
             u2,v2 = m2
             t = maybe_div(T, u2)
             if t !== nothing
-                if t * leading_monomial(o, v2) ≺ leading_monomial(o, v1)
+                if t * leading_monomial(v2) ≺ leading_monomial(v1)
                     return true
                 end
             end
@@ -152,7 +152,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{M}; with_transformati
             continue
         end
 
-        (_,v), status = regular_topreduce_rem(o, m, G)
+        (_,v), status = regular_topreduce_rem(m, G, order=order)
 
         if iszero(v)
             newh = T
@@ -173,10 +173,10 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{M}; with_transformati
                                    # this syzygy should be in the case of modules.
                     for (Tj, vj) in G
                         # syzygy = v*Tj - vj*T
-                        lhs = leading_monomial(o,v)*Tj
-                        rhs = leading_monomial(o,vj)*T
+                        lhs = leading_monomial(v)*Tj
+                        rhs = leading_monomial(vj)*T
                         if lhs != rhs
-                            newh = max(o, lhs, rhs)
+                            newh = max(order, lhs, rhs)
                             push!(H[newh.i], newh.m)
                         end
                     end
@@ -186,11 +186,11 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{M}; with_transformati
                 # ducible by H (storing only one J-pair for each distinct signature
                 # T , the one with v-part minimal), and
                 for (Tj, vj) in G
-                    t1_t2 = lcm_multipliers(leading_monomial(o,v), leading_monomial(o,vj))
+                    t1_t2 = lcm_multipliers(leading_monomial(v), leading_monomial(vj))
                     t1_t2 === nothing && continue
                     t1, t2 = t1_t2
-                    c = leading_coefficient(o,v)
-                    cj = leading_coefficient(o,vj)
+                    c = leading_coefficient(v)
+                    cj = leading_coefficient(vj)
                     lhs = t1*T
                     rhs = t2*Tj
                     if !(c == cj && lhs == rhs)
@@ -237,7 +237,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{M}; with_transformati
     progress_logged && @info("Main loop done; interreducing the result polynomials", length(result))
     k = length(result)
     for i in 1:k
-        xrem!(result[i], result[[1:i-1; i+1:k]], order=o)
+        xrem!(result[i], result[[1:i-1; i+1:k]], order=order)
         if basering(modulebasering(eltype(result))) <: Integer
             result[i] ÷= content(result[i])
         end

@@ -82,25 +82,24 @@ end
 
 max_variable_index(p::Polynomial) = iszero(p) ? 0 : maximum(max_variable_index(t) for t in terms(p))
 
-leading_term(::M, p::PolynomialBy{M}) where M <: MonomialOrder = last(terms(p))
-leading_term(o::MonomialOrder, p::Polynomial) = maximum(o, terms(p))
-leading_term(p::Polynomial) = leading_term(monomialorder(p), p)
+leading_term(p::PolynomialBy{M}, order::M) where M <: MonomialOrder = last(terms(p))
+leading_term(p::Polynomial, order::MonomialOrder) = maximum(order, terms(p))
+leading_term(p::Polynomial; order::MonomialOrder=monomialorder(p)) = leading_term(p, order)
 
-leading_monomial(o::MonomialOrder, p::Polynomial) = monomial(leading_term(o, p))
-leading_monomial(p::Polynomial) = monomial(leading_term(p))
+leading_monomial(p::Polynomial; order::MonomialOrder=monomialorder(p)) = monomial(leading_term(p, order=order))
 
-leading_coefficient(o::MonomialOrder, p::Polynomial) = coefficient(leading_term(o, p))
-leading_coefficient(p::Polynomial) = coefficient(leading_term(p))
+leading_coefficient(p::Polynomial; order::MonomialOrder=monomialorder(p)) = coefficient(leading_term(p, order=order))
+
 
 # match the behaviour for Number
 first(p::Polynomial) = p
 last(p::Polynomial) = p
 copy(p::Polynomial) = p
 
-function lt(o::MonomialOrder, a::P, b::P) where P <: Polynomial
+function lt(order::MonomialOrder, a::P, b::P) where P <: Polynomial
     iszero(b) && return false
     iszero(a) && return true
-    lt(o, leading_monomial(o, a), leading_monomial(o, b))
+    lt(order, leading_monomial(a, order=order), leading_monomial(b, order=order))
 end
 
 # -----------------------------------------------------------------------------

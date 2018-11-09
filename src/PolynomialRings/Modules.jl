@@ -7,7 +7,7 @@ import Base: keytype
 import LinearAlgebra: mul!
 import SparseArrays: SparseVector, sparsevec, spzeros
 
-import ..MonomialOrderings: MonomialOrder
+import ..MonomialOrderings: MonomialOrder, @withmonomialorder
 import ..Monomials: AbstractMonomial
 import ..Monomials: total_degree
 import ..Operators: RedType, Lead, Full, Tail
@@ -64,24 +64,22 @@ monomial(s::Signature{<:Term}) = Signature(s.i, monomial(s.m))
 
 
 leading_row(x::AbstractArray{<:Polynomial}) = findfirst(!iszero, x)
-leading_term(x::AbstractArray{P}) where P<:Polynomial = leading_term(monomialorder(P), x)
-leading_term(o::MonomialOrder, x::AbstractArray{P}) where P<:Polynomial = Signature(leading_row(x), leading_term(o, x[leading_row(x)]))
-leading_monomial(x::AbstractArray{P}) where P<:Polynomial = leading_monomial(monomialorder(P), x)
-leading_monomial(o::MonomialOrder, x::AbstractArray{P}) where P<:Polynomial = Signature(leading_row(x), leading_monomial(o, x[leading_row(x)]))
-leading_coefficient(x::AbstractArray{P}) where P<:Polynomial = leading_coefficient(monomialorder(P), x)
-leading_coefficient(o::MonomialOrder, x::AbstractArray{P}) where P<:Polynomial = leading_coefficient(o, x[leading_row(x)])
+leading_term(x::AbstractArray{P}; order::MonomialOrder=monomialorder(x)) where P<:Polynomial = Signature(leading_row(x), leading_term(x[leading_row(x)], order=order))
+leading_monomial(x::AbstractArray{P}; order::MonomialOrder=monomialorder(x)) where P<:Polynomial = Signature(leading_row(x), leading_monomial(x[leading_row(x)], order=order))
+leading_coefficient(x::AbstractArray{P}; order::MonomialOrder=monomialorder(x)) where P<:Polynomial = leading_coefficient(x[leading_row(x)], order=order)
 
-function Base.Order.lt(o::MonomialOrder, s::A, t::A) where A<:AbstractArray{P} where P<:Polynomial
+function Base.Order.lt(order::MonomialOrder, s::A, t::A) where A<:AbstractArray{P} where P<:Polynomial
     iszero(t) && return false
     iszero(s) && return true
-    Base.Order.lt(o, leading_monomial(o, s), leading_monomial(o, t))
+    Base.Order.lt(order, leading_monomial(s, order=order), leading_monomial(t, order=order))
 end
 
 function one_step_div!(a::A, b::A; order::MonomialOrder, redtype::RedType) where A<:AbstractArray{<:Polynomial}
+    @withmonomialorder order
     i = findfirst(!iszero, b)
     if i !== nothing && !iszero(a[i])
-        lt_a = leading_term(order, a[i])
-        lt_b = leading_term(order, b[i])
+        lt_a = leading_term(a[i])
+        lt_b = leading_term(b[i])
         factor = maybe_div(lt_a, lt_b)
         if factor !== nothing
             for i in eachindex(a)
@@ -100,14 +98,15 @@ function one_step_div!(a::A, b::A; order::MonomialOrder, redtype::RedType) where
 end
 
 function one_step_xdiv!(a::A, b::A; order::MonomialOrder, redtype::RedType) where A<:AbstractArray{<:Polynomial}
+    @withmonomialorder order
     i = findfirst(!iszero, b)
     if i !== nothing && !iszero(a[i])
-        lt_a = leading_monomial(order, a[i])
-        lt_b = leading_monomial(order, b[i])
+        lt_a = leading_monomial(a[i])
+        lt_b = leading_monomial(b[i])
         factor = maybe_div(lt_a, lt_b)
         if factor !== nothing
-            c1 = leading_coefficient(order, a[i])
-            c2 = leading_coefficient(order, b[i])
+            c1 = leading_coefficient(a[i])
+            c2 = leading_coefficient(b[i])
             m1, m2 = lcm_multipliers(c1, c2)
             for i in eachindex(a)
                 a[i] = m1 * a[i] - m2 * (factor * b[i])
@@ -164,9 +163,9 @@ mutable struct TransformedModuleElement{P,M,I}
     n::I
 end
 # gathering leading terms etc
-leading_monomial(o, m::TransformedModuleElement) = leading_monomial(o, m.p)
-leading_coefficient(o, m::TransformedModuleElement) = leading_coefficient(o, m.p)
-leading_term(o, m::TransformedModuleElement) = leading_term(o, m.p)
+leading_monomial(m::TransformedModuleElement; order) = leading_monomial(m.p, order=order)
+leading_coefficient(m::TransformedModuleElement; order) = leading_coefficient(m.p, order=order)
+leading_term(m::TransformedModuleElement; order) = leading_term(m.p, order=order)
 content(m::TransformedModuleElement) = content(m.p)
 Base.Order.lt(o::MonomialOrder, a::T, b::T) where T<:TransformedModuleElement = Base.Order.lt(o, a.p, b.p)
 # linear operations

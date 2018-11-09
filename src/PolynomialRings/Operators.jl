@@ -6,7 +6,7 @@ import DataStructures: enqueue!, dequeue!
 import InPlace: @inplace
 
 import ..Constants: Zero
-import ..MonomialOrderings: MonomialOrder
+import ..MonomialOrderings: MonomialOrder, @withmonomialorder
 import ..Monomials: AbstractMonomial
 import ..Polynomials: Polynomial, termtype, terms, monomialorder, monomialtype
 import ..Polynomials: PolynomialBy
@@ -243,14 +243,15 @@ terms_to_reduce(::Lead, f) = terms(f)[end:end]
 terms_to_reduce(::Full, f) = @view terms(f)[end:-1:1]
 terms_to_reduce(::Tail, f) = @view terms(f)[end-1:-1:1]
 
-function one_step_div!(f::PolynomialBy{Order}, g::PolynomialBy{Order}; order::MonomialOrder, redtype::RedType) where Order
+function one_step_div!(f::PolynomialBy{Order}, g::PolynomialBy{Order}; order::Order, redtype::RedType) where Order <: MonomialOrder
+    @withmonomialorder order
     if iszero(f)
         return nothing
     end
     if iszero(g)
         throw(DivideError())
     end
-    lt_g = leading_term(order, g)
+    lt_g = leading_term(g)
     for t in terms_to_reduce(redtype, f)
         factor = maybe_div(t, lt_g)
         if factor !== nothing
@@ -261,15 +262,16 @@ function one_step_div!(f::PolynomialBy{Order}, g::PolynomialBy{Order}; order::Mo
     return nothing
 end
 
-function one_step_xdiv!(f::PolynomialBy{Order}, g::PolynomialBy{Order}; order::MonomialOrder, redtype::RedType) where Order
+function one_step_xdiv!(f::PolynomialBy{Order}, g::PolynomialBy{Order}; order::Order, redtype::RedType) where Order <: MonomialOrder
+    @withmonomialorder order
     if iszero(f)
         return nothing
     end
     if iszero(g)
         throw(DivideError())
     end
-    lt_g = leading_monomial(order, g)
-    m2 = leading_coefficient(order, g)
+    lt_g = leading_monomial(g)
+    m2 = leading_coefficient(g)
     for t in terms_to_reduce(redtype, f)
         factor = maybe_div(monomial(t), lt_g)
         if factor !== nothing
