@@ -237,7 +237,7 @@ function gwv(o::MonomialOrder, polynomials::AbstractVector{M}; with_transformati
     progress_logged && @info("Main loop done; interreducing the result polynomials", length(result))
     k = length(result)
     for i in 1:k
-        xrem!(Full(), o, result[i], result[[1:i-1; i+1:k]])
+        xrem!(result[i], result[[1:i-1; i+1:k]], order=o)
         if basering(modulebasering(eltype(result))) <: Integer
             result[i] ÷= content(result[i])
         end

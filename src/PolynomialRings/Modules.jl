@@ -77,11 +77,11 @@ function Base.Order.lt(o::MonomialOrder, s::A, t::A) where A<:AbstractArray{P} w
     Base.Order.lt(o, leading_monomial(o, s), leading_monomial(o, t))
 end
 
-function one_step_div!(redtype::RedType, o::MonomialOrder, a::A, b::A) where A<:AbstractArray{<:Polynomial}
+function one_step_div!(a::A, b::A; order::MonomialOrder, redtype::RedType) where A<:AbstractArray{<:Polynomial}
     i = findfirst(!iszero, b)
     if i !== nothing && !iszero(a[i])
-        lt_a = leading_term(o, a[i])
-        lt_b = leading_term(o, b[i])
+        lt_a = leading_term(order, a[i])
+        lt_b = leading_term(order, b[i])
         factor = maybe_div(lt_a, lt_b)
         if factor !== nothing
             for i in eachindex(a)
@@ -99,15 +99,15 @@ function one_step_div!(redtype::RedType, o::MonomialOrder, a::A, b::A) where A<:
     end
 end
 
-function one_step_xdiv!(redtype::RedType, o::MonomialOrder, a::A, b::A) where A<:AbstractArray{<:Polynomial}
+function one_step_xdiv!(a::A, b::A; order::MonomialOrder, redtype::RedType) where A<:AbstractArray{<:Polynomial}
     i = findfirst(!iszero, b)
     if i !== nothing && !iszero(a[i])
-        lt_a = leading_monomial(o, a[i])
-        lt_b = leading_monomial(o, b[i])
+        lt_a = leading_monomial(order, a[i])
+        lt_b = leading_monomial(order, b[i])
         factor = maybe_div(lt_a, lt_b)
         if factor !== nothing
-            c1 = leading_coefficient(o, a[i])
-            c2 = leading_coefficient(o, b[i])
+            c1 = leading_coefficient(order, a[i])
+            c2 = leading_coefficient(order, b[i])
             m1, m2 = lcm_multipliers(c1, c2)
             for i in eachindex(a)
                 a[i] = m1 * a[i] - m2 * (factor * b[i])
@@ -126,12 +126,12 @@ function one_step_xdiv!(redtype::RedType, o::MonomialOrder, a::A, b::A) where A<
     end
 end
 
-leaddivrem(f::A,g::AbstractVector{A}) where A<:AbstractArray{P} where P<:Polynomial = divrem(Lead(), monomialorder(P), f, g)
-divrem(f::A,g::AbstractVector{A})     where A<:AbstractArray{P} where P<:Polynomial = divrem(Full(), monomialorder(P), f, g)
-leadrem(f::A,g::AbstractVector{A})    where A<:AbstractArray{P} where P<:Polynomial = rem(Lead(), monomialorder(P), f, g)
-rem(f::A,g::AbstractVector{A})        where A<:AbstractArray{P} where P<:Polynomial = rem(Full(), monomialorder(P), f, g)
-leaddiv(f::A,g::AbstractVector{A})    where A<:AbstractArray{P} where P<:Polynomial = div(Lead(), monomialorder(P), f, g)
-div(f::A,g::AbstractVector{A})        where A<:AbstractArray{P} where P<:Polynomial = div(Full(), monomialorder(P), f, g)
+leaddivrem(f::A,g::AbstractVector{A}) where A<:AbstractArray{P} where P<:Polynomial = divrem(f, g, order=monomialorder(P), redtype=Lead())
+divrem(f::A,g::AbstractVector{A})     where A<:AbstractArray{P} where P<:Polynomial = divrem(f, g, order=monomialorder(P), redtype=Full())
+leadrem(f::A,g::AbstractVector{A})    where A<:AbstractArray{P} where P<:Polynomial = rem(f, g, order=monomialorder(P), redtype=Lead())
+rem(f::A,g::AbstractVector{A})        where A<:AbstractArray{P} where P<:Polynomial = rem(f, g, order=monomialorder(P), redtype=Full())
+leaddiv(f::A,g::AbstractVector{A})    where A<:AbstractArray{P} where P<:Polynomial = div(f, g, order=monomialorder(P), redtype=Lead())
+div(f::A,g::AbstractVector{A})        where A<:AbstractArray{P} where P<:Polynomial = div(f, g, order=monomialorder(P), redtype=Full())
 
 
 # compatibility: a ring is just a rank-one module over itself, so the 'leading'
@@ -201,8 +201,8 @@ function Base.Broadcast.materialize!(tgt::TransformedModuleElement, src::Transfo
     tgt.n = src.n
 end
 
-function one_step_xdiv!(redtype::RedType, o::MonomialOrder, a::A, b::A) where A<:TransformedModuleElement
-    res = one_step_xdiv!(redtype, o, a.p, b.p)
+function one_step_xdiv!(a::A, b::A; order::MonomialOrder, redtype::RedType) where A<:TransformedModuleElement
+    res = one_step_xdiv!(a.p, b.p, order=order, redtype=redtype)
     if res !== nothing
         m, factor = res
         a.tr = m * b.n * a.tr - factor * b.tr

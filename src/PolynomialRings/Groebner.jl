@@ -47,14 +47,14 @@ function syzygies(polynomials::AbstractVector{M}) where M <: AbstractModuleEleme
         m_a, m_b = lcm_multipliers(lt_a, lt_b)
         S = m_a * a - m_b * b
 
-        (syzygy, S_red) = divrem(o, S, polynomials)
+        (syzygy, S_red) = divrem(S, polynomials, order=o)
         if !iszero(S_red)
             throw(ArgumentError("syzygies(...) expects a Gröbner basis, so S_red = $( S_red ) should be zero"))
         end
         syzygy[1,i] -= m_a
         syzygy[1,j] += m_b
 
-        syz_red = rem(o, syzygy, result)
+        syz_red = rem(syzygy, result, order=o)
         if !iszero(syz_red)
             push!(result, syz_red)
         end

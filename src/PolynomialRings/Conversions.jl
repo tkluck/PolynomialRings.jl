@@ -5,6 +5,7 @@ import Base: div, rem, divrem
 import Base: promote_op
 import Base: promote_rule, convert
 
+import ..Modules: AbstractModuleElement
 import ..Monomials: AbstractMonomial, total_degree
 import ..Operators: RedType
 import ..Polynomials: Polynomial, termtype, monomialtype, basering, terms
@@ -281,9 +282,9 @@ function promote_vector(a::S,b::AbstractVector{T}) where {S,T<:Polynomial}
     end
 end
 
-div(a::Polynomial, b::AbstractVector{<:Polynomial})    = div(promote_vector(a, b)...)
-rem(a::Polynomial, b::AbstractVector{<:Polynomial})    = rem(promote_vector(a, b)...)
-divrem(a::Polynomial, b::AbstractVector{<:Polynomial}) = divrem(promote_vector(a, b)...)
+div(a::AbstractModuleElement, b::AbstractVector{<:AbstractModuleElement})    = div(promote_vector(a, b)...)
+rem(a::AbstractModuleElement, b::AbstractVector{<:AbstractModuleElement})    = rem(promote_vector(a, b)...)
+divrem(a::AbstractModuleElement, b::AbstractVector{<:AbstractModuleElement}) = divrem(promote_vector(a, b)...)
 div(a::Number, b::AbstractVector{<:Polynomial})    = div(promote_vector(a, b)...)
 rem(a::Number, b::AbstractVector{<:Polynomial})    = rem(promote_vector(a, b)...)
 divrem(a::Number, b::AbstractVector{<:Polynomial}) = divrem(promote_vector(a, b)...)

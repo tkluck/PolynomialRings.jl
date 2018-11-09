@@ -243,14 +243,14 @@ terms_to_reduce(::Lead, f) = terms(f)[end:end]
 terms_to_reduce(::Full, f) = @view terms(f)[end:-1:1]
 terms_to_reduce(::Tail, f) = @view terms(f)[end-1:-1:1]
 
-function one_step_div!(redtype::RedType, o::MonomialOrder, f::PolynomialBy{Order}, g::PolynomialBy{Order}) where Order
+function one_step_div!(f::PolynomialBy{Order}, g::PolynomialBy{Order}; order::MonomialOrder, redtype::RedType) where Order
     if iszero(f)
         return nothing
     end
     if iszero(g)
         throw(DivideError())
     end
-    lt_g = leading_term(o, g)
+    lt_g = leading_term(order, g)
     for t in terms_to_reduce(redtype, f)
         factor = maybe_div(t, lt_g)
         if factor !== nothing
@@ -261,15 +261,15 @@ function one_step_div!(redtype::RedType, o::MonomialOrder, f::PolynomialBy{Order
     return nothing
 end
 
-function one_step_xdiv!(redtype::RedType, o::MonomialOrder, f::PolynomialBy{Order}, g::PolynomialBy{Order}) where Order
+function one_step_xdiv!(f::PolynomialBy{Order}, g::PolynomialBy{Order}; order::MonomialOrder, redtype::RedType) where Order
     if iszero(f)
         return nothing
     end
     if iszero(g)
         throw(DivideError())
     end
-    lt_g = leading_monomial(o, g)
-    m2 = leading_coefficient(o, g)
+    lt_g = leading_monomial(order, g)
+    m2 = leading_coefficient(order, g)
     for t in terms_to_reduce(redtype, f)
         factor = maybe_div(monomial(t), lt_g)
         if factor !== nothing

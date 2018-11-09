@@ -81,9 +81,9 @@ julia> g
 1 + 0im
 ```
 """
-function rem!(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
+function rem!(f::M, G::AbstractVector{M}; order::MonomialOrder=monomialorder(f), redtype::RedType=Full()) where M <: AbstractModuleElement
     if typeof(redtype) <: Full
-        any_reductions = rem!(Lead(), o, f, G)
+        any_reductions = rem!(f, G, order=order, redtype=Lead())
     elseif typeof(redtype) <: Lead || typeof(redtype) <: Tail
         any_reductions = false
     else
@@ -96,7 +96,7 @@ function rem!(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) wh
             i += 1
             continue
         end
-        result = one_step_div!(redtype, o, f, g)
+        result = one_step_div!(f, g, order=order, redtype=redtype)
         if result === nothing
             i += 1
         else
@@ -149,9 +149,9 @@ julia> g
 1 + 0im
 ```
 """
-function xrem!(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
+function xrem!(f::M, G::AbstractVector{M}; order::MonomialOrder=monomialorder(f), redtype::RedType=Full()) where M <: AbstractModuleElement
     if typeof(redtype) <: Full
-        any_reductions = xrem!(Lead(), o, f, G)
+        any_reductions = xrem!(f, G, order=order, redtype=Lead())
     elseif typeof(redtype) <: Lead || typeof(redtype) <: Tail
         any_reductions = false
     else
@@ -164,7 +164,7 @@ function xrem!(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) w
             i += 1
             continue
         end
-        result = one_step_xdiv!(redtype, o, f, g)
+        result = one_step_xdiv!(f, g, order=order, redtype=redtype)
         if result === nothing
             i += 1
         else
@@ -243,9 +243,9 @@ julia> g
 1 + 0im
 ```
 """
-function div!(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
+function div!(f::M, G::AbstractVector{M}; order::MonomialOrder=monomialorder(f), redtype::RedType=Full()) where M <: AbstractModuleElement
     if typeof(redtype) <: Full
-        factors = div!(Lead(), o, f, G)
+        factors = div!(f, G, order=order, redtype=Lead())
     elseif typeof(redtype) <: Lead || typeof(redtype) <: Tail
         factors = transpose(spzeros(modulebasering(M), length(G)))
     else
@@ -258,7 +258,7 @@ function div!(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) wh
             i += 1
             continue
         end
-        factor = one_step_div!(redtype, o, f, g)
+        factor = one_step_div!(f, g, order=order, redtype=redtype)
         if factor === nothing
             i += 1
         else
@@ -306,9 +306,9 @@ julia> g
 1 + 0im
 ```
 """
-function xdiv!(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
+function xdiv!(f::M, G::AbstractVector{M}; order::MonomialOrder=monomialorder(f), redtype::RedType=Full()) where M <: AbstractModuleElement
     if typeof(redtype) <: Full
-        m, factors = xdiv!(Lead(), o, f, G)
+        m, factors = xdiv!(f, G, order=order, redtype=Lead())
     elseif typeof(redtype) <: Lead || typeof(redtype) <: Tail
         m = one(basering(f))
         factors = transpose(spzeros(modulebasering(M), length(G)))
@@ -322,7 +322,7 @@ function xdiv!(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) w
             i += 1
             continue
         end
-        result = one_step_xdiv!(redtype, o, f, g)
+        result = one_step_xdiv!(f, g, order=order, redtype=redtype)
         if result === nothing
             i += 1
         else
@@ -336,26 +336,26 @@ function xdiv!(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) w
     return m, factors
 end
 
-function div(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
+function div(f::M, G::AbstractVector{M}; kwds...) where M <: AbstractModuleElement
     f′ = deepcopy(f)
-    return div!(redtype, o, f′, G)
+    return div!(f′, G; kwds...)
 end
 
-function rem(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
+function rem(f::M, G::AbstractVector{M}; kwds...) where M <: AbstractModuleElement
     f′ = deepcopy(f)
-    any_reductions = rem!(redtype, o, f′, G)
+    any_reductions = rem!(f′, G; kwds...)
     return any_reductions ? f′ : f
 end
 
-function divrem(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
+function divrem(f::M, G::AbstractVector{M}; kwds...) where M <: AbstractModuleElement
     f′ = deepcopy(f)
-    factors = div!(redtype, o, f′, G)
+    factors = div!(f′, G; kwds...)
     return factors, iszero(factors) ? f : f′
 end
 
-function xdiv(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
+function xdiv(f::M, G::AbstractVector{M}; kwds...) where M <: AbstractModuleElement
     f′ = deepcopy(f)
-    return xdiv!(redtype, o, f′, G)
+    return xdiv!(f′, G; kwds...)
 end
 
 """
@@ -382,15 +382,15 @@ julia> xrem(x^2 + y^2 + 1, [x, y])
 1 + 0im
 ```
 """
-function xrem(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
+function xrem(f::M, G::AbstractVector{M}; kwds...) where M <: AbstractModuleElement
     f′ = deepcopy(f)
-    any_reductions = xrem!(redtype, o, f′, G)
+    any_reductions = xrem!(f′, G; kwds...)
     return any_reductions ? f′ : f
 end
 
-function xdivrem(redtype::RedType, o::MonomialOrder, f::M, G::AbstractVector{M}) where M <: AbstractModuleElement
+function xdivrem(f::M, G::AbstractVector{M}; kwds...) where M <: AbstractModuleElement
     f′ = deepcopy(f)
-    m, factors = xdiv!(redtype, o, f′, G)
+    m, factors = xdiv!(f′, G; kwds...)
     return m, factors, iszero(factors) ? f : f′
 end
 
@@ -402,48 +402,31 @@ _unpack(a::Tuple{<:AbstractArray,<:Any}) = a[1][1], a[2]
 _unpack(a::Tuple{<:Any,<:AbstractArray,<:Any}) = a[1], a[2][1], a[3]
 # _unpack for xdiv!'s result
 _unpack(a::Tuple{<:Any,<:AbstractArray}) = a[1], a[2][1]
-leaddivrem(f::PolynomialBy{Order}, g::PolynomialBy{Order}) where Order = divrem(Lead(), Order(), f, [g]) |> _unpack
-divrem(f::PolynomialBy{Order}, g::PolynomialBy{Order})     where Order = divrem(Full(), Order(), f, [g]) |> _unpack
-leadrem(f::PolynomialBy{Order}, g::PolynomialBy{Order})    where Order = rem(Lead(), Order(), f, [g])
-rem(f::PolynomialBy{Order}, g::PolynomialBy{Order})        where Order = rem(Full(), Order(), f, [g])
-leaddiv(f::PolynomialBy{Order}, g::PolynomialBy{Order})    where Order = div(Lead(), Order(), f, [g]) |> _unpack
-div(f::PolynomialBy{Order}, g::PolynomialBy{Order})        where Order = div(Full(), Order(), f, [g]) |> _unpack
+# _unpack for rem's result
+_unpack(a) = a
 
-div!(f::PolynomialBy{Order}, g::PolynomialBy{Order})        where Order = div!(Full(), Order(), f, [g]) |> _unpack
-rem!(f::PolynomialBy{Order}, g::PolynomialBy{Order})        where Order = rem!(Full(), Order(), f, [g])
-xdiv!(f::PolynomialBy{Order}, g::PolynomialBy{Order})        where Order = xdiv!(Full(), Order(), f, [g]) |> _unpack
-xrem!(f::PolynomialBy{Order}, g::PolynomialBy{Order})        where Order = xrem!(Full(), Order(), f, [g])
-xdiv(f::PolynomialBy{Order}, g::PolynomialBy{Order})        where Order = xdiv(Full(), Order(), f, [g]) |> _unpack
-xrem(f::PolynomialBy{Order}, g::PolynomialBy{Order})        where Order = xrem(Full(), Order(), f, [g])
-xdivrem(f::PolynomialBy{Order}, g::PolynomialBy{Order})        where Order = xdivrem(Full(), Order(), f, [g]) |> _unpack
-
-divrem(redtype::RedType, o::MonomialOrder, f::P, g::P) where P<:Polynomial = divrem(redtype, o, f, [g]) |> _unpack
-rem(redtype::RedType, o::MonomialOrder, f::P, g::P)    where P<:Polynomial = rem(redtype, o, f, [g])
-div(redtype::RedType, o::MonomialOrder, f::P, g::P)    where P<:Polynomial = div(redtype, o, f, [g]) |> _unpack
-xdiv(redtype::RedType, o::MonomialOrder, f::P, g::P)    where P<:Polynomial = xdiv(redtype, o, f, [g]) |> _unpack
-xrem(redtype::RedType, o::MonomialOrder, f::P, g::P)    where P<:Polynomial = xrem(redtype, o, f, [g]) |> _unpack
-xdivrem(redtype::RedType, o::MonomialOrder, f::P, g::P)    where P<:Polynomial = xdivrem(redtype, o, f, [g]) |> _unpack
-
-leaddivrem(o::MonomialOrder, f, g) = divrem(Lead(), o, f, g)
-divrem(o::MonomialOrder, f, g) = divrem(Full(), o, f, g)
-leadrem(o::MonomialOrder, f, g) = rem(Lead(), o, f, g)
-rem(o::MonomialOrder, f, g) = rem(Full(), o, f, g)
-leaddiv(o::MonomialOrder, f, g) = div(Lead(), o, f, g)
-div(o::MonomialOrder, f, g) = div(Full(), o, f, g)
-
-leaddivrem(f::M,g::AbstractVector{M}) where M<:Polynomial = divrem(Lead(), monomialorder(M), f, g)
-divrem(f::M,g::AbstractVector{M})     where M<:Polynomial = divrem(Full(), monomialorder(M), f, g)
-leadrem(f::M,g::AbstractVector{M})    where M<:Polynomial = rem(Lead(), monomialorder(M), f, g)
-rem(f::M,g::AbstractVector{M})        where M<:Polynomial = rem(Full(), monomialorder(M), f, g)
-leaddiv(f::M,g::AbstractVector{M})    where M<:Polynomial = div(Lead(), monomialorder(M), f, g)
-div(f::M,g::AbstractVector{M})        where M<:Polynomial = div(Full(), monomialorder(M), f, g)
-div!(f::M,g::AbstractVector{M})       where M<:Polynomial = div!(Full(), monomialorder(M), f, g)
-rem!(f::M,g::AbstractVector{M})       where M<:Polynomial = rem!(Full(), monomialorder(M), f, g)
-xdiv!(f::M,g::AbstractVector{M})      where M<:Polynomial = xdiv!(Full(), monomialorder(M), f, g)
-xrem!(f::M,g::AbstractVector{M})      where M<:Polynomial = xrem!(Full(), monomialorder(M), f, g)
-xdiv(f::M,g::AbstractVector{M})       where M<:Polynomial = xdiv(Full(), monomialorder(M), f, g)
-xrem(f::M,g::AbstractVector{M})       where M<:Polynomial = xrem(Full(), monomialorder(M), f, g)
-xdivrem(f::M,g::AbstractVector{M})    where M<:Polynomial = xdivrem(Full(), monomialorder(M), f, g)
-
+# ergonomic versions:
+#     div(f, g) for div(f, [g])
+#     leaddiv for div(; redtype=Lead())
+#     div(f, g) for div(f, g, order=monomialorder(f)) if f and g have the same order
+# etc
+for fn in [:divrem, :div, :rem]
+    for x in ["", "x"]
+        for inplace in ["", "!"]
+            for (redtype, prefix) in [(Lead(), "lead"), (Tail(), "tail")]
+                fnname = Symbol(x, prefix, fn, inplace)
+                target = Symbol(x, fn, inplace)
+                @eval function $fnname(f::PolynomialBy{Order}, g::PolynomialBy{Order}; order=monomialorder(f)) where Order
+                    $target(f, [g], order=order, redtype=$redtype) |> _unpack
+                end
+            end
+            fnname = Symbol(x, fn, inplace)
+            target = Symbol(x, fn, inplace)
+            @eval function $fnname(f::PolynomialBy{Order}, g::PolynomialBy{Order}; order=monomialorder(f), redtype=Full()) where Order
+                $target(f, [g], order=order, redtype=redtype) |> _unpack
+            end
+        end
+    end
+end
 
 end
