@@ -37,7 +37,7 @@ end
 # with the version for which P and p do not have the same names.
 function convert(P::Type{<:PolynomialOver{C,O}}, p::PolynomialOver{D,O}) where {C,D,O<:NamedOrder}
     T = termtype(P)
-    newterms = T[T(monomial(t), convert(C, coefficient(t))) for t in terms(p)]
+    newterms = T[T(monomial(t), convert(C, coefficient(t))) for t in terms(p, order=O())]
     # in positive charactestic (e.g. C = ℤ/5ℤ), we may need to filter
     # terms that are zero from conversion.
     filter!(!iszero, newterms)
@@ -45,7 +45,7 @@ function convert(P::Type{<:PolynomialOver{C,O}}, p::PolynomialOver{D,O}) where {
 end
 function convert(P::Type{<:PolynomialOver{C,O}}, p::PolynomialOver{D,O}) where {C,D,O<:NumberedOrder}
     T = termtype(P)
-    newterms = T[T(monomial(t), convert(C, coefficient(t))) for t in terms(p)]
+    newterms = T[T(monomial(t), convert(C, coefficient(t))) for t in terms(p, order=O())]
     # in positive charactestic (e.g. C = ℤ/5ℤ), we may need to filter
     # terms that are zero from conversion.
     filter!(!iszero, newterms)

@@ -4,7 +4,7 @@ import Base: show
 
 import ..MonomialOrderings: MonomialOrder
 import ..Monomials: AbstractMonomial, enumeratenz
-import ..Polynomials: Polynomial, terms, basering
+import ..Polynomials: Polynomial, nterms, terms, basering
 import ..Terms: Term, coefficient, monomial
 import ..NamingSchemes: Named, Numbered
 import PolynomialRings: namingscheme
@@ -58,7 +58,7 @@ function show(io::IO, t::Term)
 end
 
 function show(io::IO, p::Polynomial)
-    if length(terms(p)) == 0
+    if nterms(p) == 0
         print(io, "0")
     end
     print(io, join((repr(t) for t in reverse(terms(p))), " + "))

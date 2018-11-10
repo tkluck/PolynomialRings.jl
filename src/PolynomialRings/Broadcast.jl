@@ -113,7 +113,7 @@ import InPlace: @inplace, inclusiveinplace!
 import ..Constants: Zero, One
 import ..MonomialOrderings: MonomialOrder
 import ..Monomials: AbstractMonomial
-import ..Polynomials: Polynomial, TermOver, PolynomialOver, PolynomialBy, terms, termtype
+import ..Polynomials: Polynomial, TermOver, PolynomialOver, PolynomialBy, nterms, terms, termtype
 import ..Terms: Term, monomial, coefficient
 import ..Util: ParallelIter
 import PolynomialRings: monomialorder, monomialtype, basering
@@ -203,16 +203,16 @@ Base.eltype(t::TermsMap) = Base._return_type(t.op, Tuple{eltype(t.terms)})
 #  Leaf cases for `iterterms`
 #
 # -----------------------------------------------------------------------------
-iterterms(a::RefValue{<:PolynomialBy{Order}}) where Order = TermsMap(identity, Order(), terms(a[]), length(terms(a[])), false)
-iterterms(a::Owned{<:PolynomialBy{Order}}) where Order = TermsMap(identity, Order(), terms(a[]), length(terms(a[])), true)
+iterterms(a::RefValue{<:PolynomialBy{Order}}) where Order = TermsMap(identity, Order(), terms(a[], order=Order()), nterms(a[]), false)
+iterterms(a::Owned{<:PolynomialBy{Order}}) where Order = TermsMap(identity, Order(), terms(a[], order=Order()), nterms(a[]), true)
 
 # -----------------------------------------------------------------------------
 #
 #  termsbound base case and recursion
 #
 # -----------------------------------------------------------------------------
-termsbound(a::RefValue{<:Polynomial}) = length(terms(a[]))
-termsbound(a::Owned{<:Polynomial}) = length(terms(a[]))
+termsbound(a::RefValue{<:Polynomial}) = nterms(a[])
+termsbound(a::Owned{<:Polynomial}) = nterms(a[])
 termsbound(a::RefValue) = 1
 termsbound(a::Number) = 1
 termsbound(bc::Broadcasted{<:Termwise, Nothing, <:PlusMinus}) = sum(termsbound, bc.args)

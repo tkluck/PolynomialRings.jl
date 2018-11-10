@@ -8,7 +8,7 @@ import InPlace: @inplace
 import ..Constants: Zero
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
 import ..Monomials: AbstractMonomial
-import ..Polynomials: Polynomial, termtype, terms, monomialorder, monomialtype
+import ..Polynomials: Polynomial, termtype, nterms, terms, monomialorder, monomialtype
 import ..Polynomials: PolynomialBy
 import ..Terms: Term, monomial, coefficient
 import ..Util: BoundedHeap
@@ -28,7 +28,7 @@ one(::Type{P})  where P<:Polynomial = P([one(termtype(P))])
 zero(::P)       where P <: Polynomial = zero(P)
 one(::P)        where P <: Polynomial = one(P)
 
-iszero(a::P)        where P <: Polynomial = length(terms(a)) == 0
+iszero(a::P)        where P <: Polynomial = nterms(a) == 0
 ==(a::P,b::P)       where P <: Polynomial = a.terms == b.terms
 +(a::P)             where P <: Polynomial = deepcopy(a)
 -(a::P)             where P <: Polynomial = P([-t for t in terms(a)])
@@ -93,7 +93,7 @@ function _map(op, a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
     for (m, cleft, cright) in ParallelIter(
             monomial, coefficient, ≺,
             Zero(), Zero(),
-            terms(a), terms(b),
+            terms(a, order=Order()), terms(b, order=Order()),
         )
         coeff = op(cleft, cright)
         if !iszero(coeff)
@@ -167,8 +167,8 @@ function *(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
         return zero(P)
     end
 
-    t_a = terms(a)
-    t_b = terms(b)
+    t_a = terms(a, order=Order())
+    t_b = terms(b, order=Order())
     l_a = length(t_a)
     l_b = length(t_b)
 
@@ -239,9 +239,9 @@ struct Lead <: RedType end
 struct Full <: RedType end
 struct Tail <: RedType end
 
-terms_to_reduce(::Lead, f) = terms(f)[end:end]
-terms_to_reduce(::Full, f) = @view terms(f)[end:-1:1]
-terms_to_reduce(::Tail, f) = @view terms(f)[end-1:-1:1]
+terms_to_reduce(::Lead, f; order) = terms(f, order=order)[end:end]
+terms_to_reduce(::Full, f; order) = @view terms(f, order=order)[end:-1:1]
+terms_to_reduce(::Tail, f; order) = @view terms(f, order=order)[end-1:-1:1]
 
 function one_step_div!(f::PolynomialBy{Order}, g::PolynomialBy{Order}; order::Order, redtype::RedType) where Order <: MonomialOrder
     @withmonomialorder order
@@ -252,7 +252,7 @@ function one_step_div!(f::PolynomialBy{Order}, g::PolynomialBy{Order}; order::Or
         throw(DivideError())
     end
     lt_g = leading_term(g)
-    for t in terms_to_reduce(redtype, f)
+    for t in terms_to_reduce(redtype, f, order=order)
         factor = maybe_div(t, lt_g)
         if factor !== nothing
             @. f -= factor * g
@@ -272,7 +272,7 @@ function one_step_xdiv!(f::PolynomialBy{Order}, g::PolynomialBy{Order}; order::O
     end
     lt_g = leading_monomial(g)
     m2 = leading_coefficient(g)
-    for t in terms_to_reduce(redtype, f)
+    for t in terms_to_reduce(redtype, f, order=order)
         factor = maybe_div(monomial(t), lt_g)
         if factor !== nothing
             m1 = coefficient(t)

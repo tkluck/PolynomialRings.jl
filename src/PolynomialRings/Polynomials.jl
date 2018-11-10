@@ -56,7 +56,11 @@ const PolynomialIn{M}         = Polynomial{M}
 #
 # -----------------------------------------------------------------------------
 
-terms(p::Polynomial) = p.terms
+nterms(p::Polynomial) = length(p.terms)
+
+terms(p::PolynomialBy{Order}, order::Order) where Order<:MonomialOrder = p.terms
+terms(p::Polynomial, order::MonomialOrder)                  = sort(p.terms, order=order)
+terms(p::Polynomial; order::MonomialOrder=monomialorder(p)) = terms(p, order)
 
 termtype(::Type{Polynomial{M,C}}) where {M,C}  = Term{M,C}
 exptype(::Type{P}) where P<:Polynomial = exptype(termtype(P))
@@ -73,7 +77,7 @@ generators(::Type{P}) where P <: Polynomial = lazymap(
 )
 
 function to_dense_monomials(n, p::Polynomial)
-    A = [ to_dense_monomials(n, t) for t in terms(p) ]
+    A = [ to_dense_monomials(n, t) for t in terms(p, order=monomialorder(p)) ]
     T = eltype(A)
     M = monomialtype(T)
     C = basering(T)
@@ -82,12 +86,9 @@ end
 
 max_variable_index(p::Polynomial) = iszero(p) ? 0 : maximum(max_variable_index(t) for t in terms(p))
 
-leading_term(p::PolynomialBy{M}, order::M) where M <: MonomialOrder = last(terms(p))
-leading_term(p::Polynomial, order::MonomialOrder) = maximum(order, terms(p))
-leading_term(p::Polynomial; order::MonomialOrder=monomialorder(p)) = leading_term(p, order)
 
+leading_term(p::Polynomial; order::MonomialOrder=monomialorder(p)) = last(terms(p, order=order))
 leading_monomial(p::Polynomial; order::MonomialOrder=monomialorder(p)) = monomial(leading_term(p, order=order))
-
 leading_coefficient(p::Polynomial; order::MonomialOrder=monomialorder(p)) = coefficient(leading_term(p, order=order))
 
 
