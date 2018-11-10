@@ -1,6 +1,5 @@
 module Polynomials
 
-import Base.Order: lt
 import Base: first, last, copy, hash
 import SparseArrays: SparseVector
 
@@ -97,10 +96,10 @@ first(p::Polynomial) = p
 last(p::Polynomial) = p
 copy(p::Polynomial) = p
 
-function lt(order::MonomialOrder, a::P, b::P) where P <: Polynomial
+function Base.Order.lt(order::MonomialOrder, a::P, b::P) where P <: Polynomial
     iszero(b) && return false
     iszero(a) && return true
-    lt(order, leading_monomial(a, order=order), leading_monomial(b, order=order))
+    Base.Order.lt(order, leading_monomial(a, order=order), leading_monomial(b, order=order))
 end
 
 # -----------------------------------------------------------------------------

@@ -1,6 +1,5 @@
 module Terms
 
-import Base.Order: lt
 import Base: *, ^, +, -, one, ==, iszero, diff
 import Base: hash
 
@@ -92,6 +91,6 @@ end
 total_degree(a::Term) = total_degree(monomial(a))
 lcm_degree(a::T, b::T) where T<:Term = lcm_degree(monomial(a), monomial(b))
 
-lt(o::MonomialOrder, a::T,b::T) where T <: Term = lt(o, monomial(a), monomial(b))
+Base.Order.lt(o::MonomialOrder, a::T,b::T) where T <: Term = Base.Order.lt(o, monomial(a), monomial(b))
 
 end

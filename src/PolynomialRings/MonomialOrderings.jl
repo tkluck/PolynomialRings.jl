@@ -1,6 +1,6 @@
 module MonomialOrderings
 
-import Base.Order: Ordering, lt
+import Base.Order: Ordering
 import Base: min, max, minimum, maximum
 import Base: promote_rule
 
@@ -15,8 +15,7 @@ import PolynomialRings: leading_monomial, leading_coefficient, leading_term
 For implementing your own monomial order, do the following:
 
 1. Choose a symbol to represent it, say `:myorder`
-2. `import Base.Order: lt`
-3. `lt(::MonomialOrder{:myorder}, a::M, b::M) where M <: AbstractMonomial = ...`
+2. `Base.Order.lt(::MonomialOrder{:myorder}, a::M, b::M) where M <: AbstractMonomial = ...`
 
 A few useful functions are [`enumeratenz`](@ref), [`index_union`](@ref), and
 [`rev_index_union`](@ref). See [`PolynomialRings.Monomials`](@ref) and
@@ -42,7 +41,7 @@ namingscheme(::Type{O}) where O <: MonomialOrder{Rule, Names} where {Rule, Names
 
 to_dense_monomials(n::Integer, o::MonomialOrder) = MonomialOrder{rulesymbol(o), to_dense_monomials(n, namingscheme(o))}()
 
-function lt(::MonomialOrder{:degrevlex}, a::M,b::M) where M <: AbstractMonomial
+function Base.Order.lt(::MonomialOrder{:degrevlex}, a::M,b::M) where M <: AbstractMonomial
 
     if total_degree(a) == total_degree(b)
         for i in rev_index_union(a,b)
@@ -56,7 +55,7 @@ function lt(::MonomialOrder{:degrevlex}, a::M,b::M) where M <: AbstractMonomial
     end
 end
 
-function lt(::MonomialOrder{:deglex}, a::M,b::M) where M <: AbstractMonomial
+function Base.Order.lt(::MonomialOrder{:deglex}, a::M,b::M) where M <: AbstractMonomial
 
     if total_degree(a) == total_degree(b)
         for i in index_union(a,b)
@@ -70,7 +69,7 @@ function lt(::MonomialOrder{:deglex}, a::M,b::M) where M <: AbstractMonomial
     end
 end
 
-function lt(::MonomialOrder{:lex}, a::M,b::M) where M <: AbstractMonomial
+function Base.Order.lt(::MonomialOrder{:lex}, a::M,b::M) where M <: AbstractMonomial
     for i in index_union(a,b)
         if a[i] != b[i]
             return a[i] < b[i]
@@ -82,12 +81,12 @@ end
 # This method is mostly for supporting leading monomials of elements of a free
 # f.g. module which is a tuple (index, monomial). That's in use in Gröbner,
 # and maybe this implementation detail should move there.
-function lt(m::MonomialOrder, a::T, b::T) where T <: Tuple
+function Base.Order.lt(m::MonomialOrder, a::T, b::T) where T <: Tuple
     for i = 1:fieldcount(T)
         if fieldtype(T,i) <: AbstractMonomial
-            if lt(m, a[i], b[i])
+            if Base.Order.lt(m, a[i], b[i])
                 return true
-            elseif lt(m, b[i], a[i])
+            elseif Base.Order.lt(m, b[i], a[i])
                 return false
             end
         else
@@ -101,8 +100,8 @@ function lt(m::MonomialOrder, a::T, b::T) where T <: Tuple
     return false
 end
 
-min(m::MonomialOrder, x, y) = lt(m, x, y) ? x : y
-max(m::MonomialOrder, x, y) = lt(m, x, y) ? y : x
+min(m::MonomialOrder, x, y) = Base.Order.lt(m, x, y) ? x : y
+max(m::MonomialOrder, x, y) = Base.Order.lt(m, x, y) ? y : x
 min(m::MonomialOrder, a, b, c, xs...) = (op(x,y) = min(m,x,y); Base.afoldl(op, op(op(a,b),c), xs...))
 max(m::MonomialOrder, a, b, c, xs...) = (op(x,y) = max(m,x,y); Base.afoldl(op, op(op(a,b),c), xs...))
 minimum(m::MonomialOrder, iter) = (op(x,y) = min(m,x,y); reduce(op, iter))

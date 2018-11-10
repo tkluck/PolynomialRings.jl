@@ -1,6 +1,5 @@
 module Modules
 
-import Base.Order: lt
 import Base: *, +, -, ÷
 import Base: iszero, div, rem, divrem, *, ==
 import Base: keytype
@@ -55,7 +54,7 @@ maybe_div(s::Signature, t::Signature)            = s.i == t.i ? maybe_div(s.m, t
 lcm_degree(s::Signature, t::Signature)           = s.i == t.i ? lcm_degree(s.m, t.m) : nothing
 lcm_multipliers(s::Signature, t::Signature)      = s.i == t.i ? lcm_multipliers(s.m, t.m) : nothing
 total_degree(s::Signature)                       = total_degree(s.m)
-Base.Order.lt(o::MonomialOrder, s::Signature, t::Signature) = s.i > t.i || (s.i == t.i && lt(o, s.m, t.m))
+Base.Order.lt(o::MonomialOrder, s::Signature, t::Signature) = s.i > t.i || (s.i == t.i && Base.Order.lt(o, s.m, t.m))
 ==(s::S, t::S) where S <: Signature = s.i == t.i && s.m == t.m
 iszero(s::Signature{<:Term}) = iszero(s.m)
 
