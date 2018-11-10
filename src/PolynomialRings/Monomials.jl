@@ -8,9 +8,9 @@ import Base: promote_rule
 import SparseArrays: SparseVector, sparsevec
 import SparseArrays: nonzeroinds
 
-import ..VariableNames: Named, Numbered, flatvariablesymbols
+import ..NamingSchemes: Named, Numbered, flatvariablesymbols
 import PolynomialRings: generators, to_dense_monomials, max_variable_index
-import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namestype, monomialorder
+import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namingscheme, monomialorder
 
 """
     AbstractMonomial{Order}
@@ -149,7 +149,7 @@ lcm(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _const
 gcd(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _construct(promote_type(typeof(a), typeof(b)),i -> min(a[i], b[i]), index_union(a,b))
 
 monomialorder(::Type{M}) where M <: AbstractMonomial{Order} where Order = Order()
-namestype(::Type{M}) where M <: AbstractMonomial = namestype(monomialorder(M))
+namingscheme(::Type{M}) where M <: AbstractMonomial = namingscheme(monomialorder(M))
 isless(a::M, b::M) where M <: AbstractMonomial = Base.Order.lt(monomialorder(M), a, b)
 iszero(a::AbstractMonomial) = false
 
@@ -386,7 +386,7 @@ nzindices(a::VectorMonomial{V,I,Order}) where {V <: SparseVector,I,Order} = nonz
 max_variable_index(m::TupleMonomial{N}) where N = N
 max_variable_index(m::VectorMonomial{V,I,Order}) where {V,I,Order} = length(m.e)
 
-to_dense_monomials(n::Integer, ::Type{Numbered{Name}}) where Name = (g = flatvariablesymbols(Numbered{Name}); Named{ tuple([take!(g) for _ = 1:n]...) })
+to_dense_monomials(n::Integer, ::Numbered{Name}) where Name = (g = flatvariablesymbols(Numbered{Name}()); Named{ tuple([take!(g) for _ = 1:n]...) })
 function to_dense_monomials(n::Integer, m::AbstractMonomial)
     Order = to_dense_monomials(n, monomialorder(m))
     M = TupleMonomial{n, exptype(m), typeof(Order)}

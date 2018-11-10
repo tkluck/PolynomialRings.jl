@@ -9,7 +9,7 @@ import ..Monomials: AbstractMonomial
 import ..Monomials: total_degree
 import ..Util: lazymap
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering
-import PolynomialRings: maybe_div, lcm_multipliers, monomialtype, exptype, lcm_degree, namestype, monomialorder
+import PolynomialRings: maybe_div, lcm_multipliers, monomialtype, exptype, lcm_degree, namingscheme, monomialorder
 
 """
     Term{M, C} where M <: AbstractMonomial where C
@@ -32,7 +32,7 @@ end
 monomialtype(::Type{Term{M,C}}) where {M,C} = M
 basering(::Type{Term{M,C}}) where {M,C} = C
 exptype(::Type{T}) where T<:Term = exptype(monomialtype(T))
-namestype(::Type{T}) where T<:Term = namestype(monomialtype(T))
+namingscheme(::Type{T}) where T<:Term = namingscheme(monomialtype(T))
 monomialorder(::Type{T}) where T <: Term = monomialorder(monomialtype(T))
 
 # -----------------------------------------------------------------------------

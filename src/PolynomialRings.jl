@@ -4,7 +4,7 @@ include("PolynomialRings/Methods.jl")
 include("PolynomialRings/Util.jl")
 include("PolynomialRings/Backends.jl")
 
-include("PolynomialRings/VariableNames.jl")
+include("PolynomialRings/NamingSchemes.jl")
 include("PolynomialRings/Monomials.jl")
 include("PolynomialRings/MonomialOrderings.jl")
 include("PolynomialRings/Terms.jl")
@@ -63,7 +63,7 @@ monomialtype(x::_P)  = monomialtype(typeof(x))
 monomialorder(x::_P) = monomialorder(typeof(x))
 termtype(x::_P)      = termtype(typeof(x))
 exptype(x::_P)       = exptype(typeof(x))
-namestype(x::_P)     = namestype(typeof(x))
+namingscheme(x::_P)  = namingscheme(typeof(x))
 
 include("CommutativeAlgebras.jl")
 

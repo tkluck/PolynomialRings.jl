@@ -8,8 +8,8 @@ import ..Monomials: TupleMonomial, AbstractMonomial, _construct, exptype
 import ..Polynomials:  NamedMonomial, NumberedPolynomial, monomialorder, NamedOrder, NumberedOrder
 import ..Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolynomial, PolynomialBy, PolynomialIn
 import ..Terms: Term, basering, monomial, coefficient
-import ..VariableNames: Named, Numbered
-import PolynomialRings: termtype, terms, namestype, variablesymbols, exptype, monomialtype, allvariablesymbols
+import ..NamingSchemes: Named, Numbered
+import PolynomialRings: termtype, terms, namingscheme, variablesymbols, exptype, monomialtype, allvariablesymbols
 
 # -----------------------------------------------------------------------------
 #
@@ -115,19 +115,20 @@ _coeff(::Type{P}) where P<:NamedPolynomial = _coeff(basering(P))
 _monomialtype(x::Type) = One
 _monomialtype(x::Type{P}) where P<:NamedPolynomial = promote_type(monomialtype(P), _monomialtype(basering(P)))
 
-function remove_variables(::Type{N}, vars...) where N <: Named
+function remove_variables(N::Named, vars...)
     result = [x for x in variablesymbols(N) if !(x in vars)]
-    Named{tuple(result...)}
+    Named{tuple(result...)}()
 end
 
-function remove_variables(::Type{O}, vars...) where O <: NamedOrder
-    MonomialOrder{rulesymbol(O), remove_variables(namestype(O), vars...)}
+function remove_variables(O::NamedOrder, vars...)
+    O′ = remove_variables(namingscheme(O), vars...)
+    MonomialOrder{rulesymbol(O), typeof(O′)}()
 end
 
 function remove_variables(::Type{M}, vars...) where M <: TupleMonomial
-    O = remove_variables(typeof(monomialorder(M)), vars...)
+    O = remove_variables(monomialorder(M), vars...)
     N = length(variablesymbols(O))
-    TupleMonomial{N, exptype(M), O}
+    TupleMonomial{N, exptype(M), typeof(O)}
  end
 
 function promote_rule(::Type{T1}, ::Type{T2}) where T1 <: Term where T2 <: Term

@@ -13,8 +13,8 @@ import ..NamedPolynomials: NamedPolynomial, _lossy_convert_monomial
 import ..Polynomials: Polynomial, termtype, monomialtype, monomialorder, terms, polynomial_ring
 import ..Terms: Term, monomial, coefficient
 import ..Util: SingleItemIter
-import ..VariableNames: Named, Numbered, AbstractVariableNames
-import PolynomialRings: basering, namestype, variablesymbols
+import ..NamingSchemes: Named, Numbered, NamingScheme
+import PolynomialRings: basering, namingscheme, variablesymbols
 
 # -----------------------------------------------------------------------------
 #
@@ -22,8 +22,8 @@ import PolynomialRings: basering, namestype, variablesymbols
 #
 # -----------------------------------------------------------------------------
 
-_expansion_types(t::Type, order::MonomialOrder) = _expansion_types(t, namestype(order)())
-_expansion_types(::Type{N}, ::AbstractVariableNames) where N = (One, N)
+_expansion_types(t::Type, order::MonomialOrder) = _expansion_types(t, namingscheme(order))
+_expansion_types(::Type{N}, ::NamingScheme) where N = (One, N)
 _lossy_convert_monomial(::Type{M}, ::One) where M<:AbstractMonomial = one(M)
 
 _expansion_expr(vars::NTuple{N,Symbol}) where N = MonomialOrder{:degrevlex, Named{vars}}()
@@ -99,7 +99,7 @@ end
 
 
 function _expansion(p::P, spec::NamedMonomialOrder) where P <: NamedPolynomial
-    vars = variablesymbols(namestype(spec))
+    vars = variablesymbols(spec)
     available_vars = variablesymbols(P)
     unspecified_vars = tuple(setdiff(available_vars, vars)...)
     unknown_vars = tuple(setdiff(vars, available_vars)...)
@@ -146,7 +146,7 @@ end
 #
 # -----------------------------------------------------------------------------
 function _expansion_types(::Type{P}, names::Numbered) where P <: Polynomial
-    @assert namestype(P) == typeof(names)
+    @assert namingscheme(P) == names
 
     return (monomialtype(P), basering(P))
 end

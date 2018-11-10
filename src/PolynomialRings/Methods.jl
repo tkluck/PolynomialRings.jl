@@ -13,7 +13,7 @@ function monomialtype end
 function monomialorder end
 function termtype end
 function exptype end
-function namestype end
+function namingscheme end
 function variablesymbols end
 function allvariablesymbols end
 

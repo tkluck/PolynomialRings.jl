@@ -11,7 +11,7 @@ import ..Operators: RedType
 import ..Polynomials: Polynomial, termtype, monomialtype, basering, terms
 import ..Polynomials: PolynomialOver, NamedPolynomial
 import ..Terms: Term, monomial, coefficient
-import PolynomialRings: fraction_field, integers, base_extend, base_restrict, namestype
+import PolynomialRings: fraction_field, integers, base_extend, base_restrict, namingscheme
 import PolynomialRings: ⊗, base_extend, base_restrict
 
 # -----------------------------------------------------------------------------
@@ -261,7 +261,7 @@ end
 
 # Don't duplicate variable names as a result of base_extend
 function base_extend(::Type{Term{M,C1}}, ::Type{C2}) where {M,C1,C2<:Polynomial}
-    if namestype(C2) == namestype(M)
+    if namingscheme(C2) == namingscheme(M)
         Term{M, base_extend(C1,basering(C2))}
     else
         Term{M, base_extend(C1,C2)}

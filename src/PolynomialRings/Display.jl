@@ -6,8 +6,8 @@ import ..MonomialOrderings: MonomialOrder
 import ..Monomials: AbstractMonomial, enumeratenz
 import ..Polynomials: Polynomial, terms, basering
 import ..Terms: Term, coefficient, monomial
-import ..VariableNames: Named, Numbered
-import PolynomialRings: namestype
+import ..NamingSchemes: Named, Numbered
+import PolynomialRings: namingscheme
 
 # -----------------------------------------------------------------------------
 #
@@ -15,8 +15,8 @@ import PolynomialRings: namestype
 #
 # -----------------------------------------------------------------------------
 
-_variable(::Type{Named{Names}}, ix)   where Names = String(Names[ix])
-_variable(::Type{Numbered{Name}}, ix) where Name  = "$Name[$ix]"
+_variable(::Named{Names}, ix)   where Names = String(Names[ix])
+_variable(::Numbered{Name}, ix) where Name  = "$Name[$ix]"
 
 function show(io::IO, m::AbstractMonomial)
     if m == one(m)
@@ -25,7 +25,7 @@ function show(io::IO, m::AbstractMonomial)
     end
     factors = String[]
     for (ix, i) in enumeratenz(m)
-        symbol = _variable(namestype(m), ix)
+        symbol = _variable(namingscheme(m), ix)
         if i == 1
             push!(factors, "$symbol")
         elseif i > 1
@@ -80,28 +80,16 @@ function defaultshow(io, t)
     end
 end
 
-function show(io::IO, t::MO) where MO <: MonomialOrder{Name} where Name
-    if isconcretetype(t)
-        print(io, Name)
-    else
-        defaultshow(io, t)
-    end
+function show(io::IO, t::MonomialOrder{Name}) where Name
+    print(io, Name)
 end
 
-function show(io::IO, t::Type{Named{Names}}) where Names
-    if isconcretetype(t)
-        join(io, Names, ",")
-    else
-        defaultshow(io, t)
-    end
+function show(io::IO, ::Named{Names}) where Names
+    join(io, Names, ",")
 end
 
-function show(io::IO, t::Type{Numbered{Name}}) where Name
-    if isconcretetype(t)
-        print(io, "$(Name)[]")
-    else
-        defaultshow(io, t)
-    end
+function show(io::IO, ::Numbered{Name}) where Name
+    print(io, "$(Name)[]")
 end
 
 # keep in sync with Constructors.jl
@@ -113,7 +101,7 @@ _repr(x) = x
 
 function show(io::IO, t::Type{P}) where P<:Polynomial
     if isconcretetype(t)
-        print(io, "$(_repr(basering(P)))[$(namestype(P))]")
+        print(io, "$(_repr(basering(P)))[$(namingscheme(P))]")
     else
         defaultshow(io, t)
     end
@@ -121,7 +109,7 @@ end
 
 function show(io::IO, t::Type{Term{M,C}}) where {M,C}
     if isconcretetype(t)
-        print(io, "(Term over $C in $(namestype(M)))")
+        print(io, "(Term over $C in $(namingscheme(M)))")
     else
         defaultshow(io, t)
     end

@@ -12,7 +12,7 @@ import ..Polynomials: Polynomial, polynomial_ring, numbered_polynomial_ring
 import ..QuotientRings: QuotientRing
 import ..Terms: Term, basering
 import ..Util: lazymap
-import ..VariableNames: Numbered, numberedvariablename
+import ..NamingSchemes: Numbered, numberedvariablename
 import PolynomialRings: construct_monomial, exptype
 import PolynomialRings: generators, base_extend, variablesymbols, allvariablesymbols, ⊗
 

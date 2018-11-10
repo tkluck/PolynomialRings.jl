@@ -9,10 +9,10 @@ import ..MonomialOrderings: MonomialOrder
 import ..Monomials: AbstractMonomial, TupleMonomial, VectorMonomial
 import ..Terms: Term, monomial, coefficient
 import ..Util: lazymap
-import ..VariableNames: Named, Numbered
+import ..NamingSchemes: Named, Numbered
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering, monomialtype
 import PolynomialRings: leading_coefficient, leading_monomial
-import PolynomialRings: leading_term, termtype, monomialorder, terms, exptype, namestype
+import PolynomialRings: leading_term, termtype, monomialorder, terms, exptype, namingscheme
 import PolynomialRings: variablesymbols, allvariablesymbols
 
 # -----------------------------------------------------------------------------
@@ -60,7 +60,7 @@ terms(p::Polynomial) = p.terms
 
 termtype(::Type{Polynomial{M,C}}) where {M,C}  = Term{M,C}
 exptype(::Type{P}) where P<:Polynomial = exptype(termtype(P))
-namestype(::Type{P}) where P<:Polynomial = namestype(termtype(P))
+namingscheme(::Type{P}) where P<:Polynomial = namingscheme(termtype(P))
 monomialorder(::Type{P}) where P<:Polynomial = monomialorder(termtype(P))
 basering(::Type{P}) where P <: Polynomial = basering(termtype(P))
 monomialtype(::Type{P}) where P <: Polynomial = monomialtype(termtype(P))

@@ -5,8 +5,8 @@ import Base: min, max, minimum, maximum
 import Base: promote_rule
 
 import ..Monomials: AbstractMonomial, VectorMonomial, total_degree, index_union, rev_index_union
-import ..VariableNames: Named, Numbered
-import PolynomialRings: namestype, to_dense_monomials, variablesymbols
+import ..NamingSchemes: NamingScheme, Named, Numbered
+import PolynomialRings: namingscheme, to_dense_monomials, variablesymbols
 import PolynomialRings: leading_monomial, leading_coefficient, leading_term
 
 """
@@ -29,7 +29,7 @@ You can then create a ring that uses it by calling
 There is no performance cost for using your own monomial order compared to a
 built-in one.
 """
-struct MonomialOrder{Rule, Names} <: Ordering end
+struct MonomialOrder{Rule, Names <: NamingScheme} <: Ordering end
 
 const NamedMonomialOrder    = MonomialOrder{Rule, <:Named}    where Rule
 const NumberedMonomialOrder = MonomialOrder{Rule, <:Numbered} where Rule
@@ -37,10 +37,10 @@ const NumberedMonomialOrder = MonomialOrder{Rule, <:Numbered} where Rule
 rulesymbol(::O)       where O <: MonomialOrder{Rule, Names} where {Rule, Names} = Rule
 rulesymbol(::Type{O}) where O <: MonomialOrder{Rule, Names} where {Rule, Names} = Rule
 
-namestype(::O)       where O <: MonomialOrder{Rule, Names} where {Rule, Names} = Names
-namestype(::Type{O}) where O <: MonomialOrder{Rule, Names} where {Rule, Names} = Names
+namingscheme(::O)       where O <: MonomialOrder{Rule, Names} where {Rule, Names} = Names()
+namingscheme(::Type{O}) where O <: MonomialOrder{Rule, Names} where {Rule, Names} = Names()
 
-to_dense_monomials(n::Integer, o::MonomialOrder) = MonomialOrder{rulesymbol(o), to_dense_monomials(n, namestype(o))}()
+to_dense_monomials(n::Integer, o::MonomialOrder) = MonomialOrder{rulesymbol(o), to_dense_monomials(n, namingscheme(o))}()
 
 function lt(::MonomialOrder{:degrevlex}, a::M,b::M) where M <: AbstractMonomial
 
@@ -118,7 +118,7 @@ degreecompatible(::MonomialOrder{:deglex}) = true
 #
 # -----------------------------------------------------------------------------
 function promote_rule(M1::Type{<:MonomialOrder}, M2::Type{<:MonomialOrder})
-    if namestype(M1) <: Named && namestype(M2) <: Named
+    if namingscheme(M1) isa Named && namingscheme(M2) isa Named
         AllNames = Set()
         Symbols = sort(union(variablesymbols(M1), variablesymbols(M2)))
         Names = tuple(Symbols...)
