@@ -27,8 +27,8 @@ struct NumberField{P<:Polynomial,C,Q} <: AbstractExactNumber
     coeffs::Vector{C}
     NumberField{P,C,Q}(coeffs::Vector{C}) where {P<:Polynomial,C,Q} = new(coeffs)
 end
-ring(::Type{F}) where F<:NumberField{P} where P = P
-basering(::Type{F}) where F<:NumberField{P} where P = basering(P)
+ring(::Type{<:NumberField{P}}) where P = P
+basering(::Type{<:NumberField{P}}) where P = basering(P)
 
 function _primitive_element end
 function _minimal_polynomial end
@@ -52,7 +52,7 @@ Note: currently, this function does not fully prove that
 `Q` is a number field. If it isn't, arithmetic in the resulting
 ring will not give meaningful results.
 """
-function NumberField(::Type{Q}) where Q<:QuotientRing
+function NumberField(Q::Type{<:QuotientRing})
     P = ring(Q)
     C = basering(P)
     if fraction_field(C) != C

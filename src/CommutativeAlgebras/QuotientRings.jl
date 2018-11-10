@@ -22,7 +22,7 @@ struct QuotientRing{P<:Polynomial, ID}
     f::P
     QuotientRing{P,ID}(f::P) where {P,ID} = new(rem(f, _ideal(QuotientRing{P,ID})))
 end
-ring(::Type{Q}) where Q<:QuotientRing{P} where P = P
+ring(::Type{<:QuotientRing{P}}) where P = P
 
 function _ideal end
 function /(::Type{P}, I::Ideal{P}) where P<:Polynomial

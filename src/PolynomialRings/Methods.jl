@@ -17,16 +17,16 @@ function namingscheme end
 function variablesymbols end
 function allvariablesymbols end
 
-base_extend(::Type{A}, ::Type{B}) where {A,B} = promote_type(A,B)
-base_restrict(::Type{A}, ::Type{B}) where {A,B} = B
+base_extend(A::Type, B::Type)   = promote_type(A, B)
+base_restrict(A::Type, B::Type) = B
 
-fraction_field(::Type{I}) where I <: Integer = Rational{I}
-fraction_field(::Type{R}) where R <: Rational = R
-fraction_field(::Type{R}) where R <: Real = R
+fraction_field(I::Type{<:Integer})  = Rational{I}
+fraction_field(R::Type{<:Rational}) = R
+fraction_field(R::Type{<:Real})     = R
 fraction_field(::Type{Complex{N}}) where N <: Number = Complex{fraction_field(N)}
 
-integers(::Type{I}) where I <: Integer = I
-integers(::Type{R}) where R <: Rational{I} where I = I
+integers(N::Type{<:Number}) = N
+integers(R::Type{<:Rational{I}}) where I = I
 
 allvariablesymbols(::Type) = Set()
 

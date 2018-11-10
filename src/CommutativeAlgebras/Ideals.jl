@@ -78,7 +78,7 @@ hash(I::Ideal, h::UInt) = hash(I.generators, h)
 # Conversions
 #
 # -----------------------------------------------------------------------------
-function convert(::Type{Ideal{P1}}, I::Ideal{P2}) where {P1<:Polynomial, P2<:Polynomial}
+function convert(::Type{Ideal{P1}}, I::Ideal) where P1 <: Polynomial
     return Ideal(map(P1, generators(I)))
 end
 
