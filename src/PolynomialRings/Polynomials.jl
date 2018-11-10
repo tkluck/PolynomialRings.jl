@@ -12,6 +12,7 @@ import ..NamingSchemes: Named, Numbered
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering, monomialtype
 import PolynomialRings: leading_coefficient, leading_monomial
 import PolynomialRings: leading_term, termtype, monomialorder, terms, exptype, namingscheme
+import PolynomialRings: tail
 import PolynomialRings: variablesymbols, allvariablesymbols
 
 # -----------------------------------------------------------------------------
@@ -90,6 +91,20 @@ leading_term(p::Polynomial; order::MonomialOrder=monomialorder(p)) = last(terms(
 leading_monomial(p::Polynomial; order::MonomialOrder=monomialorder(p)) = monomial(leading_term(p, order=order))
 leading_coefficient(p::Polynomial; order::MonomialOrder=monomialorder(p)) = coefficient(leading_term(p, order=order))
 
+tail(p::PolynomialBy{Order}, order::Order) where Order <: MonomialOrder = typeof(p)(map(deepcopy, @view p.terms[1:end-1]))
+tail(p::Polynomial, order::MonomialOrder) = p - leading_term(p; order=order)
+tail(p::Polynomial; order::MonomialOrder=monomialorder(p)) = tail(p, order)
+
+_monomial(m::AbstractMonomial) = m
+_monomial(m) = monomial(m)
+function Base.getindex(p::PolynomialIn{M}, m::M) where M <: AbstractMonomial
+    if (range = searchsorted(p.terms, m, by=_monomial)) |> !isempty
+        ix = first(range)
+        return coefficient(p.terms[ix])
+    else
+        return zero(basering(p))
+    end
+end
 
 # match the behaviour for Number
 first(p::Polynomial) = p

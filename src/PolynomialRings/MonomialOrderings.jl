@@ -7,7 +7,7 @@ import Base: promote_rule
 import ..Monomials: AbstractMonomial, VectorMonomial, total_degree, index_union, rev_index_union
 import ..NamingSchemes: NamingScheme, Named, Numbered
 import PolynomialRings: namingscheme, to_dense_monomials, variablesymbols
-import PolynomialRings: leading_monomial, leading_coefficient, leading_term
+import PolynomialRings: leading_monomial, leading_coefficient, leading_term, tail
 
 """
     struct MonomialOrder{Rule, Names} <: Ordering end
@@ -134,6 +134,10 @@ macro withmonomialorder(order)
         leading_monomial(f) = $leading_monomial(f, order=$order)
         leading_term(f) = $leading_term(f, order=$order)
         leading_coefficient(f) = $leading_coefficient(f, order=$order)
+        lm(f) = $leading_monomial(f, order=$order)
+        lt(f) = $leading_term(f, order=$order)
+        lc(f) = $leading_coefficient(f, order=$order)
+        tail(f) = $tail(f, order=$order)
     end)
 end
 

@@ -21,6 +21,7 @@ include("PolynomialRings/Reductions.jl")
 include("PolynomialRings/Groebner.jl")
 include("PolynomialRings/GroebnerGWV.jl")
 include("PolynomialRings/GroebnerSig.jl")
+include("PolynomialRings/GroebnerF4GB.jl")
 include("PolynomialRings/Conversions.jl")
 include("PolynomialRings/Solve.jl")
 
