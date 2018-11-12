@@ -5,6 +5,7 @@ import PolynomialRings
 
 import DataStructures: PriorityQueue, enqueue!, dequeue!
 import IterTools: chain
+import ProgressMeter: Progress, finish!, next!
 
 import ..Backends.Gröbner: F4GB
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
@@ -32,9 +33,13 @@ function f4gb(order::MonomialOrder, F::AbstractVector{<:Polynomial})
             updatereduce!(L, M, P, f, order=order)
         end
     end
+    progress = Progress(length(P)) #, "Computing Gröbner basis: ")
     while !isempty(P)
         (fₗₘ, gₗₘ) = select!(P)
         f = M[fₗₘ]; g = M[gₗₘ]
+
+        progress.n = length(P)
+        next!(progress; showvalues = [(Symbol("|L|"), length(L))])
 
         c_f, c_g = lcm_multipliers(lt(f), lt(g))
         h₁ = mulfullreduce!(L, M, c_f, tail(f), order=order)
@@ -43,6 +48,7 @@ function f4gb(order::MonomialOrder, F::AbstractVector{<:Polynomial})
             updatereduce!(L, M, P, h, order=order)
         end
     end
+    finish!(progress)
 
     return [M[fₗₘ] for fₗₘ in L]
 end
