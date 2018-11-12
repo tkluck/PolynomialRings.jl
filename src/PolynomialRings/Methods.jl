@@ -25,8 +25,13 @@ fraction_field(R::Type{<:Rational}) = R
 fraction_field(R::Type{<:Real})     = R
 fraction_field(::Type{Complex{N}}) where N <: Number = Complex{fraction_field(N)}
 
-integers(N::Type{<:Number}) = N
+integers(I::Type{<:Integer}) = I
 integers(R::Type{<:Rational{I}}) where I = I
+
+# for Galois fields. This needs a more specific definition than <: Number
+# but for now I'll leave it like this.
+fraction_field(N::Type{<:Number}) = N
+integers(N::Type{<:Number}) = N
 
 allvariablesymbols(::Type) = Set()
 
