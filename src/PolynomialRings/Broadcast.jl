@@ -314,6 +314,30 @@ function iterterms(::Order, op::typeof(*), a::TermsMap{Order}, b::RefValue{<:Abs
     end
 end
 
+function iterterms(::Order, op::typeof(*), a::RefValue{<:Term}, b::TermsMap{Order}) where Order
+    TermsMap(Order(), b, b.bound, is_inplace(b)) do t
+        c = coefficient(t)
+        if is_inplace(b)
+            @inplace c *= coefficient(a[])
+        else
+            c *= coefficient(a[])
+        end
+        return typeof(t)(monomial(t)*monomial(a[]), c)
+    end
+end
+
+function iterterms(::Order, op::typeof(*), a::TermsMap{Order}, b::RefValue{<:Term}) where Order
+    TermsMap(Order(), a, a.bound, is_inplace(a)) do t
+        c = coefficient(t)
+        if is_inplace(a)
+            @inplace c *= coefficient(b[])
+        else
+            c *= coefficient(b[])
+        end
+        return typeof(t)(monomial(t)*monomial(b[]), c)
+    end
+end
+
 # -----------------------------------------------------------------------------
 #
 #  Lazy implementations of addition/substraction

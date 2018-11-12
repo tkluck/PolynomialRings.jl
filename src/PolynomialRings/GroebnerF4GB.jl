@@ -3,14 +3,14 @@ module GröbnerF4GB
 
 import PolynomialRings
 
-import DataStructures: SortedDict, DefaultDict
+import DataStructures: PriorityQueue, enqueue!, dequeue!
 import IterTools: chain
 
 import ..Backends.Gröbner: F4GB
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
 import ..Polynomials: Polynomial, terms
 import ..Terms: monomial
-import PolynomialRings: gröbner_basis
+import PolynomialRings: gröbner_basis, monomialtype
 import PolynomialRings: maybe_div, termtype, lcm_multipliers
 
 """
@@ -22,8 +22,10 @@ An implementation of the F4GB algorithm as popularized by
 function f4gb(order::MonomialOrder, F::AbstractVector{<:Polynomial})
     @withmonomialorder order
 
-    L, M = [], Dict()
-    P = []
+    R = eltype(F); LM = monomialtype(R)
+    L, M = Set{LM}(), Dict{LM, R}()
+    P = PriorityQueue{Tuple{LM, LM}, LM}(order)
+
     for f in F
         f = mulfullreduce!(L, M, one(termtype(f)), f, order=order)
         if !iszero(f)
@@ -45,35 +47,37 @@ function f4gb(order::MonomialOrder, F::AbstractVector{<:Polynomial})
     return [M[fₗₘ] for fₗₘ in L]
 end
 
-select!(P) = popfirst!(P)
+select!(P) = dequeue!(P)
 
 function updatereduce!(L, M, P, f; order)
     @withmonomialorder order
 
     H = [f // lc(f)]
+    lm_H = Set(lm(h) for h in H)
 
     while true
-        U = setdiff(
-            Set(monomial(t) for x in chain(values(M), H) for t in terms(tail(x))),
-            map(lm, H)
-        )
-        filter!(u -> divides(lm(f), u), U)
+        U = [monomial(t) for x in chain(values(M), H) for t in x.terms[1:end-1]]
+        filter!(u -> u ∉ lm_H && divides(lm(f), u), U)
         isempty(U) && break
+
         u = maximum(order, U)
         h = mulfullreduce!(L, M, maybe_div(u, lm(f)) * inv(lc(f)), tail(f), order=order)
         push!(H, u + h)
+        push!(lm_H, u)
     end
 
     sort!(H, order=order)
     while !isempty(H)
         h = popfirst!(H)
         for g in H
-            c = g[lm(h)]
-            @. g -= c * h
+            if (c = g[lm(h)]) |> !iszero
+                @. g -= c * h
+            end
         end
         for g in values(M)
-            c = g[lm(h)]
-            @. g -= c * h
+            if (c = g[lm(h)]) |> !iszero
+                @. g -= c * h
+            end
         end
         M[lm(h)] = h
     end
@@ -81,12 +85,21 @@ function updatereduce!(L, M, P, f; order)
 end
 
 function update!(L, P, fₗₘ)
-    push!(L, fₗₘ)
     for l in L
-        if lcm(l, fₗₘ) != l*fₗₘ
-            push!(P, (l, fₗₘ))
+        lcm_l_f = lcm(l, fₗₘ)
+        if lcm_l_f != l*fₗₘ
+            # Gebauer - Möller criterion
+            if !any(L) do k
+               k != fₗₘ && k != l &&
+               minmax(fₗₘ, k) ∉ keys(P) && minmax(k, l) ∉ keys(P) &&
+               divides(k, lcm_l_f)
+            end
+                enqueue!(P, minmax(l, fₗₘ), lcm_l_f)
+            else
+            end
         end
     end
+    push!(L, fₗₘ)
 end
 
 function mulfullreduce!(L, M, t, f; order)
@@ -100,7 +113,8 @@ function mulfullreduce!(L, M, t, f; order)
             d = maybe_div(r, lt(g))
             h .-= d .* tail(g)
         else
-            h .+= r
+            #h .+= r
+            push!(h.terms, r)
         end
     end
 

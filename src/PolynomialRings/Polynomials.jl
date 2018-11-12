@@ -91,7 +91,7 @@ leading_term(p::Polynomial; order::MonomialOrder=monomialorder(p)) = last(terms(
 leading_monomial(p::Polynomial; order::MonomialOrder=monomialorder(p)) = monomial(leading_term(p, order=order))
 leading_coefficient(p::Polynomial; order::MonomialOrder=monomialorder(p)) = coefficient(leading_term(p, order=order))
 
-tail(p::PolynomialBy{Order}, order::Order) where Order <: MonomialOrder = typeof(p)(map(deepcopy, @view p.terms[1:end-1]))
+tail(p::PolynomialBy{Order}, order::Order) where Order <: MonomialOrder = typeof(p)(p.terms[1:end-1])
 tail(p::Polynomial, order::MonomialOrder) = p - leading_term(p; order=order)
 tail(p::Polynomial; order::MonomialOrder=monomialorder(p)) = tail(p, order)
 
