@@ -1,6 +1,6 @@
 module Util
 
-import Base: delete!
+import Base: delete!, similar
 import Base: iterate
 import Base: length, isempty
 import Base: length, iterate
@@ -67,6 +67,7 @@ end
 #
 # -----------------------------------------------------------------------------
 delete!(pq::PriorityQueue{K}, k::K) where K = dequeue!(pq, k)
+similar(pq::PriorityQueue{K, V, O}) where {K, V, O} = PriorityQueue{K, V}(O())
 
 # -----------------------------------------------------------------------------
 #

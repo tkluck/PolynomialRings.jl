@@ -91,20 +91,33 @@ function updatereduce!(L, M, P, f; order)
 end
 
 function update!(L, P, fₗₘ)
-    for l in L
-        lcm_l_f = lcm(l, fₗₘ)
-        if lcm_l_f != l*fₗₘ
-            # Gebauer - Möller criterion
-            if !any(L) do k
-               k != fₗₘ && k != l &&
-               minmax(fₗₘ, k) ∉ keys(P) && minmax(k, l) ∉ keys(P) &&
-               divides(k, lcm_l_f)
-            end
-                enqueue!(P, minmax(l, fₗₘ), lcm_l_f)
-            else
-            end
+    C = similar(P)
+    for gₗₘ in L
+        enqueue!(C, (fₗₘ, gₗₘ), lcm(fₗₘ, gₗₘ))
+    end
+    D = []
+    while !isempty(C)
+        (fₗₘ, gₗₘ) = select!(C)
+        u = lcm(fₗₘ, gₗₘ)
+        if u == fₗₘ * gₗₘ || !any(chain(keys(C), D)) do pair
+            divides(lcm(pair[1], pair[2]), u)
+        end
+            push!(D, (fₗₘ, gₗₘ))
         end
     end
+    P_new = filter(pair -> !isone(gcd(pair[1], pair[2])), D)
+    for ((p1, p2), lcm_p) in P
+        if !divides(fₗₘ, lcm_p) ||
+            lcm(p1, fₗₘ) == lcm_p ||
+            lcm(p2, fₗₘ) == lcm_p
+            push!(P_new, (p1, p2))
+        end
+    end
+    empty!(P)
+    for (p1, p2) in P_new
+        enqueue!(P, minmax(p1, p2), lcm(p1, p2))
+    end
+    filter!(l -> !divides(fₗₘ, l), L)
     push!(L, fₗₘ)
 end
 
