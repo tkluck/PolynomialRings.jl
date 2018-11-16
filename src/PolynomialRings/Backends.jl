@@ -2,10 +2,11 @@ module Backends
 
 module Gröbner
     abstract type Backend end
-    struct GWV <: Backend end
-    struct F5C <: Backend end
-    struct Arri <: Backend end
-    struct F4GB <: Backend end
+    struct NamedBackend{Name} <: Backend end
+    const GWV = NamedBackend{:gwv}
+    const F5C = NamedBackend{:f5c}
+    const Arri = NamedBackend{:arri}
+    const F4GB = NamedBackend{:f4gb}
     _default = GWV()
     cur_default = _default
     set_default()  = (global cur_default; cur_default=_default)
@@ -39,7 +40,15 @@ module Gröbner
     This is computed using the GWV algorithm with a few standard
     optmizations; see [`PolynomialRings.GröbnerGWV.gwv`](@ref) for details.
     """
-    gröbner_transformation(G::AbstractVector, args...; kwds...) = gröbner_transformation(cur_default, G, args...; kwds...)
+    function gröbner_transformation(G::AbstractVector, args...; kwds...)
+         kwds = copy(kwds)
+         alg = pop!(kwds, :alg, cur_default)
+         if alg isa Symbol
+             alg = NamedBackend{alg}()
+         end
+         gröbner_transformation(alg, G, args...; kwds...)
+     end
+
     """
         basis = gröbner_basis(polynomials)
 
@@ -48,7 +57,14 @@ module Gröbner
     This is computed using the GWV algorithm; see
     [`PolynomialRings.GröbnerGWV.gwv`](@ref) for details.
     """
-    gröbner_basis(G::AbstractVector, args...; kwds...) = gröbner_basis(cur_default, G, args...; kwds...)
+    function gröbner_basis(G::AbstractVector, args...; kwds...)
+         kwds = copy(kwds)
+         alg = pop!(kwds, :alg, cur_default)
+         if alg isa Symbol
+             alg = NamedBackend{alg}()
+         end
+         gröbner_basis(alg, G, args...; kwds...)
+     end
 
     """
         factors = lift(polynomials, y)
@@ -62,7 +78,14 @@ module Gröbner
     `polynomials`, it is beneficial to use `gröbner_transformation` yourself as
     it avoids re-doing the most computationally intensive part.
     """
-    lift(G::AbstractVector, y, args...; kwds...) = lift(cur_default, G, y, args...; kwds...)
-end
+    function lift(G::AbstractVector, y, args...; kwds...)
+         kwds = copy(kwds)
+         alg = pop!(kwds, :alg, cur_default)
+         if alg isa Symbol
+             alg = NamedBackend{alg}()
+         end
+         lift(alg, G, y, args...; kwds...)
+     end
 
+end
 end
