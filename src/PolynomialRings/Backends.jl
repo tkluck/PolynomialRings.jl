@@ -6,7 +6,7 @@ module Gröbner
     const GWV = NamedBackend{:gwv}
     const F5C = NamedBackend{:f5c}
     const Arri = NamedBackend{:arri}
-    const F4GB = NamedBackend{:f4gb}
+    const M4GB = NamedBackend{:m4gb}
     _default = GWV()
     cur_default = _default
     set_default()  = (global cur_default; cur_default=_default)

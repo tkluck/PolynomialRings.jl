@@ -7,7 +7,7 @@ import DataStructures: PriorityQueue, enqueue!, dequeue!
 import IterTools: chain
 import ProgressMeter: Progress, finish!, next!
 
-import ..Backends.Gröbner: F4GB
+import ..Backends.Gröbner: M4GB
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
 import ..Polynomials: Polynomial, terms
 import ..Terms: monomial
@@ -15,12 +15,12 @@ import PolynomialRings: gröbner_basis, monomialtype
 import PolynomialRings: maybe_div, termtype, lcm_multipliers
 
 """
-    gröbner_basis = f4gb(monomialorder, polynomials)
+    gröbner_basis = m4gb(monomialorder, polynomials)
 
-An implementation of the F4GB algorithm as popularized by
+An implementation of the M4GB algorithm as popularized by
 > Rusydi Makarim, Marc Stevens, "M4GB: An efficient Groebner-basis algorithm", ISSAC 2017
 """
-function f4gb(order::MonomialOrder, F::AbstractVector{<:Polynomial})
+function m4gb(order::MonomialOrder, F::AbstractVector{<:Polynomial})
     @withmonomialorder order
 
     R = eltype(F); LM = monomialtype(R)
@@ -152,9 +152,9 @@ end
 
 divides(f, g) = maybe_div(g, f) != nothing
 
-function gröbner_basis(::F4GB, o::MonomialOrder, G::AbstractArray{<:Polynomial}; kwds...)
+function gröbner_basis(::M4GB, o::MonomialOrder, G::AbstractArray{<:Polynomial}; kwds...)
     isempty(G) && return copy(G)
-    return f4gb(o, G, kwds...)
+    return m4gb(o, G, kwds...)
 end
 
 end
