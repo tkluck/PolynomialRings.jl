@@ -33,13 +33,14 @@ function m4gb(order::MonomialOrder, F::AbstractVector{<:Polynomial})
             updatereduce!(L, M, P, f, order=order)
         end
     end
-    progress = Progress(length(P)) #, "Computing Gröbner basis: ")
+    progress = Progress(length(P), "Computing Gröbner basis: ")
+    loops = 0
     while !isempty(P)
         (fₗₘ, gₗₘ) = select!(P)
         f = M[fₗₘ]; g = M[gₗₘ]
 
-        progress.n = length(P)
-        next!(progress; showvalues = [(Symbol("|L|"), length(L))])
+        progress.n = length(P) + loops
+        next!(progress; showvalues = [(Symbol("|L|"), length(L)), (Symbol("|P|"), length(P)), (:loops, loops)])
 
         c_f, c_g = lcm_multipliers(lt(f), lt(g))
         h₁ = mulfullreduce!(L, M, c_f, tail(f), order=order)
@@ -47,6 +48,7 @@ function m4gb(order::MonomialOrder, F::AbstractVector{<:Polynomial})
         if (h = h₁ - h₂) |> !iszero
             updatereduce!(L, M, P, h, order=order)
         end
+        loops += 1
     end
     finish!(progress)
 
