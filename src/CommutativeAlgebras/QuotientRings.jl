@@ -8,6 +8,7 @@ import Base: zero, one, rem, copy
 
 import ..Ideals: Ideal, _grb
 import ..Ideals: ring
+import ..NamingSchemes: boundnames, namingscheme
 import ..Polynomials: Polynomial, exptype, leading_term
 import ..Terms: Term, monomial, coefficient
 import PolynomialRings: allvariablesymbols
@@ -57,6 +58,7 @@ copy(a::QuotientRing) = a
 ==(a::Q, b::Q)                where Q<:QuotientRing = a.f == b.f
 !=(a::Q, b::Q)                where Q<:QuotientRing = a.f != b.f
 allvariablesymbols(::Type{Q}) where Q<:QuotientRing = allvariablesymbols(ring(Q))
+boundnames(::Type{Q})         where Q<:QuotientRing = namingscheme(ring(Q))
 
 # -----------------------------------------------------------------------------
 #

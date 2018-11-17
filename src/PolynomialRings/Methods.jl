@@ -14,8 +14,13 @@ function monomialorder end
 function termtype end
 function exptype end
 function namingscheme end
+function fullnamingscheme end
+function boundnames end
+function fullboundnames end
 function variablesymbols end
 function allvariablesymbols end
+function iscanonical end
+function canonicaltype end
 
 base_extend(A::Type, B::Type)   = promote_type(A, B)
 base_restrict(A::Type, B::Type) = B

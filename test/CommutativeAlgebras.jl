@@ -64,4 +64,22 @@ using PolynomialRings
         #QQ = @numberfield Q[β]/(β^3 - 2)
         #@test QQ(β + α) == QQ(β) + Q(α)
     end
+
+    @testset "Interplay with conversions" begin
+        import PolynomialRings: iscanonical, canonicaltype
+
+        Q = @ring ℤ[a]/(a^2 - 2)
+        R = @ring ℤ[b]/(b^2 - 3)
+        S = @ring ℤ[b]/(b^2 - 5)
+        @test iscanonical(@ring Q[c,d])
+        @test canonicaltype(@ring Q[c][d]) == @ring Q[c,d]
+        @test promote_type(Q, @ring ℤ[a]) == Q
+        @test promote_type(Q, @ring ℤ[a,b]) == @ring Q[b]
+        @test promote_type(Q, @ring ℤ[c]) == @ring Q[c]
+        @test promote_type(@ring(Q[c]), @ring(ℤ[a])) == @ring Q[c]
+        @test promote_type(@ring(Q[c]), @ring(ℤ[a,d])) == @ring Q[c,d]
+        #@test promote_type(@ring(Q[b]), @ring(R[a])) == (Q⊗R)
+        #@test promote_type(Q[b,c], @ring R[a,d]) == @ring (Q⊗R)[c,d]
+        @test_throws ArgumentError promote_type(@ring(R[b]), @ring(S[a]))
+    end
 end

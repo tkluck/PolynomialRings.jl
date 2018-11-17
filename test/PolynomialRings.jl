@@ -181,12 +181,41 @@ one(::Type{Foo}) = Foo()
     end
 
     @testset "promotions" begin
+        using PolynomialRings: iscanonical, canonicaltype
+
         @test promote_type(@ring(ℤ[x]), @ring(ℚ[y])) == @ring(ℚ[x,y])
         @test promote_type(@ring(ℤ[a[]][x]), @ring(ℚ[y])) == @ring(ℚ[a[]][x,y])
         @test promote_type(@ring(ℤ[a[]][x]), @ring(ℚ[a[]][y])) == @ring(ℚ[a[]][x,y])
 
-        @test promote_type(@ring(ℤ[y][x]), @ring(ℚ[y])) == @ring(ℚ[x,y])
+        @test promote_type(@ring(ℤ[y][x]), @ring(ℚ[y])) == @ring(ℚ[y][x])
         @test promote_type(@ring(ℤ[y][x]), @ring(ℚ[x])) == @ring(ℚ[y][x])
+        @test promote_type(@ring(ℤ[y][x]), @ring(ℚ[x][y])) == @ring(ℚ[x,y])
+
+        @test promote_type(@ring(ℤ[a][b[]][c][d[]]), @ring(ℚ[a][c])) == @ring(ℚ[a][b[]][c][d[]])
+        @test promote_type(@ring(ℤ[a][b[]][c][d[]]), @ring(ℚ[b[]][c])) == @ring(ℚ[a][b[]][c][d[]])
+        @test promote_type(@ring(ℤ[a][b[]][c][d[]]), @ring(ℚ[b[]][d[]])) == @ring(ℚ[a][b[]][c][d[]])
+
+        @test promote_type(@ring(ℤ[x][y,z]), @ring(ℚ[x,y][z])) == @ring(ℚ[x,y,z])
+        @test promote_type(@ring(ℤ[a,b][c,d]), @ring(ℚ[a,c][b,d])) == @ring(ℚ[a,b,c,d])
+
+        @test iscanonical(@ring ℤ[x,y])
+        @test !iscanonical(@ring ℤ[y,x])
+        @test !iscanonical(@ring ℤ[x][y])
+        @test !iscanonical(@ring ℤ[y][x])
+        @test iscanonical(@ring ℤ[c[]][x,y])
+        @test !iscanonical(@ring ℤ[x,y][c[]])
+        @test iscanonical(@ring ℤ[c[]][d[]][x,y])
+        @test !iscanonical(@ring ℤ[d[]][c[]][x,y])
+        @test !iscanonical(@ring ℤ[x][c[]][y])
+
+        @test canonicaltype(@ring ℤ[x][c[]][y]) == @ring ℤ[c[]][x,y]
+        @test canonicaltype(@ring ℤ[d[]][x][c[]][y]) == @ring ℤ[c[]][d[]][x,y]
+        @test canonicaltype(@ring ℤ[x][y]) == @ring ℤ[x,y]
+        @test canonicaltype(@ring ℤ[y][x]) == @ring ℤ[x,y]
+        @test canonicaltype(@ring ℤ[x,z][y]) == @ring ℤ[x,y,z]
+        @test canonicaltype(@ring ℤ[y,x]) == @ring ℤ[x,y]
+        @test canonicaltype(@ring(ℤ[c[]][y,x])) == @ring ℤ[c[]][x,y]
+        @test canonicaltype(@ring(ℤ[c[]][b[]][a[]])) == @ring ℤ[a[]][b[]][c[]]
     end
 end
 

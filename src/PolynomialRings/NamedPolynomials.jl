@@ -1,15 +1,16 @@
 module NamedPolynomials
 
-import Base: promote_rule, convert
+import Base: promote_rule, convert, Bottom
+import SparseArrays: SparseVector
 
 import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, rulesymbol
-import ..Monomials: TupleMonomial, AbstractMonomial, _construct, exptype
-import ..Polynomials:  NamedMonomial, NumberedPolynomial, monomialorder, NamedOrder, NumberedOrder
+import ..Monomials: TupleMonomial, VectorMonomial, AbstractMonomial, _construct, exptype, num_variables
+import ..NamingSchemes: Named, Numbered, NamingScheme, numberedvariablename, remove_variables, isdisjoint, boundnames, ≺
+import ..Polynomials:  NamedMonomial, NumberedMonomial, NamedTerm, NumberedTerm, TermOver, monomialorder, NamedOrder, NumberedOrder, polynomial_ring
 import ..Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolynomial, PolynomialBy, PolynomialIn
 import ..Terms: Term, basering, monomial, coefficient
-import ..NamingSchemes: Named, Numbered
-import PolynomialRings: termtype, terms, namingscheme, variablesymbols, exptype, monomialtype, allvariablesymbols
+import PolynomialRings: termtype, terms, namingscheme, variablesymbols, exptype, monomialtype, allvariablesymbols, iscanonical, canonicaltype, fullnamingscheme, fullboundnames
 
 # -----------------------------------------------------------------------------
 #
@@ -23,15 +24,6 @@ function unused_variable(P, a)
 end
 unused_variable(p::Polynomial)                  = unused_variable(typeof(p), p)
 unused_variable(a::AbstractArray{<:Polynomial}) = unused_variable(eltype(a), a)
-
-# -----------------------------------------------------------------------------
-#
-# Coefficient promotions when monomial type is the same
-#
-# -----------------------------------------------------------------------------
-function promote_rule(P1::Type{<:PolynomialIn{M}}, P2::Type{<:PolynomialIn{M}}) where M<:AbstractMonomial
-    return base_extend(P1, basering(P2))
-end
 
 # separate versions for N<:Named and N<:Numbered to resolve method ambiguity
 # with the version for which P and p do not have the same names.
@@ -97,50 +89,115 @@ end
 
 function promote_rule(::Type{P1}, ::Type{P2}) where P1 <: Polynomial where P2 <: Polynomial
     T = promote_rule(termtype(P1), termtype(P2))
+    T == Bottom && return Bottom
     M = monomialtype(T)
     C = basering(T)
     return Polynomial{M, C}
 end
 
-_allfreevars(x::Type) = Set()
-_allfreevars(x::Type{T}) where T<:Term{<:NamedMonomial} = union(variablesymbols(T), _allfreevars(basering(T)))
-_allfreevars(x::Type{P}) where P<:NamedPolynomial = _allfreevars(termtype(P))
-# all other vars are e.g. variables in a quotient ring or a number field. They
-# can't be freely shuffled around and typically stay in the base ring when
-# promotions need to happen
-_allothervars(x::Type) = setdiff(allvariablesymbols(x), _allfreevars(x))
-_coeff(x::Type) = x
-_coeff(::Type{T}) where T<:Term = _coeff(basering(T))
-_coeff(::Type{P}) where P<:NamedPolynomial = _coeff(basering(P))
-_monomialtype(x::Type) = One
-_monomialtype(x::Type{P}) where P<:NamedPolynomial = promote_type(monomialtype(P), _monomialtype(basering(P)))
+# fix method ambiguity
+promote_rule(::Type{P}, ::Type{C}) where P<:PolynomialOver{C} where C <: Polynomial = P
 
-function remove_variables(N::Named, vars...)
-    result = [x for x in variablesymbols(N) if !(x in vars)]
-    Named{tuple(result...)}()
+function remove_variables(O::MonomialOrder, vars)
+    O′ = remove_variables(namingscheme(O), vars)
+    O′ == nothing && return nothing
+    return MonomialOrder{rulesymbol(O), typeof(O′)}()
 end
 
-function remove_variables(O::NamedOrder, vars...)
-    O′ = remove_variables(namingscheme(O), vars...)
-    MonomialOrder{rulesymbol(O), typeof(O′)}()
-end
-
-function remove_variables(::Type{M}, vars...) where M <: TupleMonomial
-    O = remove_variables(monomialorder(M), vars...)
+function remove_variables(::Type{M}, vars) where M <: TupleMonomial
+    O = remove_variables(monomialorder(M), vars)
+    O == nothing && return One
     N = length(variablesymbols(O))
-    TupleMonomial{N, exptype(M), typeof(O)}
+    return TupleMonomial{N, exptype(M), typeof(O)}
  end
 
-function promote_rule(::Type{T1}, ::Type{T2}) where T1 <: Term where T2 <: Term
-    C = promote_type(_coeff(T1), _coeff(T2))
-    M = promote_type(
-        monomialtype(T1), _monomialtype(basering(T1)),
-        monomialtype(T2), _monomialtype(basering(T2)),
-    )
-    if !isempty(_allothervars(C))
-        M = remove_variables(M, _allothervars(C)...)
+function remove_variables(::Type{T}, vars) where T <: Term
+    M = remove_variables(monomialtype(T), vars)
+    M == One && return basering(T)
+    C = remove_variables(basering(T), vars)
+    return Term{M, C}
+end
+function remove_variables(::Type{P}, vars) where P <: Polynomial
+    M = remove_variables(monomialtype(P), vars)
+    M == One && return basering(P)
+    C = remove_variables(basering(P), vars)
+    return Polynomial{M, C}
+end
+remove_variables(T::Type, vars) = T
+
+fullnamingscheme(T::Type{<:Term}) = fullnamingscheme(basering(T)) * namingscheme(T)
+fullnamingscheme(T::Type{<:Polynomial}) = fullnamingscheme(basering(T)) * namingscheme(T)
+fullboundnames(T::Type{<:Term}) = boundnames(basering(T))
+fullboundnames(T::Type{<:Polynomial}) = boundnames(basering(T))
+
+_basering(T) = basering(T)
+_basering(T::Type{<:TermOver{<:Polynomial}}) = termtype(basering(T))
+_promote_rule(T1::Type{<:Term}, T2::Type{<:Term}) = promote_rule(T1, T2)
+_promote_rule(T1::Type, T2::Type) = promote_type(T1, T2)
+_polynomialtype(T) = T
+_polynomialtype(T::Type{<:Term}) = polynomialtype(T)
+
+function promote_rule(T1::Type{<:Term}, T2::Type)
+    if !isdisjoint(namingscheme(T1), fullboundnames(T2))
+        T1′ = remove_variables(T1, fullboundnames(T2))
+        return _promote_rule(T1′, T2)
+    elseif fullnamingscheme(T1) ⊆ fullnamingscheme(T2)
+        return _promote_rule(_basering(T1), T2)
+    elseif isdisjoint(namingscheme(T1), fullnamingscheme(T2))
+        if (C = _promote_rule(_basering(T1), T2)) != Bottom
+            return Term{monomialtype(T1), _polynomialtype(C)}
+        end
     end
-    return Term{M,C}
+    return Bottom
+end
+
+# -----------------------------------------------------------------------------
+#
+# Canonical types
+#
+# -----------------------------------------------------------------------------
+
+promote_canonical_type(T1::Type, T2::Type) = promote_type(T1, T2)
+promote_canonical_type(T1::Type{<:Polynomial}, T2::Type{<:Polynomial}) = _polynomialtype(promote_canonical_type(termtype(T1), termtype(T2)))
+
+promote_canonical_type(T1::Type{<:Polynomial}, T2::Type) = _polynomialtype(promote_canonical_type(termtype(T1), T2))
+promote_canonical_type(T1::Type, T2::Type{<:Polynomial}) = _polynomialtype(promote_canonical_type(T1, termtype(T2)))
+
+function promote_canonical_type(T1::Type{<:Term}, T2::Type)
+    if !isdisjoint(namingscheme(T1), fullboundnames(T2))
+        T1′ = remove_variables(T1, fullboundnames(T2))
+        return promote_canonical_type(T1′, T2)
+    else
+        M = monomialtype(T1)
+        C = _polynomialtype(promote_canonical_type(_basering(T1), T2))
+        return Term{M, C}
+    end
+end
+
+promote_canonical_type(T1::Type, T2::Type{<:Term}) = promote_canonical_type(T2, T1)
+
+function promote_canonical_type(T1::Type{<:Term}, T2::Type{<:Term})
+    @assert iscanonical(T1) && iscanonical(T2)
+
+    if !isdisjoint(namingscheme(T1), fullboundnames(T2))
+        T1′ = remove_variables(T1, fullboundnames(T2))
+        return promote_canonical_type(T1′, T2)
+    elseif !isdisjoint(namingscheme(T2), fullboundnames(T1))
+        T2′ = remove_variables(T2, fullboundnames(T1))
+        return promote_canonical_type(T1, T2′)
+    elseif namingscheme(T1) ≺ namingscheme(T2)
+        M = monomialtype(T2)
+        C = _polynomialtype(promote_canonical_type(T1, _basering(T2)))
+        return Term{M, C}
+    elseif namingscheme(T2) ≺ namingscheme(T1)
+        M = monomialtype(T1)
+        C = _polynomialtype(promote_canonical_type(_basering(T1), T2))
+        return Term{M, C}
+    else
+        M = promote_type(monomialtype(T1), monomialtype(T2))
+        C = _polynomialtype(promote_type(_basering(T1), _basering(T2)))
+        return Term{M, C}
+    end
 end
 
 function promote_rule(::Type{M1}, ::Type{M2}) where M1 <: AbstractMonomial where M2 <: AbstractMonomial
@@ -152,14 +209,6 @@ function promote_rule(::Type{M1}, ::Type{M2}) where M1 <: AbstractMonomial where
     else
         return Union{}
     end
-end
-
-function promote_rule(::Type{P1}, ::Type{P2}) where P1 <: NamedPolynomial where P2 <: NumberedPolynomial
-    return P2 ⊗ P1
-end
-
-function promote_rule(::Type{P1}, ::Type{P2}) where P1 <: NumberedPolynomial where P2 <: NamedPolynomial
-    return promote_rule(P2, P1)
 end
 
 using PolynomialRings
@@ -178,4 +227,77 @@ function convert(::Type{P1}, a::P2) where P1 <: NamedPolynomial where P2 <: Poly
 end
 
 convert(::Type{P}, a::P) where P <: NamedPolynomial = a
+
+polynomialtype(T::Type{<:Term}) = Polynomial{monomialtype(T), basering(T)}
+
+function canonicaltype(P::Type{<:PolynomialOver{<:Polynomial}})
+    C = canonicaltype(basering(P))
+    M1 = monomialtype(C)
+    M2 = canonicaltype(monomialtype(P))
+    if namingscheme(M1) ≺ namingscheme(M2)
+        P′ = Polynomial{M2, C}
+    elseif namingscheme(M2) ≺ namingscheme(M1)
+        C1 = basering(C)
+        P′ = Polynomial{M1, Polynomial{M2, C1}}
+    else
+        M = promote_type(M1, M2)
+        C1 = basering(C)
+        P′ = Polynomial{M, C1}
+    end
+    if P′ == P
+        return P
+    else
+        # recursive sort
+        return canonicaltype(P′)
+    end
+end
+function canonicaltype(P::Type{<:Polynomial})
+    C = canonicaltype(basering(P))
+    M = canonicaltype(monomialtype(P))
+    return Polynomial{M, C}
+end
+function canonicaltype(M::Type{<:NamedMonomial})
+    N = num_variables(M)
+    I = exptype(M)
+    names = tuple(sort(collect(variablesymbols(M)))...)
+    TupleMonomial{N, I, MonomialOrder{:degrevlex, Named{names}}}
+end
+function canonicaltype(M::Type{<:NumberedMonomial})
+    I = exptype(M)
+    name = numberedvariablename(M)
+    VectorMonomial{SparseVector{I,Int}, I, MonomialOrder{:degrevlex, Numbered{name}}}
+end
+canonicaltype(T::Type{<:Term}) = termtype(canonicaltype(polynomialtype(T)))
+canonicaltype(T::Type) = T
+
+iscanonical(::Type) = true
+iscanonical(M::Type{<:AbstractMonomial}) = iscanonical(namingscheme(M)) && rulesymbol(monomialorder(M)) == :degrevlex
+
+function _promote_result(T, S, LTR, RTL)
+if LTR == RTL
+        return LTR
+    else
+        @assert canonicaltype(LTR) == canonicaltype(RTL)
+        return canonicaltype(LTR)
+    end
+end
+
+for T in [Term, Polynomial]
+    @eval begin
+        iscanonical(T::Type{<:$T}) = iscanonical(fullnamingscheme(T))
+
+        Base.promote_result(T::Type{<:$T}, S::Type{<:$T}, LTR::Type{Bottom}, RTL::Type{<:$T}) = RTL
+        Base.promote_result(T::Type{<:$T}, S::Type{<:$T}, LTR::Type{<:$T}, RTL::Type{Bottom}) = LTR
+        Base.promote_result(T::Type, S::Type{<:$T}, LTR::Type{Bottom}, RTL::Type{<:$T}) = RTL
+        Base.promote_result(T::Type{<:$T}, S::Type, LTR::Type{<:$T}, RTL::Type{Bottom}) = LTR
+        Base.promote_result(T::Type, S::Type{<:$T}, LTR::Type{Bottom}, RTL::Type{Bottom}) = promote_canonical_type(canonicaltype(T), canonicaltype(S))
+        Base.promote_result(T::Type{<:$T}, S::Type, LTR::Type{Bottom}, RTL::Type{Bottom}) = promote_canonical_type(canonicaltype(T), canonicaltype(S))
+        Base.promote_result(T::Type{<:$T}, S::Type{<:$T}, LTR::Type{Bottom}, RTL::Type{Bottom}) = promote_canonical_type(canonicaltype(T), canonicaltype(S))
+        Base.promote_result(T::Type{<:$T}, S::Type{<:$T}, LTR::Type{<:$T}, RTL::Type{<:$T}) = _promote_result(T, S, LTR, RTL)
+        Base.promote_result(T::Type{<:$T}, S::Type, LTR::Type{<:$T}, RTL::Type{<:$T}) = _promote_result(T, S, LTR, RTL)
+        Base.promote_result(T::Type, S::Type{<:$T}, LTR::Type{<:$T}, RTL::Type{<:$T}) = _promote_result(T, S, LTR, RTL)
+
+    end
+end
+
 end
