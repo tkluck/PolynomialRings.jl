@@ -2,6 +2,7 @@ module GröbnerF4GB
 
 
 import PolynomialRings
+import Base.Iterators: flatten
 
 import DataStructures: PriorityQueue, enqueue!, dequeue!
 import IterTools: chain
@@ -64,7 +65,7 @@ function updatereduce!(L, M, P, f; order)
     lm_H = Set(lm(h) for h in H)
 
     while true
-        U = [monomial(t) for x in chain(values(M), H) for t in x.terms[1:end-1]]
+        U = [monomial(t) for x in flatten((values(M), H)) for t in x.terms[1:end-1]]
         filter!(u -> u ∉ lm_H && divides(lm(f), u), U)
         isempty(U) && break
 
@@ -101,7 +102,7 @@ function update!(L, P, fₗₘ)
     while !isempty(C)
         (fₗₘ, gₗₘ) = select!(C)
         u = lcm(fₗₘ, gₗₘ)
-        if u == fₗₘ * gₗₘ || !any(chain(keys(C), D)) do pair
+        if u == fₗₘ * gₗₘ || !any(flatten((keys(C), D))) do pair
             divides(lcm(pair[1], pair[2]), u)
         end
             push!(D, (fₗₘ, gₗₘ))
