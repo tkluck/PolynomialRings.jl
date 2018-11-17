@@ -4,8 +4,7 @@ module GröbnerF4GB
 import PolynomialRings
 import Base.Iterators: flatten
 
-import DataStructures: PriorityQueue, enqueue!, dequeue!
-import IterTools: chain
+import DataStructures: PriorityQueue, enqueue!, dequeue!, SortedSet
 import ProgressMeter: Progress, finish!, next!
 
 import ..Backends.Gröbner: M4GB
@@ -25,7 +24,7 @@ function m4gb(order::MonomialOrder, F::AbstractVector{<:Polynomial})
     @withmonomialorder order
 
     R = eltype(F); LM = monomialtype(R)
-    L, M = Set{LM}(), Dict{LM, R}()
+    L, M = SortedSet{LM}(order), Dict{LM, R}()
     P = PriorityQueue{Tuple{LM, LM}, LM}(order)
 
     for f in F

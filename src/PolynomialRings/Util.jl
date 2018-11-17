@@ -4,8 +4,9 @@ import Base: delete!, similar
 import Base: iterate
 import Base: length, isempty
 import Base: length, iterate
+import Base: filter, filter!
 
-import DataStructures: PriorityQueue
+import DataStructures: PriorityQueue, SortedSet
 import DataStructures: percolate_down!, percolate_up!, enqueue!, dequeue!, peek
 
 # -----------------------------------------------------------------------------
@@ -68,6 +69,21 @@ end
 # -----------------------------------------------------------------------------
 delete!(pq::PriorityQueue{K}, k::K) where K = dequeue!(pq, k)
 similar(pq::PriorityQueue{K, V, O}) where {K, V, O} = PriorityQueue{K, V}(O())
+
+# -----------------------------------------------------------------------------
+#
+# make filter! work for SortedSets
+#
+# -----------------------------------------------------------------------------
+function filter!(f::Function, s::SortedSet)
+    for x in s
+        if !f(x)
+            delete!(s, x)
+        end
+    end
+    return s
+end
+filter(f::Function, s::SortedSet) = filter!(f, copy(s))
 
 # -----------------------------------------------------------------------------
 #
