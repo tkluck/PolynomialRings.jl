@@ -39,16 +39,17 @@ function m4gb(order::MonomialOrder, F::AbstractVector{<:Polynomial})
         (fₗₘ, gₗₘ) = select!(P)
         f = M[fₗₘ]; g = M[gₗₘ]
 
-        progress.n = length(P) + loops
-        next!(progress; showvalues = [(Symbol("|L|"), length(L)), (Symbol("|P|"), length(P)), (:loops, loops)])
-
         c_f, c_g = lcm_multipliers(lt(f), lt(g))
         h₁ = mulfullreduce!(L, M, c_f, tail(f), order=order)
         h₂ = mulfullreduce!(L, M, c_g, tail(g), order=order)
         if (h = h₁ - h₂) |> !iszero
             updatereduce!(L, M, P, h, order=order)
         end
+
         loops += 1
+        progress.n = length(P) + loops
+        next!(progress; showvalues = [(Symbol("|L|"), length(L)), (Symbol("|P|"), length(P)), (:loops, loops)])
+
     end
     finish!(progress)
 
