@@ -87,14 +87,6 @@ end
     return :( M($converter, $degree ) )
 end
 
-function promote_rule(::Type{P1}, ::Type{P2}) where P1 <: Polynomial where P2 <: Polynomial
-    T = promote_rule(termtype(P1), termtype(P2))
-    T == Bottom && return Bottom
-    M = monomialtype(T)
-    C = basering(T)
-    return Polynomial{M, C}
-end
-
 # fix method ambiguity
 promote_rule(::Type{P}, ::Type{C}) where P<:PolynomialOver{C} where C <: Polynomial = P
 
@@ -130,22 +122,18 @@ fullnamingscheme(T::Type{<:Polynomial}) = fullnamingscheme(basering(T)) * naming
 fullboundnames(T::Type{<:Term}) = boundnames(basering(T))
 fullboundnames(T::Type{<:Polynomial}) = boundnames(basering(T))
 
-_basering(T) = basering(T)
-_basering(T::Type{<:TermOver{<:Polynomial}}) = termtype(basering(T))
-_promote_rule(T1::Type{<:Term}, T2::Type{<:Term}) = promote_rule(T1, T2)
+_promote_rule(T1::Type{<:Polynomial}, T2::Type) = promote_rule(T1, T2)
 _promote_rule(T1::Type, T2::Type) = promote_type(T1, T2)
-_polynomialtype(T) = T
-_polynomialtype(T::Type{<:Term}) = polynomialtype(T)
 
-function promote_rule(T1::Type{<:Term}, T2::Type)
+function promote_rule(T1::Type{<:Polynomial}, T2::Type)
     if !isdisjoint(namingscheme(T1), fullboundnames(T2))
         T1′ = remove_variables(T1, fullboundnames(T2))
         return _promote_rule(T1′, T2)
     elseif fullnamingscheme(T1) ⊆ fullnamingscheme(T2)
-        return _promote_rule(_basering(T1), T2)
+        return _promote_rule(basering(T1), T2)
     elseif isdisjoint(namingscheme(T1), fullnamingscheme(T2))
-        if (C = _promote_rule(_basering(T1), T2)) != Bottom
-            return Term{monomialtype(T1), _polynomialtype(C)}
+        if (C = _promote_rule(basering(T1), T2)) != Bottom
+            return Polynomial{monomialtype(T1), C}
         end
     end
     return Bottom
@@ -158,25 +146,21 @@ end
 # -----------------------------------------------------------------------------
 
 promote_canonical_type(T1::Type, T2::Type) = promote_type(T1, T2)
-promote_canonical_type(T1::Type{<:Polynomial}, T2::Type{<:Polynomial}) = _polynomialtype(promote_canonical_type(termtype(T1), termtype(T2)))
 
-promote_canonical_type(T1::Type{<:Polynomial}, T2::Type) = _polynomialtype(promote_canonical_type(termtype(T1), T2))
-promote_canonical_type(T1::Type, T2::Type{<:Polynomial}) = _polynomialtype(promote_canonical_type(T1, termtype(T2)))
-
-function promote_canonical_type(T1::Type{<:Term}, T2::Type)
+function promote_canonical_type(T1::Type{<:Polynomial}, T2::Type)
     if !isdisjoint(namingscheme(T1), fullboundnames(T2))
         T1′ = remove_variables(T1, fullboundnames(T2))
         return promote_canonical_type(T1′, T2)
     else
         M = monomialtype(T1)
-        C = _polynomialtype(promote_canonical_type(_basering(T1), T2))
-        return Term{M, C}
+        C = promote_canonical_type(basering(T1), T2)
+        return Polynomial{M, C}
     end
 end
 
-promote_canonical_type(T1::Type, T2::Type{<:Term}) = promote_canonical_type(T2, T1)
+promote_canonical_type(T1::Type, T2::Type{<:Polynomial}) = promote_canonical_type(T2, T1)
 
-function promote_canonical_type(T1::Type{<:Term}, T2::Type{<:Term})
+function promote_canonical_type(T1::Type{<:Polynomial}, T2::Type{<:Polynomial})
     @assert iscanonical(T1) && iscanonical(T2)
 
     if !isdisjoint(namingscheme(T1), fullboundnames(T2))
@@ -187,16 +171,16 @@ function promote_canonical_type(T1::Type{<:Term}, T2::Type{<:Term})
         return promote_canonical_type(T1, T2′)
     elseif namingscheme(T1) ≺ namingscheme(T2)
         M = monomialtype(T2)
-        C = _polynomialtype(promote_canonical_type(T1, _basering(T2)))
-        return Term{M, C}
+        C = promote_canonical_type(T1, basering(T2))
+        return Polynomial{M, C}
     elseif namingscheme(T2) ≺ namingscheme(T1)
         M = monomialtype(T1)
-        C = _polynomialtype(promote_canonical_type(_basering(T1), T2))
-        return Term{M, C}
+        C = promote_canonical_type(basering(T1), T2)
+        return Polynomial{M, C}
     else
         M = promote_type(monomialtype(T1), monomialtype(T2))
-        C = _polynomialtype(promote_type(_basering(T1), _basering(T2)))
-        return Term{M, C}
+        C = promote_type(basering(T1), basering(T2))
+        return Polynomial{M, C}
     end
 end
 
@@ -274,7 +258,7 @@ iscanonical(::Type) = true
 iscanonical(M::Type{<:AbstractMonomial}) = iscanonical(namingscheme(M)) && rulesymbol(monomialorder(M)) == :degrevlex
 
 function _promote_result(T, S, LTR, RTL)
-if LTR == RTL
+    if LTR == RTL
         return LTR
     else
         @assert canonicaltype(LTR) == canonicaltype(RTL)

@@ -10,6 +10,7 @@ import LinearAlgebra: tr, norm
 
 import ..Ideals: ring
 import ..Monomials: AbstractMonomial
+import ..NamingSchemes: boundnames
 import ..Polynomials: Polynomial, basering, variablesymbols
 import ..QuotientRings: QuotientRing, monomial_basis
 import ..QuotientRings: _ideal
@@ -29,6 +30,7 @@ struct NumberField{P<:Polynomial,C,Q} <: AbstractExactNumber
 end
 ring(::Type{<:NumberField{P}}) where P = P
 basering(::Type{<:NumberField{P}}) where P = basering(P)
+quotientring(::Type{<:NumberField{P,C,Q}}) where {P,C,Q} = Q
 
 function _primitive_element end
 function _minimal_polynomial end
@@ -149,6 +151,7 @@ copy(a::NumberField) = a
 ==(a::Q, b::Q) where Q<:NumberField = a.coeffs == b.coeffs
 !=(a::Q, b::Q) where Q<:NumberField = a.coeffs != b.coeffs
 allvariablesymbols(::Type{Q}) where Q<:NumberField = allvariablesymbols(ring(Q))
+boundnames(::Type{Q})         where Q<:NumberField = boundnames(quotientring(Q))
 
 fraction_field(::Type{N}) where N<:NumberField = N
 
@@ -237,6 +240,24 @@ end
 #
 # -----------------------------------------------------------------------------
 function promote_rule(::Type{N}, ::Type{C}) where N<:NumberField{P} where {P<:Polynomial,C}
+    rule_for_P = typejoin( promote_rule(P,C), promote_rule(C,P) )
+    if rule_for_P === P
+        return N
+    else
+        return Union{}
+    end
+end
+
+function promote_rule(::Type{C}, ::Type{N}) where N<:NumberField{P} where {P<:Polynomial,C}
+    rule_for_P = typejoin( promote_rule(P,C), promote_rule(C,P) )
+    if rule_for_P === P
+        return N
+    else
+        return Union{}
+    end
+end
+
+function promote_rule(::Type{C}, ::Type{N}) where N<:NumberField{P} where {P<:Polynomial,C<:Polynomial}
     rule_for_P = typejoin( promote_rule(P,C), promote_rule(C,P) )
     if rule_for_P === P
         return N
