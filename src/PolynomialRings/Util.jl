@@ -186,18 +186,6 @@ end
     end
 end
 
-function isstrictlysorted(itr; lt)
-    y = iterate(itr)
-    y === nothing && return true
-    prev, state = y
-    y = iterate(itr, state)
-    while y !== nothing
-        this, state = y
-        lt(prev, this) || return false
-        prev = this
-        y = iterate(itr, state)
-    end
-    return true
-end
+isstrictlysorted(itr; lt) = issorted(itr; lt = (a, b) -> !lt(b, a))
 
 end
