@@ -98,7 +98,7 @@ end
 namingscheme(::Type) = nothing
 fullnamingscheme(::Type) = NoNamingScheme()
 boundnames(::Type) = nothing
-fullboundnames(T::Type) = nothing * boundnames(T)
+fullboundnames(T::Type) = boundnames(T) == nothing ? NoNamingScheme() : (boundnames(T),)
 
 ≺(N1::Numbered, N2::Numbered) = numberedvariablename(N1) < numberedvariablename(N2)
 ≺(N1::Numbered, N2::Named) = true
