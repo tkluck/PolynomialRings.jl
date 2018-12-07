@@ -50,7 +50,7 @@ flatvariablesymbols(::Numbered{Name}) where Name = Channel() do ch
     end
 end
 
-issubset(::Named{Names1}, ::Named{Names2}) where {Names1, Names2} = Names1 ⊆ Names2 && issorted(indexin(collect(Names1), collect(Names2)))
+@generated issubset(::Named{Names1}, ::Named{Names2}) where {Names1, Names2} = :($( Names1 ⊆ Names2 && issorted(indexin(collect(Names1), collect(Names2))) ))
 issubset(::Named, ::Numbered) = false
 issubset(::Numbered, ::Named) = false
 issubset(::Numbered{Name1}, ::Numbered{Name2}) where {Name1, Name2} = Name1 == Name2
@@ -62,11 +62,12 @@ issubset(::NamingScheme, ::NoNamingScheme) = false
 issubset(::NoNamingScheme, ::NamingScheme) = true
 issubset(S::NamingScheme, T::FullNamingScheme) = any(t -> S ⊆ t, T)
 issubset(S::FullNamingScheme, T::NamingScheme) = all(s -> s ⊆ T, S)
-function issubset(S::FullNamingScheme, T::FullNamingScheme)
-    indices = map(s -> findfirst(t -> s ⊆ t, T), S)
-    return all(!isequal(nothing), indices) && issorted(indices)
+@generated function issubset(::Type{S}, ::Type{T}) where {S <: FullNamingScheme, T <: FullNamingScheme}
+    indices = map(s -> findfirst(t -> s ⊆ t, T()), S())
+    res = all(!isequal(nothing), indices) && issorted(indices)
+    return :($res)
 end
-isdisjoint(::Named{Names1}, ::Named{Names2}) where {Names1, Names2} = isempty(Names1 ∩ Names2)
+@generated isdisjoint(::Named{Names1}, ::Named{Names2}) where {Names1, Names2} = :($( isempty(Names1 ∩ Names2) ))
 isdisjoint(::Named, ::Numbered) = true
 isdisjoint(::Numbered, ::Named) = true
 isdisjoint(::Numbered{Name1}, ::Numbered{Name2}) where {Name1, Name2} = Name1 != Name2

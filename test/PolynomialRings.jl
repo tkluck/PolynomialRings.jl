@@ -217,6 +217,20 @@ one(::Type{Foo}) = Foo()
         @test canonicaltype(@ring(ℤ[c[]][y,x])) == @ring ℤ[c[]][x,y]
         @test canonicaltype(@ring(ℤ[c[]][b[]][a[]])) == @ring ℤ[a[]][b[]][c[]]
     end
+
+    @testset "Sparse result types" begin
+        @ring! ℤ[x]
+        @ring! ℤ[y]
+        R = @ring ℤ[x, y]
+
+        @test typeof(x * y) == R
+        @test eltype(x * [y]) == R
+        @test eltype([x x] * [y; y]) == R
+
+        @test eltype(x * sparse([y])) == R
+        @test eltype([x x] * sparse([y; y])) == R
+        @test eltype(sparse([x x]) * sparse([y; y])) == R
+    end
 end
 
 @testset "Expansions" begin

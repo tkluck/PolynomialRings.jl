@@ -240,11 +240,12 @@ function canonicaltype(P::Type{<:Polynomial})
     M = canonicaltype(monomialtype(P))
     return Polynomial{M, C}
 end
-function canonicaltype(M::Type{<:NamedMonomial})
+@generated function canonicaltype(::Type{M}) where M <: NamedMonomial
     N = num_variables(M)
     I = exptype(M)
     names = tuple(sort(collect(variablesymbols(M)))...)
-    TupleMonomial{N, I, MonomialOrder{:degrevlex, Named{names}}}
+    res = TupleMonomial{N, I, MonomialOrder{:degrevlex, Named{names}}}
+    return :($res)
 end
 function canonicaltype(M::Type{<:NumberedMonomial})
     I = exptype(M)

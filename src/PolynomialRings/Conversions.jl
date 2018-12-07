@@ -274,7 +274,7 @@ end
 #
 # -----------------------------------------------------------------------------
 function promote_vector(a::S,b::AbstractVector{T}) where {S,T<:Polynomial}
-    U = typejoin(promote_rule(S,T), promote_rule(T,S))
+    U = promote_type(S, T)
     if U === Union{}
         throw(TypeError())
     else
@@ -296,6 +296,6 @@ divrem(a::Number, b::AbstractVector{<:Polynomial}) = divrem(promote_vector(a, b)
 # Base implementation
 #
 # -----------------------------------------------------------------------------
-promote_op(f, ::Type{P}, ::Type{Q}) where P<:Polynomial where Q<:Polynomial = promote_type(P,Q)
+promote_op(f, P::Type{<:Polynomial}, Q::Type{<:Polynomial}) = promote_type(P, Q)
 
 end
