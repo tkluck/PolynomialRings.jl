@@ -227,7 +227,7 @@ one(::Type{Foo}) = Foo()
         @test eltype(x * [y]) == R
         @test eltype([x x] * [y; y]) == R
 
-        @test eltype(x * sparse([y])) == R
+        @test VERSION < v"1.0-" || eltype(x * sparse([y])) == R
         @test eltype([x x] * sparse([y; y])) == R
         @test eltype(sparse([x x]) * sparse([y; y])) == R
     end
