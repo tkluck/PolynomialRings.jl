@@ -351,10 +351,10 @@ function iterterms(::Order, op::PlusMinus, a::TermsMap{Order,true}, b::TermsMap{
 
     summands = ParallelIter(
         monomial, coefficient, ≺,
-        Zero(), Zero(),
+        Zero(), Zero(), tuple,
         a, b,
     )
-    TermsMap(Order(), summands, a.bound + b.bound, true) do (m, cleft, cright)
+    TermsMap(Order(), summands, a.bound + b.bound, true) do (m, (cleft, cright))
         @inplace cleft = op(cleft, cright)
         iszero(cleft) ? nothing : Term(m, cleft)
     end
@@ -364,10 +364,10 @@ function iterterms(::Order, op::PlusMinus, a::TermsMap{Order}, b::TermsMap{Order
 
     summands = ParallelIter(
         monomial, coefficient, ≺,
-        Zero(), Zero(),
+        Zero(), Zero(), tuple,
         a, b,
     )
-    TermsMap(Order(), summands, a.bound + b.bound, true) do (m, cleft, cright)
+    TermsMap(Order(), summands, a.bound + b.bound, true) do (m, (cleft, cright))
         @inplace cright = op(cleft, cright)
         iszero(cright) ? nothing : Term(m, cright)
     end
@@ -377,11 +377,10 @@ function iterterms(::Order, op::PlusMinus, a::TermsMap{Order}, b::TermsMap{Order
 
     summands = ParallelIter(
         monomial, coefficient, ≺,
-        Zero(), Zero(),
+        Zero(), Zero(), op,
         a, b,
     )
-    TermsMap(Order(), summands, a.bound + b.bound, true) do (m, cleft, cright)
-        coeff = op(cleft, cright)
+    TermsMap(Order(), summands, a.bound + b.bound, true) do (m, coeff)
         iszero(coeff) ? nothing : Term(m, coeff)
     end
 end

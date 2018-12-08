@@ -104,14 +104,14 @@ include("LinAlgUtil.jl")
 # Parallel iteration of two iterators
 #
 # -----------------------------------------------------------------------------
-struct ParallelIter{I,J,key,value,≺,l0,r0}
+struct ParallelIter{I,J,key,value,≺,l0,r0,op}
     left::I
     right::J
 end
-ParallelIter(key, value, ≺, l0, r0, left, right) = ParallelIter{
+ParallelIter(key, value, ≺, l0, r0, op, left, right) = ParallelIter{
         typeof(left), typeof(right),
         key, value, ≺,
-        l0, r0,
+        l0, r0, op,
     }(left, right)
 
 struct Start end
@@ -167,20 +167,20 @@ function iterate2(i::ParallelIter, ::Start)
     iterate(i.left), iterate(i.right)
 end
 
-@inline function iterate(i::ParallelIter{I,J,key,value,≺,l0,r0}, state=Start()) where {I,J,key,value,≺,l0,r0}
+@inline function iterate(i::ParallelIter{I,J,key,value,≺,l0,r0,op}, state=Start()) where {I,J,key,value,≺,l0,r0,op}
     liter, riter = iterate2(i, state)
     if liter === nothing && riter === nothing
         return nothing
     elseif liter === nothing
-        return (key(riter[1]), l0, value(riter[1])), LeftDone(riter[2])
+        return (key(riter[1]), op(l0, value(riter[1]))), LeftDone(riter[2])
     elseif riter === nothing
-        return (key(liter[1]), value(liter[1]), r0), RightDone(liter[2])
+        return (key(liter[1]), op(value(liter[1]), r0)), RightDone(liter[2])
     elseif key(riter[1]) ≺ key(liter[1])
-        return (key(riter[1]), l0, value(riter[1])), LeftReady(liter, riter[2])
+        return (key(riter[1]), op(l0, value(riter[1]))), LeftReady(liter, riter[2])
     elseif key(liter[1]) ≺ key(riter[1])
-        return (key(liter[1]), value(liter[1]), r0), RightReady(riter, liter[2])
+        return (key(liter[1]), op(value(liter[1]), r0)), RightReady(riter, liter[2])
     elseif key(liter[1]) == key(riter[1])
-        return (key(liter[1]), value(liter[1]), value(riter[1])), NextTwo(liter[2], riter[2])
+        return (key(liter[1]), op(value(liter[1]), value(riter[1]))), NextTwo(liter[2], riter[2])
     else
         @assert(false) # unreachable?
     end

@@ -90,12 +90,11 @@ function _map(op, a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
     res = Vector{T}(undef, length(a.terms) + length(b.terms))
     n = 0
 
-    for (m, cleft, cright) in ParallelIter(
+    for (m, coeff) in ParallelIter(
             monomial, coefficient, ≺,
-            Zero(), Zero(),
+            Zero(), Zero(), op,
             terms(a, order=Order()), terms(b, order=Order()),
         )
-        coeff = op(cleft, cright)
         if !iszero(coeff)
             @inbounds res[n+=1] = T(m, coeff)
         end
