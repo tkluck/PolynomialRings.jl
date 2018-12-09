@@ -105,14 +105,14 @@ function remove_variables(::Type{M}, vars) where M <: TupleMonomial
 
 function remove_variables(::Type{T}, vars) where T <: Term
     M = remove_variables(monomialtype(T), vars)
-    M == One && return basering(T)
     C = remove_variables(basering(T), vars)
+    M == One && return C
     return Term{M, C}
 end
 function remove_variables(::Type{P}, vars) where P <: Polynomial
     M = remove_variables(monomialtype(P), vars)
-    M == One && return basering(P)
     C = remove_variables(basering(P), vars)
+    M == One && return C
     return Polynomial{M, C}
 end
 remove_variables(T::Type, vars) = T
