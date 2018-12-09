@@ -8,12 +8,12 @@ import ..MonomialOrderings: MonomialOrder
 import ..Monomials: AbstractMonomial, TupleMonomial, VectorMonomial
 import ..Terms: Term, monomial, coefficient
 import ..Util: lazymap
-import ..NamingSchemes: Named, Numbered
+import ..NamingSchemes: Named, Numbered, NamingScheme, fullnamingscheme, isdisjoint, isvalid
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering, monomialtype
 import PolynomialRings: leading_coefficient, leading_monomial
 import PolynomialRings: leading_term, termtype, monomialorder, terms, exptype, namingscheme
 import PolynomialRings: tail
-import PolynomialRings: variablesymbols, allvariablesymbols
+import PolynomialRings: variablesymbols, allvariablesymbols, fullboundnames
 
 # -----------------------------------------------------------------------------
 #
@@ -152,25 +152,32 @@ x*y + z
 ```
 """
 function polynomial_ring(symbols::Symbol...; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex)
-    length(symbols)>0 || throw(ArgumentError("Need at least one variable name"))
-    if any(s in allvariablesymbols(basering) for s in symbols) || !allunique(symbols)
-        throw(ArgumentError("Duplicated symbols when extending $basering by $(Named{symbols})"))
-    end
-    M = MonomialOrder{monomialorder, Named{symbols}}
-    P = Polynomial{TupleMonomial{length(symbols),exptype, M}, basering}
+    length(symbols) > 0 || throw(ArgumentError("Need at least one variable name"))
+    allunique(symbols) || throw(ArgumentError("Duplicated symbols when extending $basering by $(Named{symbols}())"))
+    scheme = Named{symbols}()
+    P = polynomial_ring(scheme, basering=basering, exptype=exptype, monomialorder=monomialorder)
     return P, generators(P)
 end
 
 function numbered_polynomial_ring(symbol::Symbol; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex)
-    if symbol in allvariablesymbols(basering)
-        throw(ArgumentError("Duplicated symbols when extending $basering by $(Numbered{symbol})"))
-    end
-
-    M = MonomialOrder{monomialorder, Numbered{symbol, Inf}}
-    P = Polynomial{VectorMonomial{SparseVector{exptype,Int}, exptype, M}, basering}
+    scheme =  Numbered{symbol, Inf}()
+    P = polynomial_ring(scheme, basering=basering, exptype=exptype, monomialorder=monomialorder)
     return P
 end
 
+function numbered_polynomial_ring(symbol::Symbol, n::Integer; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex)
+    scheme =  Numbered{symbol, n}()
+    P = polynomial_ring(scheme, basering=basering, exptype=exptype, monomialorder=monomialorder)
+    return P, generators(P)
+end
 
+function polynomial_ring(scheme::NamingScheme; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex)
+    if !isdisjoint(scheme, fullnamingscheme(basering)) || !isdisjoint(scheme, fullboundnames(basering)) || !isvalid(scheme)
+        throw(ArgumentError("Duplicated symbols when extending $basering by $scheme"))
+    end
+    order = MonomialOrder{monomialorder, typeof(scheme)}()
+    M = monomialtype(order, exptype)
+    return Polynomial{M, basering}
+end
 
 end

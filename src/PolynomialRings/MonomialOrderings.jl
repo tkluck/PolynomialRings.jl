@@ -4,10 +4,13 @@ import Base.Order: Ordering
 import Base: min, max, minimum, maximum
 import Base: promote_rule
 
-import ..Monomials: AbstractMonomial, VectorMonomial, total_degree, index_union, rev_index_union
+import SparseArrays: SparseVector
+
+import ..Monomials: AbstractMonomial, TupleMonomial, VectorMonomial, total_degree, index_union, rev_index_union
 import ..NamingSchemes: NamingScheme, Named, Numbered
-import PolynomialRings: namingscheme, to_dense_monomials, variablesymbols
+import PolynomialRings: namingscheme, to_dense_monomials, variablesymbols, num_variables
 import PolynomialRings: leading_monomial, leading_coefficient, leading_term, tail
+import PolynomialRings: monomialtype
 
 """
     struct MonomialOrder{Rule, Names} <: Ordering end
@@ -137,6 +140,15 @@ macro withmonomialorder(order)
         lc(f) = $leading_coefficient(f, order=$order)
         tail(f) = $tail(f, order=$order)
     end)
+end
+
+function monomialtype(order::MonomialOrder, exptype::Type{<:Integer}=Int16)
+    N = num_variables(namingscheme(order))
+    if N < Inf
+        return TupleMonomial{N, exptype, typeof(order)}
+    else
+        return VectorMonomial{SparseVector{exptype, Int}, exptype, typeof(order)}
+    end
 end
 
 end

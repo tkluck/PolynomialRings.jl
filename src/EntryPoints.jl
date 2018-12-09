@@ -12,7 +12,7 @@ import ..Polynomials: Polynomial, polynomial_ring, numbered_polynomial_ring
 import ..QuotientRings: QuotientRing
 import ..Terms: Term, basering
 import ..Util: lazymap
-import ..NamingSchemes: Numbered, numberedvariablename
+import ..NamingSchemes: Numbered, numberedvariablename, parse_namingscheme, num_variables, namingscheme
 import PolynomialRings: construct_monomial, exptype
 import PolynomialRings: generators, base_extend, variablesymbols, allvariablesymbols, ⊗
 
@@ -82,7 +82,7 @@ function _variables_in_ring_definition(definition)
     basering_spec = definition.args[1]
     variable_spec = definition.args[2:end]
 
-    if length(variable_spec) == 1 && variable_spec[1] isa Expr && variable_spec[1].head == :ref && length(variable_spec[1].args) == 1
+    if length(variable_spec) == 1 && variable_spec[1] isa Expr && variable_spec[1].head == :ref
         variables = [variable_spec[1].args[1]]
     elseif all(var isa Symbol for var in variable_spec)
         variables = variable_spec
@@ -161,7 +161,9 @@ function _polynomial_ring(definition)
     end
 
     basering_spec = definition.args[1]
-    variables = definition.args[2:end]
+    variable_spec = length(definition.args) > 2 || definition.args[2] isa Symbol ?
+                    Expr(:tuple, definition.args[2:end]...) :
+                    definition.args[2]
 
     if basering_spec isa Expr
         basering = _polynomial_ring(basering_spec)
@@ -169,17 +171,9 @@ function _polynomial_ring(definition)
         basering = get(_baserings, basering_spec, esc(basering_spec))
     end
 
-    if all(v isa Symbol for v in variables)
-        return quote
-            $polynomial_ring($variables..., basering=$basering)[1]
-        end
-    elseif length(variables) == 1 && variables[1].head == :ref
-        variable = QuoteNode( variables[1].args[1] )
-        return quote
-            $numbered_polynomial_ring($variable, basering=$basering)
-        end
-    else
-        throw(ArgumentError("The specification $definition is not a valid list of variables"))
+    scheme = parse_namingscheme(variable_spec)
+    return quote
+        $polynomial_ring($scheme, basering=$basering)
     end
 end
 
@@ -413,7 +407,9 @@ end
 
 function getindex(g::NumberedVariableGenerator{Outer,Inner}, i::Integer) where {Outer,Inner}
     E = exptype(Inner)
-    e = spzeros(E, i)
+    N = num_variables(namingscheme(Inner))
+    i <= N || throw(BoundsError(namingscheme(Inner), i))
+    e = spzeros(E, N < Inf ? N : i)
     e[i] = one(E)
     return Outer(construct_monomial(Inner, e))
 end

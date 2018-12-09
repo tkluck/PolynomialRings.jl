@@ -52,6 +52,10 @@ flatvariablesymbols(::Numbered{Name}) where Name = Channel() do ch
     end
 end
 
+isvalid(scheme::Named) = allunique(variablesymbols(scheme))
+isvalid(scheme::Numbered) = true
+
+
 @generated issubset(::Named{Names1}, ::Named{Names2}) where {Names1, Names2} = :($( Names1 ⊆ Names2 && issorted(indexin(collect(Names1), collect(Names2))) ))
 issubset(::Named, ::Numbered) = false
 issubset(::Numbered, ::Named) = false
