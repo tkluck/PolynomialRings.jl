@@ -349,26 +349,27 @@ end
 function iterterms(::Order, op::PlusMinus, a::TermsMap{Order,true}, b::TermsMap{Order}) where Order
     ≺(a,b) = Base.Order.lt(Order(), a, b)
 
+
+    inplaceop(cleft, cright) = @inplace cleft = op(cleft, cright)
     summands = ParallelIter(
         monomial, coefficient, ≺,
-        Zero(), Zero(), tuple,
+        Zero(), Zero(), inplaceop,
         a, b,
     )
-    TermsMap(Order(), summands, a.bound + b.bound, true) do (m, (cleft, cright))
-        @inplace cleft = op(cleft, cright)
+    TermsMap(Order(), summands, a.bound + b.bound, true) do (m, cleft)
         iszero(cleft) ? nothing : Term(m, cleft)
     end
 end
 function iterterms(::Order, op::PlusMinus, a::TermsMap{Order}, b::TermsMap{Order,true}) where Order
     ≺(a,b) = Base.Order.lt(Order(), a, b)
 
+    inplaceop(cleft, cright) = @inplace cright = op(cleft, cright)
     summands = ParallelIter(
         monomial, coefficient, ≺,
-        Zero(), Zero(), tuple,
+        Zero(), Zero(), inplaceop,
         a, b,
     )
-    TermsMap(Order(), summands, a.bound + b.bound, true) do (m, (cleft, cright))
-        @inplace cright = op(cleft, cright)
+    TermsMap(Order(), summands, a.bound + b.bound, true) do (m, cright)
         iszero(cright) ? nothing : Term(m, cright)
     end
 end
