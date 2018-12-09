@@ -44,14 +44,6 @@ variablesymbols(::Numbered{Name}) where Name = tuple()
 numberedvariablename(::Numbered{Name}) where Name = Name
 num_variables(::Numbered{Name, Max}) where {Name, Max} = Max
 
-flatvariablesymbols(::Numbered{Name}) where Name = Channel() do ch
-    i = 0
-    while true
-        i += 1
-        push!(ch, Symbol("$Name$i"))
-    end
-end
-
 isvalid(scheme::Named) = allunique(variablesymbols(scheme))
 isvalid(scheme::Numbered) = true
 

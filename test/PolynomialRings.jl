@@ -129,10 +129,10 @@ one(::Type{Foo}) = Foo()
         g = [h5(); h5()]
         @test euler(g) == 5*g
 
-        @ring! ℤ[d1,d2,d3]
         @ring! ℤ[d[]]
         dd1,dd2,dd3 = d[]
-        @test to_dense_monomials([dd1, dd2, dd3]) == [d1,d2,d3]
+        @test to_dense_monomials([dd1, dd2, dd3]) == generators(@ring ℤ[d[1:3]])
+        @test eltype(to_dense_monomials([dd1, dd2, dd3])) == @ring ℤ[d[1:3]]
 
         # the middle one returns a tuple, that's why we need to collect()
         # it before comparison

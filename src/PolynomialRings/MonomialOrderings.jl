@@ -42,7 +42,7 @@ rulesymbol(::Type{O}) where O <: MonomialOrder{Rule, Names} where {Rule, Names} 
 namingscheme(::O)       where O <: MonomialOrder{Rule, Names} where {Rule, Names} = Names()
 namingscheme(::Type{O}) where O <: MonomialOrder{Rule, Names} where {Rule, Names} = Names()
 
-to_dense_monomials(n::Integer, o::MonomialOrder) = MonomialOrder{rulesymbol(o), to_dense_monomials(n, namingscheme(o))}()
+to_dense_monomials(n::Integer, o::MonomialOrder) = MonomialOrder{rulesymbol(o), typeof(to_dense_monomials(n, namingscheme(o)))}()
 
 function Base.Order.lt(::MonomialOrder{:degrevlex}, a::M,b::M) where M <: AbstractMonomial
 
