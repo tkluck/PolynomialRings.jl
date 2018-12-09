@@ -10,10 +10,10 @@ import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
 import ..Monomials: AbstractMonomial, TupleMonomial, exptype, expstype, enumeratenz
 import ..NamedPolynomials: NamedPolynomial, _lossy_convert_monomial
-import ..Polynomials: Polynomial, termtype, monomialtype, monomialorder, terms, polynomial_ring
+import ..Polynomials: Polynomial, termtype, monomialtype, monomialorder, terms, polynomial_ring, PolynomialBy
 import ..Terms: Term, monomial, coefficient
 import ..Util: SingleItemIter
-import ..NamingSchemes: Named, Numbered, NamingScheme
+import ..NamingSchemes: Named, Numbered, NamingScheme, remove_variables
 import PolynomialRings: basering, namingscheme, variablesymbols
 
 # -----------------------------------------------------------------------------
@@ -22,44 +22,20 @@ import PolynomialRings: basering, namingscheme, variablesymbols
 #
 # -----------------------------------------------------------------------------
 
-_expansion_types(t::Type, order::MonomialOrder) = _expansion_types(t, namingscheme(order))
-_expansion_types(::Type{N}, ::NamingScheme) where N = (One, N)
-_lossy_convert_monomial(::Type{M}, ::One) where M<:AbstractMonomial = one(M)
-
 _expansion_expr(vars::NTuple{N,Symbol}) where N = MonomialOrder{:degrevlex, Named{vars}}()
-_expansion_expr(vars::Tuple{Expr}) = (v = vars[1]; @assert(v.head == :ref && length(v.args) == 1); MonomialOrder{:degrevlex, Numbered{v.args[1]}}())
+_expansion_expr(vars::Tuple{Expr}) = (v = vars[1]; @assert(v.head == :ref && length(v.args) == 1); MonomialOrder{:degrevlex, Numbered{v.args[1], Inf}}())
 
 
-"""
-    monomialtype, coefficienttype = _expansion_types(R, Named{tuple(symbols...)})
-"""
-function _expansion_types(::Type{P}, ::Named{vars}) where P <: NamedPolynomial where vars
-    available_vars = variablesymbols(P)
-    unspecified_vars = tuple(setdiff(available_vars, vars)...)
-    unknown_vars = tuple(setdiff(vars, available_vars)...)
-
-    CoeffMonomialType, CoeffCoeffType = _expansion_types(basering(P), Named{unknown_vars}())
-
-    N = length(vars)
-    M = length(unspecified_vars)
-    ExpType = exptype(P)
-    MonomialType = TupleMonomial{N,ExpType,MonomialOrder{:degrevlex,Named{vars}}}
-    if M == 0
-        CoeffType = CoeffCoeffType
-    else
-        CoeffType = promote_type(
-            CoeffCoeffType,
-            Polynomial{TupleMonomial{M,ExpType,MonomialOrder{:degrevlex,Named{unspecified_vars}}},One},
-        )
-    end
-    if !isconcretetype(CoeffType)
-        throw(ArgumentError("Cannot expand $P in variables $(Named{vars}); would result in $CoeffType"))
-    end
-    return MonomialType, CoeffType
-
+function _expansion_types(::Type{P}, order::MonomialOrder) where P <: NamedPolynomial
+    C = remove_variables(P, namingscheme(order))
+    M = monomialtype(order, exptype(P, namingscheme(order)))
+    return M, C
 end
 
-_expansion(p, T) = ((M,C) = _expansion_types(typeof(p), T); SingleItemIter((one(M), p)))
+_expansionspec(sym::Symbol...) = _expansionspec(Named{sym}())
+_expansionspec(scheme::NamingScheme) = _expansionspec(MonomialOrder{:degrevlex, typeof(scheme)}())
+_expansionspec(spec::MonomialOrder) = spec
+_coefftype(::Type{P}, spec...) where P <: Polynomial = remove_variables(P, namingscheme(_expansionspec(spec...)))
 
 """
     expansion(f, symbol, [symbol...])
@@ -88,106 +64,47 @@ julia> collect(expansion(x^3 + y^2, :x, :y))
 # See also
 `@expansion(...)`, `@coefficient` and `coefficient`
 """
-function expansion(p::P, args...) where P <: Polynomial
-    MonomialType, CoeffType = _expansion_types(P, args...)
-    return Channel(ctype=Tuple{expstype(MonomialType), CoeffType}) do ch
-        for (w,c) in _expansion(p, args...)
-            push!(ch, (w.e, c))
-        end
-    end
-end
+expansion(p::Polynomial, spec...) = [(m.e, c) for (c,(m,)) in _expansion2(p, _expansionspec(spec...))]
 
-
-function _expansion(p::P, spec::NamedMonomialOrder) where P <: NamedPolynomial
-    vars = variablesymbols(spec)
-    available_vars = variablesymbols(P)
-    unspecified_vars = tuple(setdiff(available_vars, vars)...)
-    unknown_vars = tuple(setdiff(vars, available_vars)...)
-
-    MonomialType, CoeffType = _expansion_types(P, spec)
-    ResultType = Tuple{MonomialType, CoeffType}
-    f(m) = _lossy_convert_monomial(MonomialType, m)
-
-    if length(unspecified_vars) == 0
-        return Channel(ctype=ResultType) do ch
-            for t in terms(p)
-                outer_monomial = monomial(t)
-                for (inner_monomial,c) in _expansion(coefficient(t), _expansion_expr(unknown_vars))
-                    push!(ch, (f(inner_monomial)*f(outer_monomial), c))
-                end
-            end
-        end
-    else
-        ExpType = exptype(P)
-        UnspecifiedMonomial = TupleMonomial{length(unspecified_vars),ExpType,MonomialOrder{:degrevlex,Named{unspecified_vars}}}
-        g(m) = _lossy_convert_monomial(monomialtype(CoeffType), m)
-        h(m) = convert(MonomialType, m)
-
-        return Channel(ctype=ResultType) do ch
-            iszero(p) && return
-            separated_terms = [
-                (f(monomial(t))*h(inner_monomial), CoeffType(g(monomial(t))) * c)
-                for t in terms(p)
-                for (inner_monomial,c) in _expansion(coefficient(t), _expansion_expr(unknown_vars))
-            ]
-            sort!(separated_terms, lt=(a,b)->Base.Order.lt(spec, a[1], b[1]))
-            for term_group in groupby(x->x[1], separated_terms)
-                m = term_group[1][1]
-                p = sum(t[2] for t in term_group)
-                push!(ch, (m, p))
-            end
-        end
-    end
-end
-
-# -----------------------------------------------------------------------------
-#
-# Expansions: numbered variables
-#
-# -----------------------------------------------------------------------------
-function _expansion_types(::Type{P}, names::Numbered) where P <: Polynomial
-    @assert namingscheme(P) == names
-
-    return (monomialtype(P), basering(P))
-end
-
-function _expansion(p::P, spec::NumberedMonomialOrder) where P <: Polynomial
-    @assert monomialorder(p) == spec
-
-    return Channel(ctype=Tuple{monomialtype(P), basering(P)}) do ch
+_expansion2(p) = [(p, tuple())]
+_expansion2(p, spec::MonomialOrder, specs::MonomialOrder...) = (((c, ms),) = _expansion2(p, specs...); [(c, tuple(one(monomialtype(spec)), ms...))])
+# TODO: should we return owned copies?
+_expansion2(p::PolynomialBy{Order}, spec::Order) where Order <: MonomialOrder = map(t -> (coefficient(t), (monomial(t),)), terms(p))
+_ofpolynomialtype(t) = t
+_ofpolynomialtype(t::Term{M,C}) where {M,C} = Polynomial{M,C}([t])
+function _expansion2(p::Polynomial, spec::MonomialOrder)
+    C = remove_variables(typeof(p), namingscheme(spec))
+    M = monomialtype(spec, exptype(typeof(p), namingscheme(spec)))
+    M′ = remove_variables(monomialtype(p), namingscheme(spec))
+    exploded = Tuple{C, Tuple{M}}[
+        (
+            m = _lossy_convert_monomial(M, monomial(t));
+            m′ = _lossy_convert_monomial(M′, monomial(t));
+            c′ = _ofpolynomialtype(c * m′);
+            (c′, (m * m2,))
+        )
         for t in terms(p)
-            push!(ch, (monomial(t), coefficient(t)))
-        end
-    end
-
+        for (c, (m2,)) in _expansion2(coefficient(t), spec)
+    ]
+    sort!(exploded, by = i -> i[2])
+    collected = [
+        (sum(i -> i[1], grp), grp[1][2])
+        for grp in groupby(i -> i[2], exploded)
+    ]
+    return collected
 end
 
-function _expansion_types(::Type{P}, names::Numbered) where P <: NamedPolynomial
-    CoeffMonomialType, CoeffCoeffType = _expansion_types(basering(P), names)
-
-    PP,_ = polynomial_ring(variablesymbols(P)..., basering=CoeffCoeffType)
-
-    return (CoeffMonomialType, PP)
-end
-
-function _expansion(p::P, spec::NumberedMonomialOrder) where P <: NamedPolynomial
-
-    MonomialType, CoeffType = _expansion_types(P, spec)
-
-    return Channel(ctype=Tuple{MonomialType, CoeffType}) do ch
-        iszero(p) && return
-        separated_terms = [
-            (inner_monomial,c*CoeffType(monomial(t)))
-            for t in terms(p)
-            for (inner_monomial,c) in _expansion(coefficient(t), spec)
-        ]
-        sort!(separated_terms, lt=(a,b)->Base.Order.lt(spec, a[1], b[1]))
-        for term_group in groupby(x->x[1], separated_terms)
-            m = term_group[1][1]
-            p = sum(t[2] for t in term_group)
-            push!(ch, (m, p))
-        end
-    end
+_monomialtypes(P::Type{<:Polynomial}, spec::MonomialOrder) = tuple(monomialtype(spec, exptype(P, namingscheme(spec))))
+_monomialtypes(P::Type{<:Polynomial}, spec::MonomialOrder, specs::MonomialOrder...) = tuple(_monomialtypes(P, spec)..., _monomialtypes(P, specs...)...)
+_remove_variables(t::Type) = t
+_remove_variables(t::Type, spec::MonomialOrder, specs::MonomialOrder...) = _remove_variables(remove_variables(t, namingscheme(spec)), specs...)
+function _expansion2(p::Polynomial, spec::MonomialOrder, specs::MonomialOrder...)
+    C = _remove_variables(typeof(p), spec, specs...)
+    return Tuple{C, Tuple{_monomialtypes(typeof(p), spec, specs...)...}}[
+        (c2, tuple(m, ms...))
+        for (c1, ms) in _expansion2(p, specs...)
+        for (c2, (m,)) in _expansion2(c1, spec)
+    ]
 end
 
 # -----------------------------------------------------------------------------
@@ -220,8 +137,8 @@ julia> collect(coefficients(x^3 + y^2, :x, :y))
 # See also
 `@coefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
 """
-function coefficients(p::P, variables) where P <: Polynomial
-    return [c for (p,c) in expansion(p, variables)]
+function coefficients(p::P, spec...) where P <: Polynomial
+    return [c for (p,c) in expansion(p, spec...)]
 end
 
 """
@@ -245,25 +162,18 @@ julia> collect(expansion_terms(x^3 + y^2 + 1, :x, :y))
 # See also
 `@coefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
 """
-function expansion_terms(p::P, variables) where P <: Polynomial
-    MonomialType, CoeffType =_expansion_types(P, args...)
+function expansion_terms(p::P, spec...) where P <: Polynomial
     return [
-        convert(MonomialType, w)*c
-        for (w,c) in expansion(p, variables)
+        _ofpolynomialtype(m * c)
+        for (m,c) in _expansion2(p, spec...)
     ]
 end
 
-@inline expansion(p::Polynomial, variables::Symbol...) = expansion(p, MonomialOrder{:degrevlex, Named{variables}}())
-@inline coefficients(p::Polynomial, variables::Symbol...) = coefficients(p, MonomialOrder{:degrevlex, Named{variables}}())
-@inline linear_coefficients(p::Polynomial, variables::Symbol...) = linear_coefficients(p, MonomialOrder{:degrevlex, Named{variables}}())
-@inline coefficient(p::Polynomial, exponent_tuple::Tuple, variables::Symbol...) = coefficient(p, exponent_tuple, MonomialOrder{:degrevlex, Named{variables}}())
-
-@inline _expansion_types(t::Type, variables::Symbol...) = _expansion_types(t, Named{variables}())
+@inline _expansion_types(t::Type, variables::Symbol...) = _expansion_types(t, _expansionspec(variables...))
 
 function _substitute(p::Polynomial, names::Named, values)
-    ExpansionType, CoeffType = _expansion_types(typeof(p), names)
     SubstitutionType = eltype(values)
-    ReturnType = promote_type(SubstitutionType, CoeffType)
+    ReturnType = promote_type(SubstitutionType, _coefftype(typeof(p), names))
     if !isconcretetype(ReturnType)
         throw(ArgumentError("Cannot substitute $SubstitutionType for $names into $p; result no more specific than $ReturnType"))
     end
@@ -278,9 +188,8 @@ function _substitute(p::Polynomial, names::Named, values)
 end
 
 function _substitute(p::Polynomial, names::Numbered, values)
-    ExpansionType, CoeffType = _expansion_types(typeof(p), names)
     SubstitutionType = typeof(values(1))
-    ReturnType = promote_type(SubstitutionType, CoeffType)
+    ReturnType = promote_type(SubstitutionType, _coefftype(typeof(p), names))
     if !isconcretetype(ReturnType)
         throw(ArgumentError("Cannot substitute $SubstitutionType for $names into $p; result no more specific than $ReturnType"))
     end
@@ -288,7 +197,7 @@ function _substitute(p::Polynomial, names::Numbered, values)
         +,
         (
             reduce(*, (values(i)^k for (i,k) in enumeratenz(m)), init=c)
-            for (m,c) in _expansion(p, MonomialOrder{:degrevlex, typeof(names)}())
+            for (c,(m,)) in _expansion2(p, MonomialOrder{:degrevlex, typeof(names)}())
         ),
         init=zero(ReturnType)
     )
@@ -307,7 +216,7 @@ function (p::Polynomial)(; kwargs...)
     if !any(v isa Function for v in values)
         return _substitute(p, Named{tuple(vars...)}(), values)
     elseif length(kwargs) == 1 && values[1] isa Function
-        return _substitute(p, Numbered{vars[1]}(), values[1])
+        return _substitute(p, Numbered{vars[1], Inf}(), values[1])
     else
         throw(ArgumentError("Don't know how to substitute $kwargs"))
     end
@@ -375,8 +284,7 @@ function coefficient(f::Polynomial, t::Tuple, vars...)
             return p
         end
     end
-    ExpansionType, CoeffType = _expansion_types(typeof(f), vars...)
-    return zero(CoeffType)
+    return zero(_coefftype(typeof(f), vars...))
 end
 
 function coefficient(f::Polynomial, t::Polynomial, vars...)
@@ -415,8 +323,7 @@ function constant_coefficient(f::Polynomial, vars...)
             return p
         end
     end
-    ExpansionType, CoeffType = _expansion_types(typeof(f), vars...)
-    return zero(CoeffType)
+    return zero(_coefftype(typeof(f), vars...))
 end
 
 """
@@ -445,10 +352,10 @@ julia> linear_coefficients(x^3*y + x + y + 1, :x, :y)
 # See also
 `@constant_coefficient`, `@coefficient`, and `@expansion`
 """
-function linear_coefficients(f::Polynomial, spec::NamedMonomialOrder)
-    ExpansionType, CoeffType = _expansion_types(typeof(f), spec)
+linear_coefficients(f::Polynomial, spec...) = linear_coefficients(f, _expansionspec(spec...))
 
-    res = zeros(CoeffType, length(variablesymbols(spec)))
+function linear_coefficients(f::Polynomial, spec::NamedMonomialOrder)
+    res = zeros(_coefftype(typeof(f), spec), length(variablesymbols(spec)))
     for (w, p) in expansion(f, spec)
         if sum(w) == 1
             res[findfirst(!iszero,w)] = p
@@ -459,9 +366,7 @@ function linear_coefficients(f::Polynomial, spec::NamedMonomialOrder)
 end
 
 function linear_coefficients(f::Polynomial, spec::NumberedMonomialOrder)
-    ExpansionType, CoeffType = _expansion_types(typeof(f), spec)
-
-    res = spzeros(CoeffType, 0)
+    res = spzeros(_coefftype(typeof(f), spec), 0)
     for (w, p) in expansion(f, spec)
         if sum(w) == 1
             ix = findfirst(!iszero,w)

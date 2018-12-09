@@ -55,6 +55,16 @@ function convert(::Type{P}, a::C) where P<:PolynomialOver{C} where C
     end
 end
 
+function convert(::Type{P}, a::C) where P<:PolynomialOver{C} where C <: Polynomial
+    if iszero(a)
+        return zero(P)
+    else
+        T = termtype(P)
+        M = monomialtype(P)
+        return P([T(one(M),deepcopy(a))])
+    end
+end
+
 # -----------------------------------------------------------------------------
 #
 # Base restriction

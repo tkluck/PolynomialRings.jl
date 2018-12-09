@@ -65,7 +65,7 @@ terms(p::Polynomial, order::MonomialOrder)                  = sort(p.terms, orde
 terms(p::Polynomial; order::MonomialOrder=monomialorder(p)) = terms(p, order)
 
 termtype(::Type{Polynomial{M,C}}) where {M,C}  = Term{M,C}
-exptype(::Type{P}) where P<:Polynomial = exptype(termtype(P))
+exptype(::Type{P}, scheme::NamingScheme...) where P<:Polynomial = exptype(termtype(P), scheme...)
 namingscheme(::Type{P}) where P<:Polynomial = namingscheme(termtype(P))
 monomialorder(::Type{P}) where P<:Polynomial = monomialorder(termtype(P))
 basering(::Type{P}) where P <: Polynomial = basering(termtype(P))

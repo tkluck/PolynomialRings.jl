@@ -78,14 +78,16 @@ isdisjoint(::NoNamingScheme, ::NamingScheme) = true
 isdisjoint(S::NamingScheme, T::FullNamingScheme) = all(t -> isdisjoint(S, t), T)
 isdisjoint(S::FullNamingScheme, T::Union{FullNamingScheme, NamingScheme}) = all(s -> isdisjoint(s, T), S)
 
-function remove_variables(N::Named, vars::Named)
-    remaining = setdiff(variablesymbols(N), variablesymbols(vars))
-    isempty(remaining) && return nothing
-    Named{tuple(remaining...)}()
+@generated function remove_variables(::N, ::Vars) where N <: Named where Vars <: Named
+    remaining = setdiff(variablesymbols(N()), variablesymbols(Vars()))
+    isempty(remaining) && return :( nothing )
+    :($( Named{tuple(remaining...)}() ))
 end
 
 remove_variables(N::Named, ::Numbered) = N
 remove_variables(N::Numbered, ::Named) = N
+remove_variables(N1::Numbered{Name}, N2::Numbered{Name}) where Name = (@assert num_variables(N2) >= num_variables(N1); return nothing)
+remove_variables(N::Numbered, ::Numbered) = N
 
 function remove_variables(N::Named, vars::FullNamingScheme)
     for v in vars

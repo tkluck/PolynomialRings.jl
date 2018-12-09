@@ -5,12 +5,12 @@ import SparseArrays: SparseVector
 
 import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, rulesymbol
-import ..Monomials: TupleMonomial, VectorMonomial, AbstractMonomial, _construct, exptype, num_variables
+import ..Monomials: TupleMonomial, VectorMonomial, AbstractMonomial, _construct, exptype, num_variables, nzindices
 import ..NamingSchemes: Named, Numbered, NamingScheme, numberedvariablename, remove_variables, isdisjoint, boundnames, ≺
 import ..Polynomials:  NamedMonomial, NumberedMonomial, NamedTerm, NumberedTerm, TermOver, monomialorder, NamedOrder, NumberedOrder, polynomial_ring
 import ..Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolynomial, PolynomialBy, PolynomialIn
 import ..Terms: Term, basering, monomial, coefficient
-import PolynomialRings: termtype, terms, namingscheme, variablesymbols, exptype, monomialtype, allvariablesymbols, iscanonical, canonicaltype, fullnamingscheme, fullboundnames
+import PolynomialRings: termtype, terms, namingscheme, variablesymbols, exptype, monomialtype, allvariablesymbols, iscanonical, canonicaltype, fullnamingscheme, fullboundnames, max_variable_index
 
 # -----------------------------------------------------------------------------
 #
@@ -65,7 +65,12 @@ convert(::Type{M}, monomial::M) where M<:NamedMonomial = monomial
     :( _lossy_convert_monomial(M, monomial) )
 end
 
-@generated function _lossy_convert_monomial(::Type{M}, monomial::AbstractMonomial) where M
+_lossy_convert_monomial(::Type{M}, ::One) where M<:AbstractMonomial = one(M)
+_lossy_convert_monomial(::Type{M}, ::NumberedMonomial) where M<:NamedMonomial = one(M)
+_lossy_convert_monomial(::Type{M}, ::NamedMonomial) where M<:NumberedMonomial = one(M)
+_lossy_convert_monomial(::Type{One}, ::AbstractMonomial) = One()
+
+@generated function _lossy_convert_monomial(::Type{M}, monomial::NamedMonomial) where M <: NamedMonomial
     src = variablesymbols(monomial)
     dest = variablesymbols(M)
     # create an expression that calls the tuple constructor. No arguments -- so far
@@ -85,6 +90,22 @@ end
         end
     end
     return :( M($converter, $degree ) )
+end
+
+# workaround for the @generated body needing to be pure (no closures)
+_indexer(monomial) = i ->
+                     i <= num_variables(typeof(monomial)) ?
+                     monomial[i] :
+                     zero(exptype(monomial))
+
+@generated function _lossy_convert_monomial(::Type{M1}, monomial::M2) where {M1 <: NumberedMonomial, M2 <: NumberedMonomial}
+    if numberedvariablename(M1) != numberedvariablename(M2)
+        return :( One() )
+    end
+    @assert num_variables(M1) >= num_variables(M2)
+    return quote
+        $_construct(M1, $_indexer(monomial), $nzindices(monomial))
+    end
 end
 
 # fix method ambiguity
@@ -197,11 +218,11 @@ end
 
 using PolynomialRings
 
-function convert(::Type{P1}, a::P2) where P1 <: NamedPolynomial where P2 <: Polynomial
+function convert(::Type{P1}, a::P2) where P1 <: Polynomial where P2 <: Polynomial
     T = termtype(P1)
     # Without the leading T[ ... ], type inference makes this an Array{Any}, so
     # it can't be omitted.
-    converted_terms = T[ T(m,c) for (m,c) in PolynomialRings.Expansions._expansion(a, monomialorder(P1)) ]
+    converted_terms = T[ T(m,c) for (c,(m,)) in PolynomialRings.Expansions._expansion2(a, monomialorder(P1)) ]
     # zero may happen if conversion to the basering is lossy; e.g. mapping ℚ[α]
     # to the number field ℚ[α]/Ideal(α^2-2)
     # TODO: needs testing as soon as number fields are part of this package.
