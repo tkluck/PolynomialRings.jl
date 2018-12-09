@@ -386,7 +386,7 @@ nzindices(a::VectorMonomial{V,I,Order}) where {V <: SparseVector,I,Order} = nonz
 max_variable_index(m::TupleMonomial{N}) where N = N
 max_variable_index(m::VectorMonomial{V,I,Order}) where {V,I,Order} = length(m.e)
 
-to_dense_monomials(n::Integer, ::Numbered{Name}) where Name = (g = flatvariablesymbols(Numbered{Name}()); Named{ tuple([take!(g) for _ = 1:n]...) })
+to_dense_monomials(n::Integer, scheme::Numbered{Name}) where Name = (g = flatvariablesymbols(scheme); Named{ tuple([take!(g) for _ = 1:n]...) })
 function to_dense_monomials(n::Integer, m::AbstractMonomial)
     Order = to_dense_monomials(n, monomialorder(m))
     M = TupleMonomial{n, exptype(m), typeof(Order)}

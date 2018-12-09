@@ -88,8 +88,12 @@ function show(io::IO, ::Named{Names}) where Names
     join(io, Names, ",")
 end
 
-function show(io::IO, ::Numbered{Name}) where Name
+function show(io::IO, ::Numbered{Name, Inf}) where Name
     print(io, "$(Name)[]")
+end
+
+function show(io::IO, ::Numbered{Name, Max}) where {Name, Max}
+    print(io, "$(Name)[1:$Max]")
 end
 
 # keep in sync with Constructors.jl

@@ -250,7 +250,7 @@ end
 function canonicaltype(M::Type{<:NumberedMonomial})
     I = exptype(M)
     name = numberedvariablename(M)
-    VectorMonomial{SparseVector{I,Int}, I, MonomialOrder{:degrevlex, Numbered{name}}}
+    VectorMonomial{SparseVector{I,Int}, I, MonomialOrder{:degrevlex, Numbered{name, Inf}}}
 end
 canonicaltype(T::Type{<:Term}) = termtype(canonicaltype(polynomialtype(T)))
 canonicaltype(T::Type) = T

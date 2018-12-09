@@ -166,7 +166,7 @@ function numbered_polynomial_ring(symbol::Symbol; basering::Type=Rational{BigInt
         throw(ArgumentError("Duplicated symbols when extending $basering by $(Numbered{symbol})"))
     end
 
-    M = MonomialOrder{monomialorder, Numbered{symbol}}
+    M = MonomialOrder{monomialorder, Numbered{symbol, Inf}}
     P = Polynomial{VectorMonomial{SparseVector{exptype,Int}, exptype, M}, basering}
     return P
 end

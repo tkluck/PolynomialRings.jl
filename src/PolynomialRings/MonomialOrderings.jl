@@ -116,14 +116,12 @@ degreecompatible(::MonomialOrder{:deglex}) = true
 # Promotions for different variable name sets
 #
 # -----------------------------------------------------------------------------
-@generated function promote_rule(::Type{M1}, ::Type{M2}) where {M1 <: MonomialOrder, M2 <: MonomialOrder}
-    if namingscheme(M1) isa Named && namingscheme(M2) isa Named
-        AllNames = Set()
-        Symbols = sort(union(variablesymbols(M1), variablesymbols(M2)))
-        Names = tuple(Symbols...)
-        return :( $( MonomialOrder{:degrevlex, Named{Names}} ) )
+function promote_rule(::Type{M1}, ::Type{M2}) where {M1 <: MonomialOrder, M2 <: MonomialOrder}
+    scheme = promote_type(typeof(namingscheme(M1)), typeof(namingscheme(M2)))
+    if scheme <: NamingScheme
+        return MonomialOrder{:degrevlex, scheme}
     else
-        return :( Union{} )
+        return Union{}
     end
 end
 

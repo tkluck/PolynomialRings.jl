@@ -17,6 +17,7 @@ function namingscheme end
 function fullnamingscheme end
 function boundnames end
 function fullboundnames end
+function num_variables end
 function variablesymbols end
 function allvariablesymbols end
 function iscanonical end
