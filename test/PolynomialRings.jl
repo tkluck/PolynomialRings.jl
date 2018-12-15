@@ -88,6 +88,8 @@ one(::Type{Foo}) = Foo()
 
         @test zero(x)(x=1) == 0
         @test one(x)(x=1) == 1
+
+        @test (x+y)(x=x+y) == x + 2y
     end
 
     @testset "zero comparison in Base" begin
@@ -353,11 +355,19 @@ end
             @test B == @ring ℤ[a][b]
             @test typeof(b) == B
             @test_throws UndefVarError typeof(a)
+
+            @ring! ℤ[a][x,y]
+            @test @expansion(x + y, x) == [((0,), y), ((1,), 1)]
         end
         @testset "Variable duplication" begin
             @test_throws ArgumentError @ring ℚ[x,x]
             @test_throws ArgumentError @ring ℚ[x][x]
             @test_throws ArgumentError @ring ℚ[x][y][x]
+        end
+        @testset "Operations" begin
+            @ring! ℤ[a][x,y]
+            @test (x+y)(x=x+y, y=y) == x + 2y
+            @test (x+y)(x=x+y) == x + 2y
         end
     end
 

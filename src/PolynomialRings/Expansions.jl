@@ -70,7 +70,8 @@ _expansion2(p) = [(p, tuple())]
 _expansion2(p, spec::MonomialOrder, specs::MonomialOrder...) = (((c, ms),) = _expansion2(p, specs...); [(c, tuple(one(monomialtype(spec)), ms...))])
 # TODO: should we return owned copies?
 _expansion2(p::PolynomialBy{Order}, spec::Order) where Order <: MonomialOrder = map(t -> (coefficient(t), (monomial(t),)), terms(p))
-_ofpolynomialtype(t) = t
+_ofpolynomialtype(m::AbstractMonomial, c) = _ofpolynomialtype(Term(m, c))
+_ofpolynomialtype(m, c) = m * c
 _ofpolynomialtype(t::Term{M,C}) where {M,C} = Polynomial{M,C}([t])
 function _expansion2(p::Polynomial, spec::MonomialOrder)
     C = remove_variables(typeof(p), namingscheme(spec))
@@ -80,7 +81,7 @@ function _expansion2(p::Polynomial, spec::MonomialOrder)
         (
             m = _lossy_convert_monomial(M, monomial(t));
             m′ = _lossy_convert_monomial(M′, monomial(t));
-            c′ = _ofpolynomialtype(c * m′);
+            c′ = _ofpolynomialtype(m′, c);
             (c′, (m * m2,))
         )
         for t in terms(p)
