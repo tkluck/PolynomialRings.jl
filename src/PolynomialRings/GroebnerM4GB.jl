@@ -1,4 +1,4 @@
-module GröbnerF4GB
+module GröbnerM4GB
 
 
 import PolynomialRings
