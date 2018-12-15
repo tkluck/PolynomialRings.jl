@@ -166,8 +166,9 @@ struct TermsMap{Order,Inplace,Terms,Op}
 end
 Base.getindex(t::TermsMap) = t
 is_inplace(::TermsMap{Order,Inplace}) where {Order,Inplace} = Inplace
+inplaceval(::TermsMap{Order,Inplace}) where {Order,Inplace} = Val{Inplace}()
 
-TermsMap(op::Op, o::Order, terms::Terms, bound::Int, inplace=false) where {Op, Order,Terms} = TermsMap{Order,inplace,Terms,Op}(terms, op, bound)
+TermsMap(op::Op, o::Order, terms::Terms, bound::Int, ::Val{InPlace}) where {Op, InPlace, Order, Terms} = TermsMap{Order,InPlace,Terms,Op}(terms, op, bound)
 
 # keeping the method with and without state separate instead of unifying
 # through e.g. iterate(t, state...) because that seems to have a moderate
@@ -203,8 +204,8 @@ Base.eltype(t::TermsMap) = Base._return_type(t.op, Tuple{eltype(t.terms)})
 #  Leaf cases for `iterterms`
 #
 # -----------------------------------------------------------------------------
-iterterms(a::RefValue{<:PolynomialBy{Order}}) where Order = TermsMap(identity, Order(), terms(a[], order=Order()), nterms(a[]), false)
-iterterms(a::Owned{<:PolynomialBy{Order}}) where Order = TermsMap(identity, Order(), terms(a[], order=Order()), nterms(a[]), true)
+iterterms(a::RefValue{<:PolynomialBy{Order}}) where Order = TermsMap(identity, Order(), terms(a[], order=Order()), nterms(a[]), Val(false))
+iterterms(a::Owned{<:PolynomialBy{Order}}) where Order = TermsMap(identity, Order(), terms(a[], order=Order()), nterms(a[]), Val(true))
 
 # -----------------------------------------------------------------------------
 #
@@ -257,7 +258,7 @@ iterterms(order, op, a, b) = iterterms(Owned(op(eager(a), eager(b))))
 function iterterms(::Order, op::typeof(*), a::TermsMap{Order}, b::Number) where Order
     b′ = deepcopy(b)
     b_vanishes = iszero(b)
-    TermsMap(Order(), a, a.bound, true) do t
+    TermsMap(Order(), a, a.bound, Val(true)) do t
         b_vanishes ? nothing : Term(monomial(t), coefficient(t)*b′)
     end
 end
@@ -265,7 +266,7 @@ end
 function iterterms(::Order, op::typeof(*), a::Number, b::TermsMap{Order}) where Order
     a′ = deepcopy(a)
     a_vanishes = iszero(a)
-    TermsMap(Order(), b, b.bound, true) do t
+    TermsMap(Order(), b, b.bound, Val(true)) do t
         a_vanishes ? nothing : Term(monomial(t), a′*coefficient(t))
     end
 end
@@ -276,7 +277,7 @@ const PossiblyBigInt = Union{Int, BigInt}
 function iterterms(::Order, op::typeof(*), a::PossiblyBigInt, b::TermsMap{Order,true}) where Order
     a′ = deepcopy(a)
     a_vanishes = iszero(a)
-    TermsMap(Order(), b, b.bound, true) do t
+    TermsMap(Order(), b, b.bound, Val(true)) do t
         if a_vanishes
             return nothing
         else
@@ -288,7 +289,7 @@ end
 function iterterms(::Order, op::typeof(*), a::TermsMap{Order,true}, b::PossiblyBigInt) where Order
     b′ = deepcopy(b)
     b_vanishes = iszero(b)
-    TermsMap(Order(), a, a.bound, true) do t
+    TermsMap(Order(), a, a.bound, Val(true)) do t
         if b_vanishes
             return nothing
         else
@@ -299,7 +300,7 @@ function iterterms(::Order, op::typeof(*), a::TermsMap{Order,true}, b::PossiblyB
 end
 
 function iterterms(::Order, op::typeof(*), a::RefValue{<:AbstractMonomial}, b::TermsMap{Order}) where Order
-    TermsMap(Order(), b, b.bound, is_inplace(b)) do t
+    TermsMap(Order(), b, b.bound, inplaceval(b)) do t
         # NOTE: we are not deepcopying the coefficient, but materialize!() will
         # take care of that if the end result is not transient
         return typeof(t)(a[]*monomial(t), coefficient(t))
@@ -307,7 +308,7 @@ function iterterms(::Order, op::typeof(*), a::RefValue{<:AbstractMonomial}, b::T
 end
 
 function iterterms(::Order, op::typeof(*), a::TermsMap{Order}, b::RefValue{<:AbstractMonomial}) where Order
-    TermsMap(Order(), a, a.bound, is_inplace(a)) do t
+    TermsMap(Order(), a, a.bound, inplaceval(a)) do t
         # NOTE: we are not deepcopying the coefficient, but materialize!() will
         # take care of that if the end result is not transient
         return typeof(t)(monomial(t)*b[], coefficient(t))
@@ -315,7 +316,7 @@ function iterterms(::Order, op::typeof(*), a::TermsMap{Order}, b::RefValue{<:Abs
 end
 
 function iterterms(::Order, op::typeof(*), a::RefValue{<:Term}, b::TermsMap{Order}) where Order
-    TermsMap(Order(), b, b.bound, is_inplace(b)) do t
+    TermsMap(Order(), b, b.bound, inplaceval(b)) do t
         c = coefficient(t)
         if is_inplace(b)
             @inplace c *= coefficient(a[])
@@ -327,7 +328,7 @@ function iterterms(::Order, op::typeof(*), a::RefValue{<:Term}, b::TermsMap{Orde
 end
 
 function iterterms(::Order, op::typeof(*), a::TermsMap{Order}, b::RefValue{<:Term}) where Order
-    TermsMap(Order(), a, a.bound, is_inplace(a)) do t
+    TermsMap(Order(), a, a.bound, inplaceval(a)) do t
         c = coefficient(t)
         if is_inplace(a)
             @inplace c *= coefficient(b[])
@@ -356,7 +357,7 @@ function iterterms(::Order, op::PlusMinus, a::TermsMap{Order,true}, b::TermsMap{
         Zero(), Zero(), inplaceop,
         a, b,
     )
-    TermsMap(Order(), summands, a.bound + b.bound, true) do (m, cleft)
+    TermsMap(Order(), summands, a.bound + b.bound, Val(true)) do (m, cleft)
         iszero(cleft) ? nothing : Term(m, cleft)
     end
 end
@@ -369,7 +370,7 @@ function iterterms(::Order, op::PlusMinus, a::TermsMap{Order}, b::TermsMap{Order
         Zero(), Zero(), inplaceop,
         a, b,
     )
-    TermsMap(Order(), summands, a.bound + b.bound, true) do (m, cright)
+    TermsMap(Order(), summands, a.bound + b.bound, Val(true)) do (m, cright)
         iszero(cright) ? nothing : Term(m, cright)
     end
 end
@@ -381,7 +382,7 @@ function iterterms(::Order, op::PlusMinus, a::TermsMap{Order}, b::TermsMap{Order
         Zero(), Zero(), op,
         a, b,
     )
-    TermsMap(Order(), summands, a.bound + b.bound, true) do (m, coeff)
+    TermsMap(Order(), summands, a.bound + b.bound, Val(true)) do (m, coeff)
         iszero(coeff) ? nothing : Term(m, coeff)
     end
 end
