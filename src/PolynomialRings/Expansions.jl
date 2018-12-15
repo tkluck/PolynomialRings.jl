@@ -67,6 +67,8 @@ julia> collect(expansion(x^3 + y^2, :x, :y))
 expansion(p::Polynomial, spec...) = [(m.e, c) for (c,(m,)) in _expansion2(p, _expansionspec(spec...))]
 
 _expansion2(p) = [(p, tuple())]
+# TODO: this does not respect the exptype for one(monomialtype(spec)), but
+# I also run into issues when I try to make it do that.
 _expansion2(p, spec::MonomialOrder, specs::MonomialOrder...) = (((c, ms),) = _expansion2(p, specs...); [(c, tuple(one(monomialtype(spec)), ms...))])
 # TODO: should we return owned copies?
 _expansion2(p::PolynomialBy{Order}, spec::Order) where Order <: MonomialOrder = map(t -> (coefficient(t), (monomial(t),)), terms(p))
