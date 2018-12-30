@@ -107,15 +107,14 @@ function one_step_xdiv!(a::A, b::A; order::MonomialOrder, redtype::RedType) wher
             c1 = leading_coefficient(a[i])
             c2 = leading_coefficient(b[i])
             m1, m2 = lcm_multipliers(c1, c2)
-            for i in eachindex(a)
-                a[i] = m1 * a[i] - m2 * (factor * b[i])
-                #if iszero(a[i]) # possibly a sparse zero, so don't try in-place
-                #    a[i] -= factor * b[i]
-                #else
-                #    @. a[i] -= factor * b[i]
-                #end
+            for j in eachindex(a)
+                if iszero(a[i]) # possibly a sparse zero, so don't try in-place
+                    a[j] = m1 * a[j] - m2 * (factor * b[j])
+                else
+                    @. a[j] = m1 * a[j] - m2 * (factor * b[j])
+                end
             end
-            return m1, factor
+            return m1, m2 * factor
         else
             return nothing
         end
@@ -203,7 +202,7 @@ function one_step_xdiv!(a::A, b::A; order::MonomialOrder, redtype::RedType) wher
     res = one_step_xdiv!(a.p, b.p, order=order, redtype=redtype)
     if res !== nothing
         m, factor = res
-        a.tr = m * b.n * a.tr - factor * b.tr
+        a.tr = m * b.n * a.tr - factor * a.n * b.tr
         a.n *= b.n
     end
     return res

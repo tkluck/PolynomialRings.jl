@@ -13,6 +13,7 @@ import ..Polynomials: PolynomialOver, NamedPolynomial
 import ..Terms: Term, monomial, coefficient
 import PolynomialRings: fraction_field, integers, base_extend, base_restrict, namingscheme
 import PolynomialRings: ⊗, base_extend, base_restrict
+import PolynomialRings: xdiv, xrem, xdivrem
 
 # -----------------------------------------------------------------------------
 #
@@ -298,6 +299,9 @@ divrem(a::AbstractModuleElement, b::AbstractVector{<:AbstractModuleElement}) = d
 div(a::Number, b::AbstractVector{<:Polynomial})    = div(promote_vector(a, b)...)
 rem(a::Number, b::AbstractVector{<:Polynomial})    = rem(promote_vector(a, b)...)
 divrem(a::Number, b::AbstractVector{<:Polynomial}) = divrem(promote_vector(a, b)...)
+xdiv(a::Number, b::AbstractVector{<:Polynomial})    = xdiv(promote_vector(a, b)...)
+xrem(a::Number, b::AbstractVector{<:Polynomial})    = xrem(promote_vector(a, b)...)
+xdivrem(a::Number, b::AbstractVector{<:Polynomial}) = xdivrem(promote_vector(a, b)...)
 
 
 # -----------------------------------------------------------------------------

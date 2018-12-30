@@ -23,6 +23,10 @@ using PolynomialRings
     @test rem(x + y, [x]) == y
     @test rem(1, [x]) == 1
 
+    @test xdivrem(x^2, [2x]) == (2, transpose([x]), 0)
+    @test xdivrem(10x + y, [6x]) == (3, transpose([5]), 3y)
+    @test xdivrem(1, [x]) == (1, transpose([0]), 1)
+
     f, G = (x^23 + y -x*43, [x^3*y^4, x^7])
     factors, f_red = divrem(f,G)
     @test f == f_red + (factors * G)
