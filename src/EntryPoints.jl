@@ -405,6 +405,8 @@ function (g::NumberedVariableGenerator)()
     return g[ix]
 end
 
+Base.eltype(::NumberedVariableGenerator{Outer, Inner}) where {Outer, Inner} = Outer
+
 function getindex(g::NumberedVariableGenerator{Outer,Inner}, i::Integer) where {Outer,Inner}
     E = exptype(Inner)
     N = num_variables(namingscheme(Inner))
