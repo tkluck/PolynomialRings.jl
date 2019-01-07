@@ -44,8 +44,8 @@ function convert(P::Type{<:PolynomialOver{C,O}}, p::PolynomialOver{D,O}) where {
     P(newterms)
 end
 # and short-circuit the non-conversions
-convert(P::Type{<:PolynomialOver{C,O}}, p::PolynomialOver{C,O}) where {C,O<:NamedOrder} = p
-convert(P::Type{<:PolynomialOver{C,O}}, p::PolynomialOver{C,O}) where {C,O<:NumberedOrder} = p
+convert(::Type{P}, p::P) where P <: PolynomialOver{C,O} where {C,O<:NamedOrder} = p
+convert(::Type{P}, p::P) where P <: PolynomialOver{C,O} where {C,O<:NumberedOrder} = p
 # -----------------------------------------------------------------------------
 #
 # Promotions for different variable name sets
