@@ -11,6 +11,7 @@ import SparseArrays: nonzeroinds
 import ..NamingSchemes: Named, Numbered, NamingScheme, isdisjoint
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, monomialtype, num_variables
 import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namingscheme, monomialorder
+import PolynomialRings: divides
 
 """
     AbstractMonomial{Order}
@@ -185,16 +186,38 @@ equal.
 
 TODO: add test cases for that!
 """
-function hash(a::AbstractMonomial, h::UInt)
-    for (i,e) in enumeratenz(a)
-        if !iszero(e)
-            h = hash((i,e), h)
-        end
+@generated function hash(a::M, h::UInt) where M <: AbstractMonomial
+    N = 8sizeof(UInt)
+    n = 8sizeof(exptype(M))
+    k = N÷n
+    q = num_variables(M)÷k
+
+    res = quote
     end
-    h
+    for i in 0:q
+        push!(res.args, quote
+            accum = zero(UInt)
+        end)
+        for j in 1:k
+            if (ix = k*i + j) <= num_variables(M)
+                push!(res.args, quote
+                    accum |= UInt(a[$ix]) << $(8j)
+                end)
+            end
+        end
+        push!(res.args, quote
+            h = hash(accum, h)
+        end)
+    end
+    push!(res.args, quote
+        h
+    end)
+    res
 end
 
 ==(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = all(i->a[i]==b[i], index_union(a,b))
+
+divides(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = all(i->a[i]<=b[i], index_union(a,b))
 
 function maybe_div(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order
     M = promote_type(typeof(a), typeof(b))
@@ -238,9 +261,9 @@ function any_divisor(f::Function, a::M) where M <: AbstractMonomial
     nzinds = collect(nzindices(a))
     nonzeros_a = map(i->a[i], nzinds)
     nonzeros = copy(nonzeros_a)
-    e = SparseVector{exptype(M), Int}(n, nzinds, nonzeros)
+    e = SparseVector{Int16, Int}(n, nzinds, nonzeros)
 
-    N = VectorMonomial{typeof(e), exptype(M), typeof(monomialorder(M))}
+    N = VectorMonomial{typeof(e), Int16, typeof(monomialorder(M))}
 
     while true
         m = N(e, sum(e))

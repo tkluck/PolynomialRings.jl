@@ -9,7 +9,7 @@ import SparseArrays: SparseVector
 import ..Monomials: AbstractMonomial, TupleMonomial, VectorMonomial, total_degree, index_union, rev_index_union
 import ..NamingSchemes: NamingScheme, Named, Numbered
 import PolynomialRings: namingscheme, to_dense_monomials, variablesymbols, num_variables
-import PolynomialRings: leading_monomial, leading_coefficient, leading_term, tail
+import PolynomialRings: leading_monomial, leading_coefficient, leading_term, tail, terms
 import PolynomialRings: monomialtype
 
 """
@@ -130,8 +130,10 @@ end
 
 macro withmonomialorder(order)
     esc(quote
-        ≺(a, b) = Base.Order.lt($order, a, b)
-        ⪰(a,b) =  !Base.Order.lt($order, a, b)
+        ≺(a, b) =  Base.Order.lt($order, a, b)
+        ⪯(a, b) = !Base.Order.lt($order, b, a)
+        ≻(a, b) =  Base.Order.lt($order, b, a)
+        ⪰(a, b) = !Base.Order.lt($order, a, b)
         leading_monomial(f) = $leading_monomial(f, order=$order)
         leading_term(f) = $leading_term(f, order=$order)
         leading_coefficient(f) = $leading_coefficient(f, order=$order)
@@ -139,6 +141,7 @@ macro withmonomialorder(order)
         lt(f) = $leading_term(f, order=$order)
         lc(f) = $leading_coefficient(f, order=$order)
         tail(f) = $tail(f, order=$order)
+        terms(f) = $terms(f, order=$order)
     end)
 end
 

@@ -65,6 +65,7 @@ function xdiv end
 function xrem end
 function xdivrem end
 function tail end
+function divides end
 
 lcm_multipliers(a, b) = deepcopy(b), deepcopy(a)
 function lcm_multipliers(a::Integer, b::Integer)
