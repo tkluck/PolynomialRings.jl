@@ -221,7 +221,6 @@ function convert(P::Type{<:PolynomialBy{Order, C}}, p::DensePolynomial{Order, C}
 end
 
 function op_ordered_terms!(op, p::DensePolynomial, d, terms)
-    ix = 1
     for t in terms
         t′ = d * t
         ix = monomial(t′).ix
