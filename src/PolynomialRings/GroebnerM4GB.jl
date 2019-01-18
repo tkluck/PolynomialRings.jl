@@ -33,7 +33,7 @@ function m4gb(order::MonomialOrder, F::AbstractVector{<:Polynomial})
 
     R = eltype(F); LM = monomialtype(R)
     RDense = densepolynomialtype(R)
-    L, M = SortedSet{LM}(order), Dict{LM, RDense}()
+    L, M = SortedSet{LM}(order), Dict{LM, Tuple{RDense, LM}}()
     P = PriorityQueue{Tuple{LM, LM}, LM}(order)
 
     for f in F
@@ -45,8 +45,8 @@ function m4gb(order::MonomialOrder, F::AbstractVector{<:Polynomial})
     progress = Progress(length(P), "Computing Gröbner basis: ")
     loops = 0
     while !isempty(P)
-        ((fₗₘ, gₗₘ),_) = select!(P)
-        f = M[fₗₘ]; g = M[gₗₘ]
+        ((fₗₘ, gₗₘ), u) = select!(P)
+        f,_ = M[fₗₘ]; g,_ = M[gₗₘ]
 
         c_f, c_g = lcm_multipliers(lt(f), lt(g))
         h₁ = mulfullreduce!(L, M, c_f, tail(f), order)
@@ -62,7 +62,7 @@ function m4gb(order::MonomialOrder, F::AbstractVector{<:Polynomial})
     end
     finish!(progress)
 
-    return [convert(R, M[fₗₘ]) for fₗₘ in L]
+    return [convert(R, M[fₗₘ][1]) for fₗₘ in L]
 end
 
 select!(P) = dequeue_pair!(P)
@@ -71,7 +71,7 @@ function update_with(M, H, lm_H, fₗₘ, order)
     @withmonomialorder order
 
     max = nothing
-    for h in flatten((values(M), H))
+    for h in flatten(((m[1] for m in values(M)), H))
         for t in tailterms(h, Val(true))
             if max !== nothing && monomial(t) ⪯ max
                 break
@@ -104,16 +104,18 @@ function updatereduce!(L, M, P, f, order)
         for g in H
             if (c = g[lm(h)]) |> !iszero
                 #@. g -= c * h
-                g.coeffs[1:length(h.coeffs)] .-= c .* h.coeffs
+                N = min(length(g.coeffs), length(h.coeffs))
+                g.coeffs[1:N] .-= c .* @view h.coeffs[1:N]
             end
         end
-        for g in values(M)
+        for (g,_) in values(M)
             if (c = g[lm(h)]) |> !iszero
                 #@. g -= c * h
-                g.coeffs[1:length(h.coeffs)] .-= c .* h.coeffs
+                N = min(length(g.coeffs), length(h.coeffs))
+                g.coeffs[1:N] .-= c .* @view h.coeffs[1:N]
             end
         end
-        M[lm(h)] = h
+        M[lm(h)] = (h, lm(f))
     end
     update!(L, P, lm(f))
 end
@@ -179,15 +181,15 @@ function getreductor!(M, L, r, order)
 
     res = nothing
     if monomial(r) in keys(M)
-        res = M[monomial(r)]
+        res, _ = M[monomial(r)]
     else
         fₗₘ = reducesel(L, monomial(r), order)
         fₗₘ == nothing && return nothing
-        f = M[fₗₘ]
+        f, _ = M[fₗₘ]
         h = mulfullreduce!(L, M, maybe_div(r, lt(f)), tail(f), order)
         # res = r + h
         op_ordered_terms!(+, h, One(), (r,))
-        M[lm(h)] = h
+        M[lm(h)] = (h, fₗₘ)
         res = h
     end
     return res

@@ -8,6 +8,7 @@ import Base: lcm
 import ProgressMeter: @showprogress
 
 
+import ..Constants: One
 import ..Monomials: AbstractMonomial, _construct, num_variables, nzindices, maybe_div
 import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
 import ..NamingSchemes: NamingScheme
@@ -288,6 +289,13 @@ function -(a::P, b::P) where P <: DensePolynomial
     end
 
     P(coeffs)
+end
+
+function +(a::Term, b::DensePolynomial)
+    P = typeof(b)
+    res = P(copy(b.coeffs))
+    op_ordered_terms!(+, res, One(), (a,))
+    return res
 end
 
 //(p::DensePolynomial, c::Number) = typeof(p)(p.coeffs .// c)
