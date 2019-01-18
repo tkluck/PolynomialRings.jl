@@ -16,7 +16,7 @@ import ..Monomials: any_divisor
 import ..Polynomials: Polynomial
 import ..Terms: monomial, coefficient, Term
 import ..DensePolynomials: to_dense, op_ordered_terms!, tailterms
-import ..DensePolynomials: densepolynomialtype
+import ..DensePolynomials: densepolynomialtype, MonomialSet
 import PolynomialRings: gröbner_basis, monomialtype, basering
 import PolynomialRings: maybe_div, termtype, lcm_multipliers, divides
 
@@ -89,7 +89,8 @@ function updatereduce!(L, M, P, f, order)
     @withmonomialorder order
 
     H = [f // lc(f)]
-    lm_H = Set(lm(h) for h in H)
+    lm_H = MonomialSet()
+    push!(lm_H, lm(f))
 
     while (u = update_with(M, H, lm_H, lm(f), order)) != nothing
         h = mulfullreduce!(L, M, maybe_div(u, lm(f)) * inv(lc(f)), tail(f), order)

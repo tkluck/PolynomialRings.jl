@@ -300,5 +300,17 @@ function getindex(p::DensePolynomial{Order}, m::IndexedMonomial{Order}) where Or
     end
 end
 
+struct MonomialSet
+    a::BitArray{1}
+    MonomialSet() = new(BitArray{1}())
+end
+
+function Base.push!(s::MonomialSet, m::IndexedMonomial)
+    length(s.a) <= m.ix && resize!(s.a, m.ix)
+    s.a[m.ix] = true
+end
+
+Base.in(m::IndexedMonomial, s::MonomialSet) = length(s.a) >= m.ix && s.a[m.ix]
+
 
 end
