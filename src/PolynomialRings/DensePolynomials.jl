@@ -17,38 +17,26 @@ import ..Terms: monomial, coefficient, Term
 import PolynomialRings: leading_monomial, leading_coefficient, leading_term
 import PolynomialRings: monomialtype, exptype, monomialorder, tail, divides
 
-#ensure!(f, vec, n) = length(vec) >= n || begin
-#    m = length(vec)
-#    resize!(vec, n)
-#    for j = m + 1 : n
-#        vec[j] = f(j)
-#    end
-#end
-#
-#@generated function hilbert(n::I,k::I) where I <: Integer
-#    lookup = Vector{Vector{I}}()
-#    createvector(j) = Vector{I}()
-#    result(n) = k -> binomial(n + k - 1, n - 1)
-#    quote
-#        n < 0 && return 0
-#        k < 0 && return 0
-#        k == 0 && return 1
-#        n == 0 && return 0
-#        ensure!($createvector, $lookup, n)
-#        ensure!($result(n), $lookup[n], k)
-#        $lookup[n][k]
-#    end
-#end
-hilbert(n, k) = binomial(n + k - 1, n - 1)
-cumhilbert(n, k) = k < 0 ? 0 : hilbert(n + 1, k)
+@generated function hilbert(n::I,k::I) where I <: Integer
+    lookup = Matrix{Int}(undef, 20, 20)
+    for N = axes(lookup, 1), K = axes(lookup, 2)
+        lookup[N, K] = binomial(N + K - 1, N - 1)
+    end
+    quote
+        n < 0 && return 0
+        k < 0 && return 0
+        k == 0 && return 1
+        n == 0 && return 0
+        $lookup[n, k]
+    end
+end
 
 function degrevlex_index(exponents)
-    total_degree = sum(exponents)
-    ret = cumhilbert(length(exponents), total_degree - 1) + 1
+    ret = 1
     degree_seen = 0
     for (i,e) in enumerate(exponents)
-        ret += cumhilbert(i - 1, degree_seen - 1)
         degree_seen += e
+        ret += hilbert(i + 1, degree_seen - 1)
     end
     return ret
 end
