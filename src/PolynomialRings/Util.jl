@@ -172,18 +172,24 @@ end
     if liter === nothing && riter === nothing
         return nothing
     elseif liter === nothing
-        return (key(riter[1]), op(l0, value(riter[1]))), LeftDone(riter[2])
+        res = (key(riter[1]), op(l0, value(riter[1])))
+        nextstate = LeftDone(riter[2])
     elseif riter === nothing
-        return (key(liter[1]), op(value(liter[1]), r0)), RightDone(liter[2])
+        res = (key(liter[1]), op(value(liter[1]), r0))
+        nextstate = RightDone(liter[2])
     elseif key(riter[1]) ≺ key(liter[1])
-        return (key(riter[1]), op(l0, value(riter[1]))), LeftReady(liter, riter[2])
+        res = (key(riter[1]), op(l0, value(riter[1])))
+        nextstate = LeftReady(liter, riter[2])
     elseif key(liter[1]) ≺ key(riter[1])
-        return (key(liter[1]), op(value(liter[1]), r0)), RightReady(riter, liter[2])
+        res = (key(liter[1]), op(value(liter[1]), r0))
+        nextstate = RightReady(riter, liter[2])
     elseif key(liter[1]) == key(riter[1])
-        return (key(liter[1]), op(value(liter[1]), value(riter[1]))), NextTwo(liter[2], riter[2])
+        res = (key(liter[1]), op(value(liter[1]), value(riter[1])))
+        nextstate = NextTwo(liter[2], riter[2])
     else
         @assert(false) # unreachable?
     end
+    return res, nextstate
 end
 
 isstrictlysorted(itr; lt) = issorted(itr; lt = (a, b) -> !lt(b, a))
