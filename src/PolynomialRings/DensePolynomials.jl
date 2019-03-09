@@ -298,6 +298,14 @@ function +(a::Term, b::DensePolynomial)
     return res
 end
 
+function +(a::IndexedMonomial{Order}, b::DensePolynomial{Order}) where Order <: MonomialOrder
+    P = typeof(b)
+    res = P(copy(b.coeffs))
+    a′ = one(basering(typeof(b))) * a
+    op_ordered_terms!(+, res, One(), (a′,))
+    return res
+end
+
 //(p::DensePolynomial, c::Number) = typeof(p)(p.coeffs .// c)
 
 function getindex(p::DensePolynomial{Order}, m::IndexedMonomial{Order}) where Order <: MonomialOrder

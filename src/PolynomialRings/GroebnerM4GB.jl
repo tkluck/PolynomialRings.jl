@@ -5,7 +5,7 @@ import PolynomialRings
 import Base.Iterators: flatten
 import Base.Order: ReverseOrdering
 
-import DataStructures: PriorityQueue, enqueue!, dequeue_pair!, SortedSet, SortedDict
+import DataStructures: PriorityQueue, enqueue!, dequeue_pair!, SortedSet, SortedDict, OrderedSet
 import ProgressMeter: Progress, finish!, next!
 import TimerOutputs: TimerOutput, @timeit
 
@@ -33,26 +33,28 @@ function m4gb(order::MonomialOrder, F::AbstractVector{<:Polynomial})
 
     R = eltype(F); LM = monomialtype(R)
     RDense = densepolynomialtype(R)
-    L, M = SortedSet{LM}(order), Dict{LM, Tuple{RDense, LM}}()
+    L, M = OrderedSet{LM}(), Dict{LM, Tuple{RDense,Int}}()
     P = PriorityQueue{Tuple{LM, LM}, LM}(order)
 
     for f in F
         f = mulfullreduce!(L, M, one(termtype(f)), to_dense(f), order)
         if !iszero(f)
-            updatereduce!(L, M, P, f, order)
+            lazyupdatereduce!(L, M, P, f, order)
         end
     end
     progress = Progress(length(P), "Computing Gröbner basis: ")
     loops = 0
     while !isempty(P)
         ((fₗₘ, gₗₘ), u) = select!(P)
-        f,_ = M[fₗₘ]; g,_ = M[gₗₘ]
+        ensurereduced!(L, M, fₗₘ, order)
+        ensurereduced!(L, M, gₗₘ, order)
+        f, _ = M[fₗₘ]; g, _ = M[gₗₘ]
 
         c_f, c_g = lcm_multipliers(lt(f), lt(g))
         h₁ = mulfullreduce!(L, M, c_f, tail(f), order)
         h₂ = mulfullreduce!(L, M, c_g, tail(g), order)
         if (h = h₁ - h₂) |> !iszero
-            updatereduce!(L, M, P, h, order)
+            lazyupdatereduce!(L, M, P, h, order)
         end
 
         loops += 1
@@ -62,6 +64,9 @@ function m4gb(order::MonomialOrder, F::AbstractVector{<:Polynomial})
     end
     finish!(progress)
 
+    for fₗₘ in L
+        ensurereduced!(L, M, fₗₘ, order)
+    end
     return [convert(R, M[fₗₘ][1]) for fₗₘ in L]
 end
 
@@ -108,16 +113,68 @@ function updatereduce!(L, M, P, f, order)
                 g.coeffs[1:N] .-= c .* @view h.coeffs[1:N]
             end
         end
-        for (g,_) in values(M)
+        for (g, _) in values(M)
             if (c = g[lm(h)]) |> !iszero
                 #@. g -= c * h
                 N = min(length(g.coeffs), length(h.coeffs))
                 g.coeffs[1:N] .-= c .* @view h.coeffs[1:N]
             end
         end
-        M[lm(h)] = (h, lm(f))
+        M[lm(h)] = (h, length(L))
     end
     update!(L, P, lm(f))
+end
+
+function lazyupdatereduce!(L, M, P, f, order)
+    @withmonomialorder order
+
+    M[lm(f)] = (f, length(L))
+
+    update!(L, P, lm(f))
+end
+
+function ensurereduced!(L, M, fₗₘ, order)
+    @withmonomialorder order
+
+    f, last_reduced = M[fₗₘ]
+    if last_reduced >= length(L)
+        return
+    end
+
+    H = typeof(f)[]
+    lm_H = MonomialSet()
+    push!(lm_H, lm(f))
+
+    for (ix, gₗₘ) in enumerate(L)
+        ix <= last_reduced && continue
+        ensurereduced!(L, M, gₗₘ, order)
+        g, _ = M[gₗₘ]
+        while (u = update_with([(f,nothing)], H, lm_H, gₗₘ, order)) != nothing
+            h = mulfullreduce!(L, M, maybe_div(u, gₗₘ) * inv(lc(g)), tail(g), order)
+            push!(H, u + h)
+            push!(lm_H, u)
+        end
+    end
+
+    sort!(H, lt=(a,b)->Base.Order.lt(order, lm(a), lm(b)))
+    while !isempty(H)
+        h = popfirst!(H)
+        for g in H
+            if (c = g[lm(h)]) |> !iszero
+                #@. g -= c * h
+                N = min(length(g.coeffs), length(h.coeffs))
+                g.coeffs[1:N] .-= c .* @view h.coeffs[1:N]
+            end
+        end
+        M[lm(h)] = (h, length(L))
+        if (c = f[lm(h)]) |> !iszero
+            #@. f -= c * h
+            N = min(length(f.coeffs), length(h.coeffs))
+            f.coeffs[1:N] .-= c .* @view h.coeffs[1:N]
+        end
+    end
+
+    M[fₗₘ] = (f, length(L))
 end
 
 function update!(L, P, fₗₘ)
@@ -150,7 +207,7 @@ function update!(L, P, fₗₘ)
     for ((p1, p2), lcm_p) in P_new
         enqueue!(P, minmax(p1, p2), lcm_p)
     end
-    filter!(l -> !divides(fₗₘ, l), L)
+    #filter!(l -> !divides(fₗₘ, l), L)
     push!(L, fₗₘ)
 end
 
@@ -181,15 +238,17 @@ function getreductor!(M, L, r, order)
 
     res = nothing
     if monomial(r) in keys(M)
+        ensurereduced!(L, M, monomial(r), order)
         res, _ = M[monomial(r)]
     else
         fₗₘ = reducesel(L, monomial(r), order)
         fₗₘ == nothing && return nothing
+        ensurereduced!(L, M, fₗₘ, order)
         f, _ = M[fₗₘ]
         h = mulfullreduce!(L, M, maybe_div(r, lt(f)), tail(f), order)
         # res = r + h
         op_ordered_terms!(+, h, One(), (r,))
-        M[lm(h)] = (h, fₗₘ)
+        M[lm(h)] = (h, length(L))
         res = h
     end
     return res
