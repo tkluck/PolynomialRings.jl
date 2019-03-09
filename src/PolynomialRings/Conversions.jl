@@ -94,19 +94,18 @@ base_restrict(::Type{P}) where P <: Union{Term,Polynomial} = base_restrict(P, in
 # Base extension
 #
 # -----------------------------------------------------------------------------
-base_extend(::Type{Term{M,C1}}, ::Type{C2}) where {M,C1,C2} = Term{M, base_extend(C1,C2)}
-base_extend(::Type{Polynomial{M,C1}}, ::Type{C2}) where {M,C1,C2} = Polynomial{M, base_extend(C1,C2)}
-
 function base_extend(t::T, ::Type{C}) where T<:Term where C
-    TT = base_extend(T, C)
+    TT = promote_type(T, C)
     CC = basering(TT)
     return TT(monomial(t), unalias(CC, coefficient(t)))
 end
 
 function base_extend(p::P, ::Type{C}) where P<:Polynomial where C
-    PP = base_extend(P, C)
+    PP = promote_type(P, C)
     T = termtype(PP)
-    return PP(T[ base_extend(t, C) for t in terms(p) ])
+    newterms = T[ base_extend(t, C) for t in terms(p) ]
+    filter!(!iszero, newterms)
+    return PP(newterms)
 end
 
 base_extend(p::P)      where P <: Union{Term,Polynomial} = base_extend(p, fraction_field(basering(p)))
@@ -117,10 +116,22 @@ base_extend(::Type{P}) where P <: Union{Term,Polynomial} = base_extend(P, fracti
 # Operations (potentially) needing base extension
 #
 # -----------------------------------------------------------------------------
-/(a::T,b::Number)   where T <: Term = base_extend(T,    float(typeof(b)))(a.m, a.c/b)
-//(a::T,b::Number)  where T <: Term = base_extend(T, fraction_field(typeof(b)))(a.m, a.c//b)
-/(a::P,b::Number)   where P <: Polynomial = base_extend(P,   float(typeof(b)))([t/b  for t in terms(a)])
-//(a::P,b::Number)  where P <: Polynomial = base_extend(P,fraction_field(typeof(b)))([t//b for t in terms(a)])
+/(a::T,b::Number)   where T <: Term = promote_type(T,    float(typeof(b)))(a.m, a.c/b)
+//(a::T,b::Number)  where T <: Term = promote_type(T, fraction_field(typeof(b)))(a.m, a.c//b)
+
+function /(a::P, b::Number) where P <: Polynomial
+    P′ = promote_type(P, float(typeof(b)))
+    T′ = termtype(P′)
+    newterms = T′[t/b for t in terms(a)]
+    P′(newterms)
+end
+
+function //(a::P, b::Number) where P <: Polynomial
+    P′ = promote_type(P, fraction_field(typeof(b)))
+    T′ = termtype(P′)
+    newterms = T′[t//b for t in terms(a)]
+    P′(newterms)
+end
 
 function convert(::Type{T1}, t::T2) where T1<:Term{M} where T2<:Term{M} where M
     T1(monomial(t), convert(basering(T1), coefficient(t)))
@@ -131,11 +142,9 @@ end
 # Promoting numbers to polynomials (possibly using base extension)
 #
 # -----------------------------------------------------------------------------
-promote_rule(::Type{P}, ::Type{C}) where {P <: Polynomial, C<:Number} = base_extend(P,C)
-convert(::Type{P}, a::C) where P <: Polynomial where C<:Number = P(basering(P)(a))
+convert(::Type{P}, a::C) where P <: Polynomial where C<:Number = P(convert(basering(P), a))
 
 # resolve ambiguity between C a coefficient and C a number
-promote_rule(::Type{P}, ::Type{C}) where P<:PolynomialOver{C} where C<:Number = P
 function convert(::Type{P}, a::C)  where P<:PolynomialOver{C} where C<:Number
     if iszero(a)
         return zero(P)
@@ -152,9 +161,8 @@ end
 #
 # -----------------------------------------------------------------------------
 
-promote_rule(::Type{T}, ::Type{C}) where T <: Term where C<:Number = base_extend(T,C)
 
-convert(::Type{T}, a::C) where T <: Term{M} where M where C<:Number = base_extend(T,C)(one(M), deepcopy(a))
+convert(::Type{T}, a::C) where T <: Term{M} where M where C<:Number = promote_type(T,C)(one(M), deepcopy(a))
 
 # -----------------------------------------------------------------------------
 #
@@ -251,13 +259,6 @@ function convert(::Type{P}, a::C) where P <: NamedPolynomial{C} where C<:Polynom
 end
 
 # Don't duplicate variable names as a result of base_extend
-function base_extend(::Type{Term{M,C1}}, ::Type{C2}) where {M,C1,C2<:Polynomial}
-    if namingscheme(C2) == namingscheme(M)
-        Term{M, base_extend(C1,basering(C2))}
-    else
-        Term{M, base_extend(C1,C2)}
-    end
-end
 
 # -----------------------------------------------------------------------------
 #

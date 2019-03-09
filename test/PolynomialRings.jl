@@ -184,6 +184,12 @@ one(::Type{Foo}) = Foo()
         @test modulebasering( base_extend([a[1], 0, a[2]])) == @ring(ℚ[a[]])
         @test base_extend(a[1], Float64) == 1.0 * a[1]
         @test convert(@ring(ℚ[a[]]), a[1]+a[2]) == a[1]+a[2]
+
+        R = @ring! ℤ[a[]]
+        J = Ideal(a[1]^2 - 2)
+        S = R/J
+        T = @ring! ℚ[a[]][x, y]
+        @test base_extend(a[1]^2 + x, S) == 2 + x
     end
 
     @testset "promotions" begin

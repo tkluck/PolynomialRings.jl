@@ -58,6 +58,12 @@ using PolynomialRings
         @test (α*x)^2 != 2x^2
         @test A(α*x)^2 == A(2x^2)
 
+        C = @ring! ℚ[c[1:2]]
+        D = C / Ideal(c[1]^2 - 2, c[2]^3 - 3)
+        E = @ring! C[x]
+        @test base_extend(c[1]^2*x - 2x, D) == 0
+        @test base_extend(c[2]^3*x - 2x, D) == x
+
         S = @numberfield! ℚ[α,β]/(α^2 - 2, β^3 - 2)
         @test α^2 == β^3 == 2
 

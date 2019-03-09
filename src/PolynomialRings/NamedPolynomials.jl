@@ -152,12 +152,27 @@ function promote_rule(T1::Type{<:Polynomial}, T2::Type)
     elseif fullnamingscheme(T1) ⊆ fullnamingscheme(T2)
         return _promote_rule(basering(T1), T2)
     elseif isdisjoint(namingscheme(T1), fullnamingscheme(T2))
-        if (C = _promote_rule(basering(T1), T2)) != Bottom
+        if (C = _promote_rule(basering(T1), T2)) !== Bottom
             return Polynomial{monomialtype(T1), C}
         end
     end
     return Bottom
 end
+
+function promote_rule(T1::Type{<:Term}, T2::Type)
+    if !isdisjoint(namingscheme(T1), fullboundnames(T2))
+        T1′ = remove_variables(T1, fullboundnames(T2))
+        return _promote_rule(T1′, T2)
+    elseif fullnamingscheme(T1) ⊆ fullnamingscheme(T2)
+        return _promote_rule(basering(T1), T2)
+    elseif isdisjoint(namingscheme(T1), fullnamingscheme(T2))
+        if (C = _promote_rule(basering(T1), T2)) !== Bottom
+            return Term{monomialtype(T1), C}
+        end
+    end
+    return Bottom
+end
+
 
 # -----------------------------------------------------------------------------
 #
