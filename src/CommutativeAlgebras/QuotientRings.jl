@@ -25,11 +25,12 @@ struct QuotientRing{P<:Polynomial, ID}
 end
 ring(::Type{<:QuotientRing{P}}) where P = P
 
-function _ideal end
+const _ideals = Dict()
+_ideal(R) = _ideals[R]
 function /(::Type{P}, I::Ideal{P}) where P<:Polynomial
     ID = hash(I)
     R = QuotientRing{P, ID}
-    @eval _ideal(::Type{$R}) = $I
+    _ideals[R] = I
 
     return R
 end
