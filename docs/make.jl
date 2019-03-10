@@ -4,7 +4,6 @@ makedocs(
     modules  = [PolynomialRings],
     repo     = "https://github.com/tkluck/PolynomialRings.jl.git",
     doctest  = true,
-    format   = :html,
     sitename = "PolynomialRings.jl",
     authors  = "Timo Kluck",
     pages    = [
@@ -16,12 +15,13 @@ makedocs(
         "Types and Functions" => "functions.md",
         "Reference Index"     => "reference.md",
     ],
-    html_canonical = "http://tkluck.github.io/PolynomialRings.jl/stable/",
+    format = Documenter.HTML(
+        canonical = "http://tkluck.github.io/PolynomialRings.jl/stable/",
+    ),
 )
 deploydocs(
     repo   = "github.com/tkluck/PolynomialRings.jl.git",
     target = "build",
-    julia  = "1.0",
     deps   = nothing,
     make   = nothing,
 )
