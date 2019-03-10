@@ -35,7 +35,7 @@ function /(::Type{P}, I::Ideal{P}) where P<:Polynomial
     return R
 end
 
-/(::Type{P}, I::Ideal) where P<:Polynomial = P / Ideal{P}(I)
+/(::Type{P}, I) where P<:Polynomial = P / Ideal{P}(map(P, I))
 
 
 # -----------------------------------------------------------------------------
@@ -66,13 +66,13 @@ boundnames(::Type{Q})         where Q<:QuotientRing = namingscheme(ring(Q))
 # Conversion and promotion
 #
 # -----------------------------------------------------------------------------
-function promote_rule(::Type{Q}, ::Type{C}) where Q<:QuotientRing{P} where {P<:Polynomial,C}
-    rule_for_P = typejoin( promote_rule(P,C), promote_rule(C,P) )
-    if rule_for_P === P
-        return Q
-    else
-        return Union{}
+function promote_rule(::Type{Q}, ::Type{C}) where Q<:QuotientRing{P} where {P<:Polynomial,C<:Number}
+    P′ = promote_rule(P, C)
+    if P′ !== Union{}
+        I = Ideal(map(P′, _ideal(Q)))
+        return P′/I
     end
+    return Union{}
 end
 
 function convert(::Type{Q}, c::C) where Q<:QuotientRing{P} where {P<:Polynomial,C}

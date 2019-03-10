@@ -4,6 +4,7 @@ import Base: +,-,*,^,/,//,==,!=, hash
 import Base: promote_rule, convert
 import Base: show
 import Base: zero, one, in, div, rem, divrem, rem, issubset, inv
+import Base: iterate, length
 
 import ..Polynomials: Polynomial
 import PolynomialRings: allvariablesymbols, fraction_field
@@ -71,6 +72,9 @@ issubset(I::Ideal{P}, J::Ideal{P}) where P<:Polynomial = all(g in J for g in gen
 ^(I::Ideal, n::Integer) = Base.power_by_squaring(I,n)
 
 hash(I::Ideal, h::UInt) = hash(I.generators, h)
+
+iterate(I::Ideal, state...) = iterate(generators(I), state...)
+length(I::Ideal) = length(generators(I))
 
 # -----------------------------------------------------------------------------
 #
