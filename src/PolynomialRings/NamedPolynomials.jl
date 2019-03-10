@@ -117,11 +117,10 @@ function remove_variables(O::MonomialOrder, vars)
     return MonomialOrder{rulesymbol(O), typeof(O′)}()
 end
 
-function remove_variables(::Type{M}, vars) where M <: TupleMonomial
+function remove_variables(::Type{M}, vars) where M <: AbstractMonomial
     O = remove_variables(monomialorder(M), vars)
     O == nothing && return One
-    N = length(variablesymbols(O))
-    return TupleMonomial{N, exptype(M), typeof(O)}
+    return monomialtype(O, exptype(M))
  end
 
 function remove_variables(::Type{T}, vars) where T <: Term
@@ -144,7 +143,7 @@ fullboundnames(T::Type{<:Term}) = boundnames(basering(T))
 fullboundnames(T::Type{<:Polynomial}) = boundnames(basering(T))
 
 _promote_rule(T1::Type{<:Polynomial}, T2::Type) = promote_rule(T1, T2)
-_promote_rule(T1::Type, T2::Type) = promote_type(T1, T2)
+_promote_rule(T1::Type,               T2::Type) = (res = promote_type(T1, T2); res === Any ? Bottom : res)
 
 function promote_rule(T1::Type{<:Polynomial}, T2::Type)
     if !isdisjoint(namingscheme(T1), fullboundnames(T2))

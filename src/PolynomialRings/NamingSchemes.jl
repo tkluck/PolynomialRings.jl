@@ -96,6 +96,13 @@ function remove_variables(N::Named, vars::FullNamingScheme)
     return N
 end
 
+function remove_variables(N::Numbered, vars::FullNamingScheme)
+    for v in vars
+        N = remove_variables(N, v)
+    end
+    return N
+end
+
 namingscheme(::Type) = nothing
 fullnamingscheme(::Type) = NoNamingScheme()
 boundnames(::Type) = nothing
