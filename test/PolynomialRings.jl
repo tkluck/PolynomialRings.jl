@@ -90,6 +90,9 @@ one(::Type{Foo}) = Foo()
         @test one(x)(x=1) == 1
 
         @test (x+y)(x=x+y) == x + 2y
+
+        @test (x+y)(x=1, y = 1.0) == 2.0
+        @test (x+y)(x=1, y = 1.0) isa BigFloat
     end
 
     @testset "zero comparison in Base" begin

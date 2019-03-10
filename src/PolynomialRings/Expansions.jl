@@ -174,8 +174,9 @@ end
 
 @inline _expansion_types(t::Type, variables::Symbol...) = _expansion_types(t, _expansionspec(variables...))
 
-function _substitute(p::Polynomial, names::Named, values)
-    SubstitutionType = eltype(values)
+function _substitute(p::Polynomial, names::Named, values...)
+    values = promote(values...)
+    SubstitutionType = promote_type(map(typeof, values)...)
     ReturnType = promote_type(SubstitutionType, _coefftype(typeof(p), names))
     if !isconcretetype(ReturnType)
         throw(ArgumentError("Cannot substitute $SubstitutionType for $names into $p; result no more specific than $ReturnType"))
@@ -190,8 +191,8 @@ function _substitute(p::Polynomial, names::Named, values)
     )
 end
 
-function _substitute(p::Polynomial, names::Numbered, values)
-    SubstitutionType = typeof(values(1))
+function _substitute(p::Polynomial, names::Numbered, valuesfunc)
+    SubstitutionType = typeof(valuesfunc(1))
     ReturnType = promote_type(SubstitutionType, _coefftype(typeof(p), names))
     if !isconcretetype(ReturnType)
         throw(ArgumentError("Cannot substitute $SubstitutionType for $names into $p; result no more specific than $ReturnType"))
@@ -199,7 +200,7 @@ function _substitute(p::Polynomial, names::Numbered, values)
     return reduce(
         +,
         (
-            reduce(*, (values(i)^k for (i,k) in enumeratenz(m)), init=c)
+            reduce(*, (valuesfunc(i)^k for (i,k) in enumeratenz(m)), init=c)
             for (c,(m,)) in _expansion2(p, MonomialOrder{:degrevlex, typeof(names)}())
         ),
         init=zero(ReturnType)
@@ -217,7 +218,7 @@ function (p::Polynomial)(; kwargs...)
     values = [v for (k,v) in kwargs]
 
     if !any(v isa Function for v in values)
-        return _substitute(p, Named{tuple(vars...)}(), values)
+        return _substitute(p, Named{tuple(vars...)}(), values...)
     elseif length(kwargs) == 1 && values[1] isa Function
         return _substitute(p, Numbered{vars[1], Inf}(), values[1])
     else
