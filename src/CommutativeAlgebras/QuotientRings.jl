@@ -6,6 +6,7 @@ import Base: promote_rule, convert
 import Base: show
 import Base: zero, one, rem, copy
 
+import ..Constants: Constant, One, MinusOne, Zero
 import ..Ideals: Ideal, _grb
 import ..Ideals: ring
 import ..NamingSchemes: boundnames, namingscheme
@@ -165,6 +166,34 @@ end
 
 function show(io::IO, x::QuotientRing)
     print(io, x.f)
+end
+
+# -----------------------------------------------------------------------------
+#
+# Resolve method ambiguity
+#
+# -----------------------------------------------------------------------------
+for N = [QuotientRing]
+    @eval begin
+        promote_rule(::Type{T}, ::Type{C}) where {T<:$N, C <: Constant} = T
+
+        convert(::Type{T}, ::One)      where T<:$N = one(T)
+        convert(::Type{T}, ::Zero)     where T<:$N = zero(T)
+        convert(::Type{T}, ::MinusOne) where T<:$N = -one(T)
+
+        # fix method ambiguities
+        *(x::$N, ::One) = deepcopy(x)
+        *(::One, x::$N) = deepcopy(x)
+        *(x::$N, ::MinusOne) = -x
+        *(::MinusOne, x::$N) = -x
+
+        +(x::$N, ::Zero) = deepcopy(x)
+        -(x::$N, ::Zero) = deepcopy(x)
+        *(x::$N, ::Zero) = zero(x)
+        +(::Zero, x::$N) = deepcopy(x)
+        -(::Zero, x::$N) = -x
+        *(::Zero, x::$N) = zero(x)
+    end
 end
 
 end
