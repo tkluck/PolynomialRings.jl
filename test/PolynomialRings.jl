@@ -1,4 +1,5 @@
 using Test
+import LinearAlgebra: I
 import SparseArrays: sparse, spzeros
 using PolynomialRings
 
@@ -388,6 +389,8 @@ end
 
         @test common_denominator([(3//5)z^5, 6z + 3//2]) == 10
         @test integral_fraction([(3//5)z^5, 6z + 3//2]) == ([6z^5, 60z + 15], 10)
+
+        @test I*x == [x 0; 0 x] == x*I
     end
 
 end

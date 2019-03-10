@@ -2,8 +2,9 @@ module Conversions
 
 import Base: +,*,-,==,/,//
 import Base: div, rem, divrem
-import Base: promote_op
+import Base: promote_op, promote
 import Base: promote_rule, convert
+import LinearAlgebra: UniformScaling
 
 import ..Modules: AbstractModuleElement
 import ..Monomials: AbstractMonomial, total_degree
@@ -290,5 +291,50 @@ xdivrem(a::Number, b::AbstractVector{<:Polynomial}) = xdivrem(promote_vector(a, 
 #
 # -----------------------------------------------------------------------------
 promote_op(f, P::Type{<:Polynomial}, Q::Type{<:Polynomial}) = promote_type(P, Q)
+
+# -----------------------------------------------------------------------------
+#
+# Support e.g. (x^2 + y^2)*I
+#
+# -----------------------------------------------------------------------------
+"""
+    _UniformScaling{T}
+
+Fulfils the same role as LinearAlgebra.UniformScaling, but
+without requiring that T <: Number.
+"""
+struct _UniformScaling{T}
+    λ::T
+end
+*(x::AbstractVector, J::_UniformScaling) = x * J.λ
+*(J::_UniformScaling, x::AbstractVector) = J.λ * x
+*(x::AbstractMatrix, J::_UniformScaling) = x * J.λ
+*(J::_UniformScaling, x::AbstractMatrix) = J.λ * x
+for P in [Number, AbstractMonomial, Term, Polynomial] @eval begin
+    *(x::$P, J::_UniformScaling) = _UniformScaling(x*J.λ)
+    *(J::_UniformScaling, x::$P) = _UniformScaling(J.λ*x)
+end end
+*(J::_UniformScaling, I::UniformScaling)  = _UniformScaling(J.λ * I.λ)
+*(I::UniformScaling, J::_UniformScaling)  = _UniformScaling(I.λ * J.λ)
+
+for P in [AbstractMonomial, Term, Polynomial] @eval begin
+    *(x::$P, J::UniformScaling) = _UniformScaling(x*J.λ)
+    *(J::UniformScaling, x::$P) = _UniformScaling(J.λ*x)
+end end
+
+promote(x::AbstractMatrix, J::_UniformScaling) = (x, J.λ*one(x))
+promote(J::_UniformScaling, x::AbstractMatrix) = (J.λ*one(x), x)
+
++(J::_UniformScaling, x) = +(promote(J, x)...)
+-(J::_UniformScaling, x) = -(promote(J, x)...)
+==(J::_UniformScaling, x) = ==(promote(J, x)...)
++(x, J::_UniformScaling) = +(promote(x, J)...)
+-(x, J::_UniformScaling) = -(promote(x, J)...)
+==(x, J::_UniformScaling) = ==(promote(x, J)...)
+
++(I::_UniformScaling, J::_UniformScaling) = _UniformScaling(I.λ + J.λ)
+-(I::_UniformScaling, J::_UniformScaling) = _UniformScaling(I.λ - J.λ)
+*(I::_UniformScaling, J::_UniformScaling) = _UniformScaling(I.λ * J.λ)
+==(I::_UniformScaling, J::_UniformScaling) = I.λ == J.λ
 
 end
