@@ -323,18 +323,6 @@ end
     end
 
     @testset "Nested types" begin
-        @testset "Through tensor" begin
-            R = @ring! ℤ[x]
-            S = @ring! ℤ[y]
-
-            @test @coefficient(x⊗y, x) == y
-            @test @coefficient(x⊗y, y) == x
-            @test @coefficient(x⊗y, x*y) == 1
-
-            @test x⊗y == x*y
-
-            @test (x⊗y)(x=1) == y == (x*y)(x=1) == (y⊗x)(x=1)
-        end
         @testset "Explicit types" begin
             R = @ring! ℤ[x]
             S = @ring! ℤ[y]
@@ -342,7 +330,6 @@ end
             U = @ring ℤ[y][x]
             V = @ring ℤ[x][y]
 
-            @test S⊗R == T == U
             @test U != V
 
             @test U(x+y) == V(x+y)

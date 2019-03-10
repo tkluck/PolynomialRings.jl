@@ -233,27 +233,6 @@ end
 
 # -----------------------------------------------------------------------------
 #
-# Polynomials with polynomial coefficients
-#
-# -----------------------------------------------------------------------------
-"""
-    ⊗(a::Polynomial, b::Polynomial)
-
-Construct a polynomial with polynomial coefficients, by promoting a with the type of the coefficients of b.
-"""
-function ⊗(a::P1, b::P2) where P1 <: Polynomial where P2 <: Polynomial
-    P = P1⊗P2
-    @assert basering(P) === base_extend(P1, basering(P2))
-    l = P(base_extend(a, basering(P2)))
-    r = base_extend(b, P1)
-    @assert typeof(l) === typeof(r)
-    l * r
-end
-
-⊗(::Type{P1}, ::Type{P2}) where P1 <: Polynomial where P2 <: Polynomial = base_extend(P2, P1)
-
-# -----------------------------------------------------------------------------
-#
 # Polynomials with polynomial coefficients: resolve ambiguities
 #
 # -----------------------------------------------------------------------------
