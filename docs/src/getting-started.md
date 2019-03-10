@@ -274,6 +274,11 @@ we see that
 $y^2 = 1(x^5) + (y + xy - x^3)(x^2 + y) + -x(xy + y^2)$
 which proves that $y^2 \in (I)$.
 
+This is all summarized in the `lift` function:
+```@repl getting-started
+lift(I, y^2)
+```
+
 ### Using helper variables
 
 (Be sure you understand [Variables in your ring vs. variables in your script](@ref)
