@@ -1,5 +1,5 @@
 name = "PolynomialRings"
-uuid = "f2aa9802-77cf-11e8-220a-51def7cbcda7"
+uuid = "c8ed2632-8d42-5af4-9089-7afd55769a28"
 authors = ["Timo Kluck <tkluck@infty.nl>"]
 version = "0.2.1"
 
