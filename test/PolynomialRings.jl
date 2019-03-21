@@ -190,6 +190,22 @@ one(::Type{Foo}) = Foo()
         S = R/J
         T = @ring! ℚ[a[]][x, y]
         @test base_extend(a[1]^2 + x, S) == 2 + x
+
+        @ring! ℤ[x]
+        @ring! ℤ[y]
+        @test base_extend(x, @ring ℤ[y]) isa @ring ℤ[y][x]
+        @test base_extend(y, @ring ℚ[x]) isa @ring ℚ[x][y]
+        @test base_extend(y, @ring ℚ[y]/y^2) isa @ring ℚ[y]/y^2
+
+        @ring! ℤ[x][y]
+        @test base_extend(x*y, @ring ℚ[y]/y^2) isa @ring (ℚ[y]/y^2)[x]
+        @test base_extend(x*y, @ring ℚ[x]/x^2) isa @ring (ℚ[x]/x^2)[y]
+        @ring! ℤ[x,y]
+        @test base_extend(x*y, @ring ℚ[y]/y^2) isa @ring (ℚ[y]/y^2)[x]
+        @test base_extend(x*y, @ring ℚ[x]/x^2) isa @ring (ℚ[x]/x^2)[y]
+        @ring! ℤ[x,y][z]
+        @test base_extend(x*y*z, @ring ℚ[y]/y^2) isa @ring (ℚ[y]/y^2)[x][z]
+        @test base_extend(x*y*z, @ring ℚ[z]/z^2) isa @ring (ℚ[z]/z^2)[x,y]
     end
 
     @testset "promotions" begin

@@ -3,7 +3,7 @@ module Conversions
 import Base: +,*,-,==,/,//
 import Base: div, rem, divrem
 import Base: promote_op, promote
-import Base: promote_rule, convert
+import Base: promote_rule, convert, Bottom
 import LinearAlgebra: UniformScaling
 
 import ..Modules: AbstractModuleElement
@@ -101,11 +101,17 @@ function base_extend(t::T, ::Type{C}) where T<:Term where C
 end
 
 function base_extend(p::P, ::Type{C}) where P<:Polynomial where C
-    PP = promote_type(P, C)
-    T = termtype(PP)
-    newterms = T[ base_extend(t, C) for t in terms(p) ]
-    filter!(!iszero, newterms)
-    return PP(newterms)
+    # Our implementation of promote_rule is not symmetric: it prefers extending
+    # the basering of the LHS. For example:
+    #     promote_rule(@ring(ℤ[x]), @ring(ℤ[y])) == @ring(ℤ[y][x])
+    # see NamedPolynomials module. That's exactly the behaviour we want
+    # for base_extend.
+    PP = promote_rule(P, C)
+    if PP == Bottom
+        # if that yields no result, just apply a symmetric promote_type.
+        PP = promote_type(P, C)
+    end
+    return PP(p)
 end
 
 base_extend(p::P)      where P <: Union{Term,Polynomial} = base_extend(p, fraction_field(basering(p)))
