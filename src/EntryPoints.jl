@@ -166,7 +166,7 @@ function _polynomial_ring(definition)
                     definition.args[2]
 
     if basering_spec isa Expr
-        basering = _polynomial_ring(basering_spec)
+        basering = _ring(basering_spec)
     else
         basering = get(_baserings, basering_spec, esc(basering_spec))
     end
@@ -204,6 +204,10 @@ julia> @ring ℚ[x,y]
 
 """
 macro ring(definition)
+    return _ring(definition)
+end
+
+function _ring(definition)
     if definition.head == :call && definition.args[1] == :/
         return quote
             R = $( _polynomial_ring(definition.args[2]))
