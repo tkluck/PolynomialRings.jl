@@ -82,6 +82,12 @@ function promote_rule(::Type{Q}, ::Type{C}) where Q<:QuotientRing{P} where {P<:P
     return Union{}
 end
 
+function promote_rule(::Type{Q1}, ::Type{Q2}) where {Q1 <: QuotientRing, Q2 <: QuotientRing}
+    P = promote_type(ring(Q1), ring(Q2))
+    I = Ideal(map(P, _ideal(Q1))) + Ideal(map(P, _ideal(Q2)))
+    P/I
+end
+
 function convert(::Type{Q}, c::C) where Q<:QuotientRing{P} where {P<:Polynomial,C}
     Q(convert(P, c))
 end
@@ -122,6 +128,13 @@ convert(::Type{Q}, q::Q) where Q <: QuotientRing{P, ID} where {P <: Polynomial, 
 ==(a, b::QuotientRing) = ==(promote(a,b)...)
 !=(a::QuotientRing, b) = !=(promote(a,b)...)
 !=(a, b::QuotientRing) = !=(promote(a,b)...)
+
++(a::QuotientRing,  b::QuotientRing) = +(promote(a,b)...)
+-(a::QuotientRing,  b::QuotientRing) = -(promote(a,b)...)
+*(a::QuotientRing,  b::QuotientRing) = *(promote(a,b)...)
+//(a::QuotientRing, b::QuotientRing) = //(promote(a,b)...)
+==(a::QuotientRing, b::QuotientRing) = ==(promote(a,b)...)
+!=(a::QuotientRing, b::QuotientRing) = !=(promote(a,b)...)
 
 # -----------------------------------------------------------------------------
 #

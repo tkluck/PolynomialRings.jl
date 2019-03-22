@@ -89,6 +89,7 @@ using PolynomialRings
 
         @ring! ℤ[a]/(a^2 - 2)
         @test (im*a)^2 == -2
+        @test a * (a*im) == 2*im
     end
 
     @testset "Bound names" begin
