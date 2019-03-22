@@ -1,7 +1,6 @@
 using Test
 using PolynomialRings
 
-
 @testset "CommutativeAlgebras" begin
     @testset "Ideals" begin
         R = @ring! Int[x,y]
