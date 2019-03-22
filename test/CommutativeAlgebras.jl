@@ -87,6 +87,8 @@ using PolynomialRings
         #@test promote_type(Q[b,c], @ring R[a,d]) == @ring (Q⊗R)[c,d]
         @test_throws ArgumentError promote_type(@ring(R[b]), @ring(S[a]))
 
+        @ring! ℤ[a]/(a^2 - 2)
+        @test (im*a)^2 == -2
     end
 
     @testset "Bound names" begin

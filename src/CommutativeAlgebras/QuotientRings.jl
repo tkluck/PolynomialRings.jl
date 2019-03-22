@@ -83,7 +83,17 @@ function convert(::Type{Q}, c::C) where Q<:QuotientRing{P} where {P<:Polynomial,
     Q(convert(P, c))
 end
 
-convert(::Type{Q}, q::Q) where Q<:QuotientRing{P} where {P<:Polynomial} = q
+@generated function convert(::Type{Q1}, c::Q2) where {Q1 <: QuotientRing{P1}, Q2 <: QuotientRing} where P1 <: Polynomial
+    P1 = ring(Q1)
+    I2_image = Ideal(P1.(_ideal(Q2)))
+    I2_image ⊆ _ideal(Q1) || error("Cannot convert $Q2 to $Q1; the conversion is not compatible with the quotients.")
+    quote
+        Q1(convert($P1, c.f))
+    end
+end
+
+
+convert(::Type{Q}, q::Q) where Q <: QuotientRing = q
 
 # -----------------------------------------------------------------------------
 #
