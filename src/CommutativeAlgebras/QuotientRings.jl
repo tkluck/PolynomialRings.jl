@@ -27,11 +27,14 @@ end
 ring(::Type{<:QuotientRing{P}}) where P = P
 
 const _ideals = Dict()
-_ideal(R) = _ideals[R]
+@generated _ideal(R) = :( _ideals[R] )
 function /(::Type{P}, I::Ideal{P}) where P<:Polynomial
     ID = hash(I)
     R = QuotientRing{P, ID}
-    _ideals[R] = I
+
+    if !haskey(_ideals, R)
+        _ideals[R] = I
+    end
 
     return R
 end
