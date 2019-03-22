@@ -10,7 +10,7 @@ import LinearAlgebra: tr, norm
 
 import ..Ideals: ring
 import ..Monomials: AbstractMonomial
-import ..NamingSchemes: boundnames
+import ..NamingSchemes: boundnames, fullboundnames
 import ..Polynomials: Polynomial, basering, variablesymbols
 import ..QuotientRings: QuotientRing, monomial_basis
 import ..QuotientRings: _ideal
@@ -152,6 +152,7 @@ copy(a::NumberField) = a
 !=(a::Q, b::Q) where Q<:NumberField = a.coeffs != b.coeffs
 allvariablesymbols(::Type{Q}) where Q<:NumberField = allvariablesymbols(ring(Q))
 boundnames(::Type{Q})         where Q<:NumberField = boundnames(quotientring(Q))
+fullboundnames(::Type{Q})     where Q<:NumberField = fullboundnames(quotientring(Q))
 
 fraction_field(::Type{N}) where N<:NumberField = N
 

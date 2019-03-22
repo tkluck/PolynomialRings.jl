@@ -9,7 +9,7 @@ import Base: zero, one, rem, copy
 import ..Constants: Constant, One, MinusOne, Zero
 import ..Ideals: Ideal, _grb
 import ..Ideals: ring
-import ..NamingSchemes: boundnames, namingscheme
+import ..NamingSchemes: boundnames, fullboundnames, namingscheme, fullnamingscheme
 import ..Polynomials: Polynomial, exptype, leading_term
 import ..Terms: Term, monomial, coefficient
 import PolynomialRings: allvariablesymbols
@@ -60,7 +60,10 @@ copy(a::QuotientRing) = a
 ==(a::Q, b::Q)                where Q<:QuotientRing = a.f == b.f
 !=(a::Q, b::Q)                where Q<:QuotientRing = a.f != b.f
 allvariablesymbols(::Type{Q}) where Q<:QuotientRing = allvariablesymbols(ring(Q))
-boundnames(::Type{Q})         where Q<:QuotientRing = namingscheme(ring(Q))
+# boundnames and fullboundnames return the same result: need to assume all
+# variables may appear in _ideal(Q).
+boundnames(::Type{Q})         where Q<:QuotientRing = fullnamingscheme(ring(Q))
+fullboundnames(::Type{Q})     where Q<:QuotientRing = fullnamingscheme(ring(Q))
 
 # -----------------------------------------------------------------------------
 #

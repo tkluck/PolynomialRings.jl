@@ -87,5 +87,12 @@ using PolynomialRings
         #@test promote_type(@ring(Q[b]), @ring(R[a])) == (Q⊗R)
         #@test promote_type(Q[b,c], @ring R[a,d]) == @ring (Q⊗R)[c,d]
         @test_throws ArgumentError promote_type(@ring(R[b]), @ring(S[a]))
+
+    end
+
+    @testset "Bound names" begin
+        import PolynomialRings: boundnames, fullnamingscheme
+
+        @test boundnames(@ring ℤ[x][y]/(x^2 - y^3)) == fullnamingscheme(@ring ℤ[x][y])
     end
 end

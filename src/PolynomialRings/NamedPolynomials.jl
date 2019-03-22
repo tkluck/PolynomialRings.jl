@@ -139,8 +139,8 @@ remove_variables(T::Type, vars) = T
 
 fullnamingscheme(T::Type{<:Term}) = fullnamingscheme(basering(T)) * namingscheme(T)
 fullnamingscheme(T::Type{<:Polynomial}) = fullnamingscheme(basering(T)) * namingscheme(T)
-fullboundnames(T::Type{<:Term}) = boundnames(basering(T))
-fullboundnames(T::Type{<:Polynomial}) = boundnames(basering(T))
+fullboundnames(T::Type{<:Term}) = fullboundnames(basering(T))
+fullboundnames(T::Type{<:Polynomial}) = fullboundnames(basering(T))
 
 _promote_rule(T1::Type{<:Polynomial}, T2::Type) = promote_rule(T1, T2)
 _promote_rule(T1::Type,               T2::Type) = (res = promote_type(T1, T2); res === Any ? Bottom : res)
