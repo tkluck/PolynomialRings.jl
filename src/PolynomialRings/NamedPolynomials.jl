@@ -147,9 +147,13 @@ _promote_rule(T1::Type,               T2::Type) = (res = promote_type(T1, T2); r
 
 function promote_rule(T1::Type{<:Polynomial}, T2::Type)
     if !isdisjoint(namingscheme(T1), fullboundnames(T2))
+        # FIXME(tkluck): this loses information on the exptype associated to
+        # the namingscheme of T1.
         T1′ = remove_variables(T1, fullboundnames(T2))
         return _promote_rule(T1′, T2)
     elseif fullnamingscheme(T1) ⊆ fullnamingscheme(T2)
+        # FIXME(tkluck): this loses information on the exptype associated to
+        # the namingscheme of T1.
         return _promote_rule(basering(T1), T2)
     elseif isdisjoint(namingscheme(T1), fullnamingscheme(T2))
         if (C = _promote_rule(basering(T1), T2)) !== Bottom
