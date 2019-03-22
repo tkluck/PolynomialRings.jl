@@ -32,6 +32,14 @@ polyconstructors = [
     () -> -randpoly(),
     () -> +randpoly(),
     () -> randpoly()^rand(1:10),
+    () -> base_extend(randpoly(), randtype()),
+    function()
+        f = randpoly()
+        while !(f isa Polynomial)
+            f = randpoly()
+        end
+        f(;rand(varnames)=>randpoly())
+    end,
 ]
 
 typeconstructors = [
@@ -79,6 +87,9 @@ end
     @axiom let x = randpoly(), y = randpoly(), z = randpoly() # additive associativity
         (x + y) + z == x + (y + z)
     end
+    @axiom let x = randpoly(), y = randpoly() # additive inverse
+        x + y - y == x
+    end
     @axiom let x = randpoly(), y = randpoly() # commutative multiplication
         x * y == y * x
     end
@@ -104,5 +115,8 @@ end
     end
     @axiom let T = randtype(), x = randpoly() # base extension preserves identity
         base_extend(x, T) == x
+    end
+    @axiom let T = randtype(), S = randtype() # promotion is concrete
+        isconcretetype(promote_type(T, S))
     end
 end
