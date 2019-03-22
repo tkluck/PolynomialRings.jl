@@ -266,8 +266,6 @@ function convert(::Type{P}, a::C) where P <: NamedPolynomial{C} where C<:Polynom
     end
 end
 
-# Don't duplicate variable names as a result of base_extend
-
 # -----------------------------------------------------------------------------
 #
 # Promotions for more complicated functions
