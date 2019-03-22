@@ -117,6 +117,8 @@ end
 base_extend(p::P)      where P <: Union{Term,Polynomial} = base_extend(p, fraction_field(basering(p)))
 base_extend(::Type{P}) where P <: Union{Term,Polynomial} = base_extend(P, fraction_field(basering(P)))
 
+base_extend(x, ::Type{C}) where C = convert(promote_type(typeof(x), C), x)
+
 # -----------------------------------------------------------------------------
 #
 # Operations (potentially) needing base extension
