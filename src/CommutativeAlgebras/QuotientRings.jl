@@ -10,7 +10,8 @@ import ..Constants: Constant, One, MinusOne, Zero
 import ..Ideals: Ideal, _grb
 import ..Ideals: ring
 import ..NamingSchemes: boundnames, fullboundnames, namingscheme, fullnamingscheme
-import ..Polynomials: Polynomial, exptype, leading_term
+import ..Polynomials: Polynomial, exptype, leading_term, basering, PolynomialOver
+import ..Polynomials: termtype, monomialtype
 import ..Terms: Term, monomial, coefficient
 import PolynomialRings: allvariablesymbols
 import PolynomialRings: construct_monomial, variablesymbols
@@ -232,4 +233,15 @@ for N = [QuotientRing]
     end
 end
 
+convert(::Type{P}, a::QuotientRing) where P <: Polynomial = P(convert(basering(P), a))
+# resolve ambiguity
+function convert(::Type{P}, a::Q) where P <: PolynomialOver{Q} where Q <: QuotientRing
+    if iszero(a)
+        return zero(P)
+    else
+        T = termtype(P)
+        M = monomialtype(P)
+        return P([T(one(M),deepcopy(a))])
+    end
+end
 end
