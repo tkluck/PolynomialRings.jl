@@ -73,6 +73,12 @@ end
         G = sparse.([[x^5-y x^4;y x],[x^3+y y^3;x y]]) # matrices
         GG, tr= gröbner_transformation(G)
         @test [a for a in tr]*G == GG
+
+        # should not operate in-place
+        G = R[]
+        @test gröbner_basis(G) !== G
+        G = [x^2 - y]
+        @test gröbner_basis(G) !== G
     end
 
     # This is usually double work, as the default backend is one of the others.
