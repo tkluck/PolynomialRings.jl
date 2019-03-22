@@ -18,7 +18,7 @@ import PolynomialRings: xdiv, xrem, xdivrem
 
 # -----------------------------------------------------------------------------
 #
-# Fallback for v0.7
+# Contructor-style conversions
 #
 # -----------------------------------------------------------------------------
 (::Type{P})(a) where P <: Polynomial = convert(P, a)

@@ -127,7 +127,7 @@ convert(::Type{F}, f::P) where F<:NumberField{P, C} where {P<:Polynomial, C} =
 
 # -----------------------------------------------------------------------------
 #
-# Fallback for v0.7
+# Constructor-style conversions
 #
 # -----------------------------------------------------------------------------
 (::Type{F})(a::F) where F<:NumberField = a
