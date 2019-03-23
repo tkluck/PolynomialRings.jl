@@ -12,7 +12,7 @@ import ..Modules: AbstractModuleElement, modulebasering
 import ..Modules: withtransformations, separatetransformation
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
 import ..Monomials: total_degree, any_divisor
-import ..Operators: Lead, Full, content, integral_fraction
+import ..Operators: Lead, Full, content
 import ..Polynomials: Polynomial, monomialorder, monomialtype, PolynomialBy
 import ..Terms: monomial, coefficient
 import PolynomialRings: gröbner_basis, gröbner_transformation, xrem!
@@ -68,9 +68,7 @@ An implementation of the GWV algorithm as popularized by
 function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transformation=false) where M <: AbstractModuleElement
     @withmonomialorder order
 
-    if basering(modulebasering(M)) <: Rational
-        polynomials = map(f->integral_fraction(f)[1], polynomials)
-    end
+    orig = deepcopy(polynomials)
 
     if with_transformation
         polynomials = withtransformations(polynomials)
@@ -252,6 +250,7 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
     if with_transformation
         result, transformation = separatetransformation(result)
         result = map(p->base_extend(p, basering(P)), result)
+        @assert result == transformation * orig
         return result, transformation
     else
         result = map(p->base_extend(p, basering(P)), result)

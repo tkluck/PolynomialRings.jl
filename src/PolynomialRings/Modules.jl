@@ -10,7 +10,7 @@ import ..MonomialOrderings: MonomialOrder, @withmonomialorder
 import ..Monomials: AbstractMonomial
 import ..Monomials: total_degree
 import ..Operators: RedType, Lead, Full, Tail
-import ..Operators: one_step_div!, one_step_xdiv!, content
+import ..Operators: one_step_div!, one_step_xdiv!, content, integral_fraction
 import ..Polynomials: Polynomial, monomialorder, basering
 import ..Terms: Term
 import ..Terms: coefficient, monomial
@@ -210,9 +210,10 @@ end
 
 function withtransformations(x::AbstractVector{M}) where M
     P = modulebasering(M)
-    n = length(x)
-    map(enumerate(x)) do (i,x_i)
-        tr = sparsevec(Dict(i=>one(P)), n)
+    m = length(x)
+    map(enumerate(x)) do (i, x_i)
+        x_i, n = basering(P) <: Rational ? integral_fraction(x_i) : (x_i, one(P))
+        tr = sparsevec(Dict(i=>P(n)), m)
         TransformedModuleElement(x_i, tr, one(basering(P)))
     end
 end
