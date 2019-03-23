@@ -120,4 +120,8 @@ end
     @axiom let T = randtype(), S = randtype() # promotion is concrete
         isconcretetype(promote_type(T, S))
     end
+
+    @axiom let T = randtype(), S = randtype() # inference
+        Base._return_type(*, (T, S)) == promote_type(T, S)
+    end
 end
