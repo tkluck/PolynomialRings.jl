@@ -3,11 +3,11 @@
 ## Installation
 
 Refer to [the Julia website](https://julialang.org/downloads/) for details on
-installing Julia. As soon as you have, start it and run
+installing Julia. As soon as you have, start it and type `[` to get in
+package mode. Then, run
 ```julia-repl
-julia> Pkg.add("PolynomialRings")
+(v1.1) pkg> add PolynomialRings
 ```
-
 to install `PolynomialRings` and its dependencies. To test whether it worked,
 type
 
