@@ -178,7 +178,7 @@ function *(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
     done_until_row_at_col = zeros(Int, l_b)
 
     # We use a *bounded* queue not because we want to drop items when it
-    # gets to big, but because we want to allocate it once to its maximal
+    # gets too big, but because we want to allocate it once to its maximal
     # theoretical size, and then never reallocate.
     order = Base.Order.Lt((a,b) -> a[3] ≺ b[3])
     Key = Tuple{Int, Int, M}
@@ -195,7 +195,7 @@ function *(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
     @inbounds while !isempty(minimal_corners)
         row, col, m = dequeue!(minimal_corners)
 
-        # compute the product of the product at (row, col)
+        # compute the product of the terms at (row, col)
         if m == cur_monom
             @inplace temp = coefficient(t_a[row]) * coefficient(t_b[col])
             @inplace cur_coeff += temp
