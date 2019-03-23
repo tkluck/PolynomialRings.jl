@@ -59,16 +59,17 @@ macro axiom(expr)
     block = expr.args[2]
     blockrepr = repr(block)
     vars = [asgn.args[1] for asgn in assignments]
+    typeofvars = [:( typeof($v) ) for v in vars]
     esc(quote
         try
             let $(assignments...)
                 try
                     result = $block
                     if !result
-                        @warn "Axiom violated: $($blockrepr)" $(vars...)
+                        @warn "Axiom violated: $($blockrepr)" $(vars...) $(typeofvars...)
                     end
                 catch ex
-                    @warn "Exception during axiom check: $($blockrepr)" $(vars...) exception=(ex, catch_backtrace())
+                    @warn "Exception during axiom check: $($blockrepr)" $(vars...) $(typeofvars...) exception=(ex, catch_backtrace())
                 end
             end
         catch ex
