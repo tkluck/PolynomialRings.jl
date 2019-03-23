@@ -45,7 +45,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Getting Started",
     "title": "Installation",
     "category": "section",
-    "text": "Refer to the Julia website for details on installing Julia. As soon as you have, start it and runjulia> Pkg.add(\"PolynomialRings\")to install PolynomialRings and its dependencies. To test whether it worked, typeusing PolynomialRings\n@ring! Int[x,y]\n(x + y) * (x - y)If you see the same, you are all set!"
+    "text": "Refer to the Julia website for details on installing Julia. As soon as you have, start it and type [ to get in package mode. Then, run(v1.1) pkg> add PolynomialRingsto install PolynomialRings and its dependencies. To test whether it worked, typeusing PolynomialRings\n@ring! Int[x,y]\n(x + y) * (x - y)If you see the same, you are all set!"
 },
 
 {
