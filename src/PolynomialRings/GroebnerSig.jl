@@ -113,7 +113,7 @@ Eder/Perry but it fits with our definition of signature as the _first_ nonzero
 leading monomial in a vector.
 """
 function gröbner_basis_sig_incremental(alg::Backend, polynomials::AbstractVector{PP}; order::MonomialOrder) where PP <: Polynomial
-    @assert degreecompatible(o)
+    @assert degreecompatible(order)
     @withmonomialorder order
 
     R = PP
