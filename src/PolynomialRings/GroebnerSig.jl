@@ -56,12 +56,14 @@ function s_poly_lm(p, q; order)
     @withmonomialorder order
     (m_p, m_q) = lcm_multipliers(leading_term(p), leading_term(q))
     S_pq = m_p * p - m_q * q
-    leading_monomial(S_pq)
+    return iszero(S_pq) ? nothing : leading_monomial(S_pq)
 end
 
-function is_prunable(::Arri, o, G, P, S; order)
+function is_prunable(::Arri, x, G, P, S; order)
     @withmonomialorder order
     (σ, p, q) = x
+
+    isnothing(s_poly_lm(p, q; order=order)) && return true
     # (AR) there exist (τ F i+1 , g) ∈ G and t ∈ M such that tτ = σ and lm (tg) <
     # lm (S p,q ), or there exist (τ F i+1 , f, g) ∈ S ∪ P and t ∈ M such that tτ = σ
     # and lm (tS f,g ) < lm (S p,q ).
@@ -105,7 +107,7 @@ An implementation of the generic signature-based algorithm as popularized by
 > Gröbner bases." Proceedings of the 36th international symposium on Symbolic and
 > algebraic computation. ACM, 2011.
 The `alg` parameter decides whether this reduces to F5C, G²W, or Arri.
-For now, only F5C has been implemented.
+For now, only Arri has been implemented.
 
 This incremental algorithm assumes that `polynomials[2:end]` is already a Gröbner
 basis, and we've just added `polynomials[1]`. This convention is opposite from
@@ -249,7 +251,6 @@ function gröbner_basis_sig_incremental(alg::Backend, polynomials::AbstractVecto
 end
 
 function interreduce!(H; order)
-    @info("Interreducing $(length(H)) polynomials")
     for i in 1:length(H)
         xrem!(H[i], H[[1:i-1; i+1:end]], order=order)
         if basering(eltype(H)) <: Integer
@@ -257,7 +258,6 @@ function interreduce!(H; order)
         end
     end
     filter!(!iszero, H)
-    @info("After interreduction, $(length(H)) polynomials left")
 end
 
 function gröbner_basis(alg::Arri, o::MonomialOrder, G::AbstractArray{<:Polynomial}; kwds...)
@@ -268,11 +268,16 @@ function gröbner_basis(alg::Arri, o::MonomialOrder, G::AbstractArray{<:Polynomi
     if basering(P) <: Rational
         G = map(g->integral_fraction(g)[1], G)
     end
-    H = G[end:end]
-    for g in G[end-1:-1:1]
-        pushfirst!(H, g)
-        H = gröbner_basis_sig_incremental(alg, H; order=o, kwds...)
-        interreduce!(H, order=o)
+    H = R[]
+    ix = findlast(!iszero, G)
+    if !isnothing(ix)
+        pushfirst!(H, G[ix])
+        for g in G[ix-1:-1:1]
+            iszero(g) && continue
+            pushfirst!(H, g)
+            H = gröbner_basis_sig_incremental(alg, H; order=o, kwds...)
+            interreduce!(H, order=o)
+        end
     end
     H = map(h->base_extend(h, P), H)
 

@@ -87,7 +87,7 @@ end
     tests()
     for backend in [
             PolynomialRings.GröbnerGWV.GWV(),
-            #PolynomialRings.Backends.Gröbner.Arri(),
+            PolynomialRings.Backends.Gröbner.Arri(),
             PolynomialRings.Backends.Gröbner.M4GB(),
     ]
         PolynomialRings.Backends.Gröbner.set_default(backend)

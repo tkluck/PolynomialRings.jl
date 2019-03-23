@@ -109,6 +109,9 @@ min(m::MonomialOrder, a, b, c, xs...) = (op(x,y) = min(m,x,y); Base.afoldl(op, o
 max(m::MonomialOrder, a, b, c, xs...) = (op(x,y) = max(m,x,y); Base.afoldl(op, op(op(a,b),c), xs...))
 minimum(m::MonomialOrder, iter) = (op(x,y) = min(m,x,y); reduce(op, iter))
 maximum(m::MonomialOrder, iter) = (op(x,y) = max(m,x,y); reduce(op, iter))
+# resolve ambiguity
+minimum(m::MonomialOrder, iter::AbstractArray) = (op(x,y) = min(m,x,y); reduce(op, iter))
+maximum(m::MonomialOrder, iter::AbstractArray) = (op(x,y) = max(m,x,y); reduce(op, iter))
 
 degreecompatible(::MonomialOrder) = false
 degreecompatible(::MonomialOrder{:degrevlex}) = true
