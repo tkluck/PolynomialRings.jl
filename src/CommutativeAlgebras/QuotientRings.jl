@@ -74,19 +74,22 @@ fullboundnames(::Type{Q})     where Q<:QuotientRing = fullnamingscheme(ring(Q))
 # Conversion and promotion
 #
 # -----------------------------------------------------------------------------
-function promote_rule(::Type{Q}, ::Type{C}) where Q<:QuotientRing{P} where {P<:Polynomial,C<:Number}
+@generated function promote_rule(::Type{Q}, ::Type{C}) where Q<:QuotientRing{P} where {P<:Polynomial,C<:Number}
     P′ = promote_rule(P, C)
     if P′ !== Union{}
         I = Ideal(map(P′, _ideal(Q)))
-        return P′/I
+        res = P′/I
+    else
+        res = Union{}
     end
-    return Union{}
+    :( $res )
 end
 
-function promote_rule(::Type{Q1}, ::Type{Q2}) where {Q1 <: QuotientRing, Q2 <: QuotientRing}
+@generated function promote_rule(::Type{Q1}, ::Type{Q2}) where {Q1 <: QuotientRing, Q2 <: QuotientRing}
     P = promote_type(ring(Q1), ring(Q2))
     I = Ideal(map(P, _ideal(Q1))) + Ideal(map(P, _ideal(Q2)))
-    P/I
+    res = P/I
+    :( $res )
 end
 
 function convert(::Type{Q}, c::C) where Q<:QuotientRing{P} where {P<:Polynomial,C}
