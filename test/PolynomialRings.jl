@@ -226,6 +226,8 @@ one(::Type{Foo}) = Foo()
         @test promote_type(@ring(ℤ[x][y,z]), @ring(ℚ[x,y][z])) == @ring(ℚ[x,y,z])
         @test promote_type(@ring(ℤ[a,b][c,d]), @ring(ℚ[a,c][b,d])) == @ring(ℚ[a,b,c,d])
 
+        @test promote_type(@ring(ℤ[a][b]), @ring(ℚ[c][b])) == @ring(ℚ[a,c][b])
+
         @test iscanonical(@ring ℤ[x,y])
         @test !iscanonical(@ring ℤ[y,x])
         @test !iscanonical(@ring ℤ[x][y])
@@ -381,6 +383,11 @@ end
             @ring! ℤ[a][x,y]
             @test (x+y)(x=x+y, y=y) == x + 2y
             @test (x+y)(x=x+y) == x + 2y
+
+            A = @ring Int[a][b][c]
+            B = @ring Int[b][a][c]
+            @test one(A) + one(B) == 2
+            @test one(A) * one(B) == 1
         end
     end
 

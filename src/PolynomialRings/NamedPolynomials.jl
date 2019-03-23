@@ -297,30 +297,42 @@ canonicaltype(T::Type) = T
 iscanonical(::Type) = true
 iscanonical(M::Type{<:AbstractMonomial}) = iscanonical(namingscheme(M)) && rulesymbol(monomialorder(M)) == :degrevlex
 
+iscanonical(T::Type{<:Term})       = iscanonical(fullnamingscheme(T))
+iscanonical(P::Type{<:Polynomial}) = iscanonical(fullnamingscheme(P))
+
 function _promote_result(T, S, LTR, RTL)
-    if LTR == RTL
+    if LTR == Bottom && RTL != Bottom
+        return RTL
+    elseif RTL == Bottom && LTR != Bottom
+        return LTR
+    elseif LTR == RTL && LTR != Bottom
         return LTR
     else
-        @assert canonicaltype(LTR) == canonicaltype(RTL)
-        return canonicaltype(LTR)
+        if namingscheme(T) == namingscheme(S)
+            M = promote_type(monomialtype(T), monomialtype(S))
+            C = promote_type(basering(T), basering(S))
+            return Polynomial{M, C}
+        else
+            return promote_canonical_type(canonicaltype(T), canonicaltype(S))
+        end
     end
 end
 
+_promote_type(T, S) = _promote_result(T, S, promote_rule(T, S), promote_rule(S, T))
+
 for T in [Term, Polynomial]
     @eval begin
-        iscanonical(T::Type{<:$T}) = iscanonical(fullnamingscheme(T))
+        Base.promote_type(T::Type{<:$T}, S::Type)         = _promote_type(T, S)
+        Base.promote_type(T::Type,       S::Type{<:$T})   = _promote_type(T, S)
+        Base.promote_type(T::Type{<:$T}, S::Type{<:$T})   = _promote_type(T, S)
 
-        Base.promote_result(T::Type{<:$T}, S::Type{<:$T}, LTR::Type{Bottom}, RTL::Type{<:$T}) = RTL
-        Base.promote_result(T::Type{<:$T}, S::Type{<:$T}, LTR::Type{<:$T}, RTL::Type{Bottom}) = LTR
-        Base.promote_result(T::Type, S::Type{<:$T}, LTR::Type{Bottom}, RTL::Type{<:$T}) = RTL
-        Base.promote_result(T::Type{<:$T}, S::Type, LTR::Type{<:$T}, RTL::Type{Bottom}) = LTR
-        Base.promote_result(T::Type, S::Type{<:$T}, LTR::Type{Bottom}, RTL::Type{Bottom}) = promote_canonical_type(canonicaltype(T), canonicaltype(S))
-        Base.promote_result(T::Type{<:$T}, S::Type, LTR::Type{Bottom}, RTL::Type{Bottom}) = promote_canonical_type(canonicaltype(T), canonicaltype(S))
-        Base.promote_result(T::Type{<:$T}, S::Type{<:$T}, LTR::Type{Bottom}, RTL::Type{Bottom}) = promote_canonical_type(canonicaltype(T), canonicaltype(S))
-        Base.promote_result(T::Type{<:$T}, S::Type{<:$T}, LTR::Type{<:$T}, RTL::Type{<:$T}) = _promote_result(T, S, LTR, RTL)
-        Base.promote_result(T::Type{<:$T}, S::Type, LTR::Type{<:$T}, RTL::Type{<:$T}) = _promote_result(T, S, LTR, RTL)
-        Base.promote_result(T::Type, S::Type{<:$T}, LTR::Type{<:$T}, RTL::Type{<:$T}) = _promote_result(T, S, LTR, RTL)
-
+        Base.promote_type(T::Type{<:$T}, S::Type{Bottom}) = T
+        Base.promote_type(T::Type{Bottom}, S::Type{<:$T}) = S
+    end
+end
+for (T1, T2) in [(Term, Polynomial), (Polynomial, Term)]
+    @eval begin
+        Base.promote_type(T::Type{<:$T1}, S::Type{<:$T2}) = _promote_type(T, S)
     end
 end
 

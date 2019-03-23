@@ -84,6 +84,10 @@ end
 # -----------------------------------------------------------------------------
 function _map(op, a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
     P = promote_type(typeof(a), typeof(b))
+    # FIXME(tkluck): promote_type currently only guarantees that
+    #     namingscheme(P) == namingscheme(Order)
+    # See NamedPolynomials.jl
+    @assert monomialorder(P) == Order()
     T = termtype(P)
     ≺(a,b) = Base.Order.lt(Order(), a, b)
 
@@ -158,6 +162,10 @@ operations in-place for mutable types (e.g. BigInt).
 function *(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
     ≺(a, b) = Base.Order.lt(Order(), a, b)
     P = promote_type(typeof(a), typeof(b))
+    # FIXME(tkluck): promote_type currently only guarantees that
+    #     namingscheme(P) == namingscheme(Order)
+    # See NamedPolynomials.jl
+    @assert monomialorder(P) == Order()
     C = basering(P)
     T = termtype(P)
     M = monomialtype(P)

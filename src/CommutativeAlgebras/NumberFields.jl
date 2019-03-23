@@ -11,7 +11,7 @@ import LinearAlgebra: tr, norm
 import ..Ideals: ring
 import ..Monomials: AbstractMonomial
 import ..NamingSchemes: boundnames, fullboundnames
-import ..Polynomials: Polynomial, basering, variablesymbols
+import ..Polynomials: Polynomial, PolynomialOver, basering, variablesymbols
 import ..QuotientRings: QuotientRing, monomial_basis
 import ..QuotientRings: _ideal
 import ..Terms: Term, monomial, coefficient
@@ -280,6 +280,7 @@ convert(::Type{N}, q::N) where N<:NumberField{P} where P<:Polynomial = q
 # resolve an ambiguity for expansion() to work
 promote_rule(::Type{N}, ::Type{C}) where {N<:NumberField,C<:PolynomialRings.Constants.Constant} = N
 
+promote_rule(::Type{C}, ::Type{N}) where {P<:Polynomial,N<:NumberField{P},C<:PolynomialOver{N}} = C
 # -----------------------------------------------------------------------------
 #
 # Operations through promotion
