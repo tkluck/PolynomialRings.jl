@@ -55,7 +55,7 @@ x</code></pre><p>The result is an object of type <code>S</code>, much like how <
 ERROR: MethodError: no method matching diff(::ℤ[x,y,z], ::ℤ[x,y,z])
 Closest candidates are:
   diff(::Polynomial, !Matched::Integer) at /home/travis/build/tkluck/PolynomialRings.jl/src/PolynomialRings/Operators.jl:376
-  diff(::Polynomial, !Matched::Symbol) at /home/travis/build/tkluck/PolynomialRings.jl/src/PolynomialRings/Expansions.jl:250</code></pre><p>In some cases, we offer a convenience macro. For example, the <code>@deg</code> macro:</p><pre><code class="language-julia-repl">julia&gt; deg(x^3*y^4, :x)
+  diff(::Polynomial, !Matched::Symbol) at /home/travis/build/tkluck/PolynomialRings.jl/src/PolynomialRings/Expansions.jl:255</code></pre><p>In some cases, we offer a convenience macro. For example, the <code>@deg</code> macro:</p><pre><code class="language-julia-repl">julia&gt; deg(x^3*y^4, :x)
 3
 
 julia&gt; deg(x^3*y^4, :y)
@@ -166,10 +166,10 @@ myderivative2 (generic function with 1 method)
 
 julia&gt; myderivative2(ε^3 + ε^2, :ε)
 3//1*ε^2 + 2//1*ε</code></pre><p>which gives the correct answer. Unfortunately, this is <em>very</em> inefficient:</p><pre><code class="language-julia-repl">julia&gt; @time myderivative2(ε^3 + ε^2, :ε);
-  3.148207 seconds (5.05 M allocations: 264.426 MiB, 6.64% gc time)
+  3.089593 seconds (5.08 M allocations: 267.085 MiB, 6.52% gc time)
 
 julia&gt; @time myderivative2(ε^3 + ε^2, :ε);
-  3.167090 seconds (5.05 M allocations: 265.681 MiB, 7.57% gc time)</code></pre><p>The reason is that variable names are part of the type definition, and Julia specializes functions based on the type of its arguments. In this case, that means that for evaluating the <code>@coefficient</code> call, and for the substitution call, all the code needs to be compiled <em>every time you call <code>myderivative</code></em>.</p><p>For this reason, we provide a function <code>formal_coefficient(R)</code> which yields a variable that&#39;s guaranteed not to clash with the ring that you pass as an argument:</p><pre><code class="language-julia-repl">julia&gt; function myderivative3(f::RR, varsymbol) where RR &lt;: Polynomial
+  2.935545 seconds (5.08 M allocations: 267.212 MiB, 6.75% gc time)</code></pre><p>The reason is that variable names are part of the type definition, and Julia specializes functions based on the type of its arguments. In this case, that means that for evaluating the <code>@coefficient</code> call, and for the substitution call, all the code needs to be compiled <em>every time you call <code>myderivative</code></em>.</p><p>For this reason, we provide a function <code>formal_coefficient(R)</code> which yields a variable that&#39;s guaranteed not to clash with the ring that you pass as an argument:</p><pre><code class="language-julia-repl">julia&gt; function myderivative3(f::RR, varsymbol) where RR &lt;: Polynomial
            varvalue = RR(varsymbol)
            ε_sym, ε_val = formal_coefficient(typeof(f))
            return coefficient(f(;varsymbol =&gt; varvalue + ε_val), (1,), ε_sym)
@@ -177,13 +177,13 @@ julia&gt; @time myderivative2(ε^3 + ε^2, :ε);
 myderivative3 (generic function with 1 method)
 
 julia&gt; @time myderivative3(ε^3 + ε^2, :ε);   # first time is still slow (compiling)
-  3.289269 seconds (5.62 M allocations: 296.503 MiB, 7.34% gc time)
+  3.122791 seconds (5.73 M allocations: 303.457 MiB, 7.34% gc time)
 
 julia&gt; @time myderivative3(ε^3 + ε^2, :ε);   # but much faster the second time
-  0.001023 seconds (2.80 k allocations: 70.258 KiB)
+  0.000817 seconds (2.79 k allocations: 69.898 KiB)
 
 julia&gt; @time myderivative3(ε^3 + ε^2, :ε);   # and the third
-  0.000675 seconds (2.80 k allocations: 70.258 KiB)</code></pre><h3><a class="nav-anchor" id="Free-modules-(arrays-of-polynomials)-1" href="#Free-modules-(arrays-of-polynomials)-1">Free modules (arrays of polynomials)</a></h3><p>For practical purposes, a <em>free module</em> (of finite rank) over a ring <span>$R$</span> is just an array of polynomials in <span>$R$</span>. Many algorithms that work for polynomial rings also work for modules. For example, the function <code>gröbner_basis</code> works just as well if we pass a vector of vectors of polynomials instead of a vector of polynomials:</p><pre><code class="language-julia-repl">julia&gt; G = [[x^5-y,x^4],[x^3+y,y^3]];
+  0.000760 seconds (2.79 k allocations: 69.898 KiB)</code></pre><h3><a class="nav-anchor" id="Free-modules-(arrays-of-polynomials)-1" href="#Free-modules-(arrays-of-polynomials)-1">Free modules (arrays of polynomials)</a></h3><p>For practical purposes, a <em>free module</em> (of finite rank) over a ring <span>$R$</span> is just an array of polynomials in <span>$R$</span>. Many algorithms that work for polynomial rings also work for modules. For example, the function <code>gröbner_basis</code> works just as well if we pass a vector of vectors of polynomials instead of a vector of polynomials:</p><pre><code class="language-julia-repl">julia&gt; G = [[x^5-y,x^4],[x^3+y,y^3]];
 
 julia&gt; GG = gröbner_basis(G)
 4-element Array{Array{ℤ[x,y],1},1}:
