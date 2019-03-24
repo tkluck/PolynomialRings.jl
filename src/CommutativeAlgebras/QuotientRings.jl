@@ -127,19 +127,16 @@ convert(::Type{Q}, q::Q) where Q <: QuotientRing{P, ID} where {P <: Polynomial, 
 -(a, b::QuotientRing) = -(promote(a,b)...)
 *(a::QuotientRing, b) = *(promote(a,b)...)
 *(a, b::QuotientRing) = *(promote(a,b)...)
-//(a::QuotientRing, b) = //(promote(a,b)...)
-//(a, b::QuotientRing) = //(promote(a,b)...)
 ==(a::QuotientRing, b) = ==(promote(a,b)...)
 ==(a, b::QuotientRing) = ==(promote(a,b)...)
-!=(a::QuotientRing, b) = !=(promote(a,b)...)
-!=(a, b::QuotientRing) = !=(promote(a,b)...)
 
 +(a::QuotientRing,  b::QuotientRing) = +(promote(a,b)...)
 -(a::QuotientRing,  b::QuotientRing) = -(promote(a,b)...)
 *(a::QuotientRing,  b::QuotientRing) = *(promote(a,b)...)
-//(a::QuotientRing, b::QuotientRing) = //(promote(a,b)...)
 ==(a::QuotientRing, b::QuotientRing) = ==(promote(a,b)...)
-!=(a::QuotientRing, b::QuotientRing) = !=(promote(a,b)...)
+
+/(a::QuotientRing, b::Number)  = typeof(a)(a.f /  b)
+//(a::QuotientRing, b::Number) = typeof(a)(a.f // b)
 
 # FIXME: the case I = (1)
 minring(a::QuotientRing) = (r = minring(a.f)) <: Polynomial ? typeof(a) : r
