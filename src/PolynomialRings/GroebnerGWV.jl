@@ -68,8 +68,6 @@ An implementation of the GWV algorithm as popularized by
 function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transformation=false) where M <: AbstractModuleElement
     @withmonomialorder order
 
-    orig = deepcopy(polynomials)
-
     if with_transformation
         polynomials = withtransformations(polynomials)
     end
@@ -250,7 +248,6 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
     if with_transformation
         result, transformation = separatetransformation(result)
         result = map(p->base_extend(p, basering(P)), result)
-        @assert result == transformation * orig
         return result, transformation
     else
         result = map(p->base_extend(p, basering(P)), result)
