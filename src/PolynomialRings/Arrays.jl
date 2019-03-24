@@ -3,7 +3,7 @@ module Arrays
 import Base: *, transpose, diff, div
 import LinearAlgebra: Transpose
 import LinearAlgebra: det
-import SparseArrays: issparse, spzeros
+import SparseArrays: issparse, spzeros, SparseVector, SparseMatrixCSC
 
 import IterTools: groupby
 
@@ -79,6 +79,14 @@ function coefficients(a::AbstractArray{P}, args...) where P <: Polynomial
 end
 
 function (p::Array{P})(; kwargs...) where P <: Polynomial
+    return map(p_i -> p_i(;kwargs...), p)
+end
+
+function (p::SparseVector{P})(; kwargs...) where P <: Polynomial
+    return map(p_i -> p_i(;kwargs...), p)
+end
+
+function (p::SparseMatrixCSC{P})(; kwargs...) where P <: Polynomial
     return map(p_i -> p_i(;kwargs...), p)
 end
 
