@@ -174,9 +174,9 @@ end
 
 @inline _expansion_types(t::Type, variables::Symbol...) = _expansion_types(t, _expansionspec(variables...))
 
-function _substitute(p::Polynomial, names::Named, values...)
-    values = promote(values...)
-    SubstitutionType = promote_type(map(typeof, values)...)
+_substitute(p::Polynomial, names::Named, values...) = _substitute(p, names, promote(values...)...)
+
+function _substitute(p::Polynomial, names::Named, values::SubstitutionType...) where SubstitutionType
     ReturnType = promote_type(SubstitutionType, _coefftype(typeof(p), names))
     if !isconcretetype(ReturnType)
         throw(ArgumentError("Cannot substitute $SubstitutionType for $names into $p; result no more specific than $ReturnType"))
@@ -188,7 +188,7 @@ function _substitute(p::Polynomial, names::Named, values...)
             for (w,c) in expansion(p, MonomialOrder{:degrevlex, typeof(names)}())
         ),
         init=zero(ReturnType)
-    )
+    )::ReturnType
 end
 
 function _substitute(p::Polynomial, names::Numbered, valuesfunc)
@@ -204,8 +204,11 @@ function _substitute(p::Polynomial, names::Numbered, valuesfunc)
             for (c,(m,)) in _expansion2(p, MonomialOrder{:degrevlex, typeof(names)}())
         ),
         init=zero(ReturnType)
-    )
+    )::ReturnType
 end
+
+# helper for inspecting the types of substitution values
+_kwtupletype(::Type{Base.Iterators.Pairs{K, V, I, A}}) where {K, V, I, A} = A
 
 """
     f(var1=...,var2=...)
@@ -214,12 +217,14 @@ Substitute variables with Numbers
 
 """
 function (p::Polynomial)(; kwargs...)
-    vars = Symbol[k for (k,v) in kwargs]
+    kwtupletype = _kwtupletype(typeof(kwargs))
+    vars = fieldnames(kwtupletype)
+    valtypes = fieldtypes(kwtupletype)
     values = [v for (k,v) in kwargs]
 
-    if !any(v isa Function for v in values)
+    if !any(v <: Function for v in valtypes)
         return _substitute(p, Named{tuple(vars...)}(), values...)
-    elseif length(kwargs) == 1 && values[1] isa Function
+    elseif length(kwargs) == 1 && valtypes[1] <: Function
         return _substitute(p, Numbered{vars[1], Inf}(), values[1])
     else
         throw(ArgumentError("Don't know how to substitute $kwargs"))
