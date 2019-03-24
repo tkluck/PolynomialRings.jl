@@ -220,12 +220,32 @@ function convert(::Type{C}, a::P) where P <: PolynomialOver{C} where C
     if length(terms(a)) == 0
         return zero(C)
     elseif length(terms(a)) == 1 && total_degree(monomial(terms(a)[1])) == 0
-        return deepcopy(coefficient(terms(a)[1]))
+        return unalias(C, coefficient(terms(a)[1]))
     else
         throw(InexactError(:convert, C, a))
     end
 end
 
+function convert(C::Type{<:Number}, a::Polynomial)
+    if length(terms(a)) == 0
+        return zero(C)
+    elseif length(terms(a)) == 1 && total_degree(monomial(terms(a)[1])) == 0
+        return unalias(C, coefficient(terms(a)[1]))
+    else
+        throw(InexactError(:convert, C, a))
+    end
+end
+
+# fix abbiguity
+function convert(::Type{C}, a::P) where P <: PolynomialOver{C} where C <: Number
+    if length(terms(a)) == 0
+        return zero(C)
+    elseif length(terms(a)) == 1 && total_degree(monomial(terms(a)[1])) == 0
+        return unalias(C, coefficient(terms(a)[1]))
+    else
+        throw(InexactError(:convert, C, a))
+    end
+end
 
 # -----------------------------------------------------------------------------
 #
