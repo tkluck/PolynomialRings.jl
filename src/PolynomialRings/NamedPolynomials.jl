@@ -336,4 +336,49 @@ for (T1, T2) in [(Term, Polynomial), (Polynomial, Term)]
     end
 end
 
+"""
+    R = minring(f)
+
+The smallest ring that faithfully contains `f`, i.e. the
+intersection of all rings `R` that faithfully contain `f`.
+"""
+function minring end
+
+minring(x::Integer) = typemin(Int) <= x <= typemax(Int) ? Int : BigInt
+minring(x::Rational) = denominator(x) == 1 ? minring(numerator(x)) : typeof(x)
+minring(x::Real) = round(x) ≈ x ? minring(Integer(x)) : typeof(x)
+minring(x::Complex) = real(x) ≈ x ? minring(real(x)) : typeof(x)
+minring(x) = typeof(x)
+
+function minring(f::NamedPolynomial)
+    base = minring([coefficient(t) for t in terms(f)]...)
+
+    m = prod(monomial(t) for t in terms(f))
+    nz = findall(!iszero, m.e)
+    syms = variablesymbols(namingscheme(f))
+    isempty(nz) ? base : polynomial_ring(syms[nz]..., basering=base)[1]
+end
+
+function minring(f::NumberedPolynomial)
+    base = minring([coefficient(t) for t in terms(f)]...)
+
+    m = prod(monomial(t) for t in terms(f))
+    isone(m) ? base : polynomial_ring(namingscheme(f), basering=base)
+end
+
+"""
+    R = minring(fs...)
+
+The smallest ring that faithfully contains all `f ∈ fs`
+"""
+minring(fs...) = promote_type(minring.(fs)...)
+
+
+"""
+    g = ofminring(f)
+
+Shorthand for `convert(minring(f), f)`
+"""
+ofminring(f) = convert(minring(f), f)
+
 end

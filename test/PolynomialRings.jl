@@ -248,6 +248,22 @@ one(::Type{Foo}) = Foo()
         @test canonicaltype(@ring(ℤ[c[]][b[]][a[]])) == @ring ℤ[a[]][b[]][c[]]
     end
 
+    @testset "Minimal rings" begin
+        @ring! (ℚ[a]/(a^2 - 2))[b[]][x,y,z]
+        @test minring(x*y) == @ring Int[x,y]
+        @test minring(x) == @ring Int[x]
+        @test minring(x//2) == @ring ℚ[x]
+        @test minring(x*z//2) == @ring ℚ[x,z]
+        @test minring(b[1]*z) == @ring Int[b[]][z]
+        @test minring(b[1]*z//2) == @ring ℚ[b[]][z]
+
+        @ring! ℤ[b[]][x,y,z]
+        @test minring(2.0x) == @ring Int[x]
+        @test minring(2.0x*z) == @ring Int[x,z]
+        @test minring(2.1x*z) == @ring ℝ[x,z]
+        @test minring(2.0*x + 2.0 + im) == @ring ℂ[x]
+    end
+
     @testset "Sparse result types" begin
         @ring! ℤ[x]
         @ring! ℤ[y]

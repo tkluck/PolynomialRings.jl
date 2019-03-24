@@ -10,6 +10,7 @@ import ..Constants: Constant, One, MinusOne, Zero
 import ..Ideals: Ideal, _grb
 import ..Ideals: ring
 import ..NamingSchemes: boundnames, fullboundnames, namingscheme, fullnamingscheme
+import ..NamedPolynomials: minring
 import ..Polynomials: Polynomial, exptype, leading_term, basering, PolynomialOver
 import ..Polynomials: termtype, monomialtype
 import ..Terms: Term, monomial, coefficient
@@ -139,6 +140,9 @@ convert(::Type{Q}, q::Q) where Q <: QuotientRing{P, ID} where {P <: Polynomial, 
 //(a::QuotientRing, b::QuotientRing) = //(promote(a,b)...)
 ==(a::QuotientRing, b::QuotientRing) = ==(promote(a,b)...)
 !=(a::QuotientRing, b::QuotientRing) = !=(promote(a,b)...)
+
+# FIXME: the case I = (1)
+minring(a::QuotientRing) = (r = minring(a.f)) <: Polynomial ? typeof(a) : r
 
 # -----------------------------------------------------------------------------
 #

@@ -32,6 +32,7 @@ import .Expansions: expansion, @expansion, @expand, coefficient, @coefficient, c
 import .Arrays: flat_coefficients, @flat_coefficients
 import .Operators: content, common_denominator, integral_fraction, map_coefficients
 import .Solve: matrix_solve_affine
+import .NamedPolynomials: minring, ofminring
 
 export TupleMonomial, Term, Polynomial, generators, ⊗, polynomial_ring, variablesymbols
 export expansion, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, expansion_terms, @expansion_terms
@@ -42,6 +43,7 @@ export leaddiv, leadrem, leaddivrem, div!, rem!, xdiv!, xrem!, xdiv, xrem, xdivr
 export groebner_basis, groebner_transformation, gröbner_basis, gröbner_transformation, lift, syzygies
 export content, common_denominator, integral_fraction, map_coefficients
 export matrix_solve_affine
+export minring, ofminring
 
 # TODO: needs a better place
 import .Monomials: _construct
