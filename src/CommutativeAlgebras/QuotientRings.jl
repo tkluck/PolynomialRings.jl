@@ -28,7 +28,7 @@ end
 ring(::Type{<:QuotientRing{P}}) where P = P
 
 const _ideals = Dict()
-@generated _ideal(R) = :( _ideals[R] )
+_ideal(R) = _ideals[R]
 function /(::Type{P}, I::Ideal{P}) where P<:Polynomial
     ID = hash(I)
     R = QuotientRing{P, ID}
