@@ -21,8 +21,10 @@ import PolynomialRings: termtype, monomialtype
 
 # This should probably be in Base; see
 # https://github.com/JuliaLang/julia/pull/27749
-keytype(a::AbstractArray) = CartesianIndex{ndims(a)}
-keytype(a::AbstractVector) = Int
+if VERSION < v"1.2-"
+    keytype(a::AbstractArray) = CartesianIndex{ndims(a)}
+    keytype(a::AbstractVector) = Int
+end
 
 iszero(x::AbstractArray{P}) where P<:Polynomial = all(iszero, x)
 
