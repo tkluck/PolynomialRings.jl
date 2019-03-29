@@ -95,21 +95,20 @@ function NumberField(Q::Type{<:QuotientRing})
         throw(AssertionError("OOPS! My naive guesses for a primitive element all didn't work. Maybe this is not a number field?"))
     end
 
+    named_values = Dict{Symbol, F}()
     _values[F] = (
         primitive_element  = Q(α),
         extension_degree   = N,
         minimal_polynomial = K,
+        named_values       = named_values,
     )
 
-    named_values = Dict{Symbol, F}()
     for β in variablesymbols(P)
         MM = copy(M)
         MM[:,end] = coeffs(P(β))
         KK = nullspace(MM)
         named_values[β] = F( KK[1:end-1] // -KK[end] )
     end
-
-    @eval _named_values(::Type{$F}) = $named_values
 
     return F
 end
