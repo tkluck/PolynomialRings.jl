@@ -32,10 +32,11 @@ ring(::Type{<:NumberField{P}}) where P = P
 basering(::Type{<:NumberField{P}}) where P = basering(P)
 quotientring(::Type{<:NumberField{P,C,Q}}) where {P,C,Q} = Q
 
-function _primitive_element end
-function _minimal_polynomial end
-function _extension_degree end
-function _named_values end
+_values = Dict()
+_primitive_element(N) = _values[N].primitive_element
+_minimal_polynomial(N) = _values[N].minimal_polynomial
+_extension_degree(N) = _values[N].extension_degree
+_named_values(N) = _values[N].named_values
 
 # -----------------------------------------------------------------------------
 #
@@ -93,9 +94,11 @@ function NumberField(Q::Type{<:QuotientRing})
         throw(AssertionError("OOPS! My naive guesses for a primitive element all didn't work. Maybe this is not a number field?"))
     end
 
-    @eval _primitive_element(::Type{$F}) = $(Q(α))
-    @eval _extension_degree(::Type{$F}) = $N
-    @eval _minimal_polynomial(::Type{$F}) = $K
+    _values[F] = (
+        primitive_element  = Q(α),
+        extension_degree   = N,
+        minimal_polynomial = K,
+    )
 
     named_values = Dict{Symbol, F}()
     for β in variablesymbols(P)
