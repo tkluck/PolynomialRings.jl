@@ -75,8 +75,14 @@ isdisjoint(::Nothing, ::Nothing) = true
 
 isdisjoint(::NamingScheme, ::NoNamingScheme) = true
 isdisjoint(::NoNamingScheme, ::NamingScheme) = true
-isdisjoint(S::NamingScheme, T::FullNamingScheme) = all(t -> isdisjoint(S, t), T)
-isdisjoint(S::FullNamingScheme, T::Union{FullNamingScheme, NamingScheme}) = all(s -> isdisjoint(s, T), S)
+
+@generated function isdisjoint(::S, ::T) where {S <: NamingScheme, T <: FullNamingScheme}
+    return :($( all(t -> isdisjoint(S(), t), T()) ))
+end
+
+@generated function isdisjoint(::S, ::T) where {S <: FullNamingScheme, T <: Union{FullNamingScheme, NamingScheme}}
+    return :($( all(s -> isdisjoint(s, T()), S()) ))
+end
 
 @generated function remove_variables(::N, ::Vars) where N <: Named where Vars <: Named
     remaining = setdiff(variablesymbols(N()), variablesymbols(Vars()))
