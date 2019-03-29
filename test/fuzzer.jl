@@ -46,6 +46,7 @@ typeconstructors = [
     () -> rand(basetypes),
     () -> randring(),
     () -> @ring(Int[x] / (x^3 - 1)),
+    () -> NumberField(@ring(ℚ[x] / (x^3 - 1))),
     #() -> @ring(Int[a,b] / (a^3 - b^2)),
     () -> promote_type(randtype(), randtype()),
 ]
