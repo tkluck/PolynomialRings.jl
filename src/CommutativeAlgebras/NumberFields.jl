@@ -8,6 +8,7 @@ import Base: zero, one, inv, copy
 import LinearAlgebra: nullspace
 import LinearAlgebra: tr, norm
 
+import ..Constants: Constant, One, MinusOne, Zero
 import ..Ideals: ring
 import ..Monomials: AbstractMonomial
 import ..NamingSchemes: boundnames, fullboundnames
@@ -128,6 +129,9 @@ end
 convert(::Type{F}, f::P) where F<:NumberField{P, C} where {P<:Polynomial, C} =
     f(;_named_values(F)...)
 
+convert(::Type{F}, f::Q) where F<:NumberField{P, C, Q} where {P<:Polynomial, C, Q} =
+    f.f(;_named_values(F)...)
+
 # -----------------------------------------------------------------------------
 #
 # Constructor-style conversions
@@ -243,30 +247,13 @@ end
 # Operations through promotion
 #
 # -----------------------------------------------------------------------------
-function promote_rule(::Type{N}, ::Type{C}) where N<:NumberField{P} where {P<:Polynomial,C}
-    rule_for_P = typejoin( promote_rule(P,C), promote_rule(C,P) )
-    if rule_for_P === P
+function promote_rule(::Type{N}, ::Type{C}) where N<:NumberField where C
+    Q = quotientring(N)
+    rule_for_Q = promote_rule(Q, C)
+    if rule_for_Q === Q
         return N
     else
-        return Union{}
-    end
-end
-
-function promote_rule(::Type{C}, ::Type{N}) where N<:NumberField{P} where {P<:Polynomial,C}
-    rule_for_P = typejoin( promote_rule(P,C), promote_rule(C,P) )
-    if rule_for_P === P
-        return N
-    else
-        return Union{}
-    end
-end
-
-function promote_rule(::Type{C}, ::Type{N}) where N<:NumberField{P} where {P<:Polynomial,C<:Polynomial}
-    rule_for_P = typejoin( promote_rule(P,C), promote_rule(C,P) )
-    if rule_for_P === P
-        return N
-    else
-        return Union{}
+        return rule_for_Q
     end
 end
 
@@ -278,10 +265,15 @@ function convert(::Type{N}, c::C) where N<:NumberField{P} where {P<:Polynomial,C
     N(convert(P, c))
 end
 
-convert(::Type{N}, q::N) where N<:NumberField{P} where P<:Polynomial = q
+function convert(::Type{Q}, x::NumberField) where Q <: QuotientRing{P} where P<:Polynomial
+    N = typeof(x)
+    M = _extension_degree(N)
+    α = _primitive_element(N)
+    q = sum(c * α.f^n for (n, c) in zip(0:(M-1), x.coeffs))
+    return convert(Q, q)
+end
 
-# resolve an ambiguity for expansion() to work
-promote_rule(::Type{N}, ::Type{C}) where {N<:NumberField,C<:PolynomialRings.Constants.Constant} = N
+convert(::Type{N}, q::N) where N<:NumberField{P} where P<:Polynomial = q
 
 promote_rule(::Type{C}, ::Type{N}) where {P<:Polynomial,N<:NumberField{P},C<:PolynomialOver{N}} = C
 # -----------------------------------------------------------------------------
@@ -350,10 +342,37 @@ macro ringname(ring, name)
 end
 
 function show(io::IO, x::NumberField)
-    N = _extension_degree(typeof(x))
-    α = _primitive_element(typeof(x))
-    f = typeof(α)(sum(c * α.f^n for (n, c) in zip(0:(N-1), x.coeffs)))
+    f = convert(quotientring(typeof(x)), x)
     print(io, f)
 end
+
+# -----------------------------------------------------------------------------
+#
+# Resolve method ambiguity
+#
+# -----------------------------------------------------------------------------
+for N = [QuotientRing, NumberField]
+    @eval begin
+        promote_rule(::Type{T}, ::Type{C}) where {T<:$N, C <: Constant} = T
+
+        convert(::Type{T}, ::One)      where T<:$N = one(T)
+        convert(::Type{T}, ::Zero)     where T<:$N = zero(T)
+        convert(::Type{T}, ::MinusOne) where T<:$N = -one(T)
+
+        # fix method ambiguities
+        *(x::$N, ::One) = deepcopy(x)
+        *(::One, x::$N) = deepcopy(x)
+        *(x::$N, ::MinusOne) = -x
+        *(::MinusOne, x::$N) = -x
+
+        +(x::$N, ::Zero) = deepcopy(x)
+        -(x::$N, ::Zero) = deepcopy(x)
+        *(x::$N, ::Zero) = zero(x)
+        +(::Zero, x::$N) = deepcopy(x)
+        -(::Zero, x::$N) = -x
+        *(::Zero, x::$N) = zero(x)
+    end
+end
+
 
 end
