@@ -168,7 +168,7 @@ function _rem(a::AbstractVector{C}, b::AbstractVector{C}) where C
     a = copy(a)
     len_a = findlast(!iszero, a)
     len_b = findlast(!iszero, b)
-    while len_a >= len_b
+    while !isnothing(len_a) && len_a >= len_b
         q = a[len_a] // b[len_b]
         a[len_a-len_b+1:len_a] .-= q .* b[1:len_b]
         len_a = findprev(!iszero, a, len_a-1)
