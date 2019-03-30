@@ -261,7 +261,7 @@ function convert(::Type{N}, c::C) where N<:NumberField{P} where {P<:Polynomial,C
 end
 
 function convert(::Type{N}, c::C) where N<:NumberField{P} where {P<:Polynomial,C<:Number}
-    N(convert(P, c))
+    N(convert(quotientring(N), c))
 end
 
 function convert(::Type{Q}, x::NumberField) where Q <: QuotientRing{P} where P<:Polynomial
@@ -270,6 +270,11 @@ function convert(::Type{Q}, x::NumberField) where Q <: QuotientRing{P} where P<:
     α = _primitive_element(N)
     q = sum(c * α.f^n for (n, c) in zip(0:(M-1), x.coeffs))
     return convert(Q, q)
+end
+
+# resolve ambiguity
+function convert(::Type{N}, x::Polynomial) where N <: NumberField
+    N(convert(quotientring(N), x))
 end
 
 convert(::Type{N}, q::N) where N<:NumberField{P} where P<:Polynomial = q
