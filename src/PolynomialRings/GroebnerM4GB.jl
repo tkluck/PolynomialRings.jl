@@ -4,14 +4,18 @@ module GröbnerM4GB
 import PolynomialRings
 import Base.Iterators: flatten
 
-import DataStructures: PriorityQueue, enqueue!, dequeue!, SortedSet
-import ProgressMeter: Progress, finish!, next!
+import DataStructures: DefaultDict, SortedSet
+import DataStructures: PriorityQueue, enqueue!, dequeue_pair!, SortedSet
+import ProgressMeter: Progress, finish!, next!, @showprogress
 
 import ..Backends.Gröbner: M4GB
+import ..Modules: AbstractModuleElement, modulebasering, Signature, leading_row
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
+import ..Monomials: AbstractMonomial
+import ..Operators: integral_fraction
 import ..Polynomials: Polynomial, terms
 import ..Terms: monomial
-import PolynomialRings: gröbner_basis, monomialtype
+import PolynomialRings: gröbner_basis, monomialtype, base_extend
 import PolynomialRings: maybe_div, termtype, lcm_multipliers
 
 """
@@ -20,35 +24,38 @@ import PolynomialRings: maybe_div, termtype, lcm_multipliers
 An implementation of the M4GB algorithm as popularized by
 > Rusydi Makarim, Marc Stevens, "M4GB: An efficient Groebner-basis algorithm", ISSAC 2017
 """
-function m4gb(order::MonomialOrder, F::AbstractVector{<:Polynomial})
+function m4gb(order::MonomialOrder, F::AbstractVector{<:AbstractModuleElement})
     @withmonomialorder order
 
-    R = eltype(F); LM = monomialtype(R)
+    R = eltype(F)
+    A = modulebasering(R)
+    LM = monomialtype(eltype(F))
     L, M = SortedSet{LM}(order), Dict{LM, R}()
+    MM = DefaultDict{LM, SortedSet{R}}(() -> SortedSet{R}(order))
     P = PriorityQueue{Tuple{LM, LM}, LM}(order)
 
-    for f in F
-        f = mulfullreduce!(L, M, one(termtype(f)), f, order=order)
+    @showprogress "Gröbner: preparing inputs: " for f in map(R, F)
+        f = mulfullreduce!(L, M, one(termtype(A)), f, order=order)
         if !iszero(f)
-            updatereduce!(L, M, P, f, order=order)
+            updatereduce!(L, M, MM, P, f, order=order)
         end
     end
     progress = Progress(length(P), "Computing Gröbner basis: ")
     loops = 0
     while !isempty(P)
-        (fₗₘ, gₗₘ) = select!(P)
+        ((fₗₘ, gₗₘ), _) = select!(P)
         f = M[fₗₘ]; g = M[gₗₘ]
 
         c_f, c_g = lcm_multipliers(lt(f), lt(g))
         h₁ = mulfullreduce!(L, M, c_f, tail(f), order=order)
         h₂ = mulfullreduce!(L, M, c_g, tail(g), order=order)
         if (h = h₁ - h₂) |> !iszero
-            updatereduce!(L, M, P, h, order=order)
+            updatereduce!(L, M, MM, P, h, order=order)
         end
 
         loops += 1
         progress.n = length(P) + loops
-        next!(progress; showvalues = [(Symbol("|L|"), length(L)), (Symbol("|P|"), length(P)), (:loops, loops)])
+        next!(progress; showvalues = [(Symbol("|L|"), length(L)), (Symbol("|P|"), length(P)), (Symbol("|M|"), length(M)), (:loops, loops)])
 
     end
     finish!(progress)
@@ -56,22 +63,70 @@ function m4gb(order::MonomialOrder, F::AbstractVector{<:Polynomial})
     return [M[fₗₘ] for fₗₘ in L]
 end
 
-select!(P) = dequeue!(P)
+select!(P) = dequeue_pair!(P)
 
-function updatereduce!(L, M, P, f; order)
+tailterms_divisible_by(p::Polynomial, m::AbstractMonomial, reverse::Val{true}) = (
+    t
+    for t in @view(p.terms[end-1:-1:1]) if
+    divides(m, monomial(t))
+)
+
+function tailterms_divisible_by(p::AbstractVector{<:Polynomial}, m::Signature, reverse::Val{true})
+    l = leading_row(p)
+    row = m.i
+    if m.i == l
+        return (
+            Signature(m.i, t)
+            for t in @view(p[m.i].terms[end-1:-1:1]) if
+            divides(m.m, monomial(t))
+        )
+    elseif m.i > l
+        return (
+            Signature(m.i, t)
+            for t in @view(p[m.i].terms[end:-1:1]) if
+            divides(m.m, monomial(t))
+        )
+    else
+        return ()
+    end
+end
+
+function update_with(M, H, lm_H, fₗₘ; order)
+    @withmonomialorder order
+
+    max = nothing
+    for h in flatten((values(M), H))
+        for t in tailterms_divisible_by(h, fₗₘ, Val(true))
+            if max !== nothing && monomial(t) ⪯ max
+                break
+            end
+            if monomial(t) ∉ lm_H
+                max = monomial(t)
+                break
+            end
+        end
+    end
+    return max
+end
+
+function updatereduce!(L, M, MM, P, f; order)
     @withmonomialorder order
 
     H = [f // lc(f)]
     lm_H = Set(lm(h) for h in H)
 
-    while true
-        U = [monomial(t) for x in flatten((values(M), H)) for t in x.terms[1:end-1]]
-        filter!(u -> u ∉ lm_H && divides(lm(f), u), U)
-        isempty(U) && break
-
-        u = maximum(order, U)
+    while (u = update_with(M, H, lm_H, lm(f), order=order)) != nothing
         h = mulfullreduce!(L, M, maybe_div(u, lm(f)) * inv(lc(f)), tail(f), order=order)
-        push!(H, u + h)
+        res = if u isa Signature
+            x = h[u.i]
+            push!(x.terms, u.m)
+            @assert issorted(x.terms, order=order)
+            h[u.i] = x
+            h
+        else
+            u + h
+        end
+        push!(H, res)
         push!(lm_H, u)
     end
 
@@ -83,42 +138,58 @@ function updatereduce!(L, M, P, f; order)
                 @. g -= c * h
             end
         end
-        for g in values(M)
+        for g in MM[lm(h)]
             if (c = g[lm(h)]) |> !iszero
                 @. g -= c * h
+                for t in terms(h, order=order)
+                    push!(MM[monomial(t)], g)
+                end
             end
         end
         M[lm(h)] = h
+        for t in terms(h, order=order)
+            push!(MM[monomial(t)], h)
+        end
     end
-    update!(L, P, lm(f))
+    update!(L, P, lm(f); order=order)
 end
 
-function update!(L, P, fₗₘ)
+mutuallyprime(a, b) = lcm(a, b) == a * b
+mutuallyprime(a::Signature, b::Signature) = a.i == b.i ? mutuallyprime(a.m, b.m) : nothing
+
+function update!(L, P, fₗₘ; order)
+    @withmonomialorder order
+
     C = similar(P)
     for gₗₘ in L
-        enqueue!(C, (fₗₘ, gₗₘ), lcm(fₗₘ, gₗₘ))
+        if (u = lcm(fₗₘ, gₗₘ)) |> !isnothing
+            enqueue!(C, (fₗₘ, gₗₘ), u)
+        end
     end
-    D = []
+    D = similar(C)
     while !isempty(C)
-        (fₗₘ, gₗₘ) = select!(C)
-        u = lcm(fₗₘ, gₗₘ)
-        if u == fₗₘ * gₗₘ || !any(flatten((keys(C), D))) do pair
+        ((fₗₘ, gₗₘ), u) = select!(C)
+        if mutuallyprime(fₗₘ, gₗₘ) || !any(flatten((keys(C), keys(D)))) do pair
             divides(lcm(pair[1], pair[2]), u)
         end
-            push!(D, (fₗₘ, gₗₘ))
+            enqueue!(D, (fₗₘ, gₗₘ), u)
         end
     end
-    P_new = filter(pair -> !isone(gcd(pair[1], pair[2])), D)
-    for ((p1, p2), lcm_p) in P
+    P_new = filter!(D) do pair
+        (p1, p2), _ = pair
+        !mutuallyprime(p1, p2)
+    end
+    for ((p1, p2), lcm_p) in pairs(P)
         if !divides(fₗₘ, lcm_p) ||
             lcm(p1, fₗₘ) == lcm_p ||
             lcm(p2, fₗₘ) == lcm_p
-            push!(P_new, (p1, p2))
+            enqueue!(P_new, (p1, p2), lcm_p)
         end
     end
     empty!(P)
-    for (p1, p2) in P_new
-        enqueue!(P, minmax(p1, p2), lcm(p1, p2))
+    for ((p1, p2), lcm_p) in pairs(P_new)
+        p = p1 ≺ p2 ? (p1, p2) : (p2, p1)
+        enqueue!(P, p, lcm_p)
     end
     filter!(l -> !divides(fₗₘ, l), L)
     push!(L, fₗₘ)
@@ -136,7 +207,13 @@ function mulfullreduce!(L, M, t, f; order)
             h .-= d .* tail(g)
         else
             #h .+= r
-            push!(h.terms, r)
+            if r isa Signature
+                x = h[r.i]
+                push!(x.terms, r.m)
+                h[r.i] = x
+            else
+                push!(h.terms, r)
+            end
         end
     end
 
@@ -153,7 +230,15 @@ function getreductor!(M, L, r; order)
         fₗₘ == nothing && return nothing
         f = M[fₗₘ]
         h = mulfullreduce!(L, M, maybe_div(r, lt(f)), tail(f), order=order)
-        res = r + h
+        res = if r isa Signature
+            x = h[r.i]
+            push!(x.terms, r.m)
+            @assert issorted(x.terms, order=order)
+            h[r.i] = x
+            h
+        else
+            r + h
+        end
         M[lm(res)] = res
         return res
     end
@@ -168,7 +253,7 @@ end
 
 divides(f, g) = maybe_div(g, f) != nothing
 
-function gröbner_basis(::M4GB, o::MonomialOrder, G::AbstractArray{<:Polynomial}; kwds...)
+function gröbner_basis(::M4GB, o::MonomialOrder, G::AbstractArray{<:AbstractModuleElement}; kwds...)
     isempty(G) && return copy(G)
     return m4gb(o, G, kwds...)
 end

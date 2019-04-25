@@ -1,17 +1,17 @@
 module Modules
 
 import Base: *, +, -, ÷
-import Base: iszero, div, rem, divrem, *, ==
-import Base: keytype
+import Base: iszero, zero, div, rem, divrem, *, ==
+import Base: keytype, hash, lcm
 import LinearAlgebra: mul!
-import SparseArrays: SparseVector, sparsevec, spzeros
+import SparseArrays: AbstractSparseArray, SparseVector, sparsevec, spzeros, nonzeros
 
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
 import ..Monomials: AbstractMonomial
 import ..Monomials: total_degree
 import ..Operators: RedType, Lead, Full, Tail
 import ..Operators: one_step_div!, one_step_xdiv!, content, integral_fraction
-import ..Polynomials: Polynomial, monomialorder, basering
+import ..Polynomials: Polynomial, monomialorder, basering, terms, tail
 import ..Terms: Term
 import ..Terms: coefficient, monomial
 import PolynomialRings: leaddiv, leadrem, leaddivrem
@@ -26,7 +26,8 @@ if VERSION < v"1.2-"
     keytype(a::AbstractVector) = Int
 end
 
-iszero(x::AbstractArray{P}) where P<:Polynomial = all(iszero, x)
+iszero(x::SparseVector{<:Polynomial}) = all(iszero, nonzeros(x))
+zero(a::AbstractSparseArray{<:Polynomial}) = spzeros(eltype(a), size(a)...)
 
 base_extend(x::AbstractArray{P}, ::Type{C}) where P<:Polynomial where C = map(p->base_extend(p,C), x)
 base_extend(x::AbstractArray{P})            where P<:Polynomial         = map(base_extend, x)
@@ -55,6 +56,7 @@ monomialtype(p::Type{<:AbstractArray{<:Polynomial}}) = Signature{monomialtype(el
 maybe_div(s::Signature, t::Signature)            = s.i == t.i ? maybe_div(s.m, t.m) : nothing
 lcm_degree(s::Signature, t::Signature)           = s.i == t.i ? lcm_degree(s.m, t.m) : nothing
 lcm_multipliers(s::Signature, t::Signature)      = s.i == t.i ? lcm_multipliers(s.m, t.m) : nothing
+lcm(s::Signature, t::Signature)                  = s.i == t.i ? Signature(s.i, lcm(s.m, t.m)) : nothing
 total_degree(s::Signature)                       = total_degree(s.m)
 Base.Order.lt(o::MonomialOrder, s::Signature, t::Signature) = s.i > t.i || (s.i == t.i && Base.Order.lt(o, s.m, t.m))
 ==(s::S, t::S) where S <: Signature = s.i == t.i && s.m == t.m
@@ -63,16 +65,41 @@ iszero(s::Signature{<:Term}) = iszero(s.m)
 coefficient(s::Signature{<:Term}) = coefficient(s.m)
 monomial(s::Signature{<:Term}) = Signature(s.i, monomial(s.m))
 
+hash(s::Signature, h::UInt) = hash(s.i, hash(s.m))
 
 leading_row(x::AbstractArray{<:Polynomial}) = findfirst(!iszero, x)
-leading_term(x::AbstractArray{P}; order::MonomialOrder=monomialorder(x)) where P<:Polynomial = Signature(leading_row(x), leading_term(x[leading_row(x)], order=order))
-leading_monomial(x::AbstractArray{P}; order::MonomialOrder=monomialorder(x)) where P<:Polynomial = Signature(leading_row(x), leading_monomial(x[leading_row(x)], order=order))
+
+function leading_row(x::SparseVector{<:Polynomial})
+    n = findfirst(!iszero, x.nzval)
+    return x.nzind[n]
+end
+
+function leading_term(x::AbstractArray{P}; order::MonomialOrder=monomialorder(x)) where P<:Polynomial
+    ix = leading_row(x)
+    return Signature(ix, leading_term(x[ix], order=order))
+end
+
+function leading_monomial(x::AbstractArray{P}; order::MonomialOrder=monomialorder(x)) where P<:Polynomial
+    ix = leading_row(x)
+    return Signature(ix, leading_monomial(x[ix], order=order))
+end
+
 leading_coefficient(x::AbstractArray{P}; order::MonomialOrder=monomialorder(x)) where P<:Polynomial = leading_coefficient(x[leading_row(x)], order=order)
 
 function Base.Order.lt(order::MonomialOrder, s::A, t::A) where A<:AbstractArray{P} where P<:Polynomial
     iszero(t) && return false
     iszero(s) && return true
     Base.Order.lt(order, leading_monomial(s, order=order), leading_monomial(t, order=order))
+end
+
+Base.getindex(a::AbstractArray{<:Polynomial}, s::Signature{<:AbstractMonomial}) = a[s.i][s.m]
+function Base.getindex(a::SparseVector{<:Polynomial}, s::Signature{<:AbstractMonomial})
+    ixrange = searchsorted(a.nzind, s.i)
+    if isempty(ixrange)
+        return zero(modulebasering(a))
+    else
+        return a.nzval[ixrange[1]][s.m]
+    end
 end
 
 function one_step_div!(a::A, b::A; order::MonomialOrder, redtype::RedType) where A<:AbstractArray{<:Polynomial}
@@ -139,6 +166,25 @@ leading_row(x::Polynomial) = 1
 
 # Work around sparse-dense multiplication in Base only working for eltype() <: Number
 mul!(A, B, C, α::Polynomial, β::Polynomial) = mul!(A, B, C, convert(basering(α),α), convert(basering(β), β))
+
+terms(x::AbstractVector{<:Polynomial}; order) = (
+    Signature(ix, t)
+    for (ix, x_i) in Iterators.reverse(enumerate(x))
+    for t in terms(x_i, order=order)
+)
+
+terms(x::SparseVector{<:Polynomial}; order) = (
+    Signature(ix, t)
+    for (ix, x_i) in Iterators.reverse(zip(x.nzind, x.nzval))
+    for t in terms(x_i, order=order)
+)
+
+function tail(x::AbstractVector{<:Polynomial}; order)
+    res = deepcopy(x)
+    ix = leading_row(x)
+    pop!(res[ix].terms)
+    return res
+end
 
 """
 

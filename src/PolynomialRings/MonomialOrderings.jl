@@ -133,8 +133,10 @@ end
 
 macro withmonomialorder(order)
     esc(quote
-        ≺(a, b) = Base.Order.lt($order, a, b)
-        ⪰(a,b) =  !Base.Order.lt($order, a, b)
+        ≺(a, b) =  Base.Order.lt($order, a, b)
+        ⪯(a, b) = !Base.Order.lt($order, b, a)
+        ≻(a, b) =  Base.Order.lt($order, b, a)
+        ⪰(a, b) = !Base.Order.lt($order, a, b)
         leading_monomial(f) = $leading_monomial(f, order=$order)
         leading_term(f) = $leading_term(f, order=$order)
         leading_coefficient(f) = $leading_coefficient(f, order=$order)
