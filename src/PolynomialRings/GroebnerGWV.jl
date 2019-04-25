@@ -6,6 +6,7 @@ import LinearAlgebra: Transpose
 import SparseArrays: SparseVector, sparsevec, sparse
 
 import DataStructures: SortedDict, DefaultDict
+import ProgressMeter: Progress, finish!, next!, @showprogress
 
 import ..Backends.Gröbner: GWV
 import ..Modules: AbstractModuleElement, modulebasering
@@ -104,28 +105,13 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
         end
     end
 
+    progress = Progress(length(JP), "Computing Gröbner basis: ")
     loops = 0
-    considered = 0
-    divisors_considered = 0
-    divisor_considerations = 0
-    progress_logged = false
     # step 3
     while !isempty(JP)
         loops += 1
-        if loops % 100 == 0
-            l = length(G)
-            k = length(JP)
-            h = sum(length, values(H))
-            @info("GWV progress update:",
-                loops,
-                J_pairs_considered = considered,
-                length(JP),
-                length_H = sum(length, values(H)),
-                divisor_considerations,
-                avg_divisors_considered = round(divisors_considered/divisor_considerations, digits=1),
-            )
-            progress_logged = true
-        end
+        progress.n = length(JP) + loops
+        next!(progress; showvalues = [(Symbol("|G|"), length(G)), (Symbol("|JP|"), length(JP)), (:loops, loops)])
 
         # step 1.
         sig, m = first(JP)
@@ -197,9 +183,7 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
                             Jsig = lhs
                             Jpair = (t1*T, t1*v)
                         end
-                        divisor_considerations += 1
                         if !any_divisor(Jsig.m) do d
-                            divisors_considered += 1
                             d in H[Jsig.i]
                         end
                             # (storing only one J-pair for each distinct signature
@@ -222,17 +206,14 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
                 @assert false "Didn't expect $status"
             end
         end
-
-        considered += 1
     end
 
     # --------------------------------------------------------------------------
     # Interreduce the result
     # --------------------------------------------------------------------------
     result = getindex.(G, 2)
-    progress_logged && @info("Main loop done; interreducing the result polynomials", length(result))
     k = length(result)
-    for i in 1:k
+    @showprogress "Interreducing result" for i in 1:k
         xrem!(result[i], result[[1:i-1; i+1:k]], order=order)
         if basering(modulebasering(eltype(result))) <: Integer
             result[i] ÷= content(result[i])
@@ -241,7 +222,6 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
     # what we filter out is probably a Gröbner basis for the syzygies, and
     # maybe the caller wants to have it?
     filter!(!iszero, result)
-    progress_logged && @info("Done. Returning a Gröbner basis", length(result))
     # --------------------------------------------------------------------------
     # Return the result
     # --------------------------------------------------------------------------
