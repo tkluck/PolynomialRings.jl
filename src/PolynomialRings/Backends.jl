@@ -16,7 +16,7 @@ module Gröbner
     import PolynomialRings: gröbner_basis, gröbner_transformation, lift, monomialorder
 
     # fallback in case a backend only provides a subset of these
-    gröbner_basis(b::Backend, args...; kwds...)         = gröbner_transformation(b, args...; kwds...)[1]
+    gröbner_basis(b::Backend, args...; kwds...)         = gröbner_basis(GWV(), args...; kwds...)
     gröbner_transformation(::Backend, args...; kwds...) = gröbner_transformation(GWV(), args...; kwds...)
     lift(b::Backend, G, y; kwds...)                     = lift(b, G, (y,); kwds...)[1]
     function lift(b::Backend, G, y::Tuple; kwds...)
