@@ -156,8 +156,7 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
             elseif status == :notsupertopreducible
                 # i) Add the leading terms of the principle syzygies, vT j − v j T for
                 # 1 ≤ j ≤ |U |, to H,
-                if M <: Polynomial # TODO: I don't understand what the equivalent of
-                                   # this syzygy should be in the case of modules.
+                if M <: Polynomial # this syzygy does not exist in the case of modules.
                     for (Tj, vj) in G
                         # syzygy = v*Tj - vj*T
                         lhs = leading_monomial(v)*Tj
