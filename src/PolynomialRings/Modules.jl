@@ -104,6 +104,7 @@ end
 
 function one_step_div!(a::A, b::A; order::MonomialOrder, redtype::RedType) where A<:AbstractArray{<:Polynomial}
     @withmonomialorder order
+    @assert size(a) == size(b)
     i = findfirst(!iszero, b)
     if i !== nothing && !iszero(a[i])
         lt_a = leading_term(a[i])
@@ -127,6 +128,7 @@ end
 
 function one_step_xdiv!(a::A, b::A; order::MonomialOrder, redtype::RedType) where A<:AbstractArray{<:Polynomial}
     @withmonomialorder order
+    @assert size(a) == size(b)
     i = findfirst(!iszero, b)
     if i !== nothing && !iszero(a[i])
         lt_a = leading_monomial(a[i])
