@@ -27,6 +27,9 @@ if VERSION < v"1.2-"
 end
 
 iszero(x::SparseVector{<:Polynomial}) = all(iszero, nonzeros(x))
+
+# see https://github.com/JuliaLang/julia/issues/31835
+zero(a::AbstractArray{<:Polynomial}) = map(_ -> zero(eltype(a)), a)
 zero(a::AbstractSparseArray{<:Polynomial}) = spzeros(eltype(a), size(a)...)
 
 base_extend(x::AbstractArray{P}, ::Type{C}) where P<:Polynomial where C = map(p->base_extend(p,C), x)
