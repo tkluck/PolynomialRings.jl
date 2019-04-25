@@ -145,6 +145,9 @@ function convert(::Type{T1}, t::T2) where T1<:Term{M} where T2<:Term{M} where M
     T1(monomial(t), convert(basering(T1), coefficient(t)))
 end
 
+# short-circuit non-conversion case
+convert(::Type{T}, t::T) where T <: Term{M} where M = t
+
 # -----------------------------------------------------------------------------
 #
 # Promoting numbers to polynomials (possibly using base extension)
