@@ -222,7 +222,9 @@ function (p::Polynomial)(; kwargs...)
     valtypes = fieldtypes(kwtupletype)
     values = [v for (k,v) in kwargs]
 
-    if !any(v <: Function for v in valtypes)
+    if isempty(kwargs)
+        return copy(p)
+    elseif !any(v <: Function for v in valtypes)
         return _substitute(p, Named{tuple(vars...)}(), values...)
     elseif length(kwargs) == 1 && valtypes[1] <: Function
         return _substitute(p, Numbered{vars[1], Inf}(), values[1])
