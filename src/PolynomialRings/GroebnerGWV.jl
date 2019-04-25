@@ -239,7 +239,7 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
     end
 end
 
-function gröbner_basis(::GWV, o::MonomialOrder, G::AbstractArray{<:AbstractModuleElement}; kwds...)
+function gröbner_basis(::GWV, o::MonomialOrder, G::AbstractVector{<:AbstractModuleElement}; kwds...)
     # GWV chokes on empty arrays mainly because it tries to modify the input
     # array a few times (restrict to integers, possibly add the transformation)
     # so lets short-circuit that case.
@@ -247,7 +247,7 @@ function gröbner_basis(::GWV, o::MonomialOrder, G::AbstractArray{<:AbstractModu
     return gwv(o, G, with_transformation=false, kwds...)
 end
 
-function gröbner_transformation(::GWV, o::MonomialOrder, G::AbstractArray{<:AbstractModuleElement}; kwds...)
+function gröbner_transformation(::GWV, o::MonomialOrder, G::AbstractVector{<:AbstractModuleElement}; kwds...)
     # GWV chokes on empty arrays mainly because it tries to modify the input
     # array a few times (restrict to integers, possibly add the transformation)
     # so lets short-circuit that case.
