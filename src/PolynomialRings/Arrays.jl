@@ -3,7 +3,8 @@ module Arrays
 import Base: *, transpose, diff, div
 import LinearAlgebra: Transpose
 import LinearAlgebra: det
-import SparseArrays: issparse, spzeros, SparseVector, SparseMatrixCSC
+import SparseArrays: issparse, spzeros, SparseVector, SparseMatrixCSC, AbstractSparseArray
+import SparseArrays: nonzeros
 
 import IterTools: groupby
 
@@ -191,7 +192,9 @@ macro flat_coefficients(a, symbols...)
     end
 end
 
-common_denominator(a::AbstractArray{P}) where P <: Polynomial = mapreduce(common_denominator, lcm, a)
+common_denominator(a::AbstractArray{P}) where P <: Polynomial = mapreduce(common_denominator, lcm, a, init=common_denominator(zero(P)))
+
+common_denominator(a::AbstractSparseArray{P}) where P <: Polynomial = mapreduce(common_denominator, lcm, nonzeros(a), init=common_denominator(zero(P)))
 
 function integral_fraction(a::AbstractArray{P}) where P <: Polynomial
     D = common_denominator(a)
