@@ -112,12 +112,11 @@ function one_step_div!(a::A, b::A; order::MonomialOrder, redtype::RedType) where
         factor = maybe_div(lt_a, lt_b)
         if factor !== nothing
             for i in eachindex(a)
-                a[i] -= factor * b[i]
-                #if iszero(a[i]) # possibly a sparse zero, so don't try in-place
-                #    a[i] -= factor * b[i]
-                #else
-                #    @. a[i] -= factor * b[i]
-                #end
+                if iszero(a[i]) # possibly a sparse zero, so don't try in-place
+                    a[i] -= factor * b[i]
+                else
+                    @. a[i] -= factor * b[i]
+                end
             end
         end
         return factor
