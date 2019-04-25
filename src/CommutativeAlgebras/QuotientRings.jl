@@ -2,7 +2,7 @@ module QuotientRings
 
 using PolynomialRings
 import Base: +,-,*,/,//,^,==,!=
-import Base: promote_rule, convert
+import Base: promote_rule, promote_type, convert
 import Base: show
 import Base: zero, one, rem, copy
 
@@ -11,7 +11,7 @@ import ..Ideals: ring
 import ..NamingSchemes: boundnames, fullboundnames, namingscheme, fullnamingscheme
 import ..NamedPolynomials: minring
 import ..Polynomials: Polynomial, exptype, leading_term, basering, PolynomialOver
-import ..Polynomials: termtype, monomialtype
+import ..Polynomials: termtype, monomialtype, monomialorder
 import ..Terms: Term, monomial, coefficient
 import PolynomialRings: allvariablesymbols
 import PolynomialRings: construct_monomial, variablesymbols
@@ -85,12 +85,17 @@ fullboundnames(::Type{Q})     where Q<:QuotientRing = fullnamingscheme(ring(Q))
     :( $res )
 end
 
-@generated function promote_rule(::Type{Q1}, ::Type{Q2}) where {Q1 <: QuotientRing, Q2 <: QuotientRing}
+@generated function promote_type(::Type{Q1}, ::Type{Q2}) where {Q1 <: QuotientRing, Q2 <: QuotientRing}
     P = promote_type(ring(Q1), ring(Q2))
-    I = Ideal(map(P, _ideal(Q1))) + Ideal(map(P, _ideal(Q2)))
-    res = P/I
+    I = map(P, _ideal(Q1)) ∪ map(P, _ideal(Q2))
+    sort!(I, order=monomialorder(P))
+    res = P/Ideal(I)
     :( $res )
 end
+
+# resolve ambiguity
+promote_type(Q::Type{<:QuotientRing}, ::Type{Union{}}) = Q
+promote_type(::Type{Union{}}, Q::Type{<:QuotientRing}) = Q
 
 function convert(::Type{Q}, c::C) where Q<:QuotientRing{P} where {P<:Polynomial,C}
     Q(convert(P, c))
