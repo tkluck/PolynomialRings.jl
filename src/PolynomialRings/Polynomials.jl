@@ -180,4 +180,11 @@ function polynomial_ring(scheme::NamingScheme; basering::Type=Rational{BigInt}, 
     return Polynomial{M, basering}
 end
 
+# -----------------------------------------------------------------------------
+#
+# Improve performance for sparse arrays of Polynomials
+#
+# -----------------------------------------------------------------------------
+HigherOrderFns._iszero(f::Polynomial) = iszero(f)
+
 end
