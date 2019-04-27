@@ -53,7 +53,10 @@ _nzindices(t::AbstractVector) = eachindex(t)
 _nzindices(t::SparseVector) = nonzeroinds(t)
 function construct_monomial(::Type{P}, e::T) where P<:Polynomial where T<:Union{Tuple,AbstractVector}
     @assert all(e.>=0)
-    P([termtype(P)(_construct(monomialtype(P), i->e[i], _nzindices(e)),one(basering(P)))])
+    M = monomialtype(P)
+    C = basering(P)
+    m = _construct(M, i -> e[i], _nzindices(e))
+    P([m], [one(C)])
 end
 export construct_monomial
 # --------------------------

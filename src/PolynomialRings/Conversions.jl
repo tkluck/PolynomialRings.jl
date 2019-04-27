@@ -9,8 +9,8 @@ import LinearAlgebra: UniformScaling
 import ..Modules: AbstractModuleElement
 import ..Monomials: AbstractMonomial, total_degree
 import ..Operators: RedType
-import ..Polynomials: Polynomial, termtype, monomialtype, basering, terms
-import ..Polynomials: PolynomialOver, NamedPolynomial
+import ..Polynomials: Polynomial, termtype, monomialtype, basering
+import ..Polynomials: PolynomialOver, NamedPolynomial, polynomialtype
 import ..Terms: Term, monomial, coefficient
 import PolynomialRings: fraction_field, integers, base_extend, base_restrict, namingscheme
 import PolynomialRings: ⊗, base_extend, base_restrict
@@ -51,9 +51,8 @@ function convert(::Type{P}, a::C) where P<:PolynomialOver{C} where C
     if iszero(a)
         return zero(P)
     else
-        T = termtype(P)
         M = monomialtype(P)
-        return P([T(one(M),deepcopy(a))])
+        return P([one(M)],[deepcopy(a)])
     end
 end
 
@@ -61,9 +60,8 @@ function convert(::Type{P}, a::C) where P<:PolynomialOver{C} where C <: Polynomi
     if iszero(a)
         return zero(P)
     else
-        T = termtype(P)
         M = monomialtype(P)
-        return P([T(one(M),deepcopy(a))])
+        return P([one(M)],[deepcopy(a)])
     end
 end
 
@@ -73,7 +71,7 @@ end
 #
 # -----------------------------------------------------------------------------
 base_restrict(::Type{Term{M,C1}}, ::Type{C2}) where {M,C1,C2} = Term{M, base_restrict(C1,C2)}
-base_restrict(::Type{Polynomial{M,C1}}, ::Type{C2}) where {M,C1,C2} = Polynomial{M, base_restrict(C1,C2)}
+base_restrict(::Type{Polynomial{M,C1,MV}}, ::Type{C2}) where {M,MV,C1,C2} = polynomialtype(M, base_restrict(C1,C2))
 
 function base_restrict(t::T, ::Type{C}) where T<:Term where C
     TT = base_restrict(T, C)
@@ -83,8 +81,8 @@ end
 
 function base_restrict(p::P, ::Type{C}) where P<:Polynomial where C
     PP = base_restrict(P, C)
-    T = termtype(PP)
-    return PP(T[ base_restrict(t, C) for t in terms(p) ])
+    CC = basering(PP)
+    return Polynomial(p.monomials, unalias.(CC, p.coeffs))
 end
 
 base_restrict(p::P)      where P <: Union{Term,Polynomial} = base_restrict(p, integers(basering(p)))
@@ -127,19 +125,8 @@ base_extend(x, ::Type{C}) where C = convert(promote_type(typeof(x), C), x)
 /(a::T,b::Number)   where T <: Term = promote_type(T,    float(typeof(b)))(a.m, a.c/b)
 //(a::T,b::Number)  where T <: Term = promote_type(T, fraction_field(typeof(b)))(a.m, a.c//b)
 
-function /(a::P, b::Number) where P <: Polynomial
-    P′ = promote_type(P, float(typeof(b)))
-    T′ = termtype(P′)
-    newterms = T′[t/b for t in terms(a)]
-    P′(newterms)
-end
-
-function //(a::P, b::Number) where P <: Polynomial
-    P′ = promote_type(P, fraction_field(typeof(b)))
-    T′ = termtype(P′)
-    newterms = T′[t//b for t in terms(a)]
-    P′(newterms)
-end
+/(a::P, b::Number) where P <: Polynomial = Polynomial(copy(a.monomials), a.coeffs ./ b)
+//(a::P, b::Number) where P <: Polynomial = Polynomial(copy(a.monomials), a.coeffs .// b)
 
 function convert(::Type{T1}, t::T2) where T1<:Term{M} where T2<:Term{M} where M
     T1(monomial(t), convert(basering(T1), coefficient(t)))
@@ -160,9 +147,8 @@ function convert(::Type{P}, a::C)  where P<:PolynomialOver{C} where C<:Number
     if iszero(a)
         return zero(P)
     else
-        T = termtype(P)
         M = monomialtype(P)
-        return P([T(one(M),deepcopy(a))])
+        return P([one(M)],[deepcopy(a)])
     end
 end
 
@@ -189,10 +175,15 @@ promote_rule(::Type{M}, ::Type{C}) where M <: AbstractMonomial where C<:Number =
 #
 # -----------------------------------------------------------------------------
 
-promote_rule(::Type{P}, ::Type{T}) where P <: Polynomial{M,C} where T <: Term{M,C} where {M,C} = P
+promote_rule(::Type{P}, ::Type{T}) where
+        P <: Polynomial{M,C,MV} where
+        T <: Term{M,C} where
+        {M <: AbstractMonomial, C, MV} = P
 
-convert(::Type{P}, a::T) where P <: Polynomial{M,C} where T <: Term{M,C} where {M,C}  = iszero(a) ? zero(P) : P([deepcopy(a)])
-
+convert(::Type{P}, a::T) where
+        P <: Polynomial{M,C,MV} where
+        T <: Term{M,C} where
+        {M <: AbstractMonomial, C, MV}  = iszero(a) ? zero(P) : P([monomial(a)], [deepcopy(coefficient(a))])
 
 # -----------------------------------------------------------------------------
 #
@@ -212,7 +203,7 @@ convert(::Type{T}, a::M) where T <: Term{M,C} where {M<:AbstractMonomial,C} = T(
 
 promote_rule(::Type{P}, ::Type{M}) where P <: Polynomial{M} where M = P
 
-convert(::Type{P}, a::M) where P <: Polynomial{M} where M = P([convert(termtype(P), a)])
+convert(::Type{P}, a::M) where P <: Polynomial{M} where M = P([a], [one(basering(P))])
 
 # -----------------------------------------------------------------------------
 #
@@ -220,20 +211,20 @@ convert(::Type{P}, a::M) where P <: Polynomial{M} where M = P([convert(termtype(
 #
 # -----------------------------------------------------------------------------
 function convert(::Type{C}, a::P) where P <: PolynomialOver{C} where C
-    if length(terms(a)) == 0
+    if length(a.coeffs) == 0
         return zero(C)
-    elseif length(terms(a)) == 1 && total_degree(monomial(terms(a)[1])) == 0
-        return unalias(C, coefficient(terms(a)[1]))
+    elseif length(a.coeffs) == 1 && isone(a.monomials[1])
+        return unalias(C, a.coeffs[1])
     else
         throw(InexactError(:convert, C, a))
     end
 end
 
 function convert(C::Type{<:Number}, a::Polynomial)
-    if length(terms(a)) == 0
+    if length(a.coeffs) == 0
         return zero(C)
-    elseif length(terms(a)) == 1 && total_degree(monomial(terms(a)[1])) == 0
-        return unalias(C, coefficient(terms(a)[1]))
+    elseif length(a.coeffs) == 1 && isone(a.monomials[1])
+        return unalias(C, a.coeffs[1])
     else
         throw(InexactError(:convert, C, a))
     end
@@ -241,10 +232,10 @@ end
 
 # fix abbiguity
 function convert(::Type{C}, a::P) where P <: PolynomialOver{C} where C <: Number
-    if length(terms(a)) == 0
+    if length(a.coeffs) == 0
         return zero(C)
-    elseif length(terms(a)) == 1 && total_degree(monomial(terms(a)[1])) == 0
-        return unalias(C, coefficient(terms(a)[1]))
+    elseif length(a.coeffs) == 1 && isone(a.monomials[1])
+        return unalias(C, a.coeffs[1])
     else
         throw(InexactError(:convert, C, a))
     end
@@ -283,9 +274,8 @@ function convert(::Type{P}, a::C) where P <: NamedPolynomial{C} where C<:Polynom
     if iszero(a)
         return zero(P)
     else
-        T = termtype(P)
         M = monomialtype(P)
-        return P([T(one(M),deepcopy(a))])
+        return P([one(M)],[deepcopy(a)])
     end
 end
 

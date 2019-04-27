@@ -11,7 +11,8 @@ import ..Monomials: AbstractMonomial
 import ..Monomials: total_degree
 import ..Operators: RedType, Lead, Full, Tail
 import ..Operators: one_step_div!, one_step_xdiv!, content, integral_fraction
-import ..Polynomials: Polynomial, monomialorder, basering, terms, tail
+import ..Polynomials: Polynomial, monomialorder, basering, tail
+import ..Polynomials: nzterms, nzrevterms, nztailterms
 import ..Terms: Term
 import ..Terms: coefficient, monomial
 import PolynomialRings: leaddiv, leadrem, leaddivrem
@@ -172,22 +173,34 @@ leading_row(x::Polynomial) = 1
 # Work around sparse-dense multiplication in Base only working for eltype() <: Number
 mul!(A, B, C, α::Polynomial, β::Polynomial) = mul!(A, B, C, convert(basering(α),α), convert(basering(β), β))
 
-terms(x::AbstractVector{<:Polynomial}; order) = (
+nzterms(x::AbstractArray{<:Polynomial}; order) = (
     Signature(ix, t)
     for (ix, x_i) in Iterators.reverse(enumerate(x))
-    for t in terms(x_i, order=order)
+    for t in nzterms(x_i, order=order)
 )
 
-terms(x::SparseVector{<:Polynomial}; order) = (
+nzrevterms(x::AbstractArray{<:Polynomial}; order) = (
+    Signature(ix, t)
+    for (ix, x_i) in enumerate(x)
+    for t in nzrevterms(x_i, order=order)
+)
+
+nzterms(x::SparseVector{<:Polynomial}; order) = (
     Signature(ix, t)
     for (ix, x_i) in Iterators.reverse(zip(x.nzind, x.nzval))
-    for t in terms(x_i, order=order)
+    for t in nzterms(x_i, order=order)
+)
+
+nzrevterms(x::SparseVector{<:Polynomial}; order) = (
+    Signature(ix, t)
+    for (ix, x_i) in zip(x.nzind, x.nzval)
+    for t in nzrevterms(x_i, order=order)
 )
 
 function tail(x::AbstractVector{<:Polynomial}; order)
     res = deepcopy(x)
     ix = leading_row(x)
-    pop!(res[ix].terms)
+    res[ix] = tail(res[ix]; order=order)
     return res
 end
 

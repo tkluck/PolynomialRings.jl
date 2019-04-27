@@ -113,7 +113,7 @@ import InPlace: @inplace, inclusiveinplace!
 import ..Constants: Zero, One
 import ..MonomialOrderings: MonomialOrder
 import ..Monomials: AbstractMonomial
-import ..Polynomials: Polynomial, TermOver, PolynomialOver, PolynomialBy, nterms, terms, termtype
+import ..Polynomials: Polynomial, TermOver, PolynomialOver, PolynomialBy, nzterms, nztermscount, termtype
 import ..Terms: Term, monomial, coefficient
 import ..Util: ParallelIter
 import PolynomialRings: monomialorder, monomialtype, basering
@@ -204,16 +204,16 @@ Base.eltype(t::TermsMap) = Base._return_type(t.op, Tuple{eltype(t.terms)})
 #  Leaf cases for `iterterms`
 #
 # -----------------------------------------------------------------------------
-iterterms(a::RefValue{<:PolynomialBy{Order}}) where Order = TermsMap(identity, Order(), terms(a[], order=Order()), nterms(a[]), Val(false))
-iterterms(a::Owned{<:PolynomialBy{Order}}) where Order = TermsMap(identity, Order(), terms(a[], order=Order()), nterms(a[]), Val(true))
+iterterms(a::RefValue{<:PolynomialBy{Order}}) where Order = TermsMap(identity, Order(), nzterms(a[], order=Order()), nztermscount(a[]), Val(false))
+iterterms(a::Owned{<:PolynomialBy{Order}}) where Order = TermsMap(identity, Order(), nzterms(a[], order=Order()), nztermscount(a[]), Val(true))
 
 # -----------------------------------------------------------------------------
 #
 #  termsbound base case and recursion
 #
 # -----------------------------------------------------------------------------
-termsbound(a::RefValue{<:Polynomial}) = nterms(a[])
-termsbound(a::Owned{<:Polynomial}) = nterms(a[])
+termsbound(a::RefValue{<:Polynomial}) = nztermscount(a[])
+termsbound(a::Owned{<:Polynomial}) = nztermscount(a[])
 termsbound(a::RefValue) = 1
 termsbound(a::Number) = 1
 termsbound(bc::Broadcasted{<:Termwise, Nothing, <:PlusMinus}) = sum(termsbound, bc.args)
@@ -238,14 +238,19 @@ eager(a::RefValue) = a[]
 eager(a::Broadcasted) = materialize(a)
 function eager(a::TermsMap)
     T = eltype(a)
-    P = Polynomial{monomialtype(T), basering(T)}
-    terms = Vector{T}(undef, a.bound)
+    M = monomialtype(T)
+    C = basering(T)
+    monomials = Vector{M}(undef, a.bound)
+    coeffs = Vector{C}(undef, a.bound)
     n = 0
     for t in a
-        terms[n+=1] = t
+        n += 1
+        monomials[n] = monomial(t)
+        coeffs[n] = coefficient(t)
     end
-    resize!(terms, n)
-    P(terms)
+    resize!(monomials, n)
+    resize!(coeffs, n)
+    Polynomial(monomials, coeffs)
 end
 # XXX ensure right order
 iterterms(order, op, a, b) = iterterms(Owned(op(eager(a), eager(b))))
@@ -427,8 +432,10 @@ function materialize!(x::Polynomial, bc::BrTermwise{Order,P}) where {Order,P}
     if found == :found
         tgt = deepcopy(zero(x))
         _materialize!(tgt, bc′)
-        resize!(x.terms, length(tgt.terms))
-        copyto!(x.terms, tgt.terms)
+        resize!(x.monomials, length(tgt.monomials))
+        resize!(x.coeffs, length(tgt.coeffs))
+        copyto!(x.monomials, tgt.monomials)
+        copyto!(x.coeffs, tgt.coeffs)
     elseif found == :notfound
         _materialize!(x, bc′)
     else
@@ -438,19 +445,25 @@ function materialize!(x::Polynomial, bc::BrTermwise{Order,P}) where {Order,P}
 end
 
 function _materialize!(x::Polynomial, bc::BrTermwise{Order,P}) where {Order,P}
-    resize!(x.terms, termsbound(bc))
+    resize!(x.monomials, termsbound(bc))
+    resize!(x.coeffs, termsbound(bc))
     n = 0
     it = iterterms(bc)
     if is_inplace(it)
         for t in it
-            @inbounds x.terms[n+=1] = t
+            n += 1
+            @inbounds x.monomials[n] = monomial(t)
+            @inbounds x.coeffs[n]    = coefficient(t)
         end
     else
         for t in it
-            @inbounds x.terms[n+=1] = deepcopy(t)
+            n += 1
+            @inbounds x.monomials[n] = deepcopy(monomial(t))
+            @inbounds x.coeffs[n]    = deepcopy(coefficient(t))
         end
     end
-    resize!(x.terms, n)
+    resize!(x.monomials, n)
+    resize!(x.coeffs, n)
     x
 end
 
@@ -490,7 +503,7 @@ const HandOptimizedBroadcast = Broadcasted{
     },
 } where P<:Polynomial{M,BigInt} where M<:AbstractMonomial{Order} where Order
 
-function _materialize!(x::Polynomial, bc::HandOptimizedBroadcast)
+function __disabled_materialize!(x::Polynomial, bc::HandOptimizedBroadcast)
     ≺(a,b) = Base.Order.lt(monomialorder(x), a, b)
 
     m1 = bc.args[1].args[1]

@@ -2,6 +2,7 @@ module MonomialOrderings
 
 import Base.Order: Ordering
 import Base: min, max, minimum, maximum
+import Base: findmin, findmax, argmin, argmax
 import Base: promote_rule
 
 import SparseArrays: SparseVector
@@ -107,11 +108,54 @@ min(m::MonomialOrder, x, y) = Base.Order.lt(m, x, y) ? x : y
 max(m::MonomialOrder, x, y) = Base.Order.lt(m, x, y) ? y : x
 min(m::MonomialOrder, a, b, c, xs...) = (op(x,y) = min(m,x,y); Base.afoldl(op, op(op(a,b),c), xs...))
 max(m::MonomialOrder, a, b, c, xs...) = (op(x,y) = max(m,x,y); Base.afoldl(op, op(op(a,b),c), xs...))
-minimum(m::MonomialOrder, iter) = (op(x,y) = min(m,x,y); reduce(op, iter))
-maximum(m::MonomialOrder, iter) = (op(x,y) = max(m,x,y); reduce(op, iter))
+function findmin(order::MonomialOrder, iter)
+    p = pairs(a)
+    y = iterate(p)
+    if y === nothing
+        throw(ArgumentError("collection must be non-empty"))
+    end
+    (mi, m), s = y
+    i = mi
+    while true
+        y = iterate(p, s)
+        y === nothing && break
+        m != m && break
+        (i, ai), s = y
+        if ai != ai || Base.Order.lt(order, ai, m)
+            m = ai
+            mi = i
+        end
+    end
+    return (m, mi)
+end
+function findmax(order::MonomialOrder, iter)
+    p = pairs(a)
+    y = iterate(p)
+    if y === nothing
+        throw(ArgumentError("collection must be non-empty"))
+    end
+    (mi, m), s = y
+    i = mi
+    while true
+        y = iterate(p, s)
+        y === nothing && break
+        m != m && break
+        (i, ai), s = y
+        if ai != ai || Base.Order.lt(order, m, ai)
+            m = ai
+            mi = i
+        end
+    end
+    return (m, mi)
+end
+
+argmin(m::MonomialOrder, iter) = findmin(m, iter)[2]
+argmax(m::MonomialOrder, iter) = findmax(m, iter)[2]
+minimum(m::MonomialOrder, iter) = findmin(m, iter)[1]
+maximum(m::MonomialOrder, iter) = findmax(m, iter)[1]
 # resolve ambiguity
-minimum(m::MonomialOrder, iter::AbstractArray) = (op(x,y) = min(m,x,y); reduce(op, iter))
-maximum(m::MonomialOrder, iter::AbstractArray) = (op(x,y) = max(m,x,y); reduce(op, iter))
+minimum(m::MonomialOrder, iter::AbstractArray) = findmin(m, iter)[1]
+maximum(m::MonomialOrder, iter::AbstractArray) = findmax(m, iter)[1]
 
 degreecompatible(::MonomialOrder) = false
 degreecompatible(::MonomialOrder{:degrevlex}) = true

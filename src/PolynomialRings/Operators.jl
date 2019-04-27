@@ -3,19 +3,20 @@ module Operators
 import Base: zero, one, +, -, *, ==, div, iszero, diff, ^, gcd
 
 import DataStructures: enqueue!, dequeue!
-import InPlace: @inplace
+import InPlace: @inplace, inclusiveinplace!
 
 import ..Constants: Zero
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
 import ..Monomials: AbstractMonomial
-import ..Polynomials: Polynomial, termtype, nterms, terms, monomialorder, monomialtype
-import ..Polynomials: PolynomialBy
+import ..Polynomials: Polynomial, termtype, nztermscount, monomialorder, monomialtype
+import ..Polynomials: leading_term, nzrevterms, nztailterms, nzterms
+import ..Polynomials: PolynomialBy, isstrictlysparse
 import ..Terms: Term, monomial, coefficient
 import ..Util: BoundedHeap
 import ..Util: ParallelIter
 import PolynomialRings: basering, exptype, base_extend, base_restrict
 import PolynomialRings: lcm_multipliers
-import PolynomialRings: leading_monomial, leading_coefficient, leading_term
+import PolynomialRings: leading_monomial, leading_coefficient
 import PolynomialRings: maybe_div
 
 # -----------------------------------------------------------------------------
@@ -23,58 +24,55 @@ import PolynomialRings: maybe_div
 # zero, one, etc
 #
 # -----------------------------------------------------------------------------
-zero(::Type{P}) where P<:Polynomial = P(termtype(P)[])
-one(::Type{P})  where P<:Polynomial = P([one(termtype(P))])
+zero(::Type{P}) where P<:Polynomial = P(monomialtype(P)[], basering(P)[])
+one(::Type{P})  where P<:Polynomial = P([one(monomialtype(P))], [one(basering(P))])
 zero(::P)       where P <: Polynomial = zero(P)
 one(::P)        where P <: Polynomial = one(P)
 
-iszero(a::P)        where P <: Polynomial = nterms(a) == 0
-==(a::P,b::P)       where P <: Polynomial = a.terms == b.terms
-+(a::P)             where P <: Polynomial = deepcopy(a)
--(a::P)             where P <: Polynomial = P([-t for t in terms(a)])
+iszero(a::P)        where P <: Polynomial = nztermscount(a) == 0
+# FIXME: allow for structural zeros
+==(a::P, b::P)      where P <: Polynomial = a.monomials == b.monomials && a.coeffs == b.coeffs
++(a::P)             where P <: Polynomial = P(copy(a.monomials), copy(a.coeffs))
+-(a::P)             where P <: Polynomial = P(copy(a.monomials), map(-, a.coeffs))
 
 # -----------------------------------------------------------------------------
 #
 # utility for operators
 #
 # -----------------------------------------------------------------------------
-function _collect_summands!(summands::AbstractVector{T}) where T <: Term{M,C} where {M,C}
-    if !isempty(summands)
-        last_exp = monomial(summands[1])
-        n = 1
-        for j in 2:length(summands)
-            exponent, coef = monomial(summands[j]), coefficient(summands[j])
-            if exponent == last_exp
-                cur_coef = coefficient(summands[n])
-                @inbounds summands[n] = T(exponent, cur_coef + coef)
-            else
-                @inbounds summands[n+=1] = summands[j]
-                last_exp = exponent
-            end
+function _filterzeros!(p::Polynomial)
+    tgtix = 0
+    for srcix in eachindex(p.coeffs)
+        if !iszero(p.coeffs[srcix])
+            tgtix += 1
+            p.monomials[tgtix] = p.monomials[srcix]
+            p.coeffs[tgtix] = p.coeffs[srcix]
         end
-        resize!(summands, n)
-        filter!(!iszero, summands)
     end
+    resize!(p.monomials, tgtix)
+    resize!(p.coeffs, tgtix)
+    p
 end
 
-
-function _collect_summands!(summands::AbstractVector{T}) where T <: Term{M, BigInt} where M
-    if !isempty(summands)
-        last_exp = monomial(summands[1])
-        n = 1
-        @inbounds for j in 2:length(summands)
-            exponent, coef = monomial(summands[j]), coefficient(summands[j])
-            if exponent == last_exp
-                cur_coef = coefficient(summands[n])
-                @inplace cur_coef += coef
+function _collectsummands!(p::Polynomial)
+    if length(p.coeffs) > 1
+        I = sortperm(p.monomials, order=monomialorder(p))
+        p.monomials[:] = p.monomials[I]
+        p.coeffs[:] = p.coeffs[I]
+        tgtix = 1
+        for srcix in 2:length(p.coeffs)
+            if p.monomials[tgtix] == p.monomials[srcix]
+                @inplace p.coeffs[tgtix] += p.coeffs[srcix]
             else
-                summands[n+=1] = summands[j]
-                last_exp = exponent
+                tgtix += 1
+                p.monomials[tgtix] = p.monomials[srcix]
+                p.coeffs[tgtix] = p.coeffs[srcix]
             end
         end
-        resize!(summands, n)
-        filter!(!iszero, summands)
+        resize!(p.monomials, tgtix)
+        resize!(p.coeffs, tgtix)
     end
+    _filterzeros!(p)
 end
 
 # -----------------------------------------------------------------------------
@@ -88,23 +86,28 @@ function _map(op, a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
     #     namingscheme(P) == namingscheme(Order)
     # See NamedPolynomials.jl
     @assert monomialorder(P) == Order()
-    T = termtype(P)
+    M = monomialtype(P)
+    C = basering(P)
     ≺(a,b) = Base.Order.lt(Order(), a, b)
 
-    res = Vector{T}(undef, length(a.terms) + length(b.terms))
+    monomials = Vector{M}(undef, length(a.monomials) + length(b.monomials))
+    coeffs    = Vector{C}(undef, length(a.coeffs)    + length(b.coeffs))
     n = 0
 
     for (m, coeff) in ParallelIter(
-            monomial, coefficient, ≺,
+            first, last, ≺,
             Zero(), Zero(), op,
-            terms(a, order=Order()), terms(b, order=Order()),
+            pairs(a, Order()), pairs(b, Order()),
         )
         if !iszero(coeff)
-            @inbounds res[n+=1] = T(m, coeff)
+            n += 1
+            @inbounds monomials[n] = m
+            @inbounds coeffs[n] = coeff
         end
     end
-    resize!(res, n)
-    return P(res)
+    resize!(monomials, n)
+    resize!(coeffs, n)
+    return P(monomials, coeffs)
 end
 
 +(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order = _map(+, a, b)
@@ -174,12 +177,11 @@ function *(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
         return zero(P)
     end
 
-    t_a = terms(a, order=Order())
-    t_b = terms(b, order=Order())
-    l_a = length(t_a)
-    l_b = length(t_b)
+    l_a = length(a.coeffs)
+    l_b = length(b.coeffs)
 
-    summands = Vector{T}(undef, l_a * l_b)
+    monomials = Vector{M}(undef, l_a * l_b)
+    coeffs = Vector{C}(undef, l_a * l_b)
     k = 0
 
     done_until_col_at_row = zeros(Int, l_a)
@@ -188,31 +190,27 @@ function *(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
     # We use a *bounded* queue not because we want to drop items when it
     # gets too big, but because we want to allocate it once to its maximal
     # theoretical size, and then never reallocate.
-    order = Base.Order.Lt((a,b) -> a[3] ≺ b[3])
+    order = Base.Order.Lt((a, b) -> a[3] ≺ b[3])
     Key = Tuple{Int, Int, M}
     minimal_corners = BoundedHeap(Key, min(l_a, l_b), order)
 
     # initialize with the minimal term at (row, col) = (1, 1)
-    @inbounds m = monomial(t_a[1]) * monomial(t_b[1])
+    @inbounds m = a.monomials[1] * b.monomials[1]
     enqueue!(minimal_corners, (1, 1, m))
 
     temp = zero(C)
-    cur_monom = nothing
-    cur_coeff = nothing
 
     @inbounds while !isempty(minimal_corners)
         row, col, m = dequeue!(minimal_corners)
 
         # compute the product of the terms at (row, col)
-        if m == cur_monom
-            @inplace temp = coefficient(t_a[row]) * coefficient(t_b[col])
-            @inplace cur_coeff += temp
+        if k > 0 && m == monomials[k]
+            @inplace temp = a.coeffs[row] * b.coeffs[col]
+            @inplace coeffs[k] += temp
         else
-            if cur_monom !== nothing && !iszero(cur_coeff)
-                summands[k+=1] = T(cur_monom, cur_coeff)
-            end
-            cur_coeff = coefficient(t_a[row]) * coefficient(t_b[col])
-            cur_monom = m
+            k += 1
+            monomials[k] = m
+            coeffs[k] = a.coeffs[row] * b.coeffs[col]
         end
 
         # mark as done
@@ -222,18 +220,18 @@ function *(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
         # decide whether we just added new minimal corners
         if row < l_a && done_until_col_at_row[row+1] == col - 1
             r, c = row + 1, col
-            m = monomial(t_a[r]) * monomial(t_b[c])
+            m = a.monomials[r] * b.monomials[c]
             enqueue!(minimal_corners, (r, c, m))
         end
         if col < l_b && done_until_row_at_col[col+1] == row - 1
             r, c = row, col + 1
-            m = monomial(t_a[r]) * monomial(t_b[c])
+            m = a.monomials[r] * b.monomials[c]
             enqueue!(minimal_corners, (r, c, m))
         end
     end
-    summands[k+=1] = T(cur_monom, cur_coeff)
-    resize!(summands, k)
-    return P(summands)
+    resize!(monomials, k)
+    resize!(coeffs, k)
+    return _filterzeros!(P(monomials, coeffs))
 end
 
 # -----------------------------------------------------------------------------
@@ -246,9 +244,9 @@ struct Lead <: RedType end
 struct Full <: RedType end
 struct Tail <: RedType end
 
-terms_to_reduce(::Lead, f; order) = terms(f, order=order)[end:end]
-terms_to_reduce(::Full, f; order) = @view terms(f, order=order)[end:-1:1]
-terms_to_reduce(::Tail, f; order) = @view terms(f, order=order)[end-1:-1:1]
+terms_to_reduce(::Lead, f; order) = (leading_term(f, order=order),)
+terms_to_reduce(::Full, f; order) = nzrevterms(f, order=order)
+terms_to_reduce(::Tail, f; order) = nztailterms(f, order=order)
 
 function one_step_div!(f::PolynomialBy{Order}, g::PolynomialBy{Order}; order::Order, redtype::RedType) where Order <: MonomialOrder
     @withmonomialorder order
@@ -315,12 +313,13 @@ function ^(f::Polynomial, n::Integer)
         return deepcopy(f)
     end
 
-    T = termtype(f)
+    P = typeof(f)
+    M = monomialtype(f)
     C = basering(f)
     E = exptype(f)
     I = typeof(n)
 
-    N = length(terms(f))
+    N = length(f.coeffs)
 
     # need BigInts to do the multinom computation, but we'll cast
     # back to I = typeof(n) when we use it as an exponent
@@ -328,7 +327,9 @@ function ^(f::Polynomial, n::Integer)
     i = zeros(BigInt, N)
     i[N] = bign
 
-    summands = Vector{T}(undef, Int( multinomial(bign+N-1, N-1, bign) ))
+    nterms = Int(multinomial(bign + N - 1, N - 1, bign))
+    monomials = Vector{M}(undef, nterms)
+    coeffs = Vector{C}(undef, nterms)
     s = 0
 
     while true
@@ -339,11 +340,12 @@ function ^(f::Polynomial, n::Integer)
             # and bubble up all other exceptions?
             throw(OverflowError("Coefficient overflow while doing exponentiation; suggested fix is replacing `f^n` by `base_extend(f, BigInt)^n`"))
         end
-        new_coeff = c * prod(coefficient(f.terms[k])^I(i[k]) for k=1:N)
-        new_monom = prod(monomial(f.terms[k])^E(i[k]) for k=1:N)
-        summands[s+=1] = T(new_monom, new_coeff)
+        s += 1
+        monomials[s] =     prod(f.monomials[k] ^ E(i[k]) for k = 1:N)
+        coeffs[s]    = c * prod(f.coeffs[k]    ^ I(i[k]) for k = 1:N)
+
         carry = 1
-        for j = N-1:-1:1
+        for j = N - 1 : -1 : 1
             i[j] += carry
             i[N] -= carry
             if i[N] < 0
@@ -359,12 +361,7 @@ function ^(f::Polynomial, n::Integer)
         end
     end
 
-    sort!(summands, order=monomialorder(f))
-
-    _collect_summands!(summands)
-
-    return typeof(f)(summands)
-
+    _collectsummands!(P(monomials, coeffs))
 end
 
 # -----------------------------------------------------------------------------
@@ -374,9 +371,11 @@ end
 # -----------------------------------------------------------------------------
 function diff(f::Polynomial, i::Integer)
     iszero(f) && return zero(f)
-    new_terms = filter(!iszero, map(t->diff(t,i), terms(f)))
+    new_terms = filter(!iszero, map(t->diff(t,i), nzterms(f)))
     sort!(new_terms, order=monomialorder(f))
-    return typeof(f)(new_terms)
+    monomials = [monomial(t) for t in new_terms]
+    coeffs = [coefficient(t) for t in new_terms]
+    return typeof(f)(monomials, coeffs)
 end
 
 # -----------------------------------------------------------------------------
@@ -384,8 +383,8 @@ end
 # gcds and content
 #
 # -----------------------------------------------------------------------------
-gcd(f::Polynomial, g::Integer) = gcd(g, reduce(gcd, (coefficient(t) for t in terms(f)),init=0))
-gcd(g::Integer, f::Polynomial) = gcd(g, reduce(gcd, (coefficient(t) for t in terms(f)),init=0))
+gcd(f::Polynomial, g::Integer) = gcd(g, reduce(gcd, f.coeffs, init=zero(basering(f))))
+gcd(g::Integer, f::Polynomial) = gcd(g, reduce(gcd, f.coeffs, init=zero(basering(f))))
 
 div(f::Polynomial, g::Integer) = map_coefficients(c -> c÷g, f)
 
@@ -394,7 +393,7 @@ content(f::Polynomial) = gcd(f, 0)
 common_denominator(a) = denominator(a)
 common_denominator(a, b) = lcm(denominator(a), denominator(b))
 common_denominator(a, b...) = lcm(denominator(a), denominator.(b)...)
-common_denominator(f::Polynomial) = iszero(f) ? 1 : lcm(map(common_denominator∘coefficient, terms(f))...)
+common_denominator(f::Polynomial) = iszero(f) ? 1 : mapreduce(common_denominator, lcm, f.coeffs)
 
 function integral_fraction(f::Polynomial)
     D = common_denominator(f)
@@ -408,13 +407,7 @@ end
 Apply a function `f` to all coefficients of `q`, and return the result.
 """
 function map_coefficients(f, a::Polynomial)
-    T = termtype(a)
-    op(c) = (res = f(c); res === c ? deepcopy(res) : res)
-    new_terms = map(t->T(monomial(t), op(coefficient(t))), terms(a))
-    # work around type inference issue
-    new_terms = collect(T, new_terms)
-    filter!(!iszero, new_terms)
-    return typeof(a)(new_terms)
+    _filterzeros!(Polynomial(copy(a.monomials), map(f, a.coeffs)))
 end
 
 # -----------------------------------------------------------------------------
@@ -424,18 +417,96 @@ end
 # -----------------------------------------------------------------------------
 function *(a::T, b::P) where P<:Polynomial{M,C} where T<:Term{M,C} where {M,C}
     iszero(a) && return zero(P)
-    P(map(t->a*t, terms(b)))
+    P(monomial(a) .* b.monomials, coefficient(a) .* b.coeffs)
 end
 function *(a::P, b::T) where P<:Polynomial{M,C} where T<:Term{M,C} where {M,C}
     iszero(b) && return zero(P)
-    P(map(t->t*b, terms(a)))
+    P(a.monomials .* monomial(b), p.coeffs .* coefficient(b))
 end
 function *(a::M, b::P) where P<:Polynomial{M} where M<:AbstractMonomial
-    P(map(t->t*a, terms(b)))
+    P(a .* b.monomials, copy(b.coeffs))
 end
 function *(a::P, b::M) where P<:Polynomial{M} where M<:AbstractMonomial
-    P(map(t->t*b, terms(a)))
+    P(a.monomials .* b, copy(a.coeffs))
 end
+
+# -----------------------------------------------------------------------------
+#
+# Adding terms/monomials/scalars
+#
+# -----------------------------------------------------------------------------
+function inclusiveinplace!(::typeof(+), a::P, b::T) where
+            P <: Polynomial{M, C} where
+            T <: Term{M, C} where
+            {M <: AbstractMonomial, C}
+    ix = searchsorted(a.monomials, monomial(b))
+    if length(ix) == 1
+        i = first(ix)
+        @inplace a.coeffs[i] += coefficient(b)
+        if isstrictlysparse(a) && iszero(a.coeffs[i])
+            deleteat!(a.monomials, i)
+            deleteat!(a.coeffs, i)
+        end
+    elseif isempty(ix)
+        i = first(ix)
+        insert!(a.monomials, i, monomial(b))
+        insert!(a.coeffs, i, coefficient(b))
+    else
+        @error "Invalid polynomial" a dump(a)
+        error("Invalid polynomial")
+    end
+    a
+end
+
+function inclusiveinplace!(::typeof(+), a::P, b::M) where
+            P <: Polynomial{M, C} where
+            {M <: AbstractMonomial, C}
+    ix = searchsorted(a.monomials, b)
+    if length(ix) == 1
+        i = first(ix)
+        @inplace a.coeffs[i] += one(basering(a))
+        if isstrictlysparse(a) && iszero(a.coeffs[i])
+            deleteat!(a.monomials, i)
+            deleteat!(a.coeffs, i)
+        end
+    elseif isempty(ix)
+        i = first(ix)
+        insert!(a.monomials, i, b)
+        insert!(a.coeffs, i, one(basering(a)))
+    else
+        @error "Invalid polynomial" a dump(a)
+        error("Invalid polynomial")
+    end
+    a
+end
+
+function inclusiveinplace!(::typeof(+), a::P, b::C) where
+            P <: Polynomial{M, C} where
+            {M <: AbstractMonomial, C}
+    ix = searchsorted(a.monomials, one(monomialtype(a)))
+    if length(ix) == 1
+        i = first(ix)
+        @inplace a.coeffs[i] += b
+        if isstrictlysparse(a) && iszero(a.coeffs[i])
+            deleteat!(a.monomials, i)
+            deleteat!(a.coeffs, i)
+        end
+    elseif isempty(ix)
+        i = first(ix)
+        insert!(a.monomials, i, one(monomialtype(a)))
+        insert!(a.coeffs, i, b)
+    else
+        @error "Invalid polynomial" a dump(a)
+        error("Invalid polynomial")
+    end
+    a
+end
+
+
+
+
+
+
 
 
 end

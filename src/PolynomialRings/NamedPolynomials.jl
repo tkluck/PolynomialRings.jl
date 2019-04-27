@@ -7,10 +7,11 @@ import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, rulesymbol
 import ..Monomials: TupleMonomial, VectorMonomial, AbstractMonomial, _construct, exptype, num_variables, nzindices
 import ..NamingSchemes: Named, Numbered, NamingScheme, numberedvariablename, remove_variables, isdisjoint, boundnames, ≺
+import ..Operators: _filterzeros!, _collectsummands!
 import ..Polynomials:  NamedMonomial, NumberedMonomial, NamedTerm, NumberedTerm, TermOver, monomialorder, NamedOrder, NumberedOrder, polynomial_ring
-import ..Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolynomial, PolynomialBy, PolynomialIn
+import ..Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolynomial, PolynomialBy, PolynomialIn, nzterms
 import ..Terms: Term, basering, monomial, coefficient
-import PolynomialRings: termtype, terms, namingscheme, variablesymbols, exptype, monomialtype, allvariablesymbols, iscanonical, canonicaltype, fullnamingscheme, fullboundnames, max_variable_index
+import PolynomialRings: termtype, namingscheme, variablesymbols, exptype, monomialtype, allvariablesymbols, iscanonical, canonicaltype, fullnamingscheme, fullboundnames, max_variable_index, polynomialtype
 
 # -----------------------------------------------------------------------------
 #
@@ -28,20 +29,12 @@ unused_variable(a::AbstractArray{<:Polynomial}) = unused_variable(eltype(a), a)
 # separate versions for N<:Named and N<:Numbered to resolve method ambiguity
 # with the version for which P and p do not have the same names.
 function convert(P::Type{<:PolynomialOver{C,O}}, p::PolynomialOver{D,O}) where {C,D,O<:NamedOrder}
-    T = termtype(P)
-    newterms = T[T(monomial(t), convert(C, coefficient(t))) for t in terms(p, order=O())]
-    # in positive charactestic (e.g. C = ℤ/5ℤ), we may need to filter
-    # terms that are zero from conversion.
-    filter!(!iszero, newterms)
-    P(newterms)
+    res = Polynomial(p.monomials, convert.(C, p.coeffs))
+    _filterzeros!(res)
 end
 function convert(P::Type{<:PolynomialOver{C,O}}, p::PolynomialOver{D,O}) where {C,D,O<:NumberedOrder}
-    T = termtype(P)
-    newterms = T[T(monomial(t), convert(C, coefficient(t))) for t in terms(p, order=O())]
-    # in positive charactestic (e.g. C = ℤ/5ℤ), we may need to filter
-    # terms that are zero from conversion.
-    filter!(!iszero, newterms)
-    P(newterms)
+    res = Polynomial(p.monomials, convert.(C, p.coeffs))
+    _filterzeros!(res)
 end
 # and short-circuit the non-conversions
 convert(::Type{P}, p::P) where P <: PolynomialOver{C,O} where {C,O<:NamedOrder} = p
@@ -133,7 +126,7 @@ function remove_variables(::Type{P}, vars) where P <: Polynomial
     M = remove_variables(monomialtype(P), vars)
     C = remove_variables(basering(P), vars)
     M == One && return C
-    return Polynomial{M, C}
+    return polynomialtype(M, C)
 end
 remove_variables(T::Type, vars) = T
 
@@ -157,7 +150,7 @@ function promote_rule(T1::Type{<:Polynomial}, T2::Type)
         return _promote_rule(basering(T1), T2)
     elseif isdisjoint(namingscheme(T1), fullnamingscheme(T2))
         if (C = _promote_rule(basering(T1), T2)) !== Bottom
-            return Polynomial{monomialtype(T1), C}
+            return polynomialtype(monomialtype(T1), C)
         end
     end
     return Bottom
@@ -193,7 +186,7 @@ function promote_canonical_type(T1::Type{<:Polynomial}, T2::Type)
     else
         M = monomialtype(T1)
         C = promote_canonical_type(basering(T1), T2)
-        return Polynomial{M, C}
+        return polynomialtype(M, C)
     end
 end
 
@@ -211,15 +204,15 @@ function promote_canonical_type(T1::Type{<:Polynomial}, T2::Type{<:Polynomial})
     elseif namingscheme(T1) ≺ namingscheme(T2)
         M = monomialtype(T2)
         C = promote_canonical_type(T1, basering(T2))
-        return Polynomial{M, C}
+        return polynomialtype(M, C)
     elseif namingscheme(T2) ≺ namingscheme(T1)
         M = monomialtype(T1)
         C = promote_canonical_type(basering(T1), T2)
-        return Polynomial{M, C}
+        return polynomialtype(M, C)
     else
         M = promote_type(monomialtype(T1), monomialtype(T2))
         C = promote_type(basering(T1), basering(T2))
-        return Polynomial{M, C}
+        return polynomialtype(M, C)
     end
 end
 
@@ -237,35 +230,34 @@ end
 using PolynomialRings
 
 function convert(::Type{P1}, a::P2) where P1 <: Polynomial where P2 <: Polynomial
-    T = termtype(P1)
-    # Without the leading T[ ... ], type inference makes this an Array{Any}, so
-    # it can't be omitted.
-    converted_terms = T[ T(m,c) for (c,(m,)) in PolynomialRings.Expansions._expansion2(a, monomialorder(P1)) ]
-    # zero may happen if conversion to the basering is lossy; e.g. mapping ℚ[α]
-    # to the number field ℚ[α]/Ideal(α^2-2)
-    # TODO: needs testing as soon as number fields are part of this package.
-    filter!(!iszero, converted_terms)
-    sort!(converted_terms, order=monomialorder(P1))
-    P1(converted_terms)
+    M = monomialtype(P1)
+    C = basering(P1)
+    monomials = M[]
+    coeffs = C[]
+    for (c, (m,)) in PolynomialRings.Expansions._expansion2(a, monomialorder(P1))
+        push!(monomials, m)
+        push!(coeffs, c)
+    end
+    _collectsummands!(P1(monomials, coeffs))
 end
 
 convert(::Type{P}, a::P) where P <: NamedPolynomial = a
 
-polynomialtype(T::Type{<:Term}) = Polynomial{monomialtype(T), basering(T)}
+polynomialtype(T::Type{<:Term}) = polynomialtype(monomialtype(T), basering(T))
 
 function canonicaltype(P::Type{<:PolynomialOver{<:Polynomial}})
     C = canonicaltype(basering(P))
     M1 = monomialtype(C)
     M2 = canonicaltype(monomialtype(P))
     if namingscheme(M1) ≺ namingscheme(M2)
-        P′ = Polynomial{M2, C}
+        P′ = polynomialtype(M2, C)
     elseif namingscheme(M2) ≺ namingscheme(M1)
         C1 = basering(C)
-        P′ = Polynomial{M1, Polynomial{M2, C1}}
+        P′ = polynomialtype(M1, polynomialtype(M2, C1))
     else
         M = promote_type(M1, M2)
         C1 = basering(C)
-        P′ = Polynomial{M, C1}
+        P′ = polynomialtype(M, C1)
     end
     if P′ == P
         return P
@@ -277,7 +269,7 @@ end
 function canonicaltype(P::Type{<:Polynomial})
     C = canonicaltype(basering(P))
     M = canonicaltype(monomialtype(P))
-    return Polynomial{M, C}
+    return polynomialtype(M, C)
 end
 @generated function canonicaltype(::Type{M}) where M <: NamedMonomial
     N = num_variables(M)
@@ -311,7 +303,7 @@ function _promote_result(T, S, LTR, RTL)
         if namingscheme(T) == namingscheme(S)
             M = promote_type(monomialtype(T), monomialtype(S))
             C = promote_type(basering(T), basering(S))
-            return Polynomial{M, C}
+            return polynomialtype(M, C)
         else
             return promote_canonical_type(canonicaltype(T), canonicaltype(S))
         end
@@ -351,18 +343,18 @@ minring(x::Complex) = real(x) ≈ x ? minring(real(x)) : typeof(x)
 minring(x) = typeof(x)
 
 function minring(f::NamedPolynomial)
-    base = minring([coefficient(t) for t in terms(f)]...)
+    base = minring([coefficient(t) for t in nzterms(f)]...)
 
-    m = prod(monomial(t) for t in terms(f))
+    m = prod(monomial(t) for t in nzterms(f))
     nz = findall(!iszero, m.e)
     syms = variablesymbols(namingscheme(f))
     isempty(nz) ? base : polynomial_ring(syms[nz]..., basering=base)[1]
 end
 
 function minring(f::NumberedPolynomial)
-    base = minring([coefficient(t) for t in terms(f)]...)
+    base = minring([coefficient(t) for t in nzterms(f)]...)
 
-    m = prod(monomial(t) for t in terms(f))
+    m = prod(monomial(t) for t in nzterms(f))
     isone(m) ? base : polynomial_ring(namingscheme(f), basering=base)
 end
 

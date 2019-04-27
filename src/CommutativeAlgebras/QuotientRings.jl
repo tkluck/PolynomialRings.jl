@@ -219,9 +219,8 @@ function convert(::Type{P}, a::Q) where P <: PolynomialOver{Q} where Q <: Quotie
     if iszero(a)
         return zero(P)
     else
-        T = termtype(P)
         M = monomialtype(P)
-        return P([T(one(M),deepcopy(a))])
+        return P(M[one(M)], Q[deepcopy(a)])
     end
 end
 end

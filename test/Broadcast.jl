@@ -1,6 +1,7 @@
 using Test
 import SparseArrays: sparse, spzeros
 using PolynomialRings
+import PolynomialRings: nzterms
 
 @testset "Broadcasting" begin
     R = @ring! ℤ[x,y]     # basering = BigInt, so does support in-place ops
@@ -8,11 +9,11 @@ using PolynomialRings
 
     g1 = sum(x^(i%13)*y^(i%127+5) for i=1:100)
     h1 = x*g1;
-    t1 = g1.terms[1]
+    t1 = first(nzterms(g1))
 
     g2 = sum(z^(i%13)*w^(i%127+5) for i=1:100)
     h2 = z*g2;
-    t2 = g2.terms[1]
+    t2 = first(nzterms(g2))
 
     @testset "BigInt" begin
         for (g,h,t) = [(g1,h1,t1), (g2,h2,t2)]

@@ -10,7 +10,7 @@ import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
 import ..Monomials: AbstractMonomial, TupleMonomial, exptype, expstype, enumeratenz
 import ..NamedPolynomials: NamedPolynomial, _lossy_convert_monomial
-import ..Polynomials: Polynomial, termtype, monomialtype, monomialorder, terms, polynomial_ring, PolynomialBy
+import ..Polynomials: Polynomial, termtype, monomialtype, monomialorder, polynomial_ring, PolynomialBy
 import ..Terms: Term, monomial, coefficient
 import ..Util: SingleItemIter
 import ..NamingSchemes: Named, Numbered, NamingScheme, remove_variables
@@ -71,23 +71,23 @@ _expansion2(p) = [(p, tuple())]
 # I also run into issues when I try to make it do that.
 _expansion2(p, spec::MonomialOrder, specs::MonomialOrder...) = (((c, ms),) = _expansion2(p, specs...); [(c, tuple(one(monomialtype(spec)), ms...))])
 # TODO: should we return owned copies?
-_expansion2(p::PolynomialBy{Order}, spec::Order) where Order <: MonomialOrder = map(t -> (coefficient(t), (monomial(t),)), terms(p))
+_expansion2(p::PolynomialBy{Order}, spec::Order) where Order <: MonomialOrder = ((c, (m,)) for (m, c) in pairs(p, order=Order()))
 _ofpolynomialtype(m::AbstractMonomial, c) = _ofpolynomialtype(Term(m, c))
 _ofpolynomialtype(m, c) = m * c
-_ofpolynomialtype(t::Term{M,C}) where {M,C} = Polynomial{M,C}([t])
+_ofpolynomialtype(t::Term{M,C}) where {M,C} = Polynomial(M[monomial(t)], C[coefficient(t)])
 function _expansion2(p::Polynomial, spec::MonomialOrder)
     C = remove_variables(typeof(p), namingscheme(spec))
     M = monomialtype(spec, exptype(typeof(p), namingscheme(spec)))
     M′ = remove_variables(monomialtype(p), namingscheme(spec))
     exploded = Tuple{C, Tuple{M}}[
         (
-            m = _lossy_convert_monomial(M, monomial(t));
-            m′ = _lossy_convert_monomial(M′, monomial(t));
+            m = _lossy_convert_monomial(M, m1);
+            m′ = _lossy_convert_monomial(M′, m1);
             c′ = _ofpolynomialtype(m′, c);
             (c′, (m * m2,))
         )
-        for t in terms(p)
-        for (c, (m2,)) in _expansion2(coefficient(t), spec)
+        for (m1, c1) in pairs(p)
+        for (c, (m2,)) in _expansion2(c1, spec)
     ]
     sort!(exploded, by = i -> i[2])
     collected = [

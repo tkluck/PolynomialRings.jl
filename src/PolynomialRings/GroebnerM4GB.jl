@@ -6,6 +6,7 @@ import Base.Iterators: flatten
 
 import DataStructures: DefaultDict, SortedSet
 import DataStructures: PriorityQueue, enqueue!, dequeue_pair!, SortedSet
+import InPlace: @inplace
 import ProgressMeter: Progress, finish!, next!, @showprogress
 
 import ..Backends.Gröbner: M4GB
@@ -13,8 +14,8 @@ import ..Modules: AbstractModuleElement, modulebasering, Signature, leading_row
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
 import ..Monomials: AbstractMonomial
 import ..Operators: integral_fraction
-import ..Polynomials: Polynomial, terms
-import ..Terms: monomial
+import ..Polynomials: Polynomial, nzterms, nztailterms, nzrevterms
+import ..Terms: monomial, coefficient
 import PolynomialRings: gröbner_basis, monomialtype, base_extend
 import PolynomialRings: maybe_div, termtype, lcm_multipliers
 
@@ -65,25 +66,25 @@ end
 
 select!(P) = dequeue_pair!(P)
 
-tailterms_divisible_by(p::Polynomial, m::AbstractMonomial, reverse::Val{true}) = (
+tailterms_divisible_by(p::Polynomial, m::AbstractMonomial; order) = (
     t
-    for t in @view(p.terms[end-1:-1:1]) if
+    for t in nztailterms(p, order=order) if
     divides(m, monomial(t))
 )
 
-function tailterms_divisible_by(p::AbstractVector{<:Polynomial}, m::Signature, reverse::Val{true})
+function tailterms_divisible_by(p::AbstractArray{<:Polynomial}, m::Signature; order)
     l = leading_row(p)
     row = m.i
     if m.i == l
         return (
             Signature(m.i, t)
-            for t in @view(p[m.i].terms[end-1:-1:1]) if
+            for t in nztailterms(p[m.i], order=order) if
             divides(m.m, monomial(t))
         )
     elseif m.i > l
         return (
             Signature(m.i, t)
-            for t in @view(p[m.i].terms[end:-1:1]) if
+            for t in nzrevterms(p[m.i], order=order) if
             divides(m.m, monomial(t))
         )
     else
@@ -96,7 +97,7 @@ function update_with(M, H, lm_H, fₗₘ; order)
 
     max = nothing
     for h in flatten((values(M), H))
-        for t in tailterms_divisible_by(h, fₗₘ, Val(true))
+        for t in tailterms_divisible_by(h, fₗₘ, order=order)
             if max !== nothing && monomial(t) ⪯ max
                 break
             end
@@ -117,17 +118,13 @@ function updatereduce!(L, M, MM, P, f; order)
 
     while (u = update_with(M, H, lm_H, lm(f), order=order)) != nothing
         h = mulfullreduce!(L, M, maybe_div(u, lm(f)) * inv(lc(f)), tail(f), order=order)
-        res = if u isa Signature
-            x = h[u.i]
-            push!(x.terms, u.m)
-            @assert issorted(x.terms, order=order)
-            h[u.i] = x
-            h
+        if u isa Signature
+            @inplace h[u.i] += u.m
         else
-            u + h
+            @inplace h += u
         end
-        push!(H, res)
-        push!(lm_H, u)
+        push!(H, h)
+        push!(lm_H, lm(h))
     end
 
     sort!(H, order=order)
@@ -140,14 +137,19 @@ function updatereduce!(L, M, MM, P, f; order)
         end
         for g in MM[lm(h)]
             if (c = g[lm(h)]) |> !iszero
-                @. g -= c * h
-                for t in terms(h, order=order)
+                if g isa AbstractArray
+                    f!(g_i, c, h_i) = g_i .-= c .* h_i
+                    g .= f!.(g, c, h)
+                else
+                    @. g -= c * h
+                end
+                for t in nzterms(h, order=order)
                     push!(MM[monomial(t)], g)
                 end
             end
         end
         M[lm(h)] = h
-        for t in terms(h, order=order)
+        for t in nzterms(h, order=order)
             push!(MM[monomial(t)], h)
         end
     end
@@ -199,20 +201,18 @@ function mulfullreduce!(L, M, t, f; order)
     @withmonomialorder order
 
     h = zero(f)
-    for s in terms(f, order=order)
+    for s in nzterms(f, order=order)
         r = t * s
         g = getreductor!(M, L, r; order=order)
         if g != nothing
-            d = maybe_div(r, lt(g))
+            #d = maybe_div(r, lt(g))
+            d = coefficient(r) // lc(g)
             h .-= d .* tail(g)
         else
-            #h .+= r
             if r isa Signature
-                x = h[r.i]
-                push!(x.terms, r.m)
-                h[r.i] = x
+                @inplace h[r.i] += r.m
             else
-                push!(h.terms, r)
+                @inplace h += r
             end
         end
     end
@@ -230,17 +230,13 @@ function getreductor!(M, L, r; order)
         fₗₘ == nothing && return nothing
         f = M[fₗₘ]
         h = mulfullreduce!(L, M, maybe_div(r, lt(f)), tail(f), order=order)
-        res = if r isa Signature
-            x = h[r.i]
-            push!(x.terms, r.m)
-            @assert issorted(x.terms, order=order)
-            h[r.i] = x
-            h
+        if r isa Signature
+            @inplace h[r.i] += r.m
         else
-            r + h
+            @inplace h += r
         end
-        M[lm(res)] = res
-        return res
+        M[lm(h)] = h
+        return h
     end
 end
 
