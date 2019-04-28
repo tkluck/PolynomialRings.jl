@@ -587,7 +587,7 @@ const M4GBBroadcast = Broadcasted{
     },
 } where P <: Polynomial{M, C} where M<:AbstractMonomial{Order} where {C, Order}
 
-function __disabled_materialize!(g::Polynomial, bc::M4GBBroadcast)
+function materialize!(g::Polynomial, bc::M4GBBroadcast)
     @assert g === bc.args[1][]
     c = bc.args[2].args[1]
     h = bc.args[2].args[2][]
