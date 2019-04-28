@@ -5,6 +5,7 @@ import Base: iterate
 import Base: length, isempty
 import Base: length, iterate
 import Base: filter, filter!
+import Base: pairs
 
 import DataStructures: PriorityQueue, SortedSet
 import DataStructures: percolate_down!, percolate_up!, enqueue!, dequeue!, peek
@@ -86,6 +87,13 @@ function filter!(f::Function, s::SortedSet)
     return s
 end
 filter(f::Function, s::SortedSet) = filter!(f, copy(s))
+
+# -----------------------------------------------------------------------------
+#
+# speed up iteration over pairs(::PriorityQueue)
+#
+# -----------------------------------------------------------------------------
+pairs(x::PriorityQueue) = x.xs
 
 # -----------------------------------------------------------------------------
 #

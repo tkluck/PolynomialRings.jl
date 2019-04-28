@@ -6,6 +6,8 @@ import Base: keytype, hash, lcm
 import LinearAlgebra: mul!
 import SparseArrays: AbstractSparseArray, SparseVector, sparsevec, spzeros, nonzeros
 
+import InPlace: @inplace, inclusiveinplace!
+
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
 import ..Monomials: AbstractMonomial
 import ..Monomials: total_degree
@@ -29,6 +31,19 @@ if VERSION < v"1.2-"
 end
 
 iszero(x::SparseVector{<:Polynomial}) = all(iszero, nonzeros(x))
+"""
+    iszero(x::AbstractArray{<:Polynomial}, ix)
+
+Return true if iszero(x[ix]). In the case of sparse arrays, this
+is faster than iszero(x[xi]) because a new zero(eltype(x)) does
+not need to be allocated.
+"""
+iszero(x::AbstractArray{<:Polynomial}, ix) = iszero(x[ix])
+function iszero(x::SparseVector{<:Polynomial}, ix::Integer)
+    r = searchsorted(x.nzind, ix)
+    return isempty(r) || iszero(x.nzval[first(r)])
+end
+
 
 # see https://github.com/JuliaLang/julia/issues/31835
 zero(a::AbstractArray{<:Polynomial}) = map(_ -> zero(eltype(a)), a)
@@ -71,7 +86,7 @@ iszero(s::Signature{<:Term}) = iszero(s.m)
 coefficient(s::Signature{<:Term}) = coefficient(s.m)
 monomial(s::Signature{<:Term}) = Signature(s.i, monomial(s.m))
 
-hash(s::Signature, h::UInt) = hash(s.i, hash(s.m))
+hash(s::Signature, h::UInt) = hash(s.i, hash(s.m, h))
 
 leading_row(x::AbstractArray{<:Polynomial}) = findfirst(!iszero, x)
 
@@ -198,11 +213,26 @@ nzrevterms(x::SparseVector{<:Polynomial}; order) = (
     for t in nzrevterms(x_i, order=order)
 )
 
-function tail(x::AbstractVector{<:Polynomial}; order)
+function tail(x::AbstractArray{<:Polynomial}; order)
     res = deepcopy(x)
     ix = leading_row(x)
     res[ix] = tail(res[ix]; order=order)
     return res
+end
+
+function +(x::AbstractArray{<:Polynomial}, s::Signature)
+    res = deepcopy(x)
+    @inplace res[s.i] += s.m
+end
+
+function -(x::AbstractArray{<:Polynomial}, s::Signature)
+    res = deepcopy(x)
+    @inplace res[s.i] -= s.m
+end
+
+function inclusiveinplace!(op::Union{typeof(+), typeof(-)}, x::AbstractArray{<:Polynomial}, s::Signature)
+    x[s.i] = inclusiveinplace!(op, x[s.i], s.m)
+    x
 end
 
 """

@@ -567,4 +567,45 @@ function __disabled_materialize!(x::Polynomial, bc::HandOptimizedBroadcast)
     resize!(tgt, n)
 end
 
+# this is the inner loop for m4gb
+#    @. g -= c * h
+const M4GBBroadcast = Broadcasted{
+    Termwise{Order, P},
+    Nothing,
+    typeof(-),
+    Tuple{
+        RefValue{P},
+        Broadcasted{
+            Termwise{Order, P},
+            Nothing,
+            typeof(*),
+            Tuple{
+                C,
+                RefValue{P},
+            },
+        },
+    },
+} where P <: Polynomial{M, C} where M<:AbstractMonomial{Order} where {C, Order}
+
+function __disabled_materialize!(g::Polynomial, bc::M4GBBroadcast)
+    @assert g === bc.args[1][]
+    c = bc.args[2].args[1]
+    h = bc.args[2].args[2][]
+
+    if g.monomials === h.monomials
+        if (n = length(g.coeffs)) < (m = length(h.coeffs))
+            resize!(g.coeffs, m)
+            for i in n + 1 : m
+                g.coeffs[i] = zero(eltype(g.coeffs))
+            end
+        end
+        m = length(h.coeffs)
+        @. g.coeffs[1:m] -= c * h.coeffs
+    else
+        error("not implemented")
+    end
+
+    return g
+end
+
 end
