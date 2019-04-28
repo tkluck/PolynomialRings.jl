@@ -415,21 +415,32 @@ end
 # Use Term/Monomial/Coefficient as a scalar
 #
 # -----------------------------------------------------------------------------
-function *(a::T, b::P) where P<:Polynomial{M,C} where T<:Term{M,C} where {M,C}
-    iszero(a) && return zero(P)
-    P(monomial(a) .* b.monomials, coefficient(a) .* b.coeffs)
-end
-function *(a::P, b::T) where P<:Polynomial{M,C} where T<:Term{M,C} where {M,C}
-    iszero(b) && return zero(P)
-    P(a.monomials .* monomial(b), p.coeffs .* coefficient(b))
-end
 function *(a::M, b::P) where P<:Polynomial{M} where M<:AbstractMonomial
     P(a .* b.monomials, copy(b.coeffs))
 end
 function *(a::P, b::M) where P<:Polynomial{M} where M<:AbstractMonomial
     P(a.monomials .* b, copy(a.coeffs))
 end
-
+for Coeff in [Any, Number]
+    @eval begin
+        function *(a::T, b::P) where P<:Polynomial{M,C,MV} where T<:Term{M,C} where {M <: AbstractMonomial, C <: $Coeff, MV}
+            iszero(a) && return zero(P)
+            P(monomial(a) .* b.monomials, coefficient(a) .* b.coeffs)
+        end
+        function *(a::P, b::T) where P<:Polynomial{M,C,MV} where T<:Term{M,C} where {M <: AbstractMonomial, C <: $Coeff, MV}
+            iszero(b) && return zero(P)
+            P(a.monomials .* monomial(b), a.coeffs .* coefficient(b))
+        end
+        function *(a::C, b::P) where P<:Polynomial{M,C,MV} where {M <: AbstractMonomial, C <: $Coeff, MV}
+            iszero(a) && return zero(P)
+            P(copy(b.monomials), a .* b.coeffs)
+        end
+        function *(a::P, b::C) where P<:Polynomial{M,C,MV} where {M <: AbstractMonomial, C <: $Coeff, MV}
+            iszero(b) && return zero(P)
+            P(copy(a.monomials), a.coeffs .* b)
+        end
+    end
+end
 # -----------------------------------------------------------------------------
 #
 # Adding terms/monomials/scalars
