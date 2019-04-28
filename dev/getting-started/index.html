@@ -54,7 +54,7 @@ x</code></pre><p>The result is an object of type <code>S</code>, much like how <
 3*x^2</code></pre><p>But this doesn&#39;t:</p><pre><code class="language-julia-repl">julia&gt; diff(x^3, x)
 ERROR: MethodError: no method matching diff(::ℤ[x,y,z], ::ℤ[x,y,z])
 Closest candidates are:
-  diff(::Polynomial, !Matched::Integer) at /home/travis/build/tkluck/PolynomialRings.jl/src/PolynomialRings/Operators.jl:376
+  diff(::Polynomial, !Matched::Integer) at /home/travis/build/tkluck/PolynomialRings.jl/src/PolynomialRings/Operators.jl:373
   diff(::Polynomial, !Matched::Symbol) at /home/travis/build/tkluck/PolynomialRings.jl/src/PolynomialRings/Expansions.jl:257</code></pre><p>In some cases, we offer a convenience macro. For example, the <code>@deg</code> macro:</p><pre><code class="language-julia-repl">julia&gt; deg(x^3*y^4, :x)
 3
 
@@ -111,55 +111,20 @@ julia&gt; I = [x^5, x^2 + y, x*y + y^2]
 
 julia&gt; rem(y^2, I)  # nonzero, even though y^2 ∈ (I)
 y^2</code></pre><p>However, if you compute a Gröbner basis first, you will:</p><pre><code class="language-julia-repl">julia&gt; G = gröbner_basis(I)
-Gröbner: preparing inputs:  33%|████████                |  ETA: 0:00:05[KGröbner: preparing inputs: 100%|████████████████████████| Time: 0:00:03[K
-Computing Gröbner basis:  33%|████████▋                 |  ETA: 0:00:00[K
-  |L|:    3
-  |P|:    2
-  |M|:    5
-  loops:  1[A[A[A[A
-
-
-
-[K[A[K[A[K[A[K[AComputing Gröbner basis:  50%|█████████████             |  ETA: 0:00:00[K
-  |L|:    3
-  |P|:    2
-  |M|:    6
-  loops:  2[A[A[A[A
-
-
-
-[K[A[K[A[K[A[K[AComputing Gröbner basis:  67%|█████████████████▍        |  ETA: 0:00:00[K
-  |L|:    3
-  |P|:    2
-  |M|:    10
-  loops:  4[A[A[A[A
-
-
-
-[K[A[K[A[K[A[K[AComputing Gröbner basis: 100%|██████████████████████████| Time: 0:00:01[K
-  |L|:    3
-  |P|:    0
-  |M|:    10
-  loops:  6
-3-element Array{ℤ[x,y],1}:
+Gröbner: preparing inputs:  33%|████████                |  ETA: 0:00:01[KGröbner: preparing inputs: 100%|████████████████████████| Time: 0:00:01[K
+Computing Gröbner basis:  33%|████████▋                 |  ETA: 0:00:02[KComputing Gröbner basis: 100%|██████████████████████████| Time: 0:00:01[K
+3-element Array{ℚ[x,y],1}:
  y^2
- x*y + y^2
+ x*y
  x^2 + y
 
 julia&gt; rem(y^2, G) # now, it reduces to zero.
 0</code></pre><p>If you want to obtain the expression of <span>$y^2$</span> in these elements, you can first use <code>div</code> to obtain the (row) vector of factors expressing <span>$y^2$</span> in G:</p><pre><code class="language-julia-repl">julia&gt; div(y^2, G)
-1×3 LinearAlgebra.Transpose{ℤ[x,y],SparseArrays.SparseVector{ℤ[x,y],Int64}}:
- 1  0  0</code></pre><p>The <a href="../functions/#PolynomialRings.gröbner_transformation"><code>gröbner_transformation</code></a> function gives a matrix <code>tr</code> expressing <code>G</code> in terms of <code>I</code>:</p><pre><code class="language-julia-repl">julia&gt; G, tr = gröbner_transformation(I); tr
-Computing Gröbner basis:  50%|█████████████             |  ETA: 0:00:01[K
-  |G|:    1
-  |JP|:   2
-  loops:  2[A[A[A
-
-
-[K[A[K[A[K[AComputing Gröbner basis:  60%|███████████████▋          |  ETA: 0:00:01[K
-  |G|:    2
-  |JP|:   2
-  loops:  3[A[A[AInterreducing result 25%|███████▊                       |  ETA: 0:00:02[KInterreducing result100%|███████████████████████████████| Time: 0:00:01[K
+1×3 LinearAlgebra.Transpose{ℚ[x,y],SparseArrays.SparseVector{ℚ[x,y],Int64}}:
+ 1//1  0  0</code></pre><p>The <a href="../functions/#PolynomialRings.gröbner_transformation"><code>gröbner_transformation</code></a> function gives a matrix <code>tr</code> expressing <code>G</code> in terms of <code>I</code>:</p><pre><code class="language-julia-repl">julia&gt; G, tr = gröbner_transformation(I); tr
+Gröbner: preparing inputs 33%|████████▋                 |  ETA: 0:00:01[KGröbner: preparing inputs100%|██████████████████████████| Time: 0:00:00[K
+Computing Gröbner basis:  33%|████████▋                 |  ETA: 0:00:02[KComputing Gröbner basis:  50%|█████████████             |  ETA: 0:00:02[KComputing Gröbner basis:  75%|███████████████████▌      |  ETA: 0:00:01[KComputing Gröbner basis: 100%|██████████████████████████| Time: 0:00:02[K
+Interreducing result 25%|███████▊                       |  ETA: 0:00:04[KInterreducing result100%|███████████████████████████████| Time: 0:00:01[K
 3×3 SparseArrays.SparseMatrixCSC{ℚ[x,y],Int64} with 7 stored entries:
   [1, 1]  =  -1//1
   [3, 1]  =  -1//1
@@ -196,10 +161,10 @@ myderivative2 (generic function with 1 method)
 
 julia&gt; myderivative2(ε^3 + ε^2, :ε)
 3//1*ε^2 + 2//1*ε</code></pre><p>which gives the correct answer. Unfortunately, this is <em>very</em> inefficient:</p><pre><code class="language-julia-repl">julia&gt; @time myderivative2(ε^3 + ε^2, :ε);
-  2.918997 seconds (5.09 M allocations: 268.186 MiB, 9.54% gc time)
+  3.259486 seconds (5.68 M allocations: 297.590 MiB, 6.93% gc time)
 
 julia&gt; @time myderivative2(ε^3 + ε^2, :ε);
-  2.725584 seconds (5.09 M allocations: 268.212 MiB, 6.59% gc time)</code></pre><p>The reason is that variable names are part of the type definition, and Julia specializes functions based on the type of its arguments. In this case, that means that for evaluating the <code>@coefficient</code> call, and for the substitution call, all the code needs to be compiled <em>every time you call <code>myderivative</code></em>.</p><p>For this reason, we provide a function <code>formal_coefficient(R)</code> which yields a variable that&#39;s guaranteed not to clash with the ring that you pass as an argument:</p><pre><code class="language-julia-repl">julia&gt; function myderivative3(f::RR, varsymbol) where RR &lt;: Polynomial
+  3.439480 seconds (5.68 M allocations: 297.864 MiB, 7.82% gc time)</code></pre><p>The reason is that variable names are part of the type definition, and Julia specializes functions based on the type of its arguments. In this case, that means that for evaluating the <code>@coefficient</code> call, and for the substitution call, all the code needs to be compiled <em>every time you call <code>myderivative</code></em>.</p><p>For this reason, we provide a function <code>formal_coefficient(R)</code> which yields a variable that&#39;s guaranteed not to clash with the ring that you pass as an argument:</p><pre><code class="language-julia-repl">julia&gt; function myderivative3(f::RR, varsymbol) where RR &lt;: Polynomial
            varvalue = RR(varsymbol)
            ε_sym, ε_val = formal_coefficient(typeof(f))
            return coefficient(f(;varsymbol =&gt; varvalue + ε_val), (1,), ε_sym)
@@ -207,17 +172,18 @@ julia&gt; @time myderivative2(ε^3 + ε^2, :ε);
 myderivative3 (generic function with 1 method)
 
 julia&gt; @time myderivative3(ε^3 + ε^2, :ε);   # first time is still slow (compiling)
-  2.903209 seconds (5.73 M allocations: 304.032 MiB, 6.57% gc time)
+  3.739444 seconds (6.27 M allocations: 332.756 MiB, 10.58% gc time)
 
 julia&gt; @time myderivative3(ε^3 + ε^2, :ε);   # but much faster the second time
-  0.000738 seconds (2.73 k allocations: 67.773 KiB)
+  0.001027 seconds (2.72 k allocations: 70.180 KiB)
 
 julia&gt; @time myderivative3(ε^3 + ε^2, :ε);   # and the third
-  0.000496 seconds (2.73 k allocations: 67.773 KiB)</code></pre><h3><a class="nav-anchor" id="Free-modules-(arrays-of-polynomials)-1" href="#Free-modules-(arrays-of-polynomials)-1">Free modules (arrays of polynomials)</a></h3><p>For practical purposes, a <em>free module</em> (of finite rank) over a ring <span>$R$</span> is just an array of polynomials in <span>$R$</span>. Many algorithms that work for polynomial rings also work for modules. For example, the function <code>gröbner_basis</code> works just as well if we pass a vector of vectors of polynomials instead of a vector of polynomials:</p><pre><code class="language-julia-repl">julia&gt; G = [[x^5-y,x^4],[x^3+y,y^3]];
+  0.000766 seconds (2.72 k allocations: 70.180 KiB)</code></pre><h3><a class="nav-anchor" id="Free-modules-(arrays-of-polynomials)-1" href="#Free-modules-(arrays-of-polynomials)-1">Free modules (arrays of polynomials)</a></h3><p>For practical purposes, a <em>free module</em> (of finite rank) over a ring <span>$R$</span> is just an array of polynomials in <span>$R$</span>. Many algorithms that work for polynomial rings also work for modules. For example, the function <code>gröbner_basis</code> works just as well if we pass a vector of vectors of polynomials instead of a vector of polynomials:</p><pre><code class="language-julia-repl">julia&gt; G = [[x^5-y,x^4],[x^3+y,y^3]];
 
 julia&gt; GG = gröbner_basis(G)
-Gröbner: preparing inputs:  50%|████████████            |  ETA: 0:00:03[KGröbner: preparing inputs: 100%|████████████████████████| Time: 0:00:03[K
-4-element Array{Array{ℤ[x,y],1},1}:
+Gröbner: preparing inputs:  50%|████████████            |  ETA: 0:00:00[KGröbner: preparing inputs: 100%|████████████████████████| Time: 0:00:00[K
+Computing Gröbner basis:  75%|███████████████████▌      |  ETA: 0:00:00[KComputing Gröbner basis: 100%|██████████████████████████| Time: 0:00:00[K
+4-element Array{Array{ℚ[x,y],1},1}:
  [0, x^5*y^3 + -x^7 + -x^4*y + -y^4]
  [x*y + -y^2, x^3*y^3 + -x^5 + -y^4]
  [y^3 + y, -x^4*y^3 + -x^3*y^4 + x^6 + x^5*y + x^2*y^3 + x*y^4 + y^5 + -x^4]
