@@ -7,7 +7,6 @@ import Base.Iterators: flatten
 import DataStructures: DefaultDict, SortedSet
 import DataStructures: PriorityQueue, enqueue!, dequeue_pair!, SortedSet
 import InPlace: @inplace
-import ProgressMeter: Progress, finish!, next!, @showprogress
 
 import ..Backends.Gröbner: M4GB
 import ..Modules: AbstractModuleElement, modulebasering, Signature, leading_row
@@ -42,9 +41,7 @@ function m4gb(order::MonomialOrder, F::AbstractVector{<:AbstractModuleElement})
             updatereduce!(L, M, MM, P, f, order=order)
         end
     end
-    progress = Progress(length(P), "Computing Gröbner basis: ")
-    loops = 0
-    while !isempty(P)
+    @showprogress "Computing Gröbner basis: " while !isempty(P)
         ((fₗₘ, gₗₘ), _) = select!(P)
         f = M[fₗₘ]; g = M[gₗₘ]
 
@@ -54,13 +51,7 @@ function m4gb(order::MonomialOrder, F::AbstractVector{<:AbstractModuleElement})
         if (h = h₁ - h₂) |> !iszero
             updatereduce!(L, M, MM, P, h, order=order)
         end
-
-        loops += 1
-        progress.n = length(P) + loops
-        next!(progress; showvalues = [(Symbol("|L|"), length(L)), (Symbol("|P|"), length(P)), (Symbol("|M|"), length(M)), (:loops, loops)])
-
     end
-    finish!(progress)
 
     return [M[fₗₘ] for fₗₘ in L]
 end

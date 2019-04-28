@@ -6,7 +6,6 @@ import LinearAlgebra: Transpose
 import SparseArrays: SparseVector, sparsevec, sparse
 
 import DataStructures: SortedDict, DefaultDict
-import ProgressMeter: Progress, finish!, next!, @showprogress
 
 import ..Backends.Gröbner: GWV
 import ..Modules: AbstractModuleElement, modulebasering
@@ -16,6 +15,7 @@ import ..Monomials: total_degree, any_divisor
 import ..Operators: Lead, Full, content, integral_fraction
 import ..Polynomials: Polynomial, monomialorder, monomialtype, PolynomialBy
 import ..Terms: monomial, coefficient
+import ..Util: @showprogress
 import PolynomialRings: gröbner_basis, gröbner_transformation, xrem!
 import PolynomialRings: leading_term, leading_monomial, lcm_multipliers, lcm_degree, fraction_field, basering, base_extend, base_restrict
 import PolynomialRings: maybe_div, termtype, monomialtype, leading_row, leading_coefficient
@@ -97,7 +97,7 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
     JP = SortedDict{Signature, MM}(order)
 
     n = length(polynomials)
-    for (i,p) in enumerate(polynomials)
+    @showprogress "Gröbner: preparing inputs" for (i,p) in enumerate(polynomials)
         T = leading_monomial( sparsevec(Dict(i=>one(R)), n) )
         m = (T, p)
         if T ∈ keys(JP)
@@ -110,14 +110,8 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
         end
     end
 
-    progress = Progress(length(JP), "Computing Gröbner basis: ")
-    loops = 0
     # step 3
-    while !isempty(JP)
-        loops += 1
-        progress.n = length(JP) + loops
-        next!(progress; showvalues = [(Symbol("|G|"), length(G)), (Symbol("|JP|"), length(JP)), (:loops, loops)])
-
+    @showprogress "Computing Gröbner basis: " while !isempty(JP)
         # step 1.
         sig, m = first(JP)
         delete!(JP, sig)
