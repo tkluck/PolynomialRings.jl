@@ -16,8 +16,9 @@ import ..Monomials: AbstractMonomial
 import ..Operators: integral_fraction
 import ..Polynomials: Polynomial, nzterms, nztailterms, nzrevterms
 import ..Terms: monomial, coefficient
+import ..Util: @showprogress
 import PolynomialRings: gröbner_basis, monomialtype, base_extend
-import PolynomialRings: maybe_div, termtype, lcm_multipliers
+import PolynomialRings: maybe_div, divides, termtype, lcm_multipliers
 
 """
     gröbner_basis = m4gb(monomialorder, polynomials)
@@ -246,8 +247,6 @@ function reducesel(L, m)
     end
     return nothing
 end
-
-divides(f, g) = maybe_div(g, f) != nothing
 
 function gröbner_basis(::M4GB, o::MonomialOrder, G::AbstractArray{<:AbstractModuleElement}; kwds...)
     isempty(G) && return copy(G)

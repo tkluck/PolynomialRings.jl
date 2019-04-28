@@ -17,7 +17,7 @@ import ..Terms: Term
 import ..Terms: coefficient, monomial
 import PolynomialRings: leaddiv, leadrem, leaddivrem
 import PolynomialRings: leading_row, leading_term, leading_monomial, leading_coefficient, base_extend
-import PolynomialRings: maybe_div, lcm_degree, lcm_multipliers
+import PolynomialRings: maybe_div, divides, lcm_degree, lcm_multipliers
 import PolynomialRings: termtype, monomialtype
 
 # This should probably be in Base; see
@@ -59,6 +59,7 @@ monomialtype(p::Type{<:AbstractArray{<:Polynomial}}) = Signature{monomialtype(el
 *(s::Signature,m::Union{AbstractMonomial,Term,Number})  = Signature(s.i, s.m * m)
 *(m::Union{AbstractMonomial,Term,Number}, s::Signature) = Signature(s.i, s.m * m)
 maybe_div(s::Signature, t::Signature)            = s.i == t.i ? maybe_div(s.m, t.m) : nothing
+divides(s::Signature, t::Signature)              = s.i == t.i && divides(s.m, t.m)
 lcm_degree(s::Signature, t::Signature)           = s.i == t.i ? lcm_degree(s.m, t.m) : nothing
 lcm_multipliers(s::Signature, t::Signature)      = s.i == t.i ? lcm_multipliers(s.m, t.m) : nothing
 lcm(s::Signature, t::Signature)                  = s.i == t.i ? Signature(s.i, lcm(s.m, t.m)) : nothing

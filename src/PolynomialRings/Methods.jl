@@ -53,6 +53,7 @@ function leading_monomial end
 function leading_coefficient end
 function leading_row end
 function maybe_div end
+function divides end
 function lcm_multipliers end
 function lcm_degree end
 function leaddiv end

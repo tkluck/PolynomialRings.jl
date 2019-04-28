@@ -9,7 +9,7 @@ import SparseArrays: SparseVector, sparsevec
 import SparseArrays: nonzeroinds
 
 import ..NamingSchemes: Named, Numbered, NamingScheme, isdisjoint
-import PolynomialRings: generators, to_dense_monomials, max_variable_index, monomialtype, num_variables
+import PolynomialRings: generators, to_dense_monomials, max_variable_index, monomialtype, num_variables, divides
 import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namingscheme, monomialorder
 
 """
@@ -203,6 +203,10 @@ function maybe_div(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where
     else
         return nothing
     end
+end
+
+function divides(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order
+    return all(i -> a[i] <= b[i], index_union(a,b))
 end
 
 function lcm_multipliers(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order

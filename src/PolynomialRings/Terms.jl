@@ -9,7 +9,7 @@ import ..Monomials: total_degree
 import ..NamingSchemes: NamingScheme
 import ..Util: lazymap
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering
-import PolynomialRings: maybe_div, lcm_multipliers, monomialtype, exptype, lcm_degree, namingscheme, monomialorder
+import PolynomialRings: maybe_div, divides, lcm_multipliers, monomialtype, exptype, lcm_degree, namingscheme, monomialorder
 
 """
     Term{M, C} where M <: AbstractMonomial where C
@@ -79,6 +79,8 @@ function maybe_div(a::T, b::T) where T<:Term
         return T(q, coefficient(a) // coefficient(b))
     end
 end
+
+divides(a::T, b::T) where T <: Term = divides(monomial(a), monomial(b))
 
 function lcm_multipliers(a::T, b::T)::Tuple{T,T} where T<:Term
     m_a,m_b = lcm_multipliers(monomial(a), monomial(b))
