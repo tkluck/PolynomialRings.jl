@@ -240,7 +240,4 @@ function gröbner_basis(::M4GB, o::MonomialOrder, G::AbstractArray{<:AbstractMod
     return m4gb(o, G, kwds...)
 end
 
-# Temporary until the branch with dense polynomials gets merged
-issparse(::Polynomial) = true
-
 end
