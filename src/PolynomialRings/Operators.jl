@@ -9,6 +9,7 @@ import ..Constants: Zero
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
 import ..Monomials: AbstractMonomial
 import ..Polynomials: Polynomial, termtype, nztermscount, monomialorder, monomialtype
+import ..Polynomials: monomialstype
 import ..Polynomials: leading_term, nzrevterms, nztailterms, nzterms
 import ..Polynomials: PolynomialBy, isstrictlysparse
 import ..Terms: Term, monomial, coefficient
@@ -19,17 +20,27 @@ import PolynomialRings: lcm_multipliers
 import PolynomialRings: leading_monomial, leading_coefficient
 import PolynomialRings: maybe_div
 
+function _extendcoeffs!(coeffs, n)
+    if (m = length(coeffs)) < n
+        resize!(coeffs, n)
+        for i in m + 1 : n
+            coeffs[i] = zero(eltype(coeffs))
+        end
+    end
+    coeffs
+end
+
 # -----------------------------------------------------------------------------
 #
 # zero, one, etc
 #
 # -----------------------------------------------------------------------------
-zero(::Type{P}) where P<:Polynomial = P(monomialtype(P)[], basering(P)[])
+zero(::Type{P}) where P<:Polynomial = P(monomialstype(P)(), basering(P)[])
 one(::Type{P})  where P<:Polynomial = P([one(monomialtype(P))], [one(basering(P))])
 zero(::P)       where P <: Polynomial = zero(P)
 one(::P)        where P <: Polynomial = one(P)
 
-iszero(a::P)        where P <: Polynomial = nztermscount(a) == 0
+iszero(a::P)        where P <: Polynomial = iszero(a.coeffs)
 # FIXME: allow for structural zeros
 ==(a::P, b::P)      where P <: Polynomial = a.monomials == b.monomials && a.coeffs == b.coeffs
 +(a::P)             where P <: Polynomial = P(copy(a.monomials), copy(a.coeffs))
@@ -89,6 +100,20 @@ function _map(op, a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
     M = monomialtype(P)
     C = basering(P)
     ≺(a,b) = Base.Order.lt(Order(), a, b)
+
+    if a.monomials === b.monomials
+        if length(a.coeffs) < length(b.coeffs)
+            coeffs = op.(Zero(), b.coeffs)
+            initial = 1:length(a.coeffs)
+            coeffs[initial] .= op.(view(a.coeffs, initial), view(b.coeffs, initial))
+            return _filterzeros!(P(copy(b.monomials), coeffs))
+        else
+            coeffs = op.(a.coeffs, Zero())
+            initial = 1:length(b.coeffs)
+            coeffs[initial] .= op.(view(a.coeffs, initial), view(b.coeffs, initial))
+            return _filterzeros!(P(copy(b.monomials), coeffs))
+        end
+    end
 
     monomials = Vector{M}(undef, length(a.monomials) + length(b.monomials))
     coeffs    = Vector{C}(undef, length(a.coeffs)    + length(b.coeffs))
@@ -453,6 +478,7 @@ function inclusiveinplace!(::typeof(+), a::P, b::T) where
     ix = searchsorted(a.monomials, monomial(b))
     if length(ix) == 1
         i = first(ix)
+        _extendcoeffs!(a.coeffs, i)
         @inplace a.coeffs[i] += coefficient(b)
         if isstrictlysparse(a) && iszero(a.coeffs[i])
             deleteat!(a.monomials, i)

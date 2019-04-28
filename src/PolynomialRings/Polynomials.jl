@@ -1,13 +1,12 @@
 module Polynomials
 
 import Base: first, last, copy, hash, pairs
-import SparseArrays: SparseVector, HigherOrderFns
+import SparseArrays: SparseVector, HigherOrderFns, issparse
 
 import ..MonomialOrderings: MonomialOrder
-import ..MonomialOrderings: MonomialOrder
 import ..Monomials: AbstractMonomial, TupleMonomial, VectorMonomial
-import ..Terms: Term, monomial, coefficient
 import ..NamingSchemes: Named, Numbered, NamingScheme, fullnamingscheme, isdisjoint, isvalid
+import ..Terms: Term, monomial, coefficient
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering, monomialtype
 import PolynomialRings: leading_coefficient, leading_monomial
 import PolynomialRings: leading_term, termtype, monomialorder, nzterms, exptype, namingscheme
@@ -34,7 +33,7 @@ struct Polynomial{M <: AbstractMonomial, C, MonomVector}
     coeffs::Vector{C}
 end
 
-Polynomial(monomials::Vector{<:AbstractMonomial}, coeffs::Vector) = Polynomial{eltype(monomials), eltype(coeffs), typeof(monomials)}(monomials, coeffs)
+Polynomial(monomials, coeffs::Vector) = Polynomial{eltype(monomials), eltype(coeffs), typeof(monomials)}(monomials, coeffs)
 
 polynomialtype(M::Type{<:AbstractMonomial}, C::Type) = Polynomial{M, C, Vector{M}}
 
@@ -63,8 +62,11 @@ const PolynomialIn{M}         = Polynomial{M}
 #
 # -----------------------------------------------------------------------------
 
-isstrictlysparse(::Type{<:Polynomial}) = true
+isstrictlysparse(P::Type{<:Polynomial}) = monomialstype(P) <: Vector
 isstrictlysparse(f::Polynomial) = isstrictlysparse(typeof(f))
+issparse(P::Type{<:Polynomial}) = monomialstype(P) <: Vector
+issparse(f::Polynomial) = issparse(typeof(f))
+
 
 pairs(p::PolynomialBy{Order}, order::Order) where Order<:MonomialOrder = zip(p.monomials, p.coeffs)
 pairs(p::Polynomial; order::MonomialOrder=monomialorder(p)) = pairs(p, order)
@@ -90,6 +92,7 @@ nzrevterms(p::PolynomialBy{Order}; order::Order=monomialorder(p)) where Order <:
 )
 
 termtype(::Type{Polynomial{M,C,MV}}) where {M,C,MV}  = Term{M,C}
+monomialstype(::Type{Polynomial{M,C,MV}}) where {M,C,MV} = MV
 exptype(::Type{P}, scheme::NamingScheme...) where P<:Polynomial = exptype(termtype(P), scheme...)
 namingscheme(::Type{P}) where P<:Polynomial = namingscheme(termtype(P))
 monomialorder(::Type{P}) where P<:Polynomial = monomialorder(termtype(P))
@@ -119,17 +122,21 @@ end
 leading_monomial(p::Polynomial; order::MonomialOrder=monomialorder(p)) = p.monomials[_leading_term_ix(p, order)]
 leading_coefficient(p::Polynomial; order::MonomialOrder=monomialorder(p)) = p.coeffs[_leading_term_ix(p, order)]
 
-tail(p::PolynomialBy{Order}, order::Order) where Order <: MonomialOrder = typeof(p)(p.monomials[1:end-1], p.coeffs[1:end-1])
+function tail(p::PolynomialBy{Order}, order::Order) where Order <: MonomialOrder
+    ix = _leading_term_ix(p, order)
+    typeof(p)(p.monomials[1:ix-1], p.coeffs[1:ix-1])
+end
 tail(p::Polynomial, order::MonomialOrder) = p - leading_term(p; order=order)
 tail(p::Polynomial; order::MonomialOrder=monomialorder(p)) = tail(p, order)
 
 function Base.getindex(p::PolynomialIn{M}, m::M) where M <: AbstractMonomial
     if (range = searchsorted(p.monomials, m)) |> !isempty
         ix = first(range)
-        return p.coeffs[ix]
-    else
-        return zero(basering(p))
+        if ix <= length(p.coeffs)
+            return p.coeffs[ix]
+        end
     end
+    return zero(basering(p))
 end
 
 # match the behaviour for Number
