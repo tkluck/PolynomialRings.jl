@@ -105,6 +105,58 @@ function update_with(M, H, lm_H, fₗₘ, order)
     return max
 end
 
+function lazyupdatereduce!(L, M, MM, P, f, order)
+    M[lm(f)] = f
+    if issparse(f)
+        for t in nzterms(f, order=order)
+            push!(MM[monomial(t)], f)
+        end
+    end
+    update!(L, P, lm(f), order)
+end
+
+function ensurereduced!(L, M, MM, P, gₗₘ, order)
+    @withmonomialorder order
+
+    g₀ = M[gₗₘ]
+    H = [g₀]
+    lm_H = Set(lm(h) for h in H)
+
+    dummyM = empty(M)
+
+    skippedfirst = false
+    reduced_until = MMM[gₗₘ]
+    for fₗₘ in LL[reduced_until:end]
+        if !skippedfirst
+            skippedfirst = true
+            continue
+        end
+        f = M[fₗₘ]
+        while (u = update_with(dummyM, H, lm_H, fₗₘ, order)) != nothing
+            h = mulfullreduce!(L, M, MM, maybe_div(u, fₗₘ) * inv(lc(f)), tail(f), order)
+            @inplace h += u
+            push!(H, h)
+            push!(lm_H, lm(h))
+        end
+
+        sort!(H, order=order)
+        while !isempty(H)
+            h = popfirst!(H)
+            for g in H
+                if (c = g[lm(h)]) |> !iszero
+                    @. g -= c * h
+                end
+            end
+            M[lm(h)] = h
+            if issparse(f)
+                for t in nzterms(h, order=order)
+                    push!(MM[monomial(t)], h)
+                end
+            end
+        end
+    end
+end
+
 function updatereduce!(L, M, MM, P, f, order)
     @withmonomialorder order
 
