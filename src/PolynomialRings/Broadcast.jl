@@ -118,9 +118,9 @@ import ..Terms: Term, monomial, coefficient
 import ..Util: ParallelIter
 import PolynomialRings: monomialorder, monomialtype, basering
 
-broadcastable(p::AbstractMonomial) = Ref(p)
-broadcastable(p::Term) = Ref(p)
-broadcastable(p::Polynomial) = Ref(p)
+broadcastable(p::AbstractMonomial) = p
+broadcastable(p::Term) = p
+broadcastable(p::Polynomial) = p
 
 # -----------------------------------------------------------------------------
 #
@@ -129,7 +129,7 @@ broadcastable(p::Polynomial) = Ref(p)
 # -----------------------------------------------------------------------------
 struct Termwise{Order, P} <: BroadcastStyle end
 
-BroadcastStyle(::Type{<:RefValue{P}}) where P<:Polynomial = Termwise{typeof(monomialorder(P)), P}()
+BroadcastStyle(::Type{<:P}) where P<:Polynomial = Termwise{typeof(monomialorder(P)), P}()
 BroadcastStyle(s::Termwise{Order, P}, t::Termwise{Order, Q}) where {Order,P,Q} = Termwise{Order, promote_type(P, Q)}()
 BroadcastStyle(s::Termwise, t::AbstractArrayStyle{0}) = s
 BroadcastStyle(s::Termwise, t::BroadcastStyle) = t
@@ -204,7 +204,7 @@ Base.eltype(t::TermsMap) = Base._return_type(t.op, Tuple{eltype(t.terms)})
 #  Leaf cases for `iterterms`
 #
 # -----------------------------------------------------------------------------
-iterterms(a::RefValue{<:PolynomialBy{Order}}) where Order = TermsMap(identity, Order(), nzterms(a[], order=Order()), nztermscount(a[]), Val(false))
+iterterms(a::PolynomialBy{Order}) where Order = TermsMap(identity, Order(), nzterms(a[], order=Order()), nztermscount(a[]), Val(false))
 iterterms(a::Owned{<:PolynomialBy{Order}}) where Order = TermsMap(identity, Order(), nzterms(a[], order=Order()), nztermscount(a[]), Val(true))
 
 # -----------------------------------------------------------------------------
@@ -212,7 +212,7 @@ iterterms(a::Owned{<:PolynomialBy{Order}}) where Order = TermsMap(identity, Orde
 #  termsbound base case and recursion
 #
 # -----------------------------------------------------------------------------
-termsbound(a::RefValue{<:Polynomial}) = nztermscount(a[])
+termsbound(a::Polynomial) = nztermscount(a[])
 termsbound(a::Owned{<:Polynomial}) = nztermscount(a[])
 termsbound(a::RefValue) = 1
 termsbound(a::Number) = 1
@@ -304,43 +304,43 @@ function iterterms(::Order, op::typeof(*), a::TermsMap{Order,true}, b::PossiblyB
     end
 end
 
-function iterterms(::Order, op::typeof(*), a::RefValue{<:AbstractMonomial}, b::TermsMap{Order}) where Order
+function iterterms(::Order, op::typeof(*), a::AbstractMonomial, b::TermsMap{Order}) where Order
     TermsMap(Order(), b, b.bound, inplaceval(b)) do t
         # NOTE: we are not deepcopying the coefficient, but materialize!() will
         # take care of that if the end result is not transient
-        return typeof(t)(a[]*monomial(t), coefficient(t))
+        return typeof(t)(a*monomial(t), coefficient(t))
     end
 end
 
-function iterterms(::Order, op::typeof(*), a::TermsMap{Order}, b::RefValue{<:AbstractMonomial}) where Order
+function iterterms(::Order, op::typeof(*), a::TermsMap{Order}, b::AbstractMonomial) where Order
     TermsMap(Order(), a, a.bound, inplaceval(a)) do t
         # NOTE: we are not deepcopying the coefficient, but materialize!() will
         # take care of that if the end result is not transient
-        return typeof(t)(monomial(t)*b[], coefficient(t))
+        return typeof(t)(monomial(t)*b, coefficient(t))
     end
 end
 
-function iterterms(::Order, op::typeof(*), a::RefValue{<:Term}, b::TermsMap{Order}) where Order
+function iterterms(::Order, op::typeof(*), a::Term, b::TermsMap{Order}) where Order
     TermsMap(Order(), b, b.bound, inplaceval(b)) do t
         c = coefficient(t)
         if is_inplace(b)
-            @inplace c *= coefficient(a[])
+            @inplace c *= coefficient(a)
         else
-            c *= coefficient(a[])
+            c *= coefficient(a)
         end
-        return typeof(t)(monomial(t)*monomial(a[]), c)
+        return typeof(t)(monomial(t)*monomial(a), c)
     end
 end
 
-function iterterms(::Order, op::typeof(*), a::TermsMap{Order}, b::RefValue{<:Term}) where Order
+function iterterms(::Order, op::typeof(*), a::TermsMap{Order}, b::Term) where Order
     TermsMap(Order(), a, a.bound, inplaceval(a)) do t
         c = coefficient(t)
         if is_inplace(a)
-            @inplace c *= coefficient(b[])
+            @inplace c *= coefficient(b)
         else
-            c *= coefficient(b[])
+            c *= coefficient(b)
         end
-        return typeof(t)(monomial(t)*monomial(b[]), c)
+        return typeof(t)(monomial(t)*monomial(b), c)
     end
 end
 
@@ -507,10 +507,10 @@ function __disabled_materialize!(x::Polynomial, bc::HandOptimizedBroadcast)
     ≺(a,b) = Base.Order.lt(monomialorder(x), a, b)
 
     m1 = bc.args[1].args[1]
-    v1 = bc.args[1].args[2][]
+    v1 = bc.args[1].args[2]
     m2 = bc.args[2].args[1]
-    t  = bc.args[2].args[2].args[1][]
-    v2 = bc.args[2].args[2].args[2][]
+    t  = bc.args[2].args[2].args[1]
+    v2 = bc.args[2].args[2].args[2]
 
     tgt = x.terms
     src1 = v1.terms
@@ -574,23 +574,23 @@ const M4GBBroadcast = Broadcasted{
     Nothing,
     typeof(-),
     Tuple{
-        RefValue{P},
+        P,
         Broadcasted{
             Termwise{Order, P},
             Nothing,
             typeof(*),
             Tuple{
                 C,
-                RefValue{P},
+                P,
             },
         },
     },
 } where P <: Polynomial{M, C} where M<:AbstractMonomial{Order} where {C, Order}
 
 function materialize!(g::Polynomial, bc::M4GBBroadcast)
-    @assert g === bc.args[1][]
+    @assert g === bc.args[1]
     c = bc.args[2].args[1]
-    h = bc.args[2].args[2][]
+    h = bc.args[2].args[2]
 
     if g.monomials === h.monomials
         if (n = length(g.coeffs)) < (m = length(h.coeffs))

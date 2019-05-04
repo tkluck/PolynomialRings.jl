@@ -140,9 +140,38 @@ function Base.getindex(p::PolynomialIn{M}, m::M) where M <: AbstractMonomial
 end
 
 # match the behaviour for Number
-first(p::Polynomial) = p
-last(p::Polynomial) = p
-copy(p::Polynomial) = p
+# some code treats numbers as collection-like
+for Number in [Polynomial, Term, AbstractMonomial]
+    @eval begin
+        Base.size(x::$Number) = ()
+        Base.size(x::$Number, d::Integer) = d < 1 ? throw(BoundsError()) : 1
+        Base.axes(x::$Number) = ()
+        Base.axes(x::$Number, d::Integer) = d < 1 ? throw(BoundsError()) : OneTo(1)
+        Base.eltype(::Type{T}) where {T<:$Number} = T
+        Base.ndims(x::$Number) = 0
+        Base.ndims(::Type{<:$Number}) = 0
+        Base.length(x::$Number) = 1
+        Base.firstindex(x::$Number) = 1
+        Base.lastindex(x::$Number) = 1
+        Base.IteratorSize(::Type{<:$Number}) = HasShape{0}()
+        Base.keys(::$Number) = OneTo(1)
+
+        Base.getindex(x::$Number) = x
+        function Base.getindex(x::$Number, i::Integer)
+            Base.@_inline_meta
+            @boundscheck i == 1 || throw(BoundsError())
+            x
+        end
+        function Base.getindex(x::$Number, I::Integer...)
+            Base.@_inline_meta
+            @boundscheck all(i == 1 for i in I) || throw(BoundsError())
+            x
+        end
+        Base.first(x::$Number) = x
+        Base.last(x::$Number) = x
+        Base.copy(x::$Number) = x # some code treats numbers as collection-like
+    end
+end
 
 function Base.Order.lt(order::MonomialOrder, a::P, b::P) where P <: Polynomial
     iszero(b) && return false
