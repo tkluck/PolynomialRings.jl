@@ -2,7 +2,7 @@ module IndexedMonomials
 
 import Base: *, ==, //, +, -
 import Base: iszero, zero
-import Base: hash, convert, getindex, iterate
+import Base: hash, convert, exponent, iterate
 import Base: lcm
 
 import ProgressMeter: @showprogress
@@ -39,9 +39,9 @@ function nzindices(m::IndexedMonomial)
     nzindices(convert(N, m))
 end
 
-function Base.getindex(m::IndexedMonomial, ix)
+function exponent(m::IndexedMonomial, ix)
     N = densetype(typeof(m))
-    getindex(convert(N, m), ix)
+    exponent(convert(N, m), ix)
 end
 
 Base.lt(::Order, a::M, b::M) where M <: IndexedMonomial{Order} where Order <: MonomialOrder{:degrevlex} = a.ix < b.ix

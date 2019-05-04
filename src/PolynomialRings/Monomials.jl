@@ -1,6 +1,6 @@
 module Monomials
 
-import Base: getindex, gcd, lcm, one, *, ^, ==, diff, isless, iszero
+import Base: exponent, gcd, lcm, one, *, ^, ==, diff, isless, iszero
 import Base: hash
 import Base: iterate
 import Base: last, findlast, length
@@ -26,7 +26,7 @@ of the variables.
 
 Each concrete implementation `M` should implement for elements `m`:
 
-    m[i]
+    exponent(m, i)
     nzindices(m)
     _construct(M, i -> exponent, nonzero_indices, [total_degree])
     exptype(M)
@@ -116,17 +116,17 @@ function iterate(enz::EnumerateNZ)
     it = iterate(nzindices(enz.a))
     it === nothing && return nothing
     i, next_state = it
-    (i,enz.a[i]), next_state
+    (i, exponent(enz.a, i)), next_state
 end
 function iterate(enz::EnumerateNZ, state)
     it = iterate(nzindices(enz.a), state)
     it === nothing && return nothing
     i, next_state = it
-    (i,enz.a[i]), next_state
+    (i, exponent(enz.a, i)), next_state
 end
 start(enz::EnumerateNZ) = start(nzindices(enz.a))
 done(enz::EnumerateNZ, state) = done(nzindices(enz.a), state)
-next(enz::EnumerateNZ, state) = ((i,next_state) = next(nzindices(enz.a), state); ((i,enz.a[i]), next_state))
+next(enz::EnumerateNZ, state) = ((i,next_state) = next(nzindices(enz.a), state); ((i, exponent(enz.a, i)), next_state))
 length(enz::EnumerateNZ) = length(nzindices(enz.a))
 
 # -----------------------------------------------------------------------------
@@ -140,13 +140,13 @@ length(enz::EnumerateNZ) = length(nzindices(enz.a))
 one(::Type{M}) where M <: AbstractMonomial = _construct(M, i->0, 1:0)
 one(::M) where M <: AbstractMonomial = one(M)
 
-*(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _construct(promote_type(typeof(a), typeof(b)),i -> a[i] + b[i], index_union(a,b), total_degree(a) + total_degree(b))
-^(a::M, n::Integer) where M <: AbstractMonomial = _construct(M,i -> a[i]*n, nzindices(a), total_degree(a)*n)
+*(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _construct(promote_type(typeof(a), typeof(b)),i -> exponent(a, i) + exponent(b, i), index_union(a,b), total_degree(a) + total_degree(b))
+^(a::M, n::Integer) where M <: AbstractMonomial = _construct(M,i -> exponent(a, i)*n, nzindices(a), total_degree(a)*n)
 
-total_degree(a::A) where A <: AbstractMonomial = mapreduce(i->a[i], +, nzindices(a), init=zero(exptype(a)))
+total_degree(a::A) where A <: AbstractMonomial = mapreduce(i->exponent(a, i), +, nzindices(a), init=zero(exptype(a)))
 
-lcm(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _construct(promote_type(typeof(a), typeof(b)),i -> max(a[i], b[i]), index_union(a,b))
-gcd(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _construct(promote_type(typeof(a), typeof(b)),i -> min(a[i], b[i]), index_union(a,b))
+lcm(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _construct(promote_type(typeof(a), typeof(b)),i -> max(exponent(a, i), exponent(b, i)), index_union(a,b))
+gcd(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _construct(promote_type(typeof(a), typeof(b)),i -> min(exponent(a, i), exponent(b, i)), index_union(a,b))
 
 monomialorder(::Type{M}) where M <: AbstractMonomial{Order} where Order = Order()
 namingscheme(::Type{M}) where M <: AbstractMonomial = namingscheme(monomialorder(M))
@@ -194,42 +194,42 @@ function hash(a::AbstractMonomial, h::UInt)
     h
 end
 
-==(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = all(i->a[i]==b[i], index_union(a,b))
+==(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = all(i->exponent(a, i) == exponent(b, i), index_union(a,b))
 
 function maybe_div(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order
     M = promote_type(typeof(a), typeof(b))
-    if all(i->a[i]>=b[i], index_union(a,b))
-        return _construct(M,i -> a[i] - b[i], index_union(a,b))
+    if all(i -> exponent(a, i) >= exponent(b, i), index_union(a,b))
+        return _construct(M,i -> exponent(a, i) - exponent(b, i), index_union(a,b))
     else
         return nothing
     end
 end
 
 function divides(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order
-    return all(i -> a[i] <= b[i], index_union(a,b))
+    return all(i -> exponent(a, i) <= exponent(b, i), index_union(a,b))
 end
 
 function lcm_multipliers(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order
     M = promote_type(typeof(a), typeof(b))
     return (
-        _construct(M, i -> max(a[i], b[i]) - a[i], index_union(a,b)),
-        _construct(M, i -> max(a[i], b[i]) - b[i], index_union(a,b)),
+        _construct(M, i -> max(exponent(a, i), exponent(b, i)) - exponent(a, i), index_union(a,b)),
+        _construct(M, i -> max(exponent(a, i), exponent(b, i)) - exponent(b, i), index_union(a,b)),
     )
 end
 
 function diff(a::M, i::Integer) where M <: AbstractMonomial
-    n = a[i]
+    n = exponent(a, i)
     if iszero(n)
         return (n, one(M))
     else
-        return (n, _construct(M, j -> (j==i ? a[j]-one(exptype(M)) : a[j]), nzindices(a)))
+        return (n, _construct(M, j -> (j==i ? exponent(a, j) - one(exptype(M)) : exponent(a, j)), nzindices(a)))
     end
 end
 
 function lcm_degree(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order
     # avoid summing empty iterator
     iszero(total_degree(a)) && iszero(total_degree(b)) && return zero(exptype(M))
-    return sum(max(a[i],b[i]) for i in index_union(a,b))
+    return sum(max(exponent(a, i), exponent(b, i)) for i in index_union(a,b))
 end
 
 function any_divisor(f::Function, a::M) where M <: AbstractMonomial
@@ -240,7 +240,7 @@ function any_divisor(f::Function, a::M) where M <: AbstractMonomial
 
     n = last(nzindices(a))
     nzinds = collect(nzindices(a))
-    nonzeros_a = map(i->a[i], nzinds)
+    nonzeros_a = map(i -> exponent(a, i), nzinds)
     nonzeros = copy(nonzeros_a)
     e = SparseVector{exptype(M), Int}(n, nzinds, nonzeros)
 
@@ -299,7 +299,7 @@ end
 num_variables(::Type{TupleMonomial{N,I,Order}}) where {N,I,Order} = N
 exptype(::Type{TupleMonomial{N,I,Order}}) where I <: Integer where {N,Order} = I
 expstype(::Type{TupleMonomial{N,I,Order}}) where I <: Integer where {N,Order} = NTuple{N,I}
-@inline getindex(m::TupleMonomial, i::Integer) = m.e[i]
+@inline exponent(m::TupleMonomial, i::Integer) = m.e[i]
 
 generators(::Type{TupleMonomial{N, I, Order}}) where {N, I, Order} = [
     _construct(TupleMonomial{N, I, Order}, i->i==j ? one(I) : zero(I), 1:N)
@@ -354,7 +354,7 @@ end
 
 exptype(::Type{VectorMonomial{V,I,Order}}) where {V,I,Order} = I
 expstype(::Type{VectorMonomial{V,I,Order}}) where {V,I,Order} = V
-@inline getindex(m::VectorMonomial, i::Integer) = i <= length(m.e) ? m.e[i] : zero(exptype(m))
+@inline exponent(m::VectorMonomial, i::Integer) = i <= length(m.e) ? m.e[i] : zero(exptype(m))
 
 # special case for sparsevectors; for some reason, SparseVector{Int,Int}() does not give
 # an empty vector by default.
@@ -400,7 +400,7 @@ to_dense_monomials(n::Integer, scheme::Numbered{Name}) where Name = (@assert n <
 function to_dense_monomials(n::Integer, m::AbstractMonomial)
     Order = to_dense_monomials(n, monomialorder(m))
     M = TupleMonomial{n, exptype(m), typeof(Order)}
-    _construct(M, i->m[i], 1:n)
+    _construct(M, i -> exponent(m, i), 1:n)
 end
 
 promote_rule(::Type{<:TupleMonomial{N,I,Order}}, ::Type{<:VectorMonomial{V,J,Order}}) where {N,V,I,J,Order} = TupleMonomial{N,promote_type(I,J),Order}
