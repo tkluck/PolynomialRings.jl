@@ -220,19 +220,18 @@ function update!(L, P, fₗₘ, order)
             enqueue!(D, (fₗₘ, gₗₘ), u)
         end
     end
-    P_new = filter!(D) do pair
-        (p1, p2), _ = pair
-        !mutuallyprime(p1, p2)
+    filter!(D) do pair
+        (p1_, p2_), _ = pair
+        !mutuallyprime(p1_, p2_)
     end
-    for ((p1, p2), lcm_p) in pairs(P)
-        if !divides(fₗₘ, lcm_p) ||
-            lcm(p1, fₗₘ) == lcm_p ||
-            lcm(p2, fₗₘ) == lcm_p
-            enqueue!(P_new, (p1, p2), lcm_p)
-        end
+    filter!(P) do pair
+        (p1, p2), lcm_p = pair
+
+        !divides(fₗₘ, lcm_p) ||
+        lcm(p1, fₗₘ) == lcm_p ||
+        lcm(p2, fₗₘ) == lcm_p
     end
-    empty!(P)
-    for ((p1, p2), lcm_p) in pairs(P_new)
+    for ((p1, p2), lcm_p) in pairs(D)
         p = p1 ≺ p2 ? (p1, p2) : (p2, p1)
         enqueue!(P, p, lcm_p)
     end
