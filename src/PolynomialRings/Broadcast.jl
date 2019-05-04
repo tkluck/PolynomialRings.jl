@@ -593,14 +593,19 @@ function materialize!(g::Polynomial, bc::M4GBBroadcast)
     h = bc.args[2].args[2]
 
     if g.monomials === h.monomials
-        if (n = length(g.coeffs)) < (m = length(h.coeffs))
+        n = length(g.coeffs)
+        m = something(findlast(!iszero, h.coeffs), 0)
+        if n < m
             resize!(g.coeffs, m)
             for i in n + 1 : m
                 g.coeffs[i] = zero(eltype(g.coeffs))
             end
         end
-        m = length(h.coeffs)
-        @. g.coeffs[1:m] -= c * h.coeffs
+
+        @. g.coeffs[1:m] -= c * @view h.coeffs[1:m]
+
+        m = something(findlast(!iszero, g.coeffs), 0)
+        resize!(g.coeffs, m)
     else
         error("not implemented")
     end
