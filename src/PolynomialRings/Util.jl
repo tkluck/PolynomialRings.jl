@@ -203,7 +203,10 @@ isstrictlysorted(itr; lt) = issorted(itr; lt = (a, b) -> !lt(b, a))
 # Utility for showing progress on Gröbner basis computations
 #
 # -----------------------------------------------------------------------------
-macro showprogress(desc, expr)
+macro showprogress(desc, exprs...)
+    infos = exprs[1:end-1]
+    expr = last(exprs)
+
     ourpattern = expr.head == :while && expr.args[1].head == :call &&
         expr.args[1].args[1] == :! && expr.args[1].args[2].head == :call &&
         expr.args[1].args[2].args[1] == :isempty
@@ -216,6 +219,12 @@ macro showprogress(desc, expr)
     condition = expr.args[1]
     body = expr.args[2]
 
+    function infoval(L)
+        sym = QuoteNode(Symbol("|$L|"))
+        :( ($sym, length($(esc(L)))) )
+    end
+    infovals = map(infoval, infos)
+
     quote
         progress = $Progress($length($(esc(P))), $desc)
         loops = 0
@@ -224,7 +233,7 @@ macro showprogress(desc, expr)
 
             loops += 1
             progress.n = $length($(esc(P))) + loops
-            $next!(progress)
+            $next!(progress, showvalues = [$(infovals...)])
         end
         $finish!(progress)
     end

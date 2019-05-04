@@ -36,13 +36,13 @@ function m4gb(order::MonomialOrder, F::AbstractVector{<:AbstractModuleElement})
     MM = DefaultDict{LM, SortedSet{R, typeof(order)}}(() -> SortedSet{R}(order))
     P = PriorityQueue{Tuple{LM, LM}, LM}(order)
 
-    @showprogress "Gröbner: preparing inputs: " for f in F
+    @showprogress "Gröbner: preparing inputs: " L M P for f in F
         f = mulfullreduce!(L, M, MM, one(termtype(A)), f, order)
         if !iszero(f)
             updatereduce!(L, M, MM, P, f, order)
         end
     end
-    @showprogress "Computing Gröbner basis: " while !isempty(P)
+    @showprogress "Computing Gröbner basis: " L M P while !isempty(P)
         ((fₗₘ, gₗₘ), _) = select!(P)
         f = M[fₗₘ]; g = M[gₗₘ]
 
