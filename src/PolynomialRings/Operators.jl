@@ -20,7 +20,7 @@ import PolynomialRings: lcm_multipliers
 import PolynomialRings: leading_monomial, leading_coefficient
 import PolynomialRings: maybe_div
 
-function _extendcoeffs!(coeffs, n)
+function _ensurecoeffs!(coeffs, n)
     if (m = length(coeffs)) < n
         resize!(coeffs, n)
         for i in m + 1 : n
@@ -478,7 +478,7 @@ function inclusiveinplace!(::typeof(+), a::P, b::T) where
     ix = searchsorted(a.monomials, monomial(b))
     if length(ix) == 1
         i = first(ix)
-        _extendcoeffs!(a.coeffs, i)
+        _ensurecoeffs!(a.coeffs, i)
         @inplace a.coeffs[i] += coefficient(b)
         if isstrictlysparse(a) && iszero(a.coeffs[i])
             deleteat!(a.monomials, i)
@@ -501,6 +501,7 @@ function inclusiveinplace!(::typeof(+), a::P, b::M) where
     ix = searchsorted(a.monomials, b)
     if length(ix) == 1
         i = first(ix)
+        _ensurecoeffs!(a.coeffs, i)
         @inplace a.coeffs[i] += one(basering(a))
         if isstrictlysparse(a) && iszero(a.coeffs[i])
             deleteat!(a.monomials, i)
@@ -523,6 +524,7 @@ function inclusiveinplace!(::typeof(+), a::P, b::C) where
     ix = searchsorted(a.monomials, one(monomialtype(a)))
     if length(ix) == 1
         i = first(ix)
+        _ensurecoeffs!(a.coeffs, i)
         @inplace a.coeffs[i] += b
         if isstrictlysparse(a) && iszero(a.coeffs[i])
             deleteat!(a.monomials, i)
