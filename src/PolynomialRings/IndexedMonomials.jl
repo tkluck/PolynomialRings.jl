@@ -10,7 +10,7 @@ import ProgressMeter: @showprogress
 import ..Monomials: AbstractMonomial, _construct, num_variables, nzindices, maybe_div
 import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
 import ..NamingSchemes: NamingScheme
-import PolynomialRings: monomialtype, exptype, basering, monomialorder, tail, divides
+import PolynomialRings: monomialtype, exptype, basering, monomialorder, tail, divides, mutuallyprime
 
 struct ByIndex end
 """
@@ -76,6 +76,10 @@ function divides(a::M, b::M) where M <: IndexedMonomial
     return divides(convert(N, a), convert(N, b))
 end
 
+function mutuallyprime(a::M, b::M) where M <: IndexedMonomial
+    N = densetype(M)
+    return mutuallyprime(convert(N, a), convert(N, b))
+end
 
 struct MonomialSet
     a::BitArray{1}

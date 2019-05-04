@@ -18,7 +18,7 @@ import ..Polynomials: Polynomial, nzterms, nztailterms, nzrevterms
 import ..Terms: monomial, coefficient
 import ..Util: @showprogress
 import PolynomialRings: gröbner_basis, monomialtype, base_extend
-import PolynomialRings: maybe_div, divides, termtype, lcm_multipliers
+import PolynomialRings: maybe_div, divides, termtype, lcm_multipliers, mutuallyprime
 
 """
     gröbner_basis = m4gb(monomialorder, polynomials)
@@ -197,9 +197,6 @@ function updatereduce!(L, M, MM, P, f, order)
     end
     update!(L, P, lm(f), order)
 end
-
-mutuallyprime(a, b) = lcm(a, b) == a * b
-mutuallyprime(a::Signature, b::Signature) = a.i == b.i ? mutuallyprime(a.m, b.m) : nothing
 
 function update!(L, P, fₗₘ, order)
     @withmonomialorder order

@@ -56,6 +56,7 @@ function maybe_div end
 function divides end
 function lcm_multipliers end
 function lcm_degree end
+function mutuallyprime end
 function leaddiv end
 function leadrem end
 function leaddivrem end

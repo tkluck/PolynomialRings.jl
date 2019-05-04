@@ -9,7 +9,7 @@ import SparseArrays: SparseVector, sparsevec
 import SparseArrays: nonzeroinds
 
 import ..NamingSchemes: Named, Numbered, NamingScheme, isdisjoint
-import PolynomialRings: generators, to_dense_monomials, max_variable_index, monomialtype, num_variables, divides
+import PolynomialRings: generators, to_dense_monomials, max_variable_index, monomialtype, num_variables, divides, mutuallyprime
 import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namingscheme, monomialorder
 
 """
@@ -230,6 +230,10 @@ function lcm_degree(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) wher
     # avoid summing empty iterator
     iszero(total_degree(a)) && iszero(total_degree(b)) && return zero(exptype(M))
     return sum(max(exponent(a, i), exponent(b, i)) for i in index_union(a,b))
+end
+
+function mutuallyprime(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order
+    return all(iszero(min(exponent(a, i), exponent(b, i))) for i in index_union(a, b))
 end
 
 function any_divisor(f::Function, a::M) where M <: AbstractMonomial
