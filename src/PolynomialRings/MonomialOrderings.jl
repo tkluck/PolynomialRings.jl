@@ -109,7 +109,7 @@ max(m::MonomialOrder, x, y) = Base.Order.lt(m, x, y) ? y : x
 min(m::MonomialOrder, a, b, c, xs...) = (op(x,y) = min(m,x,y); Base.afoldl(op, op(op(a,b),c), xs...))
 max(m::MonomialOrder, a, b, c, xs...) = (op(x,y) = max(m,x,y); Base.afoldl(op, op(op(a,b),c), xs...))
 function findmin(order::MonomialOrder, iter)
-    p = pairs(a)
+    p = pairs(iter)
     y = iterate(p)
     if y === nothing
         throw(ArgumentError("collection must be non-empty"))
@@ -129,7 +129,7 @@ function findmin(order::MonomialOrder, iter)
     return (m, mi)
 end
 function findmax(order::MonomialOrder, iter)
-    p = pairs(a)
+    p = pairs(iter)
     y = iterate(p)
     if y === nothing
         throw(ArgumentError("collection must be non-empty"))

@@ -149,6 +149,7 @@ lcm(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _const
 gcd(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _construct(promote_type(typeof(a), typeof(b)),i -> min(exponent(a, i), exponent(b, i)), index_union(a,b))
 
 monomialorder(::Type{M}) where M <: AbstractMonomial{Order} where Order = Order()
+monomialtype(::Type{M}) where M <: AbstractMonomial = M
 namingscheme(::Type{M}) where M <: AbstractMonomial = namingscheme(monomialorder(M))
 isless(a::M, b::M) where M <: AbstractMonomial = Base.Order.lt(monomialorder(M), a, b)
 iszero(a::AbstractMonomial) = false

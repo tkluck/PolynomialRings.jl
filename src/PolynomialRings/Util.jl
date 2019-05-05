@@ -7,8 +7,9 @@ import Base: length, iterate
 import Base: filter, filter!
 import Base: pairs
 
-import DataStructures: PriorityQueue, SortedSet
+import DataStructures: PriorityQueue, SortedSet, OrderedSet, OrderedDict
 import DataStructures: percolate_down!, percolate_up!, enqueue!, dequeue!, peek
+import OrderedCollections: ht_keyindex, rehash!
 import ProgressMeter
 import ProgressMeter: Progress, next!, finish!
 
@@ -94,6 +95,28 @@ filter(f::Function, s::SortedSet) = filter!(f, copy(s))
 #
 # -----------------------------------------------------------------------------
 pairs(x::PriorityQueue) = x.xs
+
+# -----------------------------------------------------------------------------
+#
+# iterate over subsets of OrderedSet
+#
+# -----------------------------------------------------------------------------
+function interval(x::OrderedDict, lower; lo)
+    δ = lo == :exclusive ? 1 : lo == :inclusive ? 0 : error("lo needs to be :inclusive or :exclusive; not $lo")
+    # XXX rehash is only needed for deletions, which we don't do
+    #rehash!(x)
+    index = ht_keyindex(x, lower, true)
+    return (index<0) ? throw(KeyError(lower)) : @views zip(x.keys[index + δ : end], x.vals[index + δ : end])
+end
+
+function last_(x::OrderedDict)
+    # XXX rehash is only needed for deletions, which we don't do
+    #rehash!(x)
+    return x.keys[end]
+end
+
+interval(x::OrderedSet, lower; lo) = interval(x.dict, lower; lo=lo).is[1]
+last_(x::OrderedSet) = last_(x.dict)
 
 # -----------------------------------------------------------------------------
 #
@@ -238,5 +261,13 @@ macro showprogress(desc, exprs...)
         $finish!(progress)
     end
 end
+
+# -----------------------------------------------------------------------------
+#
+# Readable alternative for Iterators.flatten
+#
+# -----------------------------------------------------------------------------
+chain(iters...) = Iterators.flatten(iters)
+
 
 end
