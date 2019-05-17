@@ -7,13 +7,14 @@ import DataStructures: OrderedDict, SortedDict, DefaultDict
 import DataStructures: PriorityQueue, enqueue!, dequeue_pair!
 import InPlace: @inplace
 
-import ..Backends.Gröbner: M4GB
+import ..Backends.Gröbner: M4GB, GWV
 import ..Constants: One, Zero
 import ..IndexedMonomials: ByIndex, IndexedMonomial
 import ..Modules: AbstractModuleElement, modulebasering, Signature, leading_row
 import ..MonomialIterators: monomialiter
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
-import ..Monomials: AbstractMonomial, total_degree, lcm_degree
+import ..Monomials: AbstractMonomial, total_degree, lcm_degree, num_variables
+import ..NamingSchemes: namingscheme
 import ..Operators: integral_fraction
 import ..Polynomials: Polynomial, nzterms, nztailterms, nzrevterms, leading_monomial
 import ..Terms: monomial, coefficient, Term
@@ -283,7 +284,9 @@ function getreductor!(M, L, gₗₘ, order)
     return m.f
 end
 
+
 function gröbner_basis(::M4GB, o::MonomialOrder, G::AbstractArray{<:AbstractModuleElement}; kwds...)
+    num_variables(namingscheme(o)) < Inf || return gröbner_basis(GWV(), o, G)
     G = base_extend.(G)
     isempty(G) && return copy(G)
     return m4gb(o, G, kwds...)
