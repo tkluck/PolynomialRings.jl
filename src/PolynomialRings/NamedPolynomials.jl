@@ -77,8 +77,8 @@ _lossy_convert_monomial(::Type{One}, ::AbstractMonomial) = One()
             if d == s
                 # HOWEVER, if it actually also exists in src, then replace the 0
                 # by reading from exponent_tuple
-                converter.args[end]= :( monomial[$j] )
-                push!(degree.args,:( monomial[$j] ))
+                converter.args[end]= :( exponent(monomial, $j) )
+                push!(degree.args,:( exponent(monomial, $j) ))
                 break
             end
         end
@@ -89,7 +89,7 @@ end
 # workaround for the @generated body needing to be pure (no closures)
 _indexer(monomial) = i ->
                      i <= num_variables(typeof(monomial)) ?
-                     monomial[i] :
+                     exponent(monomial, i) :
                      zero(exptype(monomial))
 
 @generated function _lossy_convert_monomial(::Type{M1}, monomial::M2) where {M1 <: NumberedMonomial, M2 <: NumberedMonomial}
