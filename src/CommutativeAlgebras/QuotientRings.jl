@@ -227,4 +227,6 @@ end
 *(a::P, b::Q) where P <: PolynomialOver{Q} where Q <: QuotientRing = invoke(*, Tuple{PolynomialOver{C}, C} where C, a, b)
 *(a::Q, b::P) where P <: PolynomialOver{Q} where Q <: QuotientRing = invoke(*, Tuple{C, PolynomialOver{C}} where C, a, b)
 
+Base.Broadcast.broadcastable(q::QuotientRing) = Ref(q)
+
 end
