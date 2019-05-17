@@ -228,6 +228,8 @@ isstrictlysorted(itr; lt) = issorted(itr; lt = (a, b) -> !lt(b, a))
 # Utility for showing progress on Gröbner basis computations
 #
 # -----------------------------------------------------------------------------
+_length(x) = length(x)
+_length(x::AbstractDict{K, <: AbstractDict}) where K = sum(length, values(x))
 macro showprogress(desc, exprs...)
     infos = exprs[1:end-1]
     expr = last(exprs)
@@ -246,7 +248,7 @@ macro showprogress(desc, exprs...)
 
     function infoval(L)
         sym = QuoteNode(Symbol("|$L|"))
-        :( ($sym, length($(esc(L)))) )
+        :( ($sym, _length($(esc(L)))) )
     end
     infovals = map(infoval, infos)
 
