@@ -8,7 +8,8 @@ import SparseArrays: SparseVector, sparsevec, sparse
 import DataStructures: SortedDict, DefaultDict
 
 import ..Backends.Gröbner: GWV
-import ..Modules: AbstractModuleElement, modulebasering
+import ..Constants: Zero
+import ..Modules: AbstractModuleElement, modulebasering, leading_row
 import ..Modules: withtransformations, separatetransformation
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
 import ..Monomials: total_degree, any_divisor
@@ -20,27 +21,61 @@ import PolynomialRings: gröbner_basis, gröbner_transformation, xrem!
 import PolynomialRings: leading_term, leading_monomial, lcm_multipliers, lcm_degree, fraction_field, basering, base_extend, base_restrict
 import PolynomialRings: maybe_div, termtype, monomialtype, leading_row, leading_coefficient
 
+const lr = leading_row
+maybe_lr(v) = iszero(v) ? nothing : lr(v)
+maybe_lm(v, order) = iszero(v) ? nothing : leading_monomial(v, order=order)
+
+reduceop!(v1, m1, m2, t, v2) = @. v1 = m1*v1 - m2*(t*v2)
+
+
+import SparseArrays: AbstractSparseArray
+function reduceop!(v1::AbstractSparseArray, m1, m2, t, v2)
+    i1 = findfirst(!iszero, v1)
+    i2 = findfirst(!iszero, v2)
+    while !isnothing(i1) || !isnothing(i2)
+        ix = !isnothing(i1) && !isnothing(i2) ?
+             (i1 < i2 ? i1 : i2) : #min(i1, i2) :
+             something(i1, i2)
+
+        tgt = v1[ix]
+        @. tgt = m1*tgt - m2*(t*v2[ix])
+        v1[ix] = tgt
+
+        if ix == i1
+            i1 = findnext(!iszero, v1, nextind(v1, i1))
+        end
+        if ix == i2
+            i2 = findnext(!iszero, v2, nextind(v2, i2))
+        end
+    end
+end
+
 function regular_topreduce_rem(m, G; order)
     @withmonomialorder order
     u1,v1 = m
     v1 = deepcopy(v1)
+    lr1 = maybe_lr(v1)
+    lm1 = maybe_lm(v1, order)
     i = 1
     supertopreducible = false
-    while i <= length(G)
-        u2, v2 = G[i]
-        if iszero(v2)
+    while i <= length(G[lr1])
+        u2, lm2, v2 = G[lr1][i]
+        if isnothing(lm2)
             if maybe_div(u1, u2) !== nothing
                 supertopreducible = true
             end
-        elseif !iszero(v1)
-            t = maybe_div(leading_monomial(v1), leading_monomial(v2))
+        elseif !isnothing(lm1)
+            t = maybe_div(lm1, lm2)
             if t !== nothing
                 c1 = leading_coefficient(v1)
                 c2 = leading_coefficient(v2)
                 m1, m2 = lcm_multipliers(c1, c2)
                 if t * u2 ≺ u1
                     # new_u1 = u1 - c*(t*u2)
-                    @. v1 = m1*v1 - m2*(t*v2)
+                    reduceop!(v1, m1, m2, t, v2)
+                    #@. v1 = m1*v1 - m2*(t*v2)
+                    lm1 = maybe_lm(v1, order)
+                    lr1 = maybe_lr(v1)
                     supertopreducible = false
                     i = 1
                     continue
@@ -86,13 +121,15 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
     R = base_restrict(P)
     S = eltype(polynomials)
     Signature = monomialtype(R[])
+    LM = monomialtype(S)
+    Ix = keytype(S)
     MM = Tuple{Signature, S}
 
     signature(m) = m[1]
     # --------------------------------------------------------------------------
     # Declare the variables where we'll accumulate the result
     # --------------------------------------------------------------------------
-    G = Tuple{Signature, S}[]
+    G = DefaultDict{Union{Ix, Nothing}, Vector{Tuple{Signature, Union{LM, Nothing}, S}} }(Vector{Tuple{Signature, Union{LM, Nothing}, S}})
     H = DefaultDict{Int, Set{monomialtype(R)}}(Set{monomialtype(R)})
     JP = SortedDict{Signature, MM}(order)
 
@@ -111,7 +148,7 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
     end
 
     # step 3
-    @showprogress "Computing Gröbner basis: " while !isempty(JP)
+    @showprogress "Computing Gröbner basis: " G H JP while !isempty(JP)
         # step 1.
         sig, m = first(JP)
         delete!(JP, sig)
@@ -120,11 +157,11 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
         # step 2: criterion from thm 2.3(c)
         # there is a pair (u_2, v_2) ∈ G so that lm(u_2) divides
         # lm(T) and t lm(v_2) ≺ lm(v_1) where t = lm(T)/lm(u_2)
-        if any(G) do m2
-            u2,v2 = m2
+        if any(g_i for G_i in values(G) for g_i in G_i) do m2
+            u2,lm2,v2 = m2
             t = maybe_div(T, u2)
             if t !== nothing
-                if t * leading_monomial(v2) ≺ leading_monomial(v1)
+                if t * lm2 ≺ leading_monomial(v1)
                     return true
                 end
             end
@@ -134,8 +171,9 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
         end
 
         (_,v), status = regular_topreduce_rem(m, G, order=order)
+        lmv = maybe_lm(v, order)
 
-        if iszero(v)
+        if isnothing(lmv)
             newh = T
             push!(H[newh.i], newh.m)
             filter!(JP) do key_value
@@ -151,10 +189,10 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
                 # i) Add the leading terms of the principle syzygies, vT j − v j T for
                 # 1 ≤ j ≤ |U |, to H,
                 if M <: Polynomial # this syzygy does not exist in the case of modules.
-                    for (Tj, vj) in G
+                    for (Tj, lmj, vj) in G[lr(v)]
                         # syzygy = v*Tj - vj*T
-                        lhs = leading_monomial(v)*Tj
-                        rhs = leading_monomial(vj)*T
+                        lhs = lmv*Tj
+                        rhs = lmj*T
                         if lhs != rhs
                             newh = max(order, lhs, rhs)
                             push!(H[newh.i], newh.m)
@@ -165,8 +203,8 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
                 # iii) Insert into JP all such J-pairs whose signatures are not re-
                 # ducible by H (storing only one J-pair for each distinct signature
                 # T , the one with v-part minimal), and
-                for (Tj, vj) in G
-                    t1_t2 = lcm_multipliers(leading_monomial(v), leading_monomial(vj))
+                for (Tj, lmj, vj) in G[lr(v)]
+                    t1_t2 = lcm_multipliers(lmv, lmj)
                     t1_t2 === nothing && continue
                     t1, t2 = t1_t2
                     c = leading_coefficient(v)
@@ -199,7 +237,7 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
                     end
                 end
                 # iv) Append T to U and v to V .
-                push!(G, (T,v))
+                push!(G[lr(v)], (T,maybe_lm(v, order),v))
             else
                 @assert false "Didn't expect $status"
             end
@@ -209,7 +247,7 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
     # --------------------------------------------------------------------------
     # Interreduce the result
     # --------------------------------------------------------------------------
-    result = getindex.(G, 2)
+    result = [f for G_i in values(G) for (_,_,f) in G_i]
     k = length(result)
     @showprogress "Interreducing result" for i in 1:k
         xrem!(result[i], result[[1:i-1; i+1:k]], order=order)
