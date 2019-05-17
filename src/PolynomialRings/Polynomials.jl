@@ -152,15 +152,29 @@ end
 tail(p::Polynomial, order::MonomialOrder) = p - leading_term(p; order=order)
 tail(p::Polynomial; order::MonomialOrder=monomialorder(p)) = tail(p, order)
 
-function Base.getindex(p::PolynomialIn{M}, m::M) where M <: AbstractMonomial
+"""
+    coeff = get(p::PolynomialIn{M}, m::M, default) where M <: AbstractMonomial
+
+The coefficient of `p` at `m`, or `default` if this coefficient is zero.
+
+Typical use will have `default=zero(basering(p))`, (in which case `p[m]` is
+equivalent), but there is sometimes a distinct advantage to `default=nothing`.
+For example, when `basering(p) == BigInt`, the result `zero(BigInt)` needs
+an allocation, and that's wasteful if the caller only wants to do `iszero(...)`.
+In this situation, `isnothing(get(p, m, nothing))` is much faster.
+"""
+function Base.get(p::PolynomialIn{M}, m::M, default) where M <: AbstractMonomial
     if (range = searchsorted(p.monomials, m)) |> !isempty
         ix = first(range)
         if ix <= length(p.coeffs)
-            return p.coeffs[ix]
+            c = p.coeffs[ix]
+            return (isstrictlysparse(p) || !iszero(c)) ? c : default
         end
     end
-    return zero(basering(p))
+    return default
 end
+
+Base.getindex(p::PolynomialIn{M}, m::M) where M <: AbstractMonomial = get(p, m, zero(basering(p)))
 
 # match the behaviour for Number
 # some code treats numbers as collection-like
