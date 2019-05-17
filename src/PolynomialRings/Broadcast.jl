@@ -205,7 +205,7 @@ Base.eltype(t::TermsMap) = Base._return_type(t.op, Tuple{eltype(t.terms)})
 #  Leaf cases for `iterterms`
 #
 # -----------------------------------------------------------------------------
-iterterms(a::PolynomialBy{Order}) where Order = TermsMap(identity, Order(), nzterms(a[], order=Order()), nztermscount(a[]), Val(false))
+iterterms(a::PolynomialBy{Order}) where Order = TermsMap(identity, Order(), nzterms(a, order=Order()), nztermscount(a), Val(false))
 iterterms(a::Owned{<:PolynomialBy{Order}}) where Order = TermsMap(identity, Order(), nzterms(a[], order=Order()), nztermscount(a[]), Val(true))
 
 # -----------------------------------------------------------------------------
@@ -213,9 +213,11 @@ iterterms(a::Owned{<:PolynomialBy{Order}}) where Order = TermsMap(identity, Orde
 #  termsbound base case and recursion
 #
 # -----------------------------------------------------------------------------
-termsbound(a::Polynomial) = nztermscount(a[])
+termsbound(a::Polynomial) = nztermscount(a)
 termsbound(a::Owned{<:Polynomial}) = nztermscount(a[])
 termsbound(a::RefValue) = 1
+termsbound(a::AbstractMonomial) = 1
+termsbound(a::Term) = 1
 termsbound(a::Number) = 1
 termsbound(bc::Broadcasted{<:Termwise, Nothing, <:PlusMinus}) = sum(termsbound, bc.args)
 termsbound(bc::Broadcasted{<:Termwise, Nothing, typeof(*)}) = prod(termsbound, bc.args)
