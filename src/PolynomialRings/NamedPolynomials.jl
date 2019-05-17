@@ -12,6 +12,7 @@ import ..Polynomials:  NamedMonomial, NumberedMonomial, NamedTerm, NumberedTerm,
 import ..Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolynomial, PolynomialBy, PolynomialIn, nzterms
 import ..Terms: Term, basering, monomial, coefficient
 import PolynomialRings: termtype, namingscheme, variablesymbols, exptype, monomialtype, allvariablesymbols, iscanonical, canonicaltype, fullnamingscheme, fullboundnames, max_variable_index, polynomialtype
+import PolynomialRings: expansion
 
 # -----------------------------------------------------------------------------
 #
@@ -234,7 +235,7 @@ function convert(::Type{P1}, a::P2) where P1 <: Polynomial where P2 <: Polynomia
     C = basering(P1)
     monomials = M[]
     coeffs = C[]
-    for (c, (m,)) in PolynomialRings.Expansions._expansion2(a, monomialorder(P1))
+    for (m, c) in expansion(a, monomialorder(P1))
         push!(monomials, m)
         push!(coeffs, c)
     end

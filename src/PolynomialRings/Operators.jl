@@ -16,7 +16,7 @@ import ..Terms: Term, monomial, coefficient
 import ..Util: BoundedHeap
 import ..Util: ParallelIter
 import PolynomialRings: basering, exptype, base_extend, base_restrict
-import PolynomialRings: lcm_multipliers
+import PolynomialRings: lcm_multipliers, expansion
 import PolynomialRings: leading_monomial, leading_coefficient
 import PolynomialRings: maybe_div
 
@@ -122,7 +122,7 @@ function _map(op, a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
     for (m, coeff) in ParallelIter(
             first, last, ≺,
             Zero(), Zero(), op,
-            pairs(a, Order()), pairs(b, Order()),
+            expansion(a, Order()), expansion(b, Order()),
         )
         if !iszero(coeff)
             n += 1
