@@ -7,6 +7,8 @@ import Base: length, iterate
 import Base: filter, filter!
 import Base: pairs
 
+import SparseArrays: SparseVector, SparseMatrixCSC
+
 import DataStructures: PriorityQueue, SortedSet, OrderedSet, OrderedDict
 import DataStructures: percolate_down!, percolate_up!, enqueue!, dequeue!, peek
 import OrderedCollections: ht_keyindex, rehash!
@@ -268,6 +270,21 @@ end
 #
 # -----------------------------------------------------------------------------
 chain(iters...) = Iterators.flatten(iters)
+
+# -----------------------------------------------------------------------------
+#
+# Helper for iteration over nonzeros in arrays
+#
+# -----------------------------------------------------------------------------
+nzpairs(iter) = ((i, x) for (i, x) in pairs(iter) if !iszero(x))
+
+nzpairs(iter::SparseVector) = (
+    (iter.nzind[j], iter.nzval[j])
+    for j in eachindex(iter.nzind) if !iszero(iter.nzval[j])
+)
+
+nzpairs(iter::SparseMatrixCSC) = ((i, iter[i]) for i in findall(!iszero, iter))
+
 
 
 end
