@@ -1,6 +1,7 @@
 module Polynomials
 
 import Base: first, last, copy, hash
+import Base: OneTo
 import SparseArrays: SparseVector, HigherOrderFns, issparse
 
 import ..MonomialOrderings: MonomialOrder
@@ -192,6 +193,17 @@ for Number in [Polynomial, Term, AbstractMonomial]
         Base.first(x::$Number) = x
         Base.last(x::$Number) = x
         Base.copy(x::$Number) = x # some code treats numbers as collection-like
+
+        # more of the same "we're secretly a 0-dimensional container,
+        # except that these are not defined for Base.Number (but arguably
+        # they should be).
+        Base.values(x::$Number) = (x,)
+        Base.pairs(x::$Number) = ((1, x),)
+        Base.getindex(x::$Number, i::CartesianIndex{0}) = x
+        Base.keytype(x::$Number) = Int
+        Base.valtype(x::$Number) = typeof(x)
+        Base.keytype(::Type{<:$Number}) = Int
+        Base.valtype(T::Type{<:$Number}) = T
     end
 end
 
