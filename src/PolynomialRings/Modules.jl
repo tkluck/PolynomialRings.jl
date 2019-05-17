@@ -8,6 +8,7 @@ import SparseArrays: AbstractSparseArray, SparseVector, sparsevec, spzeros, nonz
 
 import InPlace: @inplace, inclusiveinplace!
 
+import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
 import ..Monomials: AbstractMonomial
 import ..Monomials: total_degree
@@ -17,6 +18,7 @@ import ..Polynomials: Polynomial, monomialorder, basering, tail
 import ..Polynomials: nzterms, nzrevterms, nztailterms
 import ..Terms: Term
 import ..Terms: coefficient, monomial
+import ..Util: nzpairs
 import PolynomialRings: leaddiv, leadrem, leaddivrem
 import PolynomialRings: leading_row, leading_term, leading_monomial, leading_coefficient, base_extend
 import PolynomialRings: maybe_div, divides, lcm_degree, lcm_multipliers, mutuallyprime
@@ -53,6 +55,7 @@ base_extend(x::AbstractArray{P}, ::Type{C}) where P<:Polynomial where C = map(p-
 base_extend(x::AbstractArray{P})            where P<:Polynomial         = map(base_extend, x)
 
 content(x::AbstractArray{P}) where P<:Polynomial = gcd(map(content, x))
+content(x::AbstractSparseArray{P}) where P<:Polynomial = gcd(map(content, nonzeros(x)))
 
 # -----------------------------------------------------------------------------
 #
@@ -70,6 +73,10 @@ termtype(p::AbstractArray{<:Polynomial}) = Signature{termtype(eltype(p)), keytyp
 termtype(P::Type{<:AbstractArray{<:Polynomial}}) = Signature{termtype(eltype(P)), keytype(P)}
 monomialtype(p::AbstractArray{<:Polynomial}) = Signature{monomialtype(eltype(p)), keytype(p)}
 monomialtype(p::Type{<:AbstractArray{<:Polynomial}}) = Signature{monomialtype(eltype(p)), keytype(p)}
+monomialorder(p::AbstractArray{<:Polynomial}) = monomialorder(eltype(p))
+monomialorder(p::Type{<:AbstractArray{<:Polynomial}}) = monomialorder(eltype(p))
+
+leading_row(s::Signature) = s.i
 
 *(s::Signature,m::Union{AbstractMonomial,Term,Number})  = Signature(s.i, s.m * m)
 *(m::Union{AbstractMonomial,Term,Number}, s::Signature) = Signature(s.i, s.m * m)
@@ -83,6 +90,9 @@ total_degree(s::Signature)                       = total_degree(s.m)
 Base.Order.lt(o::MonomialOrder, s::Signature, t::Signature) = s.i > t.i || (s.i == t.i && Base.Order.lt(o, s.m, t.m))
 ==(s::S, t::S) where S <: Signature = s.i == t.i && s.m == t.m
 iszero(s::Signature{<:Term}) = iszero(s.m)
+
+*(::One, s::Signature) = deepcopy(s)
+*(s::Signature, ::One) = deepcopy(s)
 
 coefficient(s::Signature{<:Term}) = coefficient(s.m)
 monomial(s::Signature{<:Term}) = Signature(s.i, monomial(s.m))
@@ -186,31 +196,21 @@ div(f::A,g::AbstractVector{A})        where A<:AbstractArray{P} where P<:Polynom
 # compatibility: a ring is just a rank-one module over itself, so the 'leading'
 # row is just the first one.
 leading_row(x::Polynomial) = 1
+leading_row(x::AbstractMonomial) = 1
+leading_row(x::Term) = 1
 
 # Work around sparse-dense multiplication in Base only working for eltype() <: Number
 mul!(A, B, C, α::Polynomial, β::Polynomial) = mul!(A, B, C, convert(basering(α),α), convert(basering(β), β))
 
 nzterms(x::AbstractArray{<:Polynomial}; order) = (
     Signature(ix, t)
-    for (ix, x_i) in Iterators.reverse(enumerate(x))
+    for (ix, x_i) in Iterators.reverse(nzpairs(x))
     for t in nzterms(x_i, order=order)
 )
 
 nzrevterms(x::AbstractArray{<:Polynomial}; order) = (
     Signature(ix, t)
-    for (ix, x_i) in enumerate(x)
-    for t in nzrevterms(x_i, order=order)
-)
-
-nzterms(x::SparseVector{<:Polynomial}; order) = (
-    Signature(ix, t)
-    for (ix, x_i) in Iterators.reverse(zip(x.nzind, x.nzval))
-    for t in nzterms(x_i, order=order)
-)
-
-nzrevterms(x::SparseVector{<:Polynomial}; order) = (
-    Signature(ix, t)
-    for (ix, x_i) in zip(x.nzind, x.nzval)
+    for (ix, x_i) in nzpairs(x)
     for t in nzrevterms(x_i, order=order)
 )
 
@@ -258,10 +258,14 @@ mutable struct TransformedModuleElement{P,M,I}
     tr::SparseVector{P, Int}
     n::I
 end
+# type information
+monomialtype(::Type{TransformedModuleElement{P,M,I}}) where {P,M,I} = monomialtype(M)
+keytype(::Type{TransformedModuleElement{P,M,I}}) where {P,M,I} = keytype(M)
 # gathering leading terms etc
 leading_monomial(m::TransformedModuleElement; order) = leading_monomial(m.p, order=order)
 leading_coefficient(m::TransformedModuleElement; order) = leading_coefficient(m.p, order=order)
 leading_term(m::TransformedModuleElement; order) = leading_term(m.p, order=order)
+leading_row(m::TransformedModuleElement) = leading_row(m.p)
 content(m::TransformedModuleElement) = content(m.p)
 Base.Order.lt(o::MonomialOrder, a::T, b::T) where T<:TransformedModuleElement = Base.Order.lt(o, a.p, b.p)
 # linear operations
