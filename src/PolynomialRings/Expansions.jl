@@ -63,18 +63,6 @@ julia> collect(expansion(x^3 + y^2, :x, :y))
 expansion(p::Polynomial, spec...) = expansion(p, _expansionspec(spec...))
 expansion(p::Number, spec...) = ((one(monomialtype(spec...)), p),)
 
-nestedexpansion(p) = (((), p),)
-# TODO: this does not respect the exptype for one(monomialtype(spec)), but
-# I also run into issues when I try to make it do that.
-function nestedexpansion(p, spec::MonomialOrder, specs::MonomialOrder...)
-    ((ms, c),) = nestedexpansion(p, specs...)
-    return ((tuple(one(monomialtype(spec)), ms...), c),)
-end
-# TODO: should we return owned copies?
-nestedexpansion(p::PolynomialBy{Order}, spec::Order) where Order <: MonomialOrder = (
-    ((m,), c)
-    for (m, c) in expansion(p, spec)
-)
 _ofpolynomialtype(m::AbstractMonomial, c) = _ofpolynomialtype(Term(m, c))
 _ofpolynomialtype(m, c) = m * c
 _ofpolynomialtype(t::Term{M,C}) where {M,C} = Polynomial(M[monomial(t)], C[coefficient(t)])
@@ -98,19 +86,6 @@ function expansion(p::Polynomial, spec::MonomialOrder)
         for grp in groupby(i -> i[1], exploded)
     ]
     return collected
-end
-
-_monomialtypes(P::Type{<:Polynomial}, spec::MonomialOrder) = tuple(monomialtype(spec, exptype(P, namingscheme(spec))))
-_monomialtypes(P::Type{<:Polynomial}, spec::MonomialOrder, specs::MonomialOrder...) = tuple(_monomialtypes(P, spec)..., _monomialtypes(P, specs...)...)
-_remove_variables(t::Type) = t
-_remove_variables(t::Type, spec::MonomialOrder, specs::MonomialOrder...) = _remove_variables(remove_variables(t, namingscheme(spec)), specs...)
-function nestedexpansion(p::Polynomial, spec::MonomialOrder, specs::MonomialOrder...)
-    C = _remove_variables(typeof(p), spec, specs...)
-    return Tuple{Tuple{_monomialtypes(typeof(p), spec, specs...)...}, C}[
-        (tuple(m, ms...), c2)
-        for (ms, c1) in nestedexpansion(p, specs...)
-        for (m,  c2) in expansion(c1, spec)
-    ]
 end
 
 # -----------------------------------------------------------------------------
