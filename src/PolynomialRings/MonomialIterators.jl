@@ -116,7 +116,7 @@ end
 
 Base.IteratorSize(::MonomialIter) = Base.IsInfinite()
 
-const MATERIALIZE_SIZE = 3000000
+const MATERIALIZE_SIZE = 3_000_000
 
 @generated function Base.getindex(::Iter, ix::Integer) where Iter <: MonomialIter
     To = monomialtype(Iter())
