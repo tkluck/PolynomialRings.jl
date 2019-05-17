@@ -230,6 +230,7 @@ isstrictlysorted(itr; lt) = issorted(itr; lt = (a, b) -> !lt(b, a))
 # -----------------------------------------------------------------------------
 _length(x) = length(x)
 _length(x::AbstractDict{K, <: AbstractDict}) where K = sum(length, values(x))
+_length(x::AbstractDict{K, <: AbstractVector}) where K = sum(length, values(x))
 macro showprogress(desc, exprs...)
     infos = exprs[1:end-1]
     expr = last(exprs)
