@@ -38,7 +38,7 @@ import .Solve: matrix_solve_affine
 import .NamedPolynomials: minring, ofminring
 
 export TupleMonomial, Term, Polynomial, generators, ⊗, polynomial_ring, variablesymbols
-export expansion, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, expansion_terms, @expansion_terms
+export expansion, expand, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, expansion_terms, @expansion_terms
 export coefficients, @coefficients, linear_coefficients, @linear_coefficients
 export deg, @deg
 export flat_coefficients, @flat_coefficients

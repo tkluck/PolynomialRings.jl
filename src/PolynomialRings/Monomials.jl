@@ -272,6 +272,9 @@ function any_divisor(f::Function, a::M) where M <: AbstractMonomial
     end
 end
 
+# TODO: define this in terms of the AbstractMonomial interface
+exponents(m::AbstractMonomial) = m.e
+
 # -----------------------------------------------------------------------------
 #
 # TupleMonomial

@@ -8,13 +8,13 @@ import IterTools: groupby
 
 import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
-import ..Monomials: AbstractMonomial, TupleMonomial, exptype, expstype, enumeratenz, total_degree
+import ..Monomials: AbstractMonomial, TupleMonomial, exptype, expstype, enumeratenz, total_degree, exponents
 import ..NamedPolynomials: NamedPolynomial, _lossy_convert_monomial
 import ..Polynomials: Polynomial, termtype, monomialtype, monomialorder, polynomial_ring, PolynomialBy
 import ..Terms: Term, monomial, coefficient
 import ..Util: SingleItemIter
 import ..NamingSchemes: Named, Numbered, NamingScheme, remove_variables
-import PolynomialRings: basering, namingscheme, variablesymbols, expansion
+import PolynomialRings: basering, namingscheme, variablesymbols, expansion, expand
 
 # -----------------------------------------------------------------------------
 #
@@ -32,6 +32,38 @@ _expansionspec(sym::Symbol...) = _expansionspec(Named{sym}())
 _expansionspec(scheme::NamingScheme) = _expansionspec(MonomialOrder{:degrevlex, typeof(scheme)}())
 _expansionspec(spec::MonomialOrder) = spec
 _coefftype(::Type{P}, spec...) where P <: Polynomial = expansiontypes(P, _expansionspec(spec...))[2]
+
+"""
+    expansion(f, symbol, [symbol...])
+
+Return a collection of (monomial, coefficient) tuples decomposing f
+into its consituent parts.
+
+In the REPL, you likely want to use the friendlier version `@expansion` instead.
+
+# Examples
+```jldoctest
+julia> using PolynomialRings
+
+julia> R = @ring! ℤ[x,y];
+
+julia> collect(expansion(x^3 + y^2, :y))
+2-element Array{Tuple{Tuple{Int16},ℤ[x]},1}:
+ (1, x^3)
+ (y^2, 1)
+
+julia> collect(expansion(x^3 + y^2, :x, :y))
+2-element Array{Tuple{Tuple{Int16,Int16},BigInt},1}:
+ (y^2, 1)
+ (x^3, 1)
+```
+# See also
+`@expansion(...)`, `@coefficient` and `coefficient`
+"""
+expand(p, spec...) = (
+    (exponents(m), c)
+    for (m, c) in expansion(p, spec...)
+)
 
 """
     expansion(f, symbol, [symbol...])
@@ -538,38 +570,6 @@ end
 """
     @expansion(f, var, [var...])
 
-Return a collection of (exponent tuple, coefficient) tuples decomposing f
-into its consituent parts.
-
-# Examples
-```jldoctest
-julia> using PolynomialRings
-
-julia> R = @ring! ℤ[x,y];
-
-julia> collect(@expansion(x^3 + y^2, y))
-2-element Array{Tuple{Tuple{Int16},ℤ[x]},1}:
- ((0,), x^3)
- ((2,), 1)
-
-julia> collect(@expansion(x^3 + y^2, x, y))
-2-element Array{Tuple{Tuple{Int16,Int16},BigInt},1}:
- ((0, 2), 1)
- ((3, 0), 1)
-```
-# See also
-`@expand`, `expansion(...)`, `@coefficient` and `coefficient`
-"""
-macro expansion(f, symbols...)
-    expansion_expr = _expansion_expr(symbols)
-    quote
-        expansion($(esc(f)), $expansion_expr)
-    end
-end
-
-"""
-    @expand(f, var, [var...])
-
 Return a collection of (monomial, coefficient) tuples decomposing f
 into its consituent parts.
 
@@ -592,14 +592,42 @@ julia> collect(@expand(x^3 + y^2, x, y))
 # See also
 `expansion(...)`, `@coefficient` and `coefficient`
 """
+macro expansion(f, symbols...)
+    expansion_expr = _expansion_expr(symbols)
+    quote
+        expansion($(esc(f)), $expansion_expr)
+    end
+end
+
+"""
+    @expand(f, var, [var...])
+
+Return a collection of (exponent tuple, coefficient) tuples decomposing f
+into its consituent parts.
+
+# Examples
+```jldoctest
+julia> using PolynomialRings
+
+julia> R = @ring! ℤ[x,y];
+
+julia> collect(@expand(x^3 + y^2, y))
+2-element Array{Tuple{Tuple{Int16},ℤ[x]},1}:
+ ((0,), x^3)
+ ((2,), 1)
+
+julia> collect(@expand(x^3 + y^2, x, y))
+2-element Array{Tuple{Tuple{Int16,Int16},BigInt},1}:
+ ((0, 2), 1)
+ ((3, 0), 1)
+```
+# See also
+`@expansion`, `expand(...)`, `@coefficient` and `coefficient`
+"""
 macro expand(f, symbols...)
     expansion_expr = _expansion_expr(symbols)
-    R,vars = polynomial_ring(symbols..., basering=Int)
     quote
-        [
-            (prod(v^k for (v,k) in zip($vars,w)), p)
-            for (w,p) in expansion($(esc(f)), $expansion_expr)
-        ]
+        expand($(esc(f)), $expansion_expr)
     end
 end
 

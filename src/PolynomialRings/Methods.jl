@@ -47,6 +47,7 @@ allvariablesymbols(::Type) = Set()
 # Polynomial/term/monomial operations
 #
 # -----------------------------------------------------------------------------
+function expand end
 function expansion end
 function nzterms end
 function leading_term end
