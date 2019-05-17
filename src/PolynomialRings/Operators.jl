@@ -52,6 +52,7 @@ iszero(a::P)        where P <: Polynomial = iszero(a.coeffs)
 #
 # -----------------------------------------------------------------------------
 function _filterzeros!(p::Polynomial)
+    !isstrictlysparse(p) && return p
     tgtix = 0
     for srcix in eachindex(p.coeffs)
         if !iszero(p.coeffs[srcix])
