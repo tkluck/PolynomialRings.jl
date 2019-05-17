@@ -482,7 +482,7 @@ const HandOptimizedBroadcast = Broadcasted{
             Nothing,
             typeof(*),
             Tuple{
-                BigInt,
+                C,
                 Owned{P},
             },
         },
@@ -491,7 +491,7 @@ const HandOptimizedBroadcast = Broadcasted{
             Nothing,
             typeof(*),
             Tuple{
-                BigInt,
+                C,
                 Broadcasted{
                     Termwise{Order,P},
                     Nothing,
@@ -504,7 +504,7 @@ const HandOptimizedBroadcast = Broadcasted{
             },
         },
     },
-} where P<:Polynomial{M,BigInt} where M<:AbstractMonomial{Order} where Order
+} where P<:Polynomial{M,C} where M<:AbstractMonomial{Order} where C where Order
 
 function _materialize!(x::Polynomial, bc::HandOptimizedBroadcast)
     ≺(a,b) = Base.Order.lt(monomialorder(x), a, b)
@@ -545,16 +545,16 @@ function _materialize!(x::Polynomial, bc::HandOptimizedBroadcast)
             ix2 += 1
         elseif monomials1[ix1] ≺ m′
             if !m1_vanishes
-                Base.GMP.MPZ.mul!(coeffs1[ix1], m1, coeffs1[ix1])
+                @inplace coeffs1[ix1] *= m1
                 n += 1
                 monomials[n] = monomials1[ix1]
                 coeffs[n] = coeffs1[ix1]
             end
             ix1 += 1
         else
-            Base.GMP.MPZ.mul!(coeffs1[ix1], m1)
-            Base.GMP.MPZ.mul!(temp, m2, coeffs2[ix2])
-            Base.GMP.MPZ.sub!(coeffs1[ix1], temp)
+            @inplace coeffs1[ix1] *= m1
+            @inplace temp = m2 * coeffs2[ix2]
+            @inplace coeffs1[ix1] -= temp
             if !iszero(coeffs1[ix1])
                 n += 1
                 monomials[n] = m′
@@ -566,7 +566,7 @@ function _materialize!(x::Polynomial, bc::HandOptimizedBroadcast)
     end
     while ix1 <= length(monomials1)
         if !m1_vanishes
-            Base.GMP.MPZ.mul!(coeffs1[ix1], m1, coeffs1[ix1])
+            @inplace coeffs1[ix1] *= m1
             n += 1
             monomials[n] = monomials1[ix1]
             coeffs[n] = coeffs1[ix1]
