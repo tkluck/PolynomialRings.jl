@@ -42,8 +42,8 @@ abstract type AbstractMonomial{Order} end
 #
 # -----------------------------------------------------------------------------
 struct IndexUnion{I,J,lt}
-    left::I
-    right::J
+    left  :: I
+    right :: J
 end
 
 struct Start end
@@ -110,7 +110,7 @@ function rev_index_union(a::AbstractMonomial, b::AbstractMonomial)
 end
 
 struct EnumerateNZ{M<:AbstractMonomial}
-    a::M
+    a :: M
 end
 function iterate(enz::EnumerateNZ)
     it = iterate(nzindices(enz.a))
@@ -333,8 +333,8 @@ is unbounded. In particular, the indexing operation `m[i]` returns `0` when `i`
 is out-of-bounds, instead of throwing an exception.
 """
 struct VectorMonomial{V,I,Order} <: AbstractMonomial{Order}
-    e::V
-    deg::I
+    e   :: V
+    deg :: I
     VectorMonomial{V,I,Order}(e, deg) where V<:AbstractVector{I} where {I<:Integer,Order} = new(e, deg)
 end
 

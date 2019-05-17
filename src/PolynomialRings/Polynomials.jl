@@ -30,8 +30,8 @@ that the vector is sorted by increasing monomial order (see
 `PolynomialRings.MonomialOrderings`).
 """
 struct Polynomial{M <: AbstractMonomial, C, MonomVector}
-    monomials::MonomVector
-    coeffs::Vector{C}
+    monomials :: MonomVector
+    coeffs    :: Vector{C}
 end
 
 Polynomial(monomials, coeffs::Vector) = Polynomial{eltype(monomials), eltype(coeffs), typeof(monomials)}(monomials, coeffs)
