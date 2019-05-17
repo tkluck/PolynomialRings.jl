@@ -603,30 +603,26 @@ const M4GBBroadcast = Broadcasted{
             },
         },
     },
-} where P <: Polynomial{M, C} where M<:AbstractMonomial{Order} where {C, Order}
+} where P <: Polynomial{M, C, MI} where M <: AbstractMonomial{Order} where MI <: MonomialIter where {C, Order}
 
 function materialize!(g::Polynomial, bc::M4GBBroadcast)
     @assert g === bc.args[1]
     c = bc.args[2].args[1]
     h = bc.args[2].args[2]
 
-    if g.monomials === h.monomials
-        n = length(g.coeffs)
-        m = something(findlast(!iszero, h.coeffs), 0)
-        if n < m
-            resize!(g.coeffs, m)
-            for i in n + 1 : m
-                g.coeffs[i] = zero(eltype(g.coeffs))
-            end
-        end
-
-        @. g.coeffs[1:m] -= c * @view h.coeffs[1:m]
-
-        m = something(findlast(!iszero, g.coeffs), 0)
+    n = length(g.coeffs)
+    m = something(findlast(!iszero, h.coeffs), 0)
+    if n < m
         resize!(g.coeffs, m)
-    else
-        error("not implemented")
+        for i in n + 1 : m
+            g.coeffs[i] = zero(eltype(g.coeffs))
+        end
     end
+
+    @. g.coeffs[1:m] -= c * @view h.coeffs[1:m]
+
+    m = something(findlast(!iszero, g.coeffs), 0)
+    resize!(g.coeffs, m)
 
     return g
 end
