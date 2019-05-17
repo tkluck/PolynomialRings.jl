@@ -31,6 +31,29 @@ function degrevlex_index(exponents)
     return ret
 end
 
+function revlex_exponents(::Val{n}, total_degree, index) where n
+    n == 0 && return ()
+    deg = 0
+    while index > (h = hilbert(n - 1, deg))
+        index -= h
+        deg += 1
+    end
+    return tuple(revlex_exponents(Val(n - 1), deg, index)..., total_degree - deg)
+end
+
+function degrevlex_exponents(::Val{n}, index) where n
+    n == 0 && return ()
+    total_degree = 0
+    while index > (h = hilbert(n, total_degree))
+        index -= h
+        total_degree += 1
+    end
+    return revlex_exponents(Val(n), total_degree, index)
+end
+
+@inline degrevlex_exponents(n, index) = degrevlex_exponents(Val(n), index)
+@inline revlex_exponents(n, total_degree, index) = revlex_exponents(Val(n), total_degree, index)
+
 struct MonomialIter{M<:AbstractMonomial, P} end
 monomialtype(::MonomialIter{M}) where M <: AbstractMonomial = M
 Base.eltype(::MonomialIter{M, P}) where M <: AbstractMonomial where P = P
