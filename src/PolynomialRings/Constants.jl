@@ -5,6 +5,7 @@ recursions, e.g. in expansion().
 module Constants
 
 import Base: promote_rule, convert, +, *, -, zero, one
+import Base: iszero, isone
 
 import InPlace: inplace!
 
@@ -35,6 +36,11 @@ struct MinusOne <: Constant end
 
 zero(::Type{C}) where C <: Constant = Zero()
 one(::Type{C})  where C <: Constant = One()
+
+iszero(::Constant) = false
+isone(::Constant) = false
+iszero(::Zero) = true
+isone(::One) = true
 
 for N = [Number, AbstractMonomial, Term, Polynomial]
     @eval begin
