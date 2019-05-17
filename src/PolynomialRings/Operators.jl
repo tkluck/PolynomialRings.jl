@@ -421,9 +421,8 @@ common_denominator(a, b...) = lcm(denominator(a), denominator.(b)...)
 common_denominator(f::Polynomial) = iszero(f) ? 1 : mapreduce(common_denominator, lcm, f.coeffs)
 
 function integral_fraction(f::Polynomial)
-    D = common_denominator(f)
-
-    return base_restrict(D*f), D
+    N = common_denominator(f)
+    return base_restrict(N * f), N
 end
 
 """
