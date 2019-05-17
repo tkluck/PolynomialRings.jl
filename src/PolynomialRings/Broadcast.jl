@@ -111,6 +111,7 @@ import Base: RefValue
 import InPlace: @inplace, inclusiveinplace!
 
 import ..Constants: Zero, One
+import ..MonomialIterators: MonomialIter
 import ..MonomialOrderings: MonomialOrder
 import ..Monomials: AbstractMonomial
 import ..Polynomials: Polynomial, TermOver, PolynomialOver, PolynomialBy, nzterms, nztermscount, termtype
@@ -406,7 +407,7 @@ function materialize(bc::BrTermwise{Order,P}) where {Order,P}
 end
 
 mark_inplace(y, x) = (y, :notfound)
-mark_inplace(bc::RefValue, x) = bc[] === x ? (Owned(bc[]), :found) : (bc, :notfound)
+mark_inplace(bc::Polynomial, x) = bc === x ? (Owned(bc), :found) : (bc, :notfound)
 """
 Mark at most a single occurrence of x as in-place in a Broadcasted tree. We
 iterate over the arguments last-to-first and depth-first, so we find the _last_
@@ -430,7 +431,7 @@ end
 function materialize!(x::Polynomial, bc::BrTermwise{Order,P}) where {Order,P}
     (bc′, found) = mark_inplace(bc, x)
     if found == :found
-        tgt = deepcopy(zero(x))
+        tgt = zero(x)
         _materialize!(tgt, bc′)
         resize!(x.monomials, length(tgt.monomials))
         resize!(x.coeffs, length(tgt.coeffs))
@@ -494,8 +495,8 @@ const HandOptimizedBroadcast = Broadcasted{
                     Nothing,
                     typeof(*),
                     Tuple{
-                        RefValue{M},
-                        RefValue{P},
+                        M,
+                        P,
                     },
                 },
             },
@@ -503,68 +504,85 @@ const HandOptimizedBroadcast = Broadcasted{
     },
 } where P<:Polynomial{M,BigInt} where M<:AbstractMonomial{Order} where Order
 
-function __disabled_materialize!(x::Polynomial, bc::HandOptimizedBroadcast)
+function _materialize!(x::Polynomial, bc::HandOptimizedBroadcast)
     ≺(a,b) = Base.Order.lt(monomialorder(x), a, b)
 
     m1 = bc.args[1].args[1]
-    v1 = bc.args[1].args[2]
+    v1 = bc.args[1].args[2][]
     m2 = bc.args[2].args[1]
     t  = bc.args[2].args[2].args[1]
     v2 = bc.args[2].args[2].args[2]
 
-    tgt = x.terms
-    src1 = v1.terms
-    src2 = map(s->t*s, v2.terms)
+    monomials = x.monomials
+    coeffs = x.coeffs
+    monomials1 = v1.monomials
+    coeffs1 = v1.coeffs
+    monomials2 = v2.monomials
+    coeffs2 = v2.coeffs
 
     # I could dispatch to a much simpler version in case these
     # scalar vanish, but that gives relatively little gain.
     m1_vanishes = iszero(m1)
     m2_vanishes = iszero(m2)
 
-    resize!(tgt, length(src1) + length(src2))
+    resize!(monomials, length(monomials1) + length(monomials2))
+    resize!(coeffs,    length(coeffs1)    + length(coeffs2))
     n = 0
 
     temp = zero(BigInt)
 
     ix1 = 1; ix2 = 1
-    while ix1 <= length(src1) && ix2 <= length(src2)
-        if src2[ix2] ≺ src1[ix1]
+    while ix1 <= length(monomials1) && ix2 <= length(monomials2)
+        m′ = t * monomials2[ix2]
+        if m′ ≺ monomials1[ix1]
             if !m2_vanishes
-                tgt[n+=1] = -m2*src2[ix2]
+                n += 1
+                monomials[n] = m′
+                coeffs[n] = -m2*coeffs2[ix2]
             end
             ix2 += 1
-        elseif src1[ix1] ≺ src2[ix2]
+        elseif monomials1[ix1] ≺ m′
             if !m1_vanishes
-                Base.GMP.MPZ.mul!(src1[ix1].c, m1, src1[ix1].c)
-                tgt[n+=1] = src1[ix1]
+                Base.GMP.MPZ.mul!(coeffs1[ix1], m1, coeffs1[ix1])
+                n += 1
+                monomials[n] = monomials1[ix1]
+                coeffs[n] = coeffs1[ix1]
             end
             ix1 += 1
         else
-            Base.GMP.MPZ.mul!(src1[ix1].c, m1)
-            Base.GMP.MPZ.mul!(temp, m2, src2[ix2].c)
-            Base.GMP.MPZ.sub!(src1[ix1].c, temp)
-            if !iszero(src1[ix1])
-                tgt[n+=1] = src1[ix1]
+            Base.GMP.MPZ.mul!(coeffs1[ix1], m1)
+            Base.GMP.MPZ.mul!(temp, m2, coeffs2[ix2])
+            Base.GMP.MPZ.sub!(coeffs1[ix1], temp)
+            if !iszero(coeffs1[ix1])
+                n += 1
+                monomials[n] = m′
+                coeffs[n] = coeffs1[ix1]
             end
             ix1 += 1
             ix2 += 1
         end
     end
-    while ix1 <= length(src1)
+    while ix1 <= length(monomials1)
         if !m1_vanishes
-            Base.GMP.MPZ.mul!(src1[ix1].c, m1, src1[ix1].c)
-            tgt[n+=1] = src1[ix1]
+            Base.GMP.MPZ.mul!(coeffs1[ix1], m1, coeffs1[ix1])
+            n += 1
+            monomials[n] = monomials1[ix1]
+            coeffs[n] = coeffs1[ix1]
         end
         ix1 += 1
     end
-    while ix2 <= length(src2)
+    while ix2 <= length(monomials2)
         if !m2_vanishes
-            tgt[n+=1] = -m2*src2[ix2]
+            n += 1
+            monomials[n] = t * monomials2[ix2]
+            coeffs[n] = -m2*coeffs2[ix2]
         end
         ix2 += 1
     end
 
-    resize!(tgt, n)
+    resize!(monomials, n)
+    resize!(coeffs, n)
+    x
 end
 
 # this is the inner loop for m4gb
