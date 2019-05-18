@@ -8,8 +8,8 @@ import Base: lcm
 import ProgressMeter: @showprogress
 
 import ..IndexedMonomials: IndexedMonomial, ByIndex
-import ..Monomials: AbstractMonomial, _construct, num_variables, nzindices, maybe_div
-import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
+import ..Monomials: TupleMonomial, AbstractMonomial, _construct, num_variables, nzindices, maybe_div
+import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder, rulesymbol
 import ..NamingSchemes: NamingScheme
 import PolynomialRings: monomialtype, exptype, basering, monomialorder, tail, divides
 
@@ -125,17 +125,22 @@ end
 
 Base.IteratorSize(::MonomialIter) = Base.IsInfinite()
 
-const MATERIALIZE_SIZE = 3_000_000
+function _byindex(M::Type{<:TupleMonomial}, ix)
+    @assert rulesymbol(monomialorder(M)) == :degrevlex
+    nv = Val(num_variables(M))
+    exps = degrevlex_exponents(nv, ix)
+    M(exps, sum(exps))
+end
 
-@generated function Base.getindex(::Iter, ix::Integer) where Iter <: MonomialIter
-    To = monomialtype(Iter())
-    lookup = Vector{To}()
-    #@showprogress 1 "pre-computing..."
-    for (i, to) in zip(1:MATERIALIZE_SIZE, Iter())
-        push!(lookup, to)
-        @assert length(lookup) == i
-    end
-    :( $lookup[ix] )
+function _byindex(M::Type{<:IndexedMonomial}, ix)
+    M(ByIndex(), ix)
+end
+
+function Base.getindex(it::MonomialIter, ix::Integer)
+    M = monomialtype(it)
+    P = eltype(it)
+    IxM = IndexedMonomial{typeof(monomialorder(M)), typeof(ix)}
+    return P(convert(M, IxM(ByIndex(), ix)))
 end
 
 # TODO: ensure order congruence
@@ -157,14 +162,21 @@ for SpecificOrder in [NamedMonomialOrder, NumberedMonomialOrder]; @eval begin
         To(ByIndex(), ix)
     end
 
-    @generated function convert(::Type{To}, m::From) where To <: AbstractMonomial{Order} where From <: IndexedMonomial{Order} where Order <: $SpecificOrder
+    @generated function convert(::Type{To}, m::From)::To where To <: AbstractMonomial{Order} where From <: IndexedMonomial{Order} where Order <: $SpecificOrder
         lookup = Vector{To}()
-        #@showprogress 1 "pre-computing $From->$To"
-        for (ix, to) in zip(1:MATERIALIZE_SIZE, MonomialIter{To, To}())
-            push!(lookup, to)
-            @assert length(lookup) == ix
+        quote
+            if 1 <= m.ix <= length($lookup)
+                return @inbounds $lookup[m.ix]::$To
+            else
+                newsize = length($lookup) + m.ix # Fibonacci growth
+                while length($lookup) < newsize
+                    k = length($lookup) + 1
+                    val = _byindex($To, k)
+                    push!($lookup, val)
+                end
+                return $lookup[m.ix]::$To
+            end
         end
-        :( $lookup[m.ix] )
     end
 
     convert(::Type{M}, m::M) where M <: IndexedMonomial{Order} where Order <: $SpecificOrder = m
