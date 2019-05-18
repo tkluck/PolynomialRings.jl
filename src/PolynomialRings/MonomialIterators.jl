@@ -13,12 +13,21 @@ import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialO
 import ..NamingSchemes: NamingScheme
 import PolynomialRings: monomialtype, exptype, basering, monomialorder, tail, divides
 
+const _hilbertfunction = Vector{Vector{Int}}()
 function hilbert(n, k)
     n < 0 && return 0
     k < 0 && return 0
     k == 0 && return 1
     n == 0 && return 0
-    return binomial(n + k - 1, n - 1)
+    while length(_hilbertfunction) < n
+        push!(_hilbertfunction, Vector{Int}())
+    end
+    hf_n = _hilbertfunction[n]
+    while length(hf_n) < k
+        k′ = length(hf_n) + 1
+        push!(hf_n, binomial(n + k′ - 1, n - 1))
+    end
+    return hf_n[k]
 end
 
 function degrevlex_index(exponents)
