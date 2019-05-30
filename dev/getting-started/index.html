@@ -54,8 +54,8 @@ x</code></pre><p>The result is an object of type <code>S</code>, much like how <
 3*x^2</code></pre><p>But this doesn&#39;t:</p><pre><code class="language-julia-repl">julia&gt; diff(x^3, x)
 ERROR: MethodError: no method matching diff(::ℤ[x,y,z], ::ℤ[x,y,z])
 Closest candidates are:
-  diff(::Polynomial, !Matched::Integer) at /home/travis/build/tkluck/PolynomialRings.jl/src/PolynomialRings/Operators.jl:373
-  diff(::Polynomial, !Matched::Symbol) at /home/travis/build/tkluck/PolynomialRings.jl/src/PolynomialRings/Expansions.jl:257</code></pre><p>In some cases, we offer a convenience macro. For example, the <code>@deg</code> macro:</p><pre><code class="language-julia-repl">julia&gt; deg(x^3*y^4, :x)
+  diff(::Polynomial, !Matched::Integer) at /home/travis/build/tkluck/PolynomialRings.jl/src/PolynomialRings/Operators.jl:399
+  diff(::Polynomial, !Matched::Symbol) at /home/travis/build/tkluck/PolynomialRings.jl/src/PolynomialRings/Expansions.jl:267</code></pre><p>In some cases, we offer a convenience macro. For example, the <code>@deg</code> macro:</p><pre><code class="language-julia-repl">julia&gt; deg(x^3*y^4, :x)
 3
 
 julia&gt; deg(x^3*y^4, :y)
@@ -82,13 +82,10 @@ a*c + b*a + b*c</code></pre><p>Keep in mind that they don&#39;t have equal <code
 ℤ[a,b,c]
 
 julia&gt; @expand (a*b*c + b*c) a b c
-2-element Array{Tuple{Int64[a,b,c],BigInt},1}:
- (b*c, 1)
- (a*b*c, 1)
+Base.Generator{PolynomialRings.Polynomials.Expansion{ℤ[a,b,c]},getfield(PolynomialRings.Expansions, Symbol(&quot;##1#2&quot;))}(getfield(PolynomialRings.Expansions, Symbol(&quot;##1#2&quot;))(), PolynomialRings.Polynomials.Expansion{ℤ[a,b,c]}(a*b*c + b*c))
 
 julia&gt; @expand (a*b*c + b*c) b c
-1-element Array{Tuple{Int64[b,c],ℤ[a]},1}:
- (b*c, a + 1)</code></pre><p>For just obtaining a single coefficient, use <code>@coefficient</code>.</p><pre><code class="language-julia-repl">julia&gt; @coefficient (a*b*c + b*c) a^0*b^1*c^1
+Base.Generator{Array{Tuple{TupleMonomial{2,Int16,PolynomialRings.MonomialOrderings.MonomialOrder{:degrevlex,PolynomialRings.NamingSchemes.Named{(:b, :c)}}},ℤ[a]},1},getfield(PolynomialRings.Expansions, Symbol(&quot;##1#2&quot;))}(getfield(PolynomialRings.Expansions, Symbol(&quot;##1#2&quot;))(), Tuple{TupleMonomial{2,Int16,PolynomialRings.MonomialOrderings.MonomialOrder{:degrevlex,PolynomialRings.NamingSchemes.Named{(:b, :c)}}},ℤ[a]}[(b*c, a + 1)])</code></pre><p>For just obtaining a single coefficient, use <code>@coefficient</code>.</p><pre><code class="language-julia-repl">julia&gt; @coefficient (a*b*c + b*c) a^0*b^1*c^1
 1
 
 julia&gt; @coefficient (a*b*c + b*c) b^1*c^1
@@ -112,19 +109,55 @@ julia&gt; I = [x^5, x^2 + y, x*y + y^2]
 julia&gt; rem(y^2, I)  # nonzero, even though y^2 ∈ (I)
 y^2</code></pre><p>However, if you compute a Gröbner basis first, you will:</p><pre><code class="language-julia-repl">julia&gt; G = gröbner_basis(I)
 Gröbner: preparing inputs:  33%|████████                |  ETA: 0:00:01[KGröbner: preparing inputs: 100%|████████████████████████| Time: 0:00:01[K
-Computing Gröbner basis:  33%|████████▋                 |  ETA: 0:00:02[KComputing Gröbner basis: 100%|██████████████████████████| Time: 0:00:01[K
+Computing Gröbner basis:  33%|████████▋                 |  ETA: 0:00:02[K
+  |L|:  4
+  |M|:  21
+  |P|:  2[A[A[A
+
+
+[K[A[K[A[K[AComputing Gröbner basis:  67%|█████████████████▍        |  ETA: 0:00:01[K
+  |L|:  4
+  |M|:  21
+  |P|:  1[A[A[A
+
+
+[K[A[K[A[K[AComputing Gröbner basis: 100%|██████████████████████████| Time: 0:00:01[K
+  |L|:  5
+  |M|:  21
+  |P|:  0
 3-element Array{ℚ[x,y],1}:
- y^2
- x*y
  x^2 + y
+ x*y + y^2
+ y^2
 
 julia&gt; rem(y^2, G) # now, it reduces to zero.
 0</code></pre><p>If you want to obtain the expression of <span>$y^2$</span> in these elements, you can first use <code>div</code> to obtain the (row) vector of factors expressing <span>$y^2$</span> in G:</p><pre><code class="language-julia-repl">julia&gt; div(y^2, G)
 1×3 LinearAlgebra.Transpose{ℚ[x,y],SparseArrays.SparseVector{ℚ[x,y],Int64}}:
- 1//1  0  0</code></pre><p>The <a href="../functions/#PolynomialRings.gröbner_transformation"><code>gröbner_transformation</code></a> function gives a matrix <code>tr</code> expressing <code>G</code> in terms of <code>I</code>:</p><pre><code class="language-julia-repl">julia&gt; G, tr = gröbner_transformation(I); tr
+ 0  0  1//1</code></pre><p>The <a href="../functions/#PolynomialRings.gröbner_transformation"><code>gröbner_transformation</code></a> function gives a matrix <code>tr</code> expressing <code>G</code> in terms of <code>I</code>:</p><pre><code class="language-julia-repl">julia&gt; G, tr = gröbner_transformation(I); tr
 Gröbner: preparing inputs 33%|████████▋                 |  ETA: 0:00:01[KGröbner: preparing inputs100%|██████████████████████████| Time: 0:00:00[K
-Computing Gröbner basis:  33%|████████▋                 |  ETA: 0:00:02[KComputing Gröbner basis:  50%|█████████████             |  ETA: 0:00:02[KComputing Gröbner basis:  75%|███████████████████▌      |  ETA: 0:00:01[KComputing Gröbner basis: 100%|██████████████████████████| Time: 0:00:02[K
-Interreducing result 25%|███████▊                       |  ETA: 0:00:04[KInterreducing result100%|███████████████████████████████| Time: 0:00:01[K
+Computing Gröbner basis:  33%|████████▋                 |  ETA: 0:00:02[K
+  |G|:   1
+  |H|:   0
+  |JP|:  2[A[A[A
+
+
+[K[A[K[A[K[AComputing Gröbner basis:  50%|█████████████             |  ETA: 0:00:02[K
+  |G|:   2
+  |H|:   1
+  |JP|:  2[A[A[A
+
+
+[K[A[K[A[K[AComputing Gröbner basis:  75%|███████████████████▌      |  ETA: 0:00:01[K
+  |G|:   3
+  |H|:   1
+  |JP|:  1[A[A[A
+
+
+[K[A[K[A[K[AComputing Gröbner basis: 100%|██████████████████████████| Time: 0:00:03[K
+  |G|:   4
+  |H|:   2
+  |JP|:  0
+Interreducing result 25%|███████▊                       |  ETA: 0:00:02[KInterreducing result100%|███████████████████████████████| Time: 0:00:01[K
 3×3 SparseArrays.SparseMatrixCSC{ℚ[x,y],Int64} with 7 stored entries:
   [1, 1]  =  -1//1
   [3, 1]  =  -1//1
@@ -161,10 +194,10 @@ myderivative2 (generic function with 1 method)
 
 julia&gt; myderivative2(ε^3 + ε^2, :ε)
 3//1*ε^2 + 2//1*ε</code></pre><p>which gives the correct answer. Unfortunately, this is <em>very</em> inefficient:</p><pre><code class="language-julia-repl">julia&gt; @time myderivative2(ε^3 + ε^2, :ε);
-  3.259486 seconds (5.68 M allocations: 297.590 MiB, 6.93% gc time)
+  2.842747 seconds (5.52 M allocations: 291.050 MiB, 7.21% gc time)
 
 julia&gt; @time myderivative2(ε^3 + ε^2, :ε);
-  3.439480 seconds (5.68 M allocations: 297.864 MiB, 7.82% gc time)</code></pre><p>The reason is that variable names are part of the type definition, and Julia specializes functions based on the type of its arguments. In this case, that means that for evaluating the <code>@coefficient</code> call, and for the substitution call, all the code needs to be compiled <em>every time you call <code>myderivative</code></em>.</p><p>For this reason, we provide a function <code>formal_coefficient(R)</code> which yields a variable that&#39;s guaranteed not to clash with the ring that you pass as an argument:</p><pre><code class="language-julia-repl">julia&gt; function myderivative3(f::RR, varsymbol) where RR &lt;: Polynomial
+  2.957602 seconds (5.51 M allocations: 290.721 MiB, 10.81% gc time)</code></pre><p>The reason is that variable names are part of the type definition, and Julia specializes functions based on the type of its arguments. In this case, that means that for evaluating the <code>@coefficient</code> call, and for the substitution call, all the code needs to be compiled <em>every time you call <code>myderivative</code></em>.</p><p>For this reason, we provide a function <code>formal_coefficient(R)</code> which yields a variable that&#39;s guaranteed not to clash with the ring that you pass as an argument:</p><pre><code class="language-julia-repl">julia&gt; function myderivative3(f::RR, varsymbol) where RR &lt;: Polynomial
            varvalue = RR(varsymbol)
            ε_sym, ε_val = formal_coefficient(typeof(f))
            return coefficient(f(;varsymbol =&gt; varvalue + ε_val), (1,), ε_sym)
@@ -172,22 +205,31 @@ julia&gt; @time myderivative2(ε^3 + ε^2, :ε);
 myderivative3 (generic function with 1 method)
 
 julia&gt; @time myderivative3(ε^3 + ε^2, :ε);   # first time is still slow (compiling)
-  3.739444 seconds (6.27 M allocations: 332.756 MiB, 10.58% gc time)
+  3.049255 seconds (6.17 M allocations: 328.413 MiB, 6.66% gc time)
 
 julia&gt; @time myderivative3(ε^3 + ε^2, :ε);   # but much faster the second time
-  0.001027 seconds (2.72 k allocations: 70.180 KiB)
+  0.000751 seconds (2.65 k allocations: 67.305 KiB)
 
 julia&gt; @time myderivative3(ε^3 + ε^2, :ε);   # and the third
-  0.000766 seconds (2.72 k allocations: 70.180 KiB)</code></pre><h3><a class="nav-anchor" id="Free-modules-(arrays-of-polynomials)-1" href="#Free-modules-(arrays-of-polynomials)-1">Free modules (arrays of polynomials)</a></h3><p>For practical purposes, a <em>free module</em> (of finite rank) over a ring <span>$R$</span> is just an array of polynomials in <span>$R$</span>. Many algorithms that work for polynomial rings also work for modules. For example, the function <code>gröbner_basis</code> works just as well if we pass a vector of vectors of polynomials instead of a vector of polynomials:</p><pre><code class="language-julia-repl">julia&gt; G = [[x^5-y,x^4],[x^3+y,y^3]];
+  0.000507 seconds (2.65 k allocations: 67.305 KiB)</code></pre><h3><a class="nav-anchor" id="Free-modules-(arrays-of-polynomials)-1" href="#Free-modules-(arrays-of-polynomials)-1">Free modules (arrays of polynomials)</a></h3><p>For practical purposes, a <em>free module</em> (of finite rank) over a ring <span>$R$</span> is just an array of polynomials in <span>$R$</span>. Many algorithms that work for polynomial rings also work for modules. For example, the function <code>gröbner_basis</code> works just as well if we pass a vector of vectors of polynomials instead of a vector of polynomials:</p><pre><code class="language-julia-repl">julia&gt; G = [[x^5-y,x^4],[x^3+y,y^3]];
 
 julia&gt; GG = gröbner_basis(G)
 Gröbner: preparing inputs:  50%|████████████            |  ETA: 0:00:00[KGröbner: preparing inputs: 100%|████████████████████████| Time: 0:00:00[K
-Computing Gröbner basis:  75%|███████████████████▌      |  ETA: 0:00:00[KComputing Gröbner basis: 100%|██████████████████████████| Time: 0:00:00[K
+Computing Gröbner basis:  75%|███████████████████▌      |  ETA: 0:00:00[K
+  |L|:  5
+  |M|:  54
+  |P|:  1[A[A[A
+
+
+[K[A[K[A[K[AComputing Gröbner basis: 100%|██████████████████████████| Time: 0:00:00[K
+  |L|:  6
+  |M|:  63
+  |P|:  0
 4-element Array{Array{ℚ[x,y],1},1}:
- [0, x^5*y^3 + -x^7 + -x^4*y + -y^4]
+ [x^3 + y, y^3]
  [x*y + -y^2, x^3*y^3 + -x^5 + -y^4]
  [y^3 + y, -x^4*y^3 + -x^3*y^4 + x^6 + x^5*y + x^2*y^3 + x*y^4 + y^5 + -x^4]
- [x^3 + y, y^3]</code></pre><p>One can then use the functions <code>rem</code> and <code>div</code> to express a given vector as an <span>$R$</span>-linear combination of the others.</p><p>For these purposes, the leading term of a vector is defined to be the tuple <span>$(i,t)$</span> where <span>$i$</span> is the first nonzero index, and <span>$t$</span> is the leading term of that nonzero element.</p><h3><a class="nav-anchor" id="Base-rings-and-base-restriction-/-extension-1" href="#Base-rings-and-base-restriction-/-extension-1">Base rings and base restriction / extension</a></h3><p>Some operations need a field for a base ring. For example:</p><pre><code class="language-julia-repl">julia&gt; R = @ring! ℤ[x]
+ [0, x^5*y^3 + -x^7 + -x^4*y + -y^4]</code></pre><p>One can then use the functions <code>rem</code> and <code>div</code> to express a given vector as an <span>$R$</span>-linear combination of the others.</p><p>For these purposes, the leading term of a vector is defined to be the tuple <span>$(i,t)$</span> where <span>$i$</span> is the first nonzero index, and <span>$t$</span> is the leading term of that nonzero element.</p><h3><a class="nav-anchor" id="Base-rings-and-base-restriction-/-extension-1" href="#Base-rings-and-base-restriction-/-extension-1">Base rings and base restriction / extension</a></h3><p>Some operations need a field for a base ring. For example:</p><pre><code class="language-julia-repl">julia&gt; R = @ring! ℤ[x]
 ℤ[x]
 
 julia&gt; rem(2x^2, 3x + 1)
