@@ -114,11 +114,9 @@ function linear_coefficients(a::AbstractArray{P}, args...) where P <: Polynomial
 end
 
 function expansion_terms(a::AbstractArray{P}, symbols...) where P <: Polynomial
-    MonomialType, CoeffType = expansiontypes(P, symbols...)
-    vars = map(P, symbols)
     return [
-        prod(v^k for (v,k) in zip(vars,w))*P.(c)
-        for (w,c) in expansion(a, symbols...)
+        P.(m * c)
+        for (m, c) in expansion(a, symbols...)
     ]
 end
 
