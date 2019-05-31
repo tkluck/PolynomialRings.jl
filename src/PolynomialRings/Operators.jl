@@ -3,7 +3,7 @@ module Operators
 import Base: zero, one, +, -, *, ==, div, iszero, diff, ^, gcd
 
 import DataStructures: enqueue!, dequeue!
-import InPlace: @inplace, inclusiveinplace!
+import InPlace: @inplace, inplace!, inclusiveinplace!
 
 import ..Constants: Zero
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
@@ -11,10 +11,9 @@ import ..Monomials: AbstractMonomial
 import ..Polynomials: Polynomial, termtype, nztermscount, monomialorder, monomialtype
 import ..Polynomials: monomialstype
 import ..Polynomials: leading_term, nzrevterms, nztailterms, nzterms
-import ..Polynomials: PolynomialBy, isstrictlysparse
+import ..Polynomials: PolynomialBy, TermBy, MonomialBy, isstrictlysparse, TermOver
 import ..Terms: Term, monomial, coefficient
 import ..Util: BoundedHeap
-import ..Util: ParallelIter
 import PolynomialRings: basering, exptype, base_extend, base_restrict
 import PolynomialRings: lcm_multipliers, expansion
 import PolynomialRings: leading_monomial, leading_coefficient
@@ -92,52 +91,8 @@ end
 # addition, subtraction
 #
 # -----------------------------------------------------------------------------
-function _map(op, a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
-    P = promote_type(typeof(a), typeof(b))
-    # FIXME(tkluck): promote_type currently only guarantees that
-    #     namingscheme(P) == namingscheme(Order)
-    # See NamedPolynomials.jl
-    @assert monomialorder(P) == Order()
-    M = monomialtype(P)
-    C = basering(P)
-    ≺(a,b) = Base.Order.lt(Order(), a, b)
-
-    if a.monomials === b.monomials
-        if length(a.coeffs) < length(b.coeffs)
-            coeffs = op.(Zero(), b.coeffs)
-            initial = 1:length(a.coeffs)
-            coeffs[initial] .= op.(view(a.coeffs, initial), view(b.coeffs, initial))
-            return _filterzeros!(P(copy(b.monomials), coeffs))
-        else
-            coeffs = op.(a.coeffs, Zero())
-            initial = 1:length(b.coeffs)
-            coeffs[initial] .= op.(view(a.coeffs, initial), view(b.coeffs, initial))
-            return _filterzeros!(P(copy(b.monomials), coeffs))
-        end
-    end
-
-    monomials = Vector{M}(undef, length(a.monomials) + length(b.monomials))
-    coeffs    = Vector{C}(undef, length(a.coeffs)    + length(b.coeffs))
-    n = 0
-
-    for (m, coeff) in ParallelIter(
-            first, last, ≺,
-            Zero(), Zero(), op,
-            expansion(a, Order()), expansion(b, Order()),
-        )
-        if !iszero(coeff)
-            n += 1
-            @inbounds monomials[n] = m
-            @inbounds coeffs[n] = coeff
-        end
-    end
-    resize!(monomials, n)
-    resize!(coeffs, n)
-    return P(monomials, coeffs)
-end
-
-+(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order = _map(+, a, b)
--(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order = _map(-, a, b)
++(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order = a .+ b
+-(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order = a .- b
 
 # -----------------------------------------------------------------------------
 #
@@ -542,10 +497,28 @@ function inclusiveinplace!(::typeof(+), a::P, b::C) where
 end
 
 
+# -----------------------------------------------------------------------------
+#
+# Multiplying Terms in-place
+#
+# -----------------------------------------------------------------------------
+function inplace!(::typeof(*), a::T, b::MonomialBy{Order}, c::T) where T <: TermBy{Order} where Order <: MonomialOrder
+    if coefficient(a) === coefficient(c)
+        # in-place means that we do not need to deepcopy the coefficient
+        a = Term(b * monomial(c), coefficient(c))
+    else
+        a = b * c
+    end
+end
 
-
-
-
-
+function inplace!(::typeof(*), a::T, b::C, c::T) where T <: TermOver{C} where C
+    if coefficient(a) === coefficient(c)
+        coef = coefficient(a)
+        @inplace coef *= b
+        a = Term(monomial(c), coef)
+    else
+        a = b * c
+    end
+end
 
 end

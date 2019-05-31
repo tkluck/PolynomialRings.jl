@@ -47,6 +47,8 @@ end
 *(a::Term{M, C1}, b::Term{M, C2}) where M <: AbstractMonomial where {C1,C2} = Term(a.m*b.m, a.c*b.c)
 *(a::Term{M, C}, b::C) where M <: AbstractMonomial where C = Term(a.m, a.c*b)
 *(a::C, b::Term{M, C}) where M <: AbstractMonomial where C = Term(b.m, a*b.c)
+*(a::Term{M, C}, b::M) where M <: AbstractMonomial where C = Term(a.m*b, deepcopy(a.c))
+*(a::M, b::Term{M, C}) where M <: AbstractMonomial where C = Term(a*b.m, deepcopy(b.c))
 +(a::T)                where T <: Term = deepcopy(a)
 -(a::T)                where T <: Term = T(a.m, -a.c)
 ==(a::T,b::T)          where T <: Term = a.m == b.m && a.c == b.c

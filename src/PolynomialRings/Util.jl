@@ -9,6 +9,10 @@ import Base: pairs
 
 import SparseArrays: SparseVector, SparseMatrixCSC
 
+import Transducers: Transducer, R_, inner, wrap, xform
+import Transducers: wrapping, unwrap
+import Transducers: start, next, complete, outtype
+
 import DataStructures: PriorityQueue, SortedSet, OrderedSet, OrderedDict
 import DataStructures: percolate_down!, percolate_up!, enqueue!, dequeue!, peek
 import OrderedCollections: ht_keyindex, rehash!
@@ -134,93 +138,6 @@ iterate(i::SingleItemIter, ::Nothing) = nothing
 
 include("LinAlgUtil.jl")
 
-# -----------------------------------------------------------------------------
-#
-# Parallel iteration of two iterators
-#
-# -----------------------------------------------------------------------------
-struct ParallelIter{I,J,key,value,≺,l0,r0,op}
-    left::I
-    right::J
-end
-ParallelIter(key, value, ≺, l0, r0, op, left, right) = ParallelIter{
-        typeof(left), typeof(right),
-        key, value, ≺,
-        l0, r0, op,
-    }(left, right)
-
-struct Start end
-struct LeftReady{T,S}
-    liter::T
-    rstate::S
-end
-struct RightReady{T,S}
-    riter::T
-    lstate::S
-end
-struct NextTwo{T,S}
-    lstate::T
-    rstate::S
-end
-# LeftDone could be represented by LeftReady{Nothing}, but Julia's type
-# inference seems happier with a slightly flatter type tree. I checked
-# that by adding
-#     return it
-# to _materialize!, allowing me to obtain the TermsMap from
-#     @ring! ℤ[x,y]
-#     t = x.terms[1].m
-#     it = @. BigInt(1)*x - BigInt(1)*(t*x);
-# and then inspecting
-#     @code_warntype iterate(it, PolynomialRings.Util.Start())
-struct LeftDone{S}
-    rstate::S
-end
-struct RightDone{S}
-    lstate::S
-end
-
-function iterate2(i::ParallelIter, state::LeftReady)
-    riter = iterate(i.right, state.rstate)
-    state.liter, riter
-end
-function iterate2(i::ParallelIter, state::LeftDone)
-    riter = iterate(i.right, state.rstate)
-    nothing, riter
-end
-function iterate2(i::ParallelIter, state::RightReady)
-    liter = iterate(i.left, state.lstate)
-    liter, state.riter
-end
-function iterate2(i::ParallelIter, state::RightDone)
-    liter = iterate(i.left, state.lstate)
-    liter, nothing
-end
-function iterate2(i::ParallelIter, state::NextTwo)
-    iterate(i.left, state.lstate), iterate(i.right, state.rstate)
-end
-function iterate2(i::ParallelIter, ::Start)
-    iterate(i.left), iterate(i.right)
-end
-
-@inline function iterate(i::ParallelIter{I,J,key,value,≺,l0,r0,op}, state=Start()) where {I,J,key,value,≺,l0,r0,op}
-    liter, riter = iterate2(i, state)
-    if liter === nothing && riter === nothing
-        return nothing
-    elseif liter === nothing
-        return (key(riter[1]), op(l0, value(riter[1]))), LeftDone(riter[2])
-    elseif riter === nothing
-        return (key(liter[1]), op(value(liter[1]), r0)), RightDone(liter[2])
-    elseif key(riter[1]) ≺ key(liter[1])
-        return (key(riter[1]), op(l0, value(riter[1]))), LeftReady(liter, riter[2])
-    elseif key(liter[1]) ≺ key(riter[1])
-        return (key(liter[1]), op(value(liter[1]), r0)), RightReady(riter, liter[2])
-    elseif key(liter[1]) == key(riter[1])
-        return (key(liter[1]), op(value(liter[1]), value(riter[1]))), NextTwo(liter[2], riter[2])
-    else
-        @assert(false) # unreachable?
-    end
-end
-
 isstrictlysorted(itr; lt) = issorted(itr; lt = (a, b) -> !lt(b, a))
 
 # -----------------------------------------------------------------------------
@@ -288,6 +205,87 @@ nzpairs(iter::SparseVector) = (
 
 nzpairs(iter::SparseMatrixCSC) = ((i, iter[i]) for i in findall(!iszero, iter))
 
+# -----------------------------------------------------------------------------
+#
+# A transducer that merges two iterables like a zipper
+#
+# -----------------------------------------------------------------------------
+struct MergingTransducer{Iter, Order, LeftOp, RightOp, MergeOp, Key, Value} <: Transducer
+    iter      :: Iter
+    order     :: Order
+    leftop    :: LeftOp
+    rightop   :: RightOp
+    mergeop   :: MergeOp
+    key       :: Key
+    value     :: Value
+end
+
+function start(rf::R_{<:MergingTransducer}, result)
+    outeriter = iterate(xform(rf).iter)
+    return wrap(rf, outeriter, start(inner(rf), result))
+end
+
+function next(rf::R_{<:MergingTransducer}, result, input)
+    ≺(a, b) = Base.Order.lt(xform(rf).order, a, b)
+
+    leftop = xform(rf).leftop
+    rightop = xform(rf).rightop
+    mergeop = xform(rf).mergeop
+    key = xform(rf).key
+    value = xform(rf).value
+
+    wrapping(rf, result) do outeriter, res
+        while !isnothing(outeriter)
+            outerinput, state = outeriter
+            if key(input) ≺ key(outerinput)
+                t = rightop(value(input))
+                res = next(inner(rf), res, t)
+                return outeriter, res
+            elseif key(input) == key(outerinput)
+                t = mergeop(value(outerinput), value(input))
+                res = next(inner(rf), res, t)
+                outeriter = iterate(xform(rf).iter, state)
+                return outeriter, res
+            else
+                t = leftop(value(outerinput))
+                res = next(inner(rf), res, t)
+                outeriter = iterate(xform(rf).iter, state)
+            end
+        end
+        res = next(inner(rf), res, rightop(value(input)))
+        return outeriter, res
+    end
+end
+
+function complete(rf::R_{<:MergingTransducer}, result)
+    leftop = xform(rf).leftop
+    value = xform(rf).value
+
+    outeriter, res = unwrap(rf, result)
+    while !isnothing(outeriter)
+        outerinput, state = outeriter
+        res = next(inner(rf), res, leftop(value(outerinput)))
+        outeriter = iterate(xform(rf).iter, state)
+    end
+    complete(inner(rf), res)
+end
+
+outtype(xf::MergingTransducer, Q) = Base._return_type((a, b) -> xf.mergeop(xf.value(a), xf.value(b)), Tuple{eltype(xf.iter), Q})
+
+"""
+    _Map{Op} <: Transducer
+
+The same thing as Transducers.Map, except using Base._return_type for determining
+the outtype. This is not API-stable but gives much better performance. Moreover,
+it means we can use it in @generated functions as well.
+"""
+struct _Map{Op} <: Transducer
+    f  :: Op
+end
+
+next(rf::R_{<:_Map}, result, input) = next(inner(rf), result, xform(rf).f(input))
+outtype(xf::_Map, intype) = Base._return_type(xf.f, Tuple{intype})
+isexpansive(xf::_Map) = false
 
 
 end

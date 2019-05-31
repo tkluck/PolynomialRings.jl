@@ -48,7 +48,10 @@ const NamedOrder              = MonomialOrder{Rule,<:Named}    where Rule
 const NumberedOrder           = MonomialOrder{Rule,<:Numbered} where Rule
 const NamedMonomial           = AbstractMonomial{<:NamedOrder}
 const NumberedMonomial        = AbstractMonomial{<:NumberedOrder}
+const MonomialBy{Order}       = AbstractMonomial{Order}
 const TermOver{C,Order}       = Term{<:AbstractMonomial{Order}, C}
+const TermBy{Order,C}        = TermOver{C,Order}
+const TermIn{M}              = Term{M}
 const PolynomialOver{C,Order} = Polynomial{<:AbstractMonomial{Order}, C}
 const NamedTerm{C}            = TermOver{C,<:NamedOrder}
 const NumberedTerm{C}         = TermOver{C,<:NumberedOrder}
@@ -121,7 +124,28 @@ nzrevterms(p::PolynomialBy{Order}; order::Order=monomialorder(p)) where Order <:
     for ix in reverse(1:_leading_term_ix(p, order)) if
     isstrictlysparse(p) || !iszero(p.coeffs[ix])
 )
+# -----------------------------------------------------------------------------
+#
+# Methods for collection-of-terms
+#
+# -----------------------------------------------------------------------------
+function Base.empty!(p::Polynomial)
+    empty!(p.coeffs)
+    empty!(p.monomials)
+    p
+end
 
+function Base.push!(p::PolynomialIn{M}, t::TermIn{M}) where M <: AbstractMonomial
+    @assert isempty(p.monomials) || isless(last(p.monomials), monomial(t))
+    push!(p.monomials, monomial(t))
+    push!(p.coeffs, coefficient(t))
+    p
+end
+
+function Base.sizehint!(p::Polynomial, n)
+    sizehint!(p.coeffs, n)
+    sizehint!(p.monomials, n)
+end
 
 hash(p::Polynomial, h::UInt) = hash(p.monomials, hash(p.coeffs, h))
 
