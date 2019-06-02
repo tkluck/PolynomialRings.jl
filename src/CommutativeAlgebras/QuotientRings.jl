@@ -6,6 +6,7 @@ import Base: promote_rule, promote_type, convert
 import Base: show
 import Base: zero, one, rem, copy
 
+import ..Expansions: expansion
 import ..Ideals: Ideal, _grb
 import ..Ideals: ring
 import ..NamingSchemes: boundnames, fullboundnames, namingscheme, fullnamingscheme
@@ -68,6 +69,8 @@ allvariablesymbols(::Type{Q}) where Q<:QuotientRing = allvariablesymbols(ring(Q)
 # variables may appear in _ideal(Q).
 boundnames(::Type{Q})         where Q<:QuotientRing = fullnamingscheme(ring(Q))
 fullboundnames(::Type{Q})     where Q<:QuotientRing = fullnamingscheme(ring(Q))
+
+expansion(q::QuotientRing, spec...) = ((one(monomialtype(spec...)), q),)
 
 # -----------------------------------------------------------------------------
 #
