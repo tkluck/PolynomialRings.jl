@@ -124,13 +124,16 @@ function Base.Order.lt(order::MonomialOrder, s::A, t::A) where A<:AbstractArray{
     Base.Order.lt(order, leading_monomial(s, order=order), leading_monomial(t, order=order))
 end
 
-Base.getindex(a::AbstractArray{<:Polynomial}, s::Signature{<:AbstractMonomial}) = a[s.i][s.m]
-function Base.getindex(a::SparseVector{<:Polynomial}, s::Signature{<:AbstractMonomial})
+Base.get(a::AbstractArray{<:Polynomial}, s::Signature{<:AbstractMonomial}, default) = get(a[s.i], s.m, default)
+
+Base.getindex(a::AbstractArray{<:Polynomial}, s::Signature{<:AbstractMonomial}) = get(a, s, zero(basering(eltype(a))))
+
+function Base.get(a::SparseVector{<:Polynomial}, s::Signature{<:AbstractMonomial}, default)
     ixrange = searchsorted(a.nzind, s.i)
     if isempty(ixrange)
-        return zero(modulebasering(a))
+        return default
     else
-        return a.nzval[ixrange[1]][s.m]
+        return get(a.nzval[ixrange[1]], s.m, default)
     end
 end
 
