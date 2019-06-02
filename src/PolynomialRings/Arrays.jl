@@ -11,6 +11,7 @@ import IterTools: groupby
 import ..Expansions: _expansion_expr, expansiontypes
 import ..Expansions: constant_coefficient, linear_coefficients, expansion_terms
 import ..Expansions: expansion, coefficients, coefficient, deg
+import ..Expansions: substitutedtype
 import ..Monomials: AbstractMonomial, expstype
 import ..Operators: common_denominator, integral_fraction, map_coefficients
 import ..Polynomials: Polynomial, PolynomialOver
@@ -79,16 +80,13 @@ function coefficients(a::AbstractArray{P}, args...) where P <: Polynomial
     return [c for (p,c) in expansion(a, args...)]
 end
 
-function (p::Array{P})(; kwargs...) where P <: Polynomial
-    return map(p_i -> p_i(;kwargs...), p)
-end
-
-function (p::SparseVector{P})(; kwargs...) where P <: Polynomial
-    return map(p_i -> p_i(;kwargs...), p)
-end
-
-function (p::SparseMatrixCSC{P})(; kwargs...) where P <: Polynomial
-    return map(p_i -> p_i(;kwargs...), p)
+function (p::AbstractArray{P})(; kwargs...) where P <: Polynomial
+    ElType = substitutedtype(eltype(p); kwargs...)
+    res = similar(p, ElType)
+    for ix in eachindex(p)
+        res[ix] = p[ix](;kwargs...)
+    end
+    res
 end
 
 function coefficient(a::AbstractArray{P}, args...) where P <: Polynomial

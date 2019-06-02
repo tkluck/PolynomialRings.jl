@@ -220,6 +220,17 @@ end
 # helper for inspecting the types of substitution values
 _kwtupletype(::Type{Base.Iterators.Pairs{K, V, I, A}}) where {K, V, I, A} = A
 
+function substitutedtype(P::Type; kwargs...)
+    kwtupletype = _kwtupletype(typeof(kwargs))
+    vars = fieldnames(kwtupletype)
+    valtypes = fieldtypes(kwtupletype)
+    if length(kwargs) == 1 && valtypes[1] <: Function
+        return promote_type(P, typeof(first(first(kwargs))(1)))
+    else
+        return promote_type(_coefftype(P, vars...), valtypes...)
+    end
+end
+
 """
     f(var1=...,var2=...)
 
