@@ -61,6 +61,9 @@ end
 one(::Type{Term{M,C}}) where {M, C} = Term{M,C}(one(M), one(C))
 one(t::T) where T <: Term = one(typeof(t))
 
+zero(::Type{Term{M,C}}) where {M, C} = error("Using zero(::Term) is indicative of faulty logic")
+zero(t::T) where T <: Term = zero(typeof(t))
+
 monomial(a::Term) = a.m
 coefficient(a::Term) = a.c
 
