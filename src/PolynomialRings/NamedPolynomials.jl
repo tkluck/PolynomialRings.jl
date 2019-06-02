@@ -165,6 +165,7 @@ function promote_rule(T1::Type{<:Term}, T2::Type)
         return _promote_rule(basering(T1), T2)
     elseif isdisjoint(namingscheme(T1), fullnamingscheme(T2))
         if (C = _promote_rule(basering(T1), T2)) !== Bottom
+            # TODO: replace by termtype(m, c) function
             return Term{monomialtype(T1), C}
         end
     end
@@ -180,20 +181,11 @@ end
 
 promote_canonical_type(T1::Type, T2::Type) = promote_type(T1, T2)
 
-function promote_canonical_type(T1::Type{<:Polynomial}, T2::Type)
-    if !isdisjoint(namingscheme(T1), fullboundnames(T2))
-        T1′ = remove_variables(T1, fullboundnames(T2))
-        return promote_canonical_type(T1′, T2)
-    else
-        M = monomialtype(T1)
-        C = promote_canonical_type(basering(T1), T2)
-        return polynomialtype(M, C)
-    end
-end
-
 promote_canonical_type(T1::Type, T2::Type{<:Polynomial}) = promote_canonical_type(T2, T1)
 
-function promote_canonical_type(T1::Type{<:Polynomial}, T2::Type{<:Polynomial})
+promote_canonical_type(T1::Type{<:Polynomial}, T2::Type{<:Polynomial}) = invoke(promote_canonical_type, Tuple{Type{<:Polynomial}, Type}, T1, T2)
+
+function promote_canonical_type(T1::Type{<:Polynomial}, T2::Type)
     @assert iscanonical(T1) && iscanonical(T2)
 
     if !isdisjoint(namingscheme(T1), fullboundnames(T2))
@@ -230,7 +222,7 @@ end
 
 using PolynomialRings
 
-function convert(::Type{P1}, a::P2) where P1 <: Polynomial where P2 <: Polynomial
+function convert(::Type{P1}, a::P2) where P1 <: Polynomial where P2 #<: Polynomial
     M = monomialtype(P1)
     C = basering(P1)
     monomials = M[]

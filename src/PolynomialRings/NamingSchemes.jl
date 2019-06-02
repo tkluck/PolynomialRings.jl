@@ -71,10 +71,12 @@ isdisjoint(::Numbered, ::Named) = true
 isdisjoint(::Numbered{Name1}, ::Numbered{Name2}) where {Name1, Name2} = Name1 != Name2
 isdisjoint(::NamingScheme, ::Nothing) = true
 isdisjoint(::Nothing, ::NamingScheme) = true
+isdisjoint(::Nothing, ::NoNamingScheme) = true
 isdisjoint(::Nothing, ::Nothing) = true
 
 isdisjoint(::NamingScheme, ::NoNamingScheme) = true
 isdisjoint(::NoNamingScheme, ::NamingScheme) = true
+isdisjoint(::NoNamingScheme, ::Nothing) = true
 
 @generated function isdisjoint(::S, ::T) where {S <: NamingScheme, T <: FullNamingScheme}
     return :($( all(t -> isdisjoint(S(), t), T()) ))
@@ -110,14 +112,15 @@ function remove_variables(N::Numbered, vars::FullNamingScheme)
 end
 
 namingscheme(::Type) = nothing
-fullnamingscheme(::Type) = NoNamingScheme()
+fullnamingscheme(T::Type) = isnothing(namingscheme(T)) ? NoNamingScheme() : (namingscheme(T),)
 boundnames(::Type) = nothing
-fullboundnames(T::Type) = boundnames(T) == nothing ? NoNamingScheme() : (boundnames(T),)
+fullboundnames(T::Type) = isnothing(boundnames(T)) ? NoNamingScheme() : (boundnames(T),)
 
 ≺(N1::Numbered, N2::Numbered) = numberedvariablename(N1) < numberedvariablename(N2)
 ≺(N1::Numbered, N2::Named) = true
 ≺(N1::Named, N2::NamingScheme) = false
 ≺(N1::Nothing, N2::NamingScheme) = true
+≺(N1::NamingScheme, N2::Nothing) = false
 
 iscanonical(N::Numbered) = true
 iscanonical(N::Named) = issorted(variablesymbols(N))

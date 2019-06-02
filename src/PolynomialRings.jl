@@ -28,6 +28,9 @@ include("PolynomialRings/GroebnerM4GB.jl")
 include("PolynomialRings/Conversions.jl")
 include("PolynomialRings/Solve.jl")
 
+# define this here to resolve a dependency cycle
+basering(::Type{M}) where M <: Monomials.AbstractMonomial = Constants.One
+
 import .Monomials: TupleMonomial, VectorMonomial
 import .Terms: Term
 import .Polynomials: Polynomial, generators, polynomial_ring

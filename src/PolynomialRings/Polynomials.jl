@@ -36,7 +36,19 @@ end
 
 Polynomial(monomials, coeffs::Vector) = Polynomial{eltype(monomials), eltype(coeffs), typeof(monomials)}(monomials, coeffs)
 
-polynomialtype(M::Type{<:AbstractMonomial}, C::Type) = Polynomial{M, C, Vector{M}}
+function polynomialtype(M::Type{<:AbstractMonomial}, C::Type)
+    if !isdisjoint(namingscheme(M), fullnamingscheme(C)) || !isdisjoint(namingscheme(M), fullboundnames(C))
+        error("Duplicate veriable names while creating polynomialring in $M over $C")
+    end
+    if C <: AbstractMonomial
+        C = polynomialtype(C, Int)
+    elseif C <: Term
+        C = polynomialtype(C)
+    end
+    return Polynomial{M, C, Vector{M}}
+end
+
+polynomialtype(P::Type{<:Polynomial}) = P
 
 # -----------------------------------------------------------------------------
 #

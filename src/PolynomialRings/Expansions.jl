@@ -14,7 +14,7 @@ import ..Polynomials: Polynomial, termtype, monomialtype, monomialorder, polynom
 import ..Terms: Term, monomial, coefficient
 import ..Util: SingleItemIter
 import ..NamingSchemes: Named, Numbered, NamingScheme, remove_variables
-import PolynomialRings: basering, namingscheme, variablesymbols, expansion, expand
+import PolynomialRings: basering, namingscheme, variablesymbols, expansion, expand, polynomialtype
 
 # -----------------------------------------------------------------------------
 #
@@ -93,6 +93,8 @@ julia> collect(expansion(x^3 + y^2, :x, :y))
 `@expansion(...)`, `@coefficient` and `coefficient`
 """
 expansion(p::Polynomial, spec...) = expansion(p, _expansionspec(spec...))
+expansion(p::Term, spec...) = expansion(p, _expansionspec(spec...))
+expansion(p::AbstractMonomial, spec...) = expansion(p, _expansionspec(spec...))
 expansion(p::Number, spec...) = ((one(monomialtype(spec...)), p),)
 
 _ofpolynomialtype(m::AbstractMonomial, c) = _ofpolynomialtype(Term(m, c))
@@ -118,6 +120,18 @@ function expansion(p::Polynomial, spec::MonomialOrder)
         for grp in groupby(i -> i[1], exploded)
     ]
     return collected
+end
+
+function expansion(t::Term, spec::MonomialOrder)
+    return expansion(polynomialtype(typeof(t))(t), spec)
+end
+
+function expansion(a::AbstractMonomial, spec::MonomialOrder)
+    C = remove_variables(typeof(a), namingscheme(spec))
+    M = monomialtype(spec, exptype(typeof(a), namingscheme(spec)))
+    c = _lossy_convert_monomial(C, a)
+    m = _lossy_convert_monomial(M, a)
+    return ((m, c),)
 end
 
 # -----------------------------------------------------------------------------
@@ -177,7 +191,7 @@ julia> collect(expansion_terms(x^3 + y^2 + 1, :x, :y))
 """
 function expansion_terms(p::P, spec...) where P <: Polynomial
     return [
-        _ofpolynomialtype(m * c)
+        P(m * c)
         for (m,c) in expansion(p, spec...)
     ]
 end
