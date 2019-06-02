@@ -287,5 +287,6 @@ next(rf::R_{<:_Map}, result, input) = next(inner(rf), result, xform(rf).f(input)
 outtype(xf::_Map, intype) = Base._return_type(xf.f, Tuple{intype})
 isexpansive(xf::_Map) = false
 
+Base.deepcopy(x::BigInt) = return Base.GMP.MPZ.set(x)
 
 end
