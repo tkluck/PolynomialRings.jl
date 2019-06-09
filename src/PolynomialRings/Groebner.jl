@@ -5,6 +5,7 @@ import SparseArrays: SparseVector
 
 import ..Modules: AbstractModuleElement, modulebasering, leading_row
 import ..Polynomials: monomialorder
+import ..Util: @showprogress
 import PolynomialRings: leading_term, lcm_multipliers
 import PolynomialRings: syzygies
 
@@ -33,12 +34,12 @@ function syzygies(polynomials::AbstractVector{M}) where M <: AbstractModuleEleme
     order = monomialorder(eltype(polynomials))
     pairs_to_consider = [
         (i,j) for i in eachindex(polynomials) for j in eachindex(polynomials)
-        if i < j && leading_row(polynomials[i]) == leading_row(polynomials[j])
+        if i < j && !iszero(polynomials[i]) && !iszero(polynomials[j]) && leading_row(polynomials[i]) == leading_row(polynomials[j])
     ]
 
     result = Vector{Transpose{modulebasering(M),SparseVector{modulebasering(M),Int}}}()
 
-    for (i,j) in pairs_to_consider
+    @showprogress "Computing syzygies: " for (i,j) in pairs_to_consider
         a = polynomials[i]
         b = polynomials[j]
         lt_a = leading_term(a, order=order)
@@ -49,7 +50,7 @@ function syzygies(polynomials::AbstractVector{M}) where M <: AbstractModuleEleme
 
         (syzygy, S_red) = divrem(S, polynomials, order=order)
         if !iszero(S_red)
-            throw(ArgumentError("syzygies(...) expects a Gröbner basis, so S_red = $( S_red ) should be zero"))
+            throw(ArgumentError("syzygies(...) expects a Gröbner basis, but the ($i,$j) trivial syzygy doesn't reduce to zero"))
         end
         syzygy[1,i] -= m_a
         syzygy[1,j] += m_b
