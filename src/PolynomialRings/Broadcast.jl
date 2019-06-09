@@ -104,13 +104,14 @@ TermsBy struct. This property bubbles up through the optree.
 """
 module Broadcast
 
+import Base: +, -, *
 import Base.Broadcast: Style, AbstractArrayStyle, BroadcastStyle, Broadcasted, broadcasted
 import Base.Broadcast: copyto!, copy
-import Base.Broadcast: broadcastable, broadcasted, materialize!
+import Base.Broadcast: broadcastable, broadcasted, materialize!, DefaultArrayStyle
 import Base: RefValue, similar
 
 import InPlace: @inplace, inplace!, inclusiveinplace!
-import Transducers: Transducer, eduction, Map, Filter
+import Transducers: Transducer, eduction, Filter
 
 import ..MonomialIterators: MonomialIter
 import ..MonomialOrderings: MonomialOrder
@@ -144,82 +145,106 @@ BroadcastStyle(s::Termwise, t::BroadcastStyle) = t
 struct TermsBy{Order, Iter}
     order :: Order
     iter  :: Iter
-    owned :: Bool
 end
 
-isowned(t::TermsBy) = t.owned
+struct Owned{T}
+    val   :: T
+    owned :: Bool
+end
+Owned(val) = Owned(val, true)
+val(x::Owned)     = x.val
+isowned(x::Owned) = x.owned
+ownedval(x::Owned) = isowned(x) ? val(x) : deepcopy(val(x))
 
-iterterms(dest, x) = x
-# TODO: only the last one is really owned
-iterterms(dest, a::Polynomial) = TermsBy(monomialorder(a), nzterms(a), a === dest)
++(a::Owned) = a
+-(a::Owned) = ownedop(-, a)
++(a::Owned, b::Owned) = ownedop(+, a, b)
+-(a::Owned, b::Owned) = ownedop(-, a, b)
+*(a::Owned, b::Owned) = ownedop(*, a, b)
+*(a::Owned, b) = Owned(isowned(a) ? inplace!(*, val(a), val(a), b) : val(a) * b)
+*(a, b::Owned) = Owned(isowned(b) ? inplace!(*, val(b), a, val(b)) : a * val(b))
+Owned(op::Function, x) = Owned(op(val(x)), isowned(x))
+ownedop(op, a) = Owned(
+    isowned(a) ?
+    inclusiveinplace!(op, val(a)) :
+    op(val(a))
+)
+ownedop(op, a, b) = Owned(
+    isowned(a) ?
+    inclusiveinplace!(op, val(a), val(b)) :
+    isowned(b) ?
+    inplace!(op, val(b), val(a), val(b)) :
+    op(val(a), val(b))
+)
+function coeffwise(op)
+    function (a, b)
+        @assert monomial(val(a)) == monomial(val(b))
+        Owned(
+            Term(monomial(val(a)), val(op(Owned(coefficient, a), Owned(coefficient, b))))
+        )
+    end
+end
 
-iterterms(order::MonomialOrder, owned, transducer, coll) = TermsBy(order, eduction(transducer |> Filter(!iszero), coll), owned)
+iterterms(dest, found, x) = x
 
-iterterms(dest, bc::Broadcasted{<:Termwise}) = iterterms(bc.f, map(arg -> iterterms(dest, arg), bc.args)...)
+function iterterms(dest, found, a::Polynomial)
+    isdest = dest === a
+    owned = !found[] && (found[] |= isdest)
+    TermsBy(monomialorder(a), eduction(_Map(t -> Owned(t, owned)), nzterms(a)))
+end
+
+iterterms(order::MonomialOrder, transducer, coll) = TermsBy(order, eduction(transducer |> Filter(!iszero∘val), coll))
+
+@inline rmap(f, iter) = reverse(map(f, reverse(iter)))
+iterterms(dest, found, bc::Broadcasted{<:Termwise}) = iterterms(bc.f, rmap(arg -> iterterms(dest, found, arg), bc.args)...)
 iterterms(f::Function, args...) = iterterms(f(args...))
 
-coeffwise(op) = (a, b) -> (@assert monomial(a) == monomial(b); res = Term(monomial(a), op(coefficient(a), coefficient(b))); res)
 
 function iterterms(op::typeof(+), a::TermsBy{Order}, b::TermsBy{Order}) where Order <: MonomialOrder
-    if isowned(a) && isowned(b)
-        iterterms(Order(), true,
-            MergingTransducer(a.iter, Order(), identity, identity, coeffwise((a_i, b_i) -> inclusiveinplace!(+, a_i, b_i)), monomial, identity), b.iter)
-    elseif isowned(a)
-        iterterms(Order(), true,
-            MergingTransducer(a.iter, Order(), identity, +, coeffwise((a_i, b_i) -> inclusiveinplace!(+, a_i, b_i)), monomial, identity), b.iter)
-    elseif isowned(b)
-        iterterms(Order(), true,
-            MergingTransducer(a.iter, Order(), +, identity, coeffwise((a_i, b_i) -> inplace!(+, b_i, a_i, b_i)), monomial, identity), b.iter)
-    else
-        iterterms(Order(), true, MergingTransducer(a.iter, Order(), +, +, coeffwise(+), monomial, identity), b.iter)
-    end
+    iterterms(
+        Order(),
+        MergingTransducer(a.iter, Order(), +, +, coeffwise(+), monomial∘val, identity),
+        b.iter,
+    )
 end
 
 function iterterms(op::typeof(-), a::TermsBy{Order}, b::TermsBy{Order}) where Order <: MonomialOrder
-    if isowned(a) && isowned(b)
-        iterterms(Order(), true,
-            MergingTransducer(a.iter, Order(), identity, b_i -> inclusiveinplace!(-, b_i), coeffwise((a_i, b_i) -> inclusiveinplace!(-, a_i, b_i)), monomial, identity), b.iter)
-    elseif isowned(a)
-        iterterms(Order(), true,
-            MergingTransducer(a.iter, Order(), identity, -, coeffwise((a_i, b_i) -> inclusiveinplace!(-, a_i, b_i)), monomial, identity), b.iter)
-    elseif isowned(b)
-        iterterms(Order(), true,
-            MergingTransducer(a.iter, Order(), +, b_i -> inclusiveinplace!(-, b_i), coeffwise((a_i, b_i) -> inplace!(-, b_i, a_i, b_i)), monomial, identity), b.iter)
-    else
-        iterterms(Order(), true, MergingTransducer(a.iter, Order(), +, -, coeffwise(-), monomial, identity), b.iter)
-    end
+    iterterms(
+        Order(),
+        MergingTransducer(a.iter, Order(), +, -, coeffwise(-), monomial∘val, identity),
+        b.iter,
+    )
 end
 
 function iterterms(op::typeof(*), a::TermsBy{Order}, b::Union{TermBy{Order}, MonomialBy{Order}, Number}) where Order <: MonomialOrder
-    if isowned(a)
-        iterterms(Order(), true, _Map(a_i -> inclusiveinplace!(*, a_i, b)), a.iter)
-    else
-        iterterms(Order(), true, _Map(a_i -> a_i * b),                      a.iter)
-    end
+    iterterms(Order(), _Map(a_i -> a_i * b), a.iter)
 end
 
 function iterterms(op::typeof(*), a::Union{TermBy{Order}, MonomialBy{Order}, Number}, b::TermsBy{Order}) where Order <: MonomialOrder
-    if isowned(b)
-        iterterms(Order(), true, _Map(b_i -> inplace!(*, b_i, a, b_i)), b.iter)
-    else
-        iterterms(Order(), true, _Map(b_i -> a * b_i),                  b.iter)
-    end
+    iterterms(Order(), _Map(b_i -> a * b_i), b.iter)
 end
 
 similar(bc::Broadcasted{<:Termwise{Order}}, ::Type{P}) where P <: PolynomialBy{Order} where Order = zero(P)
 
 function copy(bc::Broadcasted{Termwise{Order, P}}) where P <: PolynomialBy{Order} where Order
     result = zero(P)
-    copyto!(result, bc)
+    terms = iterterms(nothing, Ref(false), bc).iter
+    copy!(Transducer(terms) |> _Map(ownedval), result, terms.coll)
+    result
 end
 
 function copyto!(dest::P, bc::Broadcasted{Termwise{Order, P}}) where P <: PolynomialBy{Order} where Order
-    d = zero(dest)
-    ed = iterterms(dest, bc).iter
-    sizehint!(d, termsbound(bc))
-    copy!(Transducer(ed), d, ed.coll)
-    copy!(dest.coeffs, d.coeffs)
-    copy!(dest.monomials, d.monomials)
+    found = Ref(false)
+    terms = iterterms(dest, found, bc).iter
+    if found[]
+        d = zero(dest)
+        sizehint!(d, termsbound(bc))
+        copy!(Transducer(terms) |> _Map(ownedval), d, terms.coll)
+        copy!(dest, d)
+    else
+        sizehint!(dest, termsbound(bc))
+        copy!(Transducer(terms) |> _Map(ownedval), dest, terms.coll)
+    end
     dest
 end
 
