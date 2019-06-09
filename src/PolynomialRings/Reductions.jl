@@ -3,15 +3,18 @@ module Reductions
 import Base: div, rem, divrem
 import SparseArrays: spzeros
 
+import ..Expansions: deg
 import ..Modules: AbstractModuleElement, modulebasering
 import ..MonomialOrderings: MonomialOrder
 import ..Operators: RedType, Lead, Full, Tail
-import ..Operators: one_step_div!, one_step_xdiv!
-import ..Polynomials: Polynomial, monomialorder
+import ..Operators: one_step_div!, one_step_xdiv!, content
+import ..Polynomials: Polynomial, monomialorder, leading_monomial
 import ..Polynomials: PolynomialBy
+import ..Util: @showprogress
 import PolynomialRings: basering
 import PolynomialRings: div!, rem!, xdiv!, xrem!, xdiv, xrem, xdivrem
 import PolynomialRings: leaddiv, leaddivrem, leadrem
+import PolynomialRings: gröbner_basis, syzygies
 
 """
     f_red = rem(f, G)
@@ -427,6 +430,50 @@ for fn in [:divrem, :div, :rem]
             end
         end
     end
+end
+
+interreduce(G::AbstractVector{<:AbstractModuleElement}; kwds...) = interreduce!(deepcopy(G); kwds...)
+
+function interreduce!(G::AbstractVector{<:AbstractModuleElement}; kwds...)
+    order = get(kwds, :order, monomialorder(modulebasering(eltype(G))))
+
+    lm(f) = leading_monomial(f, order=order)
+    S = unique(map(lm, G))
+    @showprogress "Interreducing" for ix in 1:length(G)
+        xrem!(G[ix], G[[1 : ix - 1; ix + 1 : end]]; kwds...)
+        if !iszero(G[ix]) && basering(modulebasering(eltype(G))) <: Integer
+            G[ix] ÷= content(G[ix])
+        end
+    end
+
+    filter!(!iszero, G)
+    T = unique(map(lm, G))
+
+    G
+end
+
+function mingenerators(I::AbstractVector{<:AbstractModuleElement})
+    G = gröbner_basis(I, alg=:gwv)
+    syz = syzygies(G)
+
+    superfluous_cols = Int[]
+    for row in axes(syz, 1)
+        for col in axes(syz, 2)
+            if deg(syz[row, col], monomialorder(eltype(I))) == 0
+                c = syz[row, col].coeffs[1]
+                for r in [1:row-1; row+1:size(syz, 1)]
+                    syz[r, :] -= (syz[r, col] // c ) * syz[row, :]
+                end
+                push!(superfluous_cols, col)
+            end
+        end
+    end
+
+    for col in sort!(superfluous_cols, rev=true)
+        deleteat!(G, col)
+    end
+
+    return G
 end
 
 end

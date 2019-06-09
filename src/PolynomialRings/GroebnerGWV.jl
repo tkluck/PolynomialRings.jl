@@ -15,7 +15,7 @@ import ..MonomialOrderings: MonomialOrder, @withmonomialorder
 import ..Monomials: total_degree, any_divisor
 import ..Operators: Lead, Full, content, integral_fraction
 import ..Polynomials: Polynomial, monomialorder, monomialtype, PolynomialBy
-import ..Reductions: one_step_xdiv!
+import ..Reductions: interreduce!, one_step_xdiv!
 import ..Terms: monomial, coefficient
 import ..Util: @showprogress
 import PolynomialRings: gröbner_basis, gröbner_transformation, xrem!
@@ -90,6 +90,7 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
             f
         end
     end
+    filter!(!iszero, polynomials)
 
     # experimentally, it seems much better to sort in
     # decreasing monomial order
@@ -226,16 +227,7 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
     # Interreduce the result
     # --------------------------------------------------------------------------
     result = [f for G_i in values(G) for (_,_,f) in G_i]
-    k = length(result)
-    @showprogress "Interreducing result" for i in 1:k
-        xrem!(result[i], result[[1:i-1; i+1:k]], order=order)
-        if basering(modulebasering(eltype(result))) <: Integer
-            result[i] ÷= content(result[i])
-        end
-    end
-    # what we filter out is probably a Gröbner basis for the syzygies, and
-    # maybe the caller wants to have it?
-    filter!(!iszero, result)
+    interreduce!(result, order=order)
     # --------------------------------------------------------------------------
     # Return the result
     # --------------------------------------------------------------------------
