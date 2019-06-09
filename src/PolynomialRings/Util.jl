@@ -288,5 +288,14 @@ outtype(xf::_Map, intype) = Base._return_type(xf.f, Tuple{intype})
 isexpansive(xf::_Map) = false
 
 Base.deepcopy(x::BigInt) = return Base.GMP.MPZ.set(x)
+function Base.deepcopy(x::Rational)
+    T = typeof(x)
+    n = deepcopy(numerator(x))
+    d = numerator(x) === denominator(x) ? n : deepcopy(denominator(x))
+    y = ccall(:jl_new_struct_uninit, Any, (Any,), T)
+    ccall(:jl_set_nth_field, Cvoid, (Any, Csize_t, Any), y, 0, n)
+    ccall(:jl_set_nth_field, Cvoid, (Any, Csize_t, Any), y, 1, d)
+    return y::T
+end
 
 end

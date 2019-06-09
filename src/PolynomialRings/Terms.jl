@@ -105,4 +105,6 @@ lcm_degree(a::T, b::T) where T<:Term = lcm_degree(monomial(a), monomial(b))
 
 Base.Order.lt(o::MonomialOrder, a::T,b::T) where T <: Term = Base.Order.lt(o, monomial(a), monomial(b))
 
+Base.deepcopy(t::Term) = Term(deepcopy(monomial(t)), deepcopy(coefficient(t)))
+
 end
