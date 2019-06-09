@@ -110,14 +110,13 @@ struct NZTerms{P <: Polynomial}
 end
 Base.eltype(it::NZTerms) = termtype(it.p)
 Base.length(it::NZTerms) = nztermscount(it.p)
-function Base.iterate(it::NZTerms, state...)
-    zipped = zip(it.p.monomials, it.p.coeffs)
-    iter = iterate(zipped, state...)
+function Base.iterate(it::NZTerms, state=1)
     while true
-        iter == nothing && return nothing
-        (m, c), state = iter
-        (isstrictlysparse(it.p) || !iszero(c)) && return Term(m, c), state
-        iter = iterate(zipped, state)
+        state <= length(it.p.coeffs) || return nothing
+        c = it.p.coeffs[state]
+        m = it.p.monomials[state]
+        (isstrictlysparse(it.p) || !iszero(c)) && return (Term(m, c), state + 1)
+        state += 1
     end
     return nothing
 end
