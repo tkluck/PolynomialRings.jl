@@ -58,7 +58,7 @@ function m4gb(order::MonomialOrder, F::AbstractVector{<:AbstractModuleElement})
     sort!(F, order=order, rev=true)
     filter!(!iszero, F)
 
-    for f in F
+    @showprogress "materializing initial reducers: " for f in F
         ensure_reducers_materialized!(M, L, One(), f, order)
     end
     @showprogress "Gröbner: preparing inputs: " L M P for f in F
