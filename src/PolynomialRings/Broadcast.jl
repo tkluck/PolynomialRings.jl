@@ -267,6 +267,128 @@ termsbound(bc::Broadcasted{<:Termwise, A, typeof(*)}) where A = prod(termsbound,
 #  Special-case optimizations
 #
 # -----------------------------------------------------------------------------
+# this is the inner loop for many reduction operations:
+#    @. f = m1*f - m2*t*g
+const HandOptimizedBroadcast = Broadcasted{
+    Termwise{Order,P},
+    Nothing,
+    typeof(-),
+    Tuple{
+        Broadcasted{
+            Termwise{Order,P},
+            Nothing,
+            typeof(*),
+            Tuple{
+                C,
+                P,
+            },
+        },
+        Broadcasted{
+            Termwise{Order,P},
+            Nothing,
+            typeof(*),
+            Tuple{
+                C,
+                Broadcasted{
+                    Termwise{Order,P},
+                    Nothing,
+                    typeof(*),
+                    Tuple{
+                        M,
+                        P,
+                    },
+                },
+            },
+        },
+    },
+} where P<:Polynomial{M,C} where M<:AbstractMonomial{Order} where C where Order
+
+function copyto!(dest::P, bc::HandOptimizedBroadcast{Order, C, M, P}) where {Order, C, M, P}
+    ≺(a,b) = Base.Order.lt(monomialorder(dest), a, b)
+
+    m1 = bc.args[1].args[1]
+    v1 = bc.args[1].args[2][]
+    m2 = bc.args[2].args[1]
+    t  = bc.args[2].args[2].args[1]
+    v2 = bc.args[2].args[2].args[2]
+
+    applicable = dest === v1 && dest !== v2
+    !applicable && return invoke(copyto!, Tuple{P, Broadcasted{Termwise{Order, P}}} where P <: PolynomialBy{Order} where Order <: MonomialOrder, dest, bc)
+
+    d = zero(dest)
+
+    monomials = d.monomials
+    coeffs = d.coeffs
+    monomials1 = v1.monomials
+    coeffs1 = v1.coeffs
+    monomials2 = v2.monomials
+    coeffs2 = v2.coeffs
+
+    # I could dispatch to a much simpler version in case these
+    # scalar vanish, but that gives relatively little gain.
+    m1_vanishes = iszero(m1)
+    m2_vanishes = iszero(m2)
+
+    resize!(monomials, length(monomials1) + length(monomials2))
+    resize!(coeffs,    length(coeffs1)    + length(coeffs2))
+    n = 0
+
+    temp = zero(BigInt)
+
+    ix1 = 1; ix2 = 1
+    while ix1 <= length(monomials1) && ix2 <= length(monomials2)
+        m′ = t * monomials2[ix2]
+        if m′ ≺ monomials1[ix1]
+            if !m2_vanishes
+                n += 1
+                monomials[n] = m′
+                coeffs[n] = -m2*coeffs2[ix2]
+            end
+            ix2 += 1
+        elseif monomials1[ix1] ≺ m′
+            if !m1_vanishes
+                @inplace coeffs1[ix1] *= m1
+                n += 1
+                monomials[n] = monomials1[ix1]
+                coeffs[n] = coeffs1[ix1]
+            end
+            ix1 += 1
+        else
+            @inplace coeffs1[ix1] *= m1
+            @inplace temp = m2 * coeffs2[ix2]
+            @inplace coeffs1[ix1] -= temp
+            if !iszero(coeffs1[ix1])
+                n += 1
+                monomials[n] = m′
+                coeffs[n] = coeffs1[ix1]
+            end
+            ix1 += 1
+            ix2 += 1
+        end
+    end
+    while ix1 <= length(monomials1)
+        if !m1_vanishes
+            @inplace coeffs1[ix1] *= m1
+            n += 1
+            monomials[n] = monomials1[ix1]
+            coeffs[n] = coeffs1[ix1]
+        end
+        ix1 += 1
+    end
+    while ix2 <= length(monomials2)
+        if !m2_vanishes
+            n += 1
+            monomials[n] = t * monomials2[ix2]
+            coeffs[n] = -m2*coeffs2[ix2]
+        end
+        ix2 += 1
+    end
+
+    copy!(dest.monomials, @view monomials[1:n])
+    copy!(dest.coeffs, @view coeffs[1:n])
+    dest
+end
+
 # this is the inner loop for m4gb
 #    @. g -= c * h
 const M4GBBroadcast = Broadcasted{
