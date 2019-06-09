@@ -271,6 +271,8 @@ end
 # type information
 monomialtype(::Type{TransformedModuleElement{P,M,I}}) where {P,M,I} = monomialtype(M)
 keytype(::Type{TransformedModuleElement{P,M,I}}) where {P,M,I} = keytype(M)
+
+monomialorder(::Type{TransformedModuleElement{P,M,I}}) where {P,M,I} = monomialorder(P)
 # gathering leading terms etc
 leading_monomial(m::TransformedModuleElement; order) = leading_monomial(m.p, order=order)
 leading_coefficient(m::TransformedModuleElement; order) = leading_coefficient(m.p, order=order)
