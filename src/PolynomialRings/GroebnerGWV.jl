@@ -15,6 +15,7 @@ import ..MonomialOrderings: MonomialOrder, @withmonomialorder
 import ..Monomials: total_degree, any_divisor
 import ..Operators: Lead, Full, content, integral_fraction
 import ..Polynomials: Polynomial, monomialorder, monomialtype, PolynomialBy
+import ..Reductions: one_step_xdiv!
 import ..Terms: monomial, coefficient
 import ..Util: @showprogress
 import PolynomialRings: gröbner_basis, gröbner_transformation, xrem!
@@ -27,28 +28,6 @@ maybe_lm(v, order) = iszero(v) ? nothing : leading_monomial(v, order=order)
 
 reduceop!(v1, m1, m2, t, v2) = @. v1 = m1*v1 - m2*(t*v2)
 
-
-import SparseArrays: AbstractSparseArray
-function reduceop!(v1::AbstractSparseArray, m1, m2, t, v2)
-    i1 = findfirst(!iszero, v1)
-    i2 = findfirst(!iszero, v2)
-    while !isnothing(i1) || !isnothing(i2)
-        ix = !isnothing(i1) && !isnothing(i2) ?
-             (i1 < i2 ? i1 : i2) : #min(i1, i2) :
-             something(i1, i2)
-
-        tgt = v1[ix]
-        @. tgt = m1*tgt - m2*(t*v2[ix])
-        v1[ix] = tgt
-
-        if ix == i1
-            i1 = findnext(!iszero, v1, nextind(v1, i1))
-        end
-        if ix == i2
-            i2 = findnext(!iszero, v2, nextind(v2, i2))
-        end
-    end
-end
 
 function regular_topreduce_rem(m, G; order)
     @withmonomialorder order
@@ -69,11 +48,10 @@ function regular_topreduce_rem(m, G; order)
             if t !== nothing
                 c1 = leading_coefficient(v1)
                 c2 = leading_coefficient(v2)
-                m1, m2 = lcm_multipliers(c1, c2)
                 if t * u2 ≺ u1
                     # new_u1 = u1 - c*(t*u2)
-                    reduceop!(v1, m1, m2, t, v2)
                     #@. v1 = m1*v1 - m2*(t*v2)
+                    one_step_xdiv!(v1, v2, order=order, redtype=Lead())
                     lm1 = maybe_lm(v1, order)
                     lr1 = maybe_lr(v1)
                     supertopreducible = false

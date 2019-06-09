@@ -22,7 +22,7 @@ import ..Util: nzpairs
 import PolynomialRings: leaddiv, leadrem, leaddivrem
 import PolynomialRings: leading_row, leading_term, leading_monomial, leading_coefficient, base_extend
 import PolynomialRings: maybe_div, divides, lcm_degree, lcm_multipliers, mutuallyprime
-import PolynomialRings: termtype, monomialtype
+import PolynomialRings: termtype, monomialtype, base_restrict
 
 # This should probably be in Base; see
 # https://github.com/JuliaLang/julia/pull/27749
@@ -146,11 +146,12 @@ function one_step_div!(a::A, b::A; order::MonomialOrder, redtype::RedType) where
         lt_b = leading_term(b[i])
         factor = maybe_div(lt_a, lt_b)
         if factor !== nothing
-            for i in eachindex(a)
-                if iszero(a[i]) # possibly a sparse zero, so don't try in-place
-                    a[i] -= factor * b[i]
+            for (j, b_j) in nzpairs(b)
+                a_j = a[j]
+                if iszero(a_j) # possibly a sparse zero, so don't try in-place
+                    a[j] = -factor * b_j
                 else
-                    @. a[i] -= factor * b[i]
+                    @. a_j -= factor * b_j
                 end
             end
         end
@@ -172,11 +173,17 @@ function one_step_xdiv!(a::A, b::A; order::MonomialOrder, redtype::RedType) wher
             c1 = leading_coefficient(a[i])
             c2 = leading_coefficient(b[i])
             m1, m2 = lcm_multipliers(c1, c2)
-            for j in eachindex(a)
-                if iszero(a[i]) # possibly a sparse zero, so don't try in-place
-                    a[j] = m1 * a[j] - m2 * (factor * b[j])
+            for (j, b_j) in nzpairs(b)
+                a_j = a[j]
+                if iszero(a_j) # possibly a sparse zero, so don't try in-place
+                    a[j] = @. m1 * a_j - m2 * (factor * b_j)
                 else
-                    @. a[j] = m1 * a[j] - m2 * (factor * b[j])
+                    @. a_j = m1 * a_j - m2 * (factor * b_j)
+                end
+            end
+            for (j, a_j) in nzpairs(a)
+                if iszero(b[j])
+                    a_j .= m1 .* a_j
                 end
             end
             return m1, m2 * factor
@@ -307,7 +314,8 @@ function one_step_xdiv!(a::A, b::A; order::MonomialOrder, redtype::RedType) wher
     res = one_step_xdiv!(a.p, b.p, order=order, redtype=redtype)
     if res !== nothing
         m, factor = res
-        a.tr = m * b.n * a.tr - factor * a.n * b.tr
+        op!(a_tr, b_tr) = a_tr .= (m * b.n) .* a_tr .- (factor * a.n) .* b_tr
+        @. a.tr = op!(a.tr, b.tr)
         a.n *= b.n
     end
     return res
@@ -315,11 +323,12 @@ end
 
 function withtransformations(x::AbstractVector{M}) where M
     P = modulebasering(M)
+    PP = basering(P) <: Rational ? base_restrict(P) : P
     m = length(x)
     map(enumerate(x)) do (i, x_i)
         x_i, n = basering(P) <: Rational ? integral_fraction(x_i) : (x_i, one(P))
-        tr = sparsevec(Dict(i=>P(n)), m)
-        TransformedModuleElement(x_i, tr, one(basering(P)))
+        tr = sparsevec(Dict(i=>PP(n)), m)
+        TransformedModuleElement(x_i, tr, one(basering(PP)))
     end
 end
 
