@@ -276,7 +276,7 @@ termsbound(bc::Broadcasted{<:Termwise, A, typeof(*)}) where A = prod(termsbound,
 #    @. f = m1*f - m2*t*g
 const HandOptimizedBroadcast = Broadcasted{
     Termwise{Order,P},
-    Union{Tuple{}, Nothing},
+    <:Union{Tuple{}, Nothing},
     typeof(-),
     Tuple{
         Broadcasted{
