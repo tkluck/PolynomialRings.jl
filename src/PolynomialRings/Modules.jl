@@ -297,6 +297,7 @@ function -(f::T, g::T) where T<:TransformedModuleElement
 end
 +(f::T) where T<:TransformedModuleElement = TransformedModuleElement(+f.p, +f.tr, +f.n)
 -(f::T) where T<:TransformedModuleElement = TransformedModuleElement(-f.p, -f.tr, +f.n)
+==(f::T, g::T) where T<:TransformedModuleElement = f.p == g.p && f.tr == g.tr && f.n == g.n
 Base.iszero(f::TransformedModuleElement) = iszero(f.p)
 # broadcasting: just evaluate it all eagerly
 struct TransformedStyle <: Base.Broadcast.BroadcastStyle end
