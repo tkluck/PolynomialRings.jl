@@ -158,7 +158,9 @@ function mulfullreduce!(L, M, t, f, order)
         g = getreductor!(M, L, monomial(r), order)
         if g != nothing
             d = coefficient(r) // lc(g)
-            h .-= d .* tail(g)
+            tail_g = tail(g)
+            op!(h, d, tail_g) = @. h -= d * tail_g
+            @. h = op!(h, d, tail_g)
         else
             @inplace h += r
         end
@@ -275,7 +277,8 @@ function getreductor!(M, L, gₗₘ, order)
                 m == gₗₘ && break
                 h = getreductor!(M, L, m, order)
                 d = c // lc(h)
-                @. g₀ -= d * h
+                op!(g₀, d, h) = @. g₀ -= d * h
+                @. g₀ = op!(g₀, d, h)
             end
         end
     end
