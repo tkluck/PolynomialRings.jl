@@ -99,7 +99,7 @@ select!(P) = dequeue_pair!(P)
 function lazyupdatereduce!(L, M, P, f, order)
     @withmonomialorder order
 
-    M[lr(f)][lm(f)] = MType(f // lc(f), lm(f), lm(f))
+    M[lr(f)][lm(f)] = MType(f * (1 // lc(f)), lm(f), lm(f))
     update!(L, M, P, lm(f), order)
 end
 

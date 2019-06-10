@@ -338,8 +338,8 @@ function withtransformations(x::AbstractVector{M}) where M
 end
 
 function separatetransformation(x::AbstractVector{<:TransformedModuleElement{P}}) where P
-    result         = map(a->a.p,       x)
-    transformation = map(a->a.tr//a.n, x)
+    result         = map(a->a.p,             x)
+    transformation = map(a->(1//a.n) * a.tr, x)
 
     columns = isempty(transformation) ? 0 : length(transformation[1])
 
