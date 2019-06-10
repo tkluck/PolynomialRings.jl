@@ -106,7 +106,7 @@ module Broadcast
 
 import Base: +, -, *
 import Base.Broadcast: Style, AbstractArrayStyle, BroadcastStyle, Broadcasted, broadcasted
-import Base.Broadcast: copyto!, copy
+import Base.Broadcast: copyto!, copy, flatten
 import Base.Broadcast: broadcastable, broadcasted, materialize!, DefaultArrayStyle
 import Base: RefValue, similar
 
@@ -185,18 +185,27 @@ function coeffwise(op)
     end
 end
 
-iterterms(dest, found, x) = x
+iterterms(destix, myix, x) = x
 
-function iterterms(dest, found, a::Polynomial)
-    isdest = dest === a
-    owned = !found[] && (found[] |= isdest)
+function iterterms(destix, myix, a::Polynomial)
+    owned = destix == myix
     TermsBy(monomialorder(a), eduction(_Map(t -> Owned(t, owned)), nzterms(a)))
 end
 
 iterterms(order::MonomialOrder, transducer, coll) = TermsBy(order, eduction(transducer |> Filter(!iszero∘val), coll))
 
-@inline rmap(f, iter) = reverse(map(f, reverse(iter)))
-iterterms(dest, found, bc::Broadcasted{<:Termwise}) = iterterms(bc.f, rmap(arg -> iterterms(dest, found, arg), bc.args)...)
+# the simple solution with map(...) leads to code that the compiler doesn't inline,
+# and then this part becomes a major bottleneck. By having the generated function
+# spell out the map, we fix that.
+@generated function iterterms(destix, myix, bc::Broadcasted{<:Termwise, Axes, Op, Args}) where {Axes, Op, Args}
+    call = :( iterterms(bc.f) )
+    for ix = 1:length(Args.types)
+        push!(call.args, :( iterterms(destix, myix + $(ix - 1), bc.args[$ix])))
+    end
+    return call
+end
+
+iterterms(destix::Nothing, myix, bc::Broadcasted{<:Termwise}) = iterterms(bc.f, map(arg -> iterterms(destix, 1, arg), bc.args)...)
 iterterms(f::Function, args...) = iterterms(f(args...))
 
 
@@ -228,7 +237,7 @@ similar(bc::Broadcasted{<:Termwise{Order}}, ::Type{P}) where P <: PolynomialBy{O
 
 function copy(bc::Broadcasted{Termwise{Order, P}}) where P <: PolynomialBy{Order} where Order
     result = zero(P)
-    terms = iterterms(nothing, Ref(false), bc).iter
+    terms = iterterms(nothing, nothing, bc).iter
     copy!(Transducer(terms) |> _Map(ownedval), result, terms.coll)
     result
 end
@@ -239,9 +248,9 @@ copyto!(dest::P, bc::Broadcasted{Termwise{Order, P}}) where P <: PolynomialBy{Or
 # the handcrafted version as well. My solution with `invoke` gives a segfault
 # in Julia's code generator (Julia bug) so I'll just manually disentangle them.
 function _copyto!(dest, bc)
-    found = Ref(false)
-    terms = iterterms(dest, found, bc).iter
-    if found[]
+    destix = findlast(a -> dest === a, flatten(bc).args)
+    terms = iterterms(destix, 1, bc).iter
+    if !isnothing(destix)
         d = zero(dest)
         sizehint!(d, termsbound(bc))
         copy!(Transducer(terms) |> _Map(ownedval), d, terms.coll)
