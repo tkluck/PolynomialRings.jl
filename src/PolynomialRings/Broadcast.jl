@@ -410,7 +410,7 @@ end
 #    @. g -= c * h
 const M4GBBroadcast = Broadcasted{
     Termwise{Order, P},
-    Nothing,
+    <:Union{Tuple{}, Nothing},
     typeof(-),
     Tuple{
         P,
@@ -426,8 +426,10 @@ const M4GBBroadcast = Broadcasted{
     },
 } where P <: Polynomial{M, C, MI} where M <: AbstractMonomial{Order} where MI <: MonomialIter where {C, Order}
 
-function materialize!(g::Polynomial, bc::M4GBBroadcast)
-    @assert g === bc.args[1]
+function copyto!(g::Polynomial, bc::M4GBBroadcast)
+    applicable = g === bc.args[1]
+    !applicable && return _copyto!(g, bc)
+
     c = bc.args[2].args[1]
     h = bc.args[2].args[2]
 
