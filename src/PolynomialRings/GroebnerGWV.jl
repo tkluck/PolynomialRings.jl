@@ -20,7 +20,7 @@ import ..Terms: monomial, coefficient
 import ..Util: @showprogress
 import PolynomialRings: gröbner_basis, gröbner_transformation, xrem!
 import PolynomialRings: leading_term, leading_monomial, lcm_multipliers, lcm_degree, fraction_field, basering, base_extend, base_restrict
-import PolynomialRings: maybe_div, termtype, monomialtype, leading_row, leading_coefficient
+import PolynomialRings: maybe_div, divides, termtype, monomialtype, leading_row, leading_coefficient
 
 const lr = leading_row
 maybe_lr(v) = iszero(v) ? nothing : lr(v)
@@ -136,11 +136,11 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
         # step 2: criterion from thm 2.3(c)
         # there is a pair (u_2, v_2) ∈ G so that lm(u_2) divides
         # lm(T) and t lm(v_2) ≺ lm(v_1) where t = lm(T)/lm(u_2)
+        lm1 = leading_monomial(v1)
         if any(g_i for G_i in values(G) for g_i in G_i) do m2
             u2,lm2,v2 = m2
-            t = maybe_div(T, u2)
-            if t !== nothing
-                if t * lm2 ≺ leading_monomial(v1)
+            if (t = maybe_div(T, u2)) |> !isnothing
+                if t * lm2 ≺ lm1
                     return true
                 end
             end
@@ -152,14 +152,13 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
         (_,v), status = regular_topreduce_rem(m, G, order=order)
         lmv = maybe_lm(v, order)
 
-        if isnothing(lmv)
+        if (lmv = maybe_lm(v, order)) |> isnothing
             newh = T
             push!(H[newh.i], newh.m)
             filter!(JP) do key_value
                 sig, jp = key_value
                 T2, v2 = jp
-                divisible = maybe_div(T2, newh) !== nothing
-                !divisible
+                !divides(newh, T2)
             end
         else
             if status == :supertopreducible
