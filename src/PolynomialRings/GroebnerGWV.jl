@@ -109,6 +109,7 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
     # Declare the variables where we'll accumulate the result
     # --------------------------------------------------------------------------
     G = DefaultDict{Union{Ix, Nothing}, Vector{Tuple{Signature, Union{LM, Nothing}, S}} }(Vector{Tuple{Signature, Union{LM, Nothing}, S}})
+    G_by_sig = DefaultDict{Any, Vector{Tuple{Signature, Union{LM, Nothing}, S}} }(Vector{Tuple{Signature, Union{LM, Nothing}, S}})
     H = DefaultDict{Int, Set{monomialtype(R)}}(Set{monomialtype(R)})
     JP = SortedDict{Signature, MM}(order)
 
@@ -137,7 +138,7 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
         # there is a pair (u_2, v_2) ∈ G so that lm(u_2) divides
         # lm(T) and t lm(v_2) ≺ lm(v_1) where t = lm(T)/lm(u_2)
         lm1 = leading_monomial(v1)
-        if any(g_i for G_i in values(G) for g_i in G_i) do m2
+        if any(G_by_sig[lr(T)]) do m2
             u2,lm2,v2 = m2
             if (t = maybe_div(T, u2)) |> !isnothing
                 if t * lm2 ≺ lm1
@@ -216,6 +217,7 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
                 end
                 # iv) Append T to U and v to V .
                 push!(G[lr(v)], (T,maybe_lm(v, order),v))
+                push!(G_by_sig[lr(T)], (T,maybe_lm(v, order),v))
             else
                 @assert false "Didn't expect $status"
             end
