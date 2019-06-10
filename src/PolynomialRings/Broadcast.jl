@@ -233,7 +233,12 @@ function copy(bc::Broadcasted{Termwise{Order, P}}) where P <: PolynomialBy{Order
     result
 end
 
-function copyto!(dest::P, bc::Broadcasted{Termwise{Order, P}}) where P <: PolynomialBy{Order} where Order
+copyto!(dest::P, bc::Broadcasted{Termwise{Order, P}}) where P <: PolynomialBy{Order} where Order = _copyto!(dest, bc)
+
+# This is just the intended body of copyto! above, but I need to call it from
+# the handcrafted version as well. My solution with `invoke` gives a segfault
+# in Julia's code generator (Julia bug) so I'll just manually disentangle them.
+function _copyto!(dest, bc)
     found = Ref(false)
     terms = iterterms(dest, found, bc).iter
     if found[]
@@ -271,7 +276,7 @@ termsbound(bc::Broadcasted{<:Termwise, A, typeof(*)}) where A = prod(termsbound,
 #    @. f = m1*f - m2*t*g
 const HandOptimizedBroadcast = Broadcasted{
     Termwise{Order,P},
-    Nothing,
+    Union{Tuple{}, Nothing},
     typeof(-),
     Tuple{
         Broadcasted{
@@ -301,9 +306,9 @@ const HandOptimizedBroadcast = Broadcasted{
             },
         },
     },
-} where P<:Polynomial{M,C} where M<:AbstractMonomial{Order} where C where Order
+} where P<:Polynomial where M<:AbstractMonomial{Order} where C where Order
 
-function copyto!(dest::P, bc::HandOptimizedBroadcast{Order, C, M, P}) where {Order, C, M, P}
+function copyto!(dest::P, bc::HandOptimizedBroadcast{Order, C, M, P}) where {Order, C, M, P <: PolynomialBy{Order}}
     ≺(a,b) = Base.Order.lt(monomialorder(dest), a, b)
 
     m1 = bc.args[1].args[1]
@@ -313,7 +318,9 @@ function copyto!(dest::P, bc::HandOptimizedBroadcast{Order, C, M, P}) where {Ord
     v2 = bc.args[2].args[2].args[2]
 
     applicable = dest === v1 && dest !== v2
-    !applicable && return invoke(copyto!, Tuple{P, Broadcasted{Termwise{Order, P}}} where P <: PolynomialBy{Order} where Order <: MonomialOrder, dest, bc)
+    # The solution with `invoke` segfaults on Julia Version 1.3.0-DEV.377 (2019-06-09)
+    # Commit 5d02c59185
+    !applicable && return _copyto!(dest, bc) #invoke(copyto!, Tuple{P, Broadcasted{Termwise{Order, P}}} where P <: PolynomialBy{Order} where Order <: MonomialOrder, dest, bc)
 
     d = zero(dest)
 
