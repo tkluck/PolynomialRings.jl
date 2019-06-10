@@ -496,6 +496,17 @@ function inclusiveinplace!(::typeof(+), a::P, b::C) where
     a
 end
 
+function inclusiveinplace!(::typeof(*), a::P, b::C) where
+            P <: Polynomial{M, C} where
+            {M <: AbstractMonomial, C}
+    if iszero(b)
+        empty!(a)
+    else
+        a.coeffs .*= b
+    end
+    a
+end
+
 
 # -----------------------------------------------------------------------------
 #

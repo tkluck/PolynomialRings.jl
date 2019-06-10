@@ -183,7 +183,7 @@ function one_step_xdiv!(a::A, b::A; order::MonomialOrder, redtype::RedType) wher
             end
             for (j, a_j) in nzpairs(a)
                 if iszero(b[j])
-                    a_j .= m1 .* a_j
+                    @inplace a[j] *= m1
                 end
             end
             return m1, m2 * factor
