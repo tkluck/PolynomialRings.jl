@@ -391,8 +391,9 @@ function copyto!(dest::P, bc::HandOptimizedBroadcast{Order, C, M, P}) where {Ord
         ix2 += 1
     end
 
-    copy!(dest.monomials, @view monomials[1:n])
-    copy!(dest.coeffs, @view coeffs[1:n])
+    # copy!(..., @view ...) is slow because it needs to allocate the view.
+    empty!(dest.monomials); for ix = 1:n; push!(dest.monomials, monomials[ix]); end
+    empty!(dest.coeffs);    for ix = 1:n; push!(dest.coeffs,    coeffs[ix]);    end
     dest
 end
 

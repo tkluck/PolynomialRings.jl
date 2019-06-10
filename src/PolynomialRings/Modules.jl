@@ -18,7 +18,7 @@ import ..Polynomials: Polynomial, monomialorder, basering, tail
 import ..Polynomials: nzterms, nzrevterms, nztailterms
 import ..Terms: Term
 import ..Terms: coefficient, monomial
-import ..Util: nzpairs
+import ..Util: nzpairs, isnonzero
 import PolynomialRings: leaddiv, leadrem, leaddivrem
 import PolynomialRings: leading_row, leading_term, leading_monomial, leading_coefficient, base_extend
 import PolynomialRings: maybe_div, divides, lcm_degree, lcm_multipliers, mutuallyprime
@@ -175,14 +175,16 @@ function one_step_xdiv!(a::A, b::A; order::MonomialOrder, redtype::RedType) wher
             m1, m2 = lcm_multipliers(c1, c2)
             for (j, b_j) in nzpairs(b)
                 a_j = a[j]
-                if iszero(a_j) # possibly a sparse zero, so don't try in-place
-                    a[j] = @. m1 * a_j - m2 * (factor * b_j)
+                if iszero(a_j) # possibly a sparse zero, so be sure to assign back
+                    # TODO: if just - m2 * (factor * b_j) is faster, use that
+                    @. a_j = m1 * a_j - m2 * (factor * b_j)
+                    a[j] = a_j
                 else
                     @. a_j = m1 * a_j - m2 * (factor * b_j)
                 end
             end
             for (j, a_j) in nzpairs(a)
-                if iszero(b[j])
+                if !isnonzero(b, j)
                     @inplace a[j] *= m1
                 end
             end
