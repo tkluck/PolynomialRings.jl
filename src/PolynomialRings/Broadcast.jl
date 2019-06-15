@@ -107,7 +107,7 @@ module Broadcast
 import Base: +, -, *
 import Base.Broadcast: Style, AbstractArrayStyle, BroadcastStyle, Broadcasted, broadcasted
 import Base.Broadcast: copyto!, copy, flatten
-import Base.Broadcast: broadcastable, broadcasted, materialize!, DefaultArrayStyle
+import Base.Broadcast: broadcastable, broadcasted, DefaultArrayStyle
 import Base: RefValue, similar
 
 import InPlace: @inplace, inplace!, inclusiveinplace!
@@ -317,7 +317,7 @@ const HandOptimizedBroadcast = Broadcasted{
     },
 } where P<:Polynomial where M<:AbstractMonomial{Order} where C where Order
 
-function copyto!(dest::P, bc::HandOptimizedBroadcast{Order, C, M, P}) where {Order, C, M, P <: PolynomialBy{Order}}
+function copyto!(dest::P, bc::HandOptimizedBroadcast{Order, C, M, P}) where {Order, C, M, P <: PolynomialBy{Order, C}}
     ≺(a,b) = Base.Order.lt(monomialorder(dest), a, b)
 
     m1 = bc.args[1].args[1]
@@ -426,7 +426,7 @@ const M4GBBroadcast = Broadcasted{
     },
 } where P <: Polynomial{M, C, MI} where M <: AbstractMonomial{Order} where MI <: MonomialIter where {C, Order}
 
-function copyto!(g::Polynomial, bc::M4GBBroadcast)
+function copyto!(g::P, bc::M4GBBroadcast{C, Order, MI, M, P}) where {C, Order, MI, M, P <: PolynomialBy{Order, C}}
     applicable = g === bc.args[1]
     !applicable && return _copyto!(g, bc)
 
