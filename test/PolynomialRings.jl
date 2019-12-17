@@ -4,8 +4,11 @@ import SparseArrays: sparse, spzeros
 using PolynomialRings
 
 struct Foo end
-import Base: one
-one(::Type{Foo}) = Foo()
+import Base: one, zero
+one(::Type{Foo})  = Foo()
+zero(::Type{Foo}) = 0
+one(::Foo)        = Foo()
+zero(::Foo)       = 0
 
 @testset "PolynomialRings" begin
 
