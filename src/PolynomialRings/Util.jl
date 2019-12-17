@@ -305,4 +305,20 @@ function Base.deepcopy(x::Rational)
     return y::T
 end
 
+_debugassertions() = false
+
+macro assertvalid(p)
+    if _debugassertions()
+        quote
+            res = $(esc(p))
+            @assert length(res.monomials) == length(res.coeffs)
+            @assert all(!iszero, res.coeffs)
+            @assert issorted(res.monomials)
+            res
+        end
+    else
+        esc(p)
+    end
+end
+
 end

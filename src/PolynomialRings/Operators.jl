@@ -13,7 +13,7 @@ import ..Polynomials: monomialstype
 import ..Polynomials: leading_term, nzrevterms, nztailterms, nzterms
 import ..Polynomials: PolynomialBy, TermBy, MonomialBy, isstrictlysparse, TermOver
 import ..Terms: Term, monomial, coefficient
-import ..Util: BoundedHeap
+import ..Util: BoundedHeap, @assertvalid
 import PolynomialRings: basering, exptype, base_extend, base_restrict
 import PolynomialRings: lcm_multipliers, expansion
 import PolynomialRings: leading_monomial, leading_coefficient
@@ -34,16 +34,16 @@ end
 # zero, one, etc
 #
 # -----------------------------------------------------------------------------
-zero(::Type{P}) where P<:Polynomial = P(monomialstype(P)(), basering(P)[])
-one(::Type{P})  where P<:Polynomial = P([one(monomialtype(P))], [one(basering(P))])
+zero(::Type{P}) where P<:Polynomial = @assertvalid P(monomialstype(P)(), basering(P)[])
+one(::Type{P})  where P<:Polynomial = @assertvalid P([one(monomialtype(P))], [one(basering(P))])
 zero(::P)       where P <: Polynomial = zero(P)
 one(::P)        where P <: Polynomial = one(P)
 
 iszero(a::P)        where P <: Polynomial = iszero(a.coeffs)
 # FIXME: allow for structural zeros
 ==(a::P, b::P)      where P <: Polynomial = a.monomials == b.monomials && a.coeffs == b.coeffs
-+(a::P)             where P <: Polynomial = P(copy(a.monomials), copy(a.coeffs))
--(a::P)             where P <: Polynomial = P(copy(a.monomials), map(-, a.coeffs))
++(a::P)             where P <: Polynomial = @assertvalid P(copy(a.monomials), copy(a.coeffs))
+-(a::P)             where P <: Polynomial = @assertvalid P(copy(a.monomials), map(-, a.coeffs))
 
 # -----------------------------------------------------------------------------
 #
@@ -212,7 +212,7 @@ function *(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
     end
     resize!(monomials, k)
     resize!(coeffs, k)
-    return _filterzeros!(P(monomials, coeffs))
+    return @assertvalid _filterzeros!(P(monomials, coeffs))
 end
 
 # -----------------------------------------------------------------------------
@@ -342,7 +342,7 @@ function ^(f::Polynomial, n::Integer)
         end
     end
 
-    _collectsummands!(P(monomials, coeffs))
+    @assertvalid _collectsummands!(P(monomials, coeffs))
 end
 
 # -----------------------------------------------------------------------------
@@ -356,7 +356,7 @@ function diff(f::Polynomial, i::Integer)
     sort!(new_terms, order=monomialorder(f))
     monomials = [monomial(t) for t in new_terms]
     coeffs = [coefficient(t) for t in new_terms]
-    return typeof(f)(monomials, coeffs)
+    return @assertvalid typeof(f)(monomials, coeffs)
 end
 
 # -----------------------------------------------------------------------------
@@ -387,7 +387,7 @@ end
 Apply a function `f` to all coefficients of `q`, and return the result.
 """
 function map_coefficients(f, a::Polynomial)
-    _filterzeros!(Polynomial(copy(a.monomials), map(f, a.coeffs)))
+    @assertvalid _filterzeros!(Polynomial(copy(a.monomials), map(f, a.coeffs)))
 end
 
 # -----------------------------------------------------------------------------
@@ -396,28 +396,28 @@ end
 #
 # -----------------------------------------------------------------------------
 function *(a::M, b::P) where P<:Polynomial{M} where M<:AbstractMonomial
-    P(a .* b.monomials, copy(b.coeffs))
+    @assertvalid P(a .* b.monomials, deepcopy(b.coeffs))
 end
 function *(a::P, b::M) where P<:Polynomial{M} where M<:AbstractMonomial
-    P(a.monomials .* b, copy(a.coeffs))
+    @assertvalid P(a.monomials .* b, deepcopy(a.coeffs))
 end
 for Coeff in [Any, Number]
     @eval begin
         function *(a::T, b::P) where P<:Polynomial{M,C,MV} where T<:Term{M,C} where {M <: AbstractMonomial, C <: $Coeff, MV}
             iszero(a) && return zero(P)
-            P(monomial(a) .* b.monomials, coefficient(a) .* b.coeffs)
+            @assertvalid P(monomial(a) .* b.monomials, coefficient(a) .* b.coeffs)
         end
         function *(a::P, b::T) where P<:Polynomial{M,C,MV} where T<:Term{M,C} where {M <: AbstractMonomial, C <: $Coeff, MV}
             iszero(b) && return zero(P)
-            P(a.monomials .* monomial(b), a.coeffs .* coefficient(b))
+            @assertvalid P(a.monomials .* monomial(b), a.coeffs .* coefficient(b))
         end
         function *(a::C, b::P) where P<:Polynomial{M,C,MV} where {M <: AbstractMonomial, C <: $Coeff, MV}
             iszero(a) && return zero(P)
-            P(copy(b.monomials), a .* b.coeffs)
+            @assertvalid P(copy(b.monomials), a .* b.coeffs)
         end
         function *(a::P, b::C) where P<:Polynomial{M,C,MV} where {M <: AbstractMonomial, C <: $Coeff, MV}
             iszero(b) && return zero(P)
-            P(copy(a.monomials), a.coeffs .* b)
+            @assertvalid P(copy(a.monomials), a.coeffs .* b)
         end
     end
 end
@@ -447,7 +447,7 @@ function inclusiveinplace!(::typeof(+), a::P, b::T) where
         @error "Invalid polynomial" a dump(a)
         error("Invalid polynomial")
     end
-    a
+    @assertvalid a
 end
 
 function inclusiveinplace!(::typeof(+), a::P, b::M) where
@@ -470,7 +470,7 @@ function inclusiveinplace!(::typeof(+), a::P, b::M) where
         @error "Invalid polynomial" a dump(a)
         error("Invalid polynomial")
     end
-    a
+    @assertvalid a
 end
 
 function inclusiveinplace!(::typeof(+), a::P, b::C) where
@@ -493,7 +493,7 @@ function inclusiveinplace!(::typeof(+), a::P, b::C) where
         @error "Invalid polynomial" a dump(a)
         error("Invalid polynomial")
     end
-    a
+    @assertvalid a
 end
 
 function inclusiveinplace!(::typeof(*), a::P, b::C) where
@@ -504,7 +504,7 @@ function inclusiveinplace!(::typeof(*), a::P, b::C) where
     else
         a.coeffs .*= b
     end
-    a
+    @assertvalid a
 end
 
 
@@ -520,6 +520,7 @@ function inplace!(::typeof(*), a::T, b::MonomialBy{Order}, c::T) where T <: Term
     else
         a = b * c
     end
+    @assertvalid a
 end
 
 function inplace!(::typeof(*), a::T, b::C, c::T) where T <: TermOver{C} where C
@@ -530,6 +531,7 @@ function inplace!(::typeof(*), a::T, b::C, c::T) where T <: TermOver{C} where C
     else
         a = b * c
     end
+    @assertvalid a
 end
 
 end
