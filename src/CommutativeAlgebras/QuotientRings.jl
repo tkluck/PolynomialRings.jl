@@ -1,10 +1,10 @@
 module QuotientRings
 
 using PolynomialRings
-import Base: +,-,*,/,//,^,==,!=
+import Base: +,-,*,/,//,^,==
 import Base: promote_rule, promote_type, convert
 import Base: show
-import Base: zero, one, rem, copy
+import Base: zero, iszero, one, rem, copy
 
 import ..Expansions: expansion
 import ..Ideals: Ideal, _grb
@@ -22,15 +22,19 @@ import PolynomialRings: construct_monomial, variablesymbols
 # Constructors
 #
 # -----------------------------------------------------------------------------
+struct Reduced end
+
 struct QuotientRing{P<:Polynomial, ID}
     f::P
     QuotientRing{P,ID}(f::P) where {P,ID} = new(rem(f, _ideal(QuotientRing{P,ID})))
+    QuotientRing{P,ID}(::Reduced, f::P) where {P,ID} = new(f)
 end
 ring(::Type{<:QuotientRing{P}}) where P = P
 
 const _ideals = Dict()
 _ideal(R) = _ideals[R]
 function /(::Type{P}, I::Ideal{P}) where P<:Polynomial
+    I = Ideal(sort(unique(generators(I)), order=monomialorder(P)))
     ID = hash(I)
     R = QuotientRing{P, ID}
 
@@ -50,11 +54,13 @@ end
 #
 # -----------------------------------------------------------------------------
 
-zero(::Type{Q}) where Q<:QuotientRing{P} where P<:Polynomial = Q(zero(P))
+zero(::Type{Q}) where Q<:QuotientRing{P} where P<:Polynomial = Q(Reduced(), zero(P))
 one(::Type{Q})  where Q<:QuotientRing{P} where P<:Polynomial = Q(one(P))
 zero(a::QuotientRing) = zero(typeof(a))
 one(a::QuotientRing)  = one(typeof(a))
 copy(a::QuotientRing) = a
+
+iszero(a::QuotientRing) = iszero(a.f)
 
 +(a::QuotientRing) = a
 -(a::Q)                       where Q<:QuotientRing = Q(-a.f)
@@ -63,7 +69,6 @@ copy(a::QuotientRing) = a
 *(a::Q, b::Q)                 where Q<:QuotientRing = Q(a.f*b.f)
 ^(a::Q, n::Integer)           where Q<:QuotientRing = Base.power_by_squaring(a, n)
 ==(a::Q, b::Q)                where Q<:QuotientRing = a.f == b.f
-!=(a::Q, b::Q)                where Q<:QuotientRing = a.f != b.f
 allvariablesymbols(::Type{Q}) where Q<:QuotientRing = allvariablesymbols(ring(Q))
 # boundnames and fullboundnames return the same result: need to assume all
 # variables may appear in _ideal(Q).
@@ -226,6 +231,8 @@ function convert(::Type{P}, a::Q) where P <: PolynomialOver{Q} where Q <: Quotie
         return P(M[one(M)], Q[deepcopy(a)])
     end
 end
+
+convert(::Type{N}, a::QuotientRing) where N <: Union{Integer, Rational{Integer}} = convert(N, a.f)
 
 *(a::P, b::Q) where P <: PolynomialOver{Q} where Q <: QuotientRing = invoke(*, Tuple{PolynomialOver{C}, C} where C, a, b)
 *(a::Q, b::P) where P <: PolynomialOver{Q} where Q <: QuotientRing = invoke(*, Tuple{C, PolynomialOver{C}} where C, a, b)
