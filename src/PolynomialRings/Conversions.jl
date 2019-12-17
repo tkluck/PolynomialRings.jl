@@ -37,7 +37,7 @@ convert(::Type{P}, x::P) where P <: Polynomial = x
 #
 # -----------------------------------------------------------------------------
 unalias(::Type{T}, a::T) where T = deepcopy(a)
-unalias(::Type{T}, a::S) where {T,S} = T(a)
+unalias(::Type{T}, a::S) where {T,S} = convert(T, a)
 
 # -----------------------------------------------------------------------------
 #

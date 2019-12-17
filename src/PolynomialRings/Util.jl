@@ -11,7 +11,7 @@ import SparseArrays: SparseVector, SparseMatrixCSC
 
 import Transducers: Transducer, R_, inner, wrap, xform
 import Transducers: wrapping, unwrap
-import Transducers: start, next, complete, outtype
+import Transducers: start, next, complete
 
 import DataStructures: PriorityQueue, SortedSet, OrderedSet, OrderedDict
 import DataStructures: percolate_down!, percolate_up!, enqueue!, dequeue!, peek
@@ -217,14 +217,15 @@ end
 # A transducer that merges two iterables like a zipper
 #
 # -----------------------------------------------------------------------------
-struct MergingTransducer{Iter, Order, LeftOp, RightOp, MergeOp, Key, Value} <: Transducer
-    iter      :: Iter
-    order     :: Order
-    leftop    :: LeftOp
-    rightop   :: RightOp
-    mergeop   :: MergeOp
-    key       :: Key
-    value     :: Value
+struct MergingTransducer{Iter, Order, LeftOp, RightOp, MergeOp, Key, Value, Constructor} <: Transducer
+    iter        :: Iter
+    order       :: Order
+    leftop      :: LeftOp
+    rightop     :: RightOp
+    mergeop     :: MergeOp
+    key         :: Key
+    value       :: Value
+    constructor :: Constructor
 end
 
 function start(rf::R_{<:MergingTransducer}, result)
@@ -234,65 +235,51 @@ end
 
 function next(rf::R_{<:MergingTransducer}, result, input)
     ≺(a, b) = Base.Order.lt(xform(rf).order, a, b)
+    #T = outtype(xform(rf), typeof(input))
 
     leftop = xform(rf).leftop
     rightop = xform(rf).rightop
     mergeop = xform(rf).mergeop
     key = xform(rf).key
     value = xform(rf).value
-
-    wrapping(rf, result) do outeriter, res
-        while !isnothing(outeriter)
-            outerinput, state = outeriter
-            if key(input) ≺ key(outerinput)
-                t = rightop(value(input))
-                res = next(inner(rf), res, t)
-                return outeriter, res
-            elseif key(input) == key(outerinput)
-                t = mergeop(value(outerinput), value(input))
-                res = next(inner(rf), res, t)
-                outeriter = iterate(xform(rf).iter, state)
-                return outeriter, res
-            else
-                t = leftop(value(outerinput))
-                res = next(inner(rf), res, t)
-                outeriter = iterate(xform(rf).iter, state)
-            end
-        end
-        res = next(inner(rf), res, rightop(value(input)))
-        return outeriter, res
-    end
-end
-
-function complete(rf::R_{<:MergingTransducer}, result)
-    leftop = xform(rf).leftop
-    value = xform(rf).value
+    constructor = xform(rf).constructor
 
     outeriter, res = unwrap(rf, result)
     while !isnothing(outeriter)
         outerinput, state = outeriter
-        res = next(inner(rf), res, leftop(value(outerinput)))
+        if key(input) ≺ key(outerinput)
+            t = constructor(key(input), rightop(value(input)))
+            res = next(inner(rf), res, t)
+            return wrap(rf, outeriter, res)
+        elseif key(input) == key(outerinput)
+            t = constructor(key(input), mergeop(value(outerinput), value(input)))
+            res = next(inner(rf), res, t)
+            outeriter = iterate(xform(rf).iter, state)
+            return wrap(rf, outeriter, res)
+        else
+            t = constructor(key(outerinput), leftop(value(outerinput)))
+            res = next(inner(rf), res, t)
+            outeriter = iterate(xform(rf).iter, state)
+        end
+    end
+    res = next(inner(rf), res, constructor(key(input), rightop(value(input))))
+    return wrap(rf, outeriter, res)
+end
+
+function complete(rf::R_{<:MergingTransducer}, result)
+    leftop = xform(rf).leftop
+    key = xform(rf).key
+    value = xform(rf).value
+    constructor = xform(rf).constructor
+
+    outeriter, res = unwrap(rf, result)
+    while !isnothing(outeriter)
+        outerinput, state = outeriter
+        res = next(inner(rf), res, constructor(key(outerinput), leftop(value(outerinput))))
         outeriter = iterate(xform(rf).iter, state)
     end
     complete(inner(rf), res)
 end
-
-outtype(xf::MergingTransducer, Q) = Base._return_type((a, b) -> xf.mergeop(xf.value(a), xf.value(b)), Tuple{eltype(xf.iter), Q})
-
-"""
-    _Map{Op} <: Transducer
-
-The same thing as Transducers.Map, except using Base._return_type for determining
-the outtype. This is not API-stable but gives much better performance. Moreover,
-it means we can use it in @generated functions as well.
-"""
-struct _Map{Op} <: Transducer
-    f  :: Op
-end
-
-next(rf::R_{<:_Map}, result, input) = next(inner(rf), result, xform(rf).f(input))
-outtype(xf::_Map, intype) = Base._return_type(xf.f, Tuple{intype})
-isexpansive(xf::_Map) = false
 
 Base.deepcopy(x::BigInt) = return Base.GMP.MPZ.set(x)
 function Base.deepcopy(x::Rational)

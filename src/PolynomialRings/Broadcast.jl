@@ -111,15 +111,15 @@ import Base.Broadcast: broadcastable, broadcasted, DefaultArrayStyle
 import Base: RefValue, similar
 
 import InPlace: @inplace, inplace!, inclusiveinplace!
-import Transducers: Transducer, eduction, Filter
+import Transducers: Transducer, eduction, Filter, Map
 
 import ..MonomialIterators: MonomialIter
 import ..MonomialOrderings: MonomialOrder
 import ..Monomials: AbstractMonomial
 import ..Polynomials: Polynomial, PolynomialBy, nzterms, nztermscount, TermBy, MonomialBy
 import ..Terms: Term, monomial, coefficient
-import ..Util: MergingTransducer, _Map
-import PolynomialRings: monomialorder
+import ..Util: MergingTransducer, @assertvalid
+import PolynomialRings: monomialorder, basering
 
 broadcastable(p::AbstractMonomial) = p
 broadcastable(p::Term) = p
@@ -142,57 +142,45 @@ BroadcastStyle(s::Termwise, t::BroadcastStyle) = t
 # A light-weight wrapper around an iterator that yields terms
 #
 # -----------------------------------------------------------------------------
-struct TermsBy{Order, Iter}
+struct TermsBy{Order, Iter, Owned}
     order :: Order
     iter  :: Iter
+    owned :: Owned
 end
 
-struct Owned{T}
-    val   :: T
-    owned :: Bool
-end
-Owned(val) = Owned(val, true)
-val(x::Owned)     = x.val
-isowned(x::Owned) = x.owned
-ownedval(x::Owned) = isowned(x) ? val(x) : deepcopy(val(x))
+isowned(::Val{owned}) where owned = owned
+isowned(x::Bool) = x
+_ownedop(op, owned, x) = isowned(owned) ? inplace!(op, x, x) : op(x)
+_ownedop(op, ownedx, x, ownedy, y) = isowned(ownedx) ?
+                                     inplace!(op, x, x, y) :
+                                     isowned(ownedy) ?
+                                     inplace!(op, y, x, y) :
+                                     op(x, y)
+_unalias(owned, x) = isowned(owned) ? x : deepcopy(x)
+_unalias(x) = x
+_unalias(x::TermsBy) = iterterms(x.order, Map(_unalias), x.iter)
 
-+(a::Owned) = a
--(a::Owned) = ownedop(-, a)
-+(a::Owned, b::Owned) = ownedop(+, a, b)
--(a::Owned, b::Owned) = ownedop(-, a, b)
-*(a::Owned, b::Owned) = ownedop(*, a, b)
-*(a::Owned, b) = Owned(isowned(a) ? inplace!(*, val(a), val(a), b) : val(a) * b)
-*(a, b::Owned) = Owned(isowned(b) ? inplace!(*, val(b), a, val(b)) : a * val(b))
-Owned(op::Function, x) = Owned(op(val(x)), isowned(x))
-ownedop(op, a) = Owned(
-    isowned(a) ?
-    inclusiveinplace!(op, val(a)) :
-    op(val(a))
-)
-ownedop(op, a, b) = Owned(
-    isowned(a) ?
-    inclusiveinplace!(op, val(a), val(b)) :
-    isowned(b) ?
-    inplace!(op, val(b), val(a), val(b)) :
-    op(val(a), val(b))
-)
-function coeffwise(op)
-    function (a, b)
-        @assert monomial(val(a)) == monomial(val(b))
-        Owned(
-            Term(monomial(val(a)), val(op(Owned(coefficient, a), Owned(coefficient, b))))
-        )
-    end
+_constructterm(m, c) = Term(m, c)
+
+function merge(a::TermsBy{Order}, b::TermsBy{Order}, leftop, rightop, mergeop, key, value, constructor) where Order <: MonomialOrder
+    leftop′(x) = _ownedop(leftop, a.owned, x)
+    rightop′(x) = _ownedop(rightop, a.owned, x)
+    mergeop′(x, y) = _ownedop(mergeop, a.owned, x, b.owned, y)
+    iterterms(
+        Order(),
+        MergingTransducer(a.iter, Order(), leftop′, rightop′, mergeop′, monomial, coefficient, _constructterm),
+        b.iter,
+    )
 end
 
 iterterms(destix, myix, x) = x
 
 function iterterms(destix, myix, a::Polynomial)
-    owned = destix == myix
-    TermsBy(monomialorder(a), eduction(_Map(t -> Owned(t, owned)), nzterms(a)))
+    owned = isbitstype(basering(a)) ? Val(true) : destix == myix
+    TermsBy(monomialorder(a), nzterms(a), owned)
 end
 
-iterterms(order::MonomialOrder, transducer, coll) = TermsBy(order, eduction(transducer |> Filter(!iszero∘val), coll))
+iterterms(order::MonomialOrder, transducer, coll) = TermsBy(order, eduction(transducer |> Filter(!iszero), coll), Val(true))
 
 # the simple solution with map(...) leads to code that the compiler doesn't inline,
 # and then this part becomes a major bottleneck. By having the generated function
@@ -210,36 +198,29 @@ iterterms(f::Function, args...) = iterterms(f(args...))
 
 
 function iterterms(op::typeof(+), a::TermsBy{Order}, b::TermsBy{Order}) where Order <: MonomialOrder
-    iterterms(
-        Order(),
-        MergingTransducer(a.iter, Order(), +, +, coeffwise(+), monomial∘val, identity),
-        b.iter,
-    )
+    return merge(a, b, +, +, +, monomial, coefficient, Term)
 end
 
 function iterterms(op::typeof(-), a::TermsBy{Order}, b::TermsBy{Order}) where Order <: MonomialOrder
-    iterterms(
-        Order(),
-        MergingTransducer(a.iter, Order(), +, -, coeffwise(-), monomial∘val, identity),
-        b.iter,
-    )
+    return merge(a, b, +, -, -, monomial, coefficient, Term)
 end
 
 function iterterms(op::typeof(*), a::TermsBy{Order}, b::Union{TermBy{Order}, MonomialBy{Order}, Number}) where Order <: MonomialOrder
-    iterterms(Order(), _Map(a_i -> a_i * b), a.iter)
+    iterterms(Order(), Map(a_i -> a_i * b), a.iter)
 end
 
 function iterterms(op::typeof(*), a::Union{TermBy{Order}, MonomialBy{Order}, Number}, b::TermsBy{Order}) where Order <: MonomialOrder
-    iterterms(Order(), _Map(b_i -> a * b_i), b.iter)
+    iterterms(Order(), Map(b_i -> a * b_i), b.iter)
 end
 
 similar(bc::Broadcasted{<:Termwise{Order}}, ::Type{P}) where P <: PolynomialBy{Order} where Order = zero(P)
 
 function copy(bc::Broadcasted{Termwise{Order, P}}) where P <: PolynomialBy{Order} where Order
     result = zero(P)
-    terms = iterterms(nothing, nothing, bc).iter
-    copy!(Transducer(terms) |> _Map(ownedval), result, terms.coll)
-    result
+    sizehint!(result, termsbound(bc))
+    terms = _unalias(iterterms(nothing, nothing, bc)).iter
+    copy!(Transducer(terms), result, terms.coll)
+    @assertvalid result
 end
 
 copyto!(dest::P, bc::Broadcasted{Termwise{Order, P}}) where P <: PolynomialBy{Order} where Order = _copyto!(dest, bc)
@@ -249,17 +230,17 @@ copyto!(dest::P, bc::Broadcasted{Termwise{Order, P}}) where P <: PolynomialBy{Or
 # in Julia's code generator (Julia bug) so I'll just manually disentangle them.
 function _copyto!(dest, bc)
     destix = findlast(a -> dest === a, flatten(bc).args)
-    terms = iterterms(destix, 1, bc).iter
+    terms = _unalias(iterterms(destix, 1, bc)).iter
     if !isnothing(destix)
         d = zero(dest)
         sizehint!(d, termsbound(bc))
-        copy!(Transducer(terms) |> _Map(ownedval), d, terms.coll)
+        copy!(Transducer(terms), d, terms.coll)
         copy!(dest, d)
     else
         sizehint!(dest, termsbound(bc))
-        copy!(Transducer(terms) |> _Map(ownedval), dest, terms.coll)
+        copy!(Transducer(terms), dest, terms.coll)
     end
-    dest
+    @assertvalid dest
 end
 
 # -----------------------------------------------------------------------------
@@ -403,7 +384,7 @@ function copyto!(dest::P, bc::HandOptimizedBroadcast{Order, C, M, P}) where {Ord
     # copy!(..., @view ...) is slow because it needs to allocate the view.
     empty!(dest.monomials); for ix = 1:n; push!(dest.monomials, monomials[ix]); end
     empty!(dest.coeffs);    for ix = 1:n; push!(dest.coeffs,    coeffs[ix]);    end
-    dest
+    @assertvalid dest
 end
 
 # this is the inner loop for m4gb
@@ -447,7 +428,7 @@ function copyto!(g::P, bc::M4GBBroadcast{C, Order, MI, M, P}) where {C, Order, M
     m = something(findlast(!iszero, g.coeffs), 0)
     resize!(g.coeffs, m)
 
-    return g
+    return @assertvalid g
 end
 
 end
