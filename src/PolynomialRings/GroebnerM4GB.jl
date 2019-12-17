@@ -159,8 +159,12 @@ function mulfullreduce!(L, M, t, f, order)
         if g != nothing
             d = coefficient(r) // lc(g)
             tail_g = tail(g)
-            op!(h, d, tail_g) = @. h -= d * tail_g
-            @. h = op!(h, d, tail_g)
+            if h isa AbstractArray
+                op!(h, d, tail_g) = @. h -= d * tail_g
+                @. h = op!(h, d, tail_g)
+            else
+                @. h -= d * tail_g
+            end
         else
             @inplace h += r
         end
@@ -277,8 +281,12 @@ function getreductor!(M, L, gₗₘ, order)
                 m == gₗₘ && break
                 h = getreductor!(M, L, m, order)
                 d = c // lc(h)
-                op!(g₀, d, h) = @. g₀ -= d * h
-                @. g₀ = op!(g₀, d, h)
+                if g₀ isa AbstractArray
+                    op!(g₀, d, h) = @. g₀ -= d * h
+                    @. g₀ = op!(g₀, d, h)
+                else
+                    @. g₀ -= d * h
+                end
             end
         end
     end
