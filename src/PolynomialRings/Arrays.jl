@@ -80,13 +80,32 @@ function coefficients(a::AbstractArray{P}, args...) where P <: Polynomial
     return [c for (p,c) in expansion(a, args...)]
 end
 
-function (p::AbstractArray{P})(; kwargs...) where P <: Polynomial
-    ElType = substitutedtype(eltype(p); kwargs...)
-    res = similar(p, ElType)
-    for ix in eachindex(p)
-        res[ix] = p[ix](;kwargs...)
+if VERSION > v"1.3-"
+    function (p::AbstractArray{P})(; kwargs...) where P <: Polynomial
+        ElType = substitutedtype(eltype(p); kwargs...)
+        res = similar(p, ElType)
+        for ix in eachindex(p)
+            res[ix] = p[ix](;kwargs...)
+        end
+        res
     end
-    res
+else
+    function (p::Vector{P})(; kwargs...) where P <: Polynomial
+        ElType = substitutedtype(eltype(p); kwargs...)
+        res = similar(p, ElType)
+        for ix in eachindex(p)
+            res[ix] = p[ix](;kwargs...)
+        end
+        res
+    end
+    function (p::Matrix{P})(; kwargs...) where P <: Polynomial
+        ElType = substitutedtype(eltype(p); kwargs...)
+        res = similar(p, ElType)
+        for ix in eachindex(p)
+            res[ix] = p[ix](;kwargs...)
+        end
+        res
+    end
 end
 
 function coefficient(a::AbstractArray{P}, args...) where P <: Polynomial
