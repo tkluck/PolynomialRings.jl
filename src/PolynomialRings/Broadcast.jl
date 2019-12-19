@@ -38,8 +38,8 @@ to
 
     materialize!(f, broadcasted(+, broadcasted(*, g, h)))
 
-In turn, `materialize!` calls `copyto!` In order to define our own behaviour, we
-override `copyto!` (and `copy` for the variant that allocates its result).
+In order to define our own behaviour, we override `materialize!` (and `copy` for
+the variant that allocates its result).
 
 The function `broadcasted` decides on a `BroadcastStyle` based on its arguments.
 This is typically used to decide the shape of the output, but we re-use this feature
@@ -63,19 +63,16 @@ e.g. we may as well evaluate
 as `g * h` if `g` and `h` are polynomials. In this case, the allocation is probably
 negligible compared to the time spent multiplying.
 
-To achieve this, the default implementation for `iterterms` eagerly evaluates
-the broadcast operation. Only those operations that we _know_ to work term-wise
-efficiently get a more specific override.
+To achieve this, the default implementation for `maybe_instantiate` eagerly
+evaluates the broadcast operation. Only those operations that we _know_ to work
+term-wise efficiently get a more specific override.
 
 ### Lazy evaluation
 
 For the operations that _do_ work well term-wise, we implement a function
-`iterterms` that takes a `Broadcasted` object or a scalar, and returns
-an object that supports the `iterate` protocol.
-
-The function `iterterms` is paired with a helper function `termsbound` that
-tells the function `materialize!` how many terms to allocate. It is an upper
-bound for how many terms the `iterterms` object may return.
+`maybe_instantiate` that takes a `Broadcasted` object or a scalar, and returns
+either an `Owned{<:Polynomial}` or a `TermsBy` object. These can be composed
+to form the full operation.
 
 ### In-place evaluation
 
@@ -99,8 +96,8 @@ We can do in-place evaluation in two cases:
    eagerly as `f * g`. The resulting polynomial is transient, so we may apply the
    `... .+ h)` operation in-place.
 
-We represent both cases by passing a value for `owned` alongside them in the
-TermsBy struct. This property bubbles up through the optree.
+We represent both cases by keeping a `owned` value with the scalar or the
+`TermsBy` object.
 """
 module Broadcast
 
@@ -140,7 +137,7 @@ BroadcastStyle(s::Termwise, t::BroadcastStyle) = t
 
 # -----------------------------------------------------------------------------
 #
-# A light-weight wrapper around an iterator that yields terms
+# Return values for the `instantiate` function
 #
 # -----------------------------------------------------------------------------
 struct TermsBy{Order, P, Iter, Owned}
