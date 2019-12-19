@@ -5,6 +5,7 @@ import Base: OneTo
 import SparseArrays: SparseVector, HigherOrderFns, issparse
 
 import InPlace: @inplace
+import Transducers: Transducer, Eduction
 
 import ..MonomialOrderings: MonomialOrder
 import ..Monomials: AbstractMonomial, TupleMonomial, VectorMonomial
@@ -166,6 +167,7 @@ end
 
 Base.append!(dst::Polynomial, src) = for t in src; push!(dst, t); end
 Base.copy!(dst::Polynomial, src) = append!(empty!(dst), src)
+Base.copy!(x::Polynomial, ed::Eduction) = copy!(Transducer(ed), x, ed.coll)
 
 function Base.copy!(dst::Polynomial, src::Polynomial)
     copy!(dst.coeffs, src.coeffs)

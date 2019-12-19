@@ -38,8 +38,8 @@ to
 
     materialize!(f, broadcasted(+, broadcasted(*, g, h)))
 
-In turn, `materialize` calls `copyto!` In order to define our own behaviour, we
-override `broadcasted` and `copyto!`.
+In turn, `materialize!` calls `copyto!` In order to define our own behaviour, we
+override `copyto!` (and `copy` for the variant that allocates its result).
 
 The function `broadcasted` decides on a `BroadcastStyle` based on its arguments.
 This is typically used to decide the shape of the output, but we re-use this feature
@@ -104,14 +104,13 @@ TermsBy struct. This property bubbles up through the optree.
 """
 module Broadcast
 
-import Base: +, -, *
-import Base.Broadcast: Style, AbstractArrayStyle, BroadcastStyle, Broadcasted, broadcasted
-import Base.Broadcast: copyto!, copy, flatten
-import Base.Broadcast: broadcastable, broadcasted, DefaultArrayStyle
-import Base: RefValue, similar
+import Base.Broadcast: AbstractArrayStyle, BroadcastStyle, Broadcasted
+import Base.Broadcast: materialize!, copyto!, copy, flatten
+import Base.Broadcast: broadcastable
+import Base: RefValue
 
-import InPlace: @inplace, inplace!, inclusiveinplace!
-import Transducers: Transducer, eduction, Filter, Map
+import InPlace: @inplace, inplace!
+import Transducers: eduction, Map, Filter
 
 import ..MonomialIterators: MonomialIter
 import ..MonomialOrderings: MonomialOrder
@@ -119,7 +118,9 @@ import ..Monomials: AbstractMonomial
 import ..Polynomials: Polynomial, PolynomialBy, nzterms, nztermscount, TermBy, MonomialBy
 import ..Terms: Term, monomial, coefficient
 import ..Util: MergingTransducer, @assertvalid
-import PolynomialRings: monomialorder, basering
+import PolynomialRings: monomialorder
+
+const PlusMinus = Union{typeof(+), typeof(-)}
 
 broadcastable(p::AbstractMonomial) = p
 broadcastable(p::Term) = p
@@ -142,103 +143,152 @@ BroadcastStyle(s::Termwise, t::BroadcastStyle) = t
 # A light-weight wrapper around an iterator that yields terms
 #
 # -----------------------------------------------------------------------------
-struct TermsBy{Order, Iter, Owned}
+struct TermsBy{Order, P, Iter, Owned}
     order :: Order
+    P     :: Type{P}
     iter  :: Iter
     owned :: Owned
 end
 
+struct Owned{Value, IsOwned}
+    value :: Value
+    owned :: IsOwned
+end
+
+const TermsIterable{Order} = Union{Owned{<:PolynomialBy{Order}}, TermsBy{Order}}
+
+function Owned(f::Function, args::Owned...)
+    Owned(f(map(a -> a.value, args)...), Val(false))
+end
+
+const MathOperator = Union{typeof(+), typeof(-), typeof(*), typeof(/), typeof(//)}
+function Owned(f::MathOperator, args::Owned...)
+    Owned(f(map(a -> a.value, args)...), Val(true))
+end
+
+copy(x::TermsBy{<:Any, P}) where P = copy!(zero(P), nzterms(x))
+copy(x::Owned) = isowned(x) ? x.value : deepcopy(x.value)
+nzterms(x::TermsBy) = x.iter
+nzterms(x::Owned{<:Polynomial}) = nzterms(x.value)
+polynomialtype(x::TermsBy) = x.P
+polynomialtype(x::Owned{<:Polynomial}) = typeof(x.value)
+
 isowned(::Val{owned}) where owned = owned
 isowned(x::Bool) = x
+isowned(x::TermsBy) = isowned(x.owned)
+isowned(x::Owned) = isowned(x.owned)
+
 _ownedop(op, owned, x) = isowned(owned) ? inplace!(op, x, x) : op(x)
 _ownedop(op, ownedx, x, ownedy, y) = isowned(ownedx) ?
                                      inplace!(op, x, x, y) :
                                      isowned(ownedy) ?
                                      inplace!(op, y, x, y) :
                                      op(x, y)
-_unalias(owned, x) = isowned(owned) ? x : deepcopy(x)
-_unalias(x) = x
-_unalias(x::TermsBy) = iterterms(x.order, Map(_unalias), x.iter)
 
 _constructterm(m, c) = Term(m, c)
 
-function merge(a::TermsBy{Order}, b::TermsBy{Order}, leftop, rightop, mergeop, key, value, constructor) where Order <: MonomialOrder
-    leftop′(x) = _ownedop(leftop, a.owned, x)
-    rightop′(x) = _ownedop(rightop, a.owned, x)
-    mergeop′(x, y) = _ownedop(mergeop, a.owned, x, b.owned, y)
-    iterterms(
+function merge(a::TermsIterable{Order}, b::TermsIterable{Order}, leftop, rightop, mergeop) where Order <: MonomialOrder
+    leftop′(x) = _ownedop(leftop, isowned(a), x)
+    rightop′(x) = _ownedop(rightop, isowned(b), x)
+    mergeop′(x, y) = _ownedop(mergeop, isowned(a), x, isowned(b), y)
+    return TermsBy(
         Order(),
-        MergingTransducer(a.iter, Order(), leftop′, rightop′, mergeop′, monomial, coefficient, _constructterm),
-        b.iter,
+        promote_type(polynomialtype(a), polynomialtype(b)),
+        eduction(
+            MergingTransducer(nzterms(a), Order(), leftop′, rightop′, mergeop′, monomial, coefficient, _constructterm) |> Filter(!iszero),
+            nzterms(b),
+        ),
+        Val(true),
     )
 end
 
-iterterms(destix, myix, x) = x
-
-function iterterms(destix, myix, a::Polynomial)
-    owned = isbitstype(basering(a)) ? Val(true) : destix == myix
-    TermsBy(monomialorder(a), nzterms(a), owned)
-end
-
-iterterms(order::MonomialOrder, transducer, coll) = TermsBy(order, eduction(transducer |> Filter(!iszero), coll), Val(true))
-
-# the simple solution with map(...) leads to code that the compiler doesn't inline,
-# and then this part becomes a major bottleneck. By having the generated function
-# spell out the map, we fix that.
-@generated function iterterms(destix, myix, bc::Broadcasted{<:Termwise, Axes, Op, Args}) where {Axes, Op, Args}
-    call = :( iterterms(bc.f) )
+withownership(x::Owned, args...) = error("Can't apply withownership twice!")
+withownership(x, destix) = withownership(x, destix, 1)
+withownership(x, destix, myix) = Owned(x, isbitstype(typeof(x)) ? Val(true) : destix == myix)
+@generated function withownership(bc::BC, destix, myix) where BC <: Broadcasted{Tw, Axes, F, Args} where {Tw <: Termwise, Axes, F, Args}
+    argtuple = :( tuple() )
+    expr = :( Broadcasted{Tw}(bc.f, $argtuple) )
     for ix = 1:length(Args.types)
-        push!(call.args, :( iterterms(destix, myix + $(ix - 1), bc.args[$ix])))
+        push!(argtuple.args, :( withownership(bc.args[$ix], destix, myix + $(ix - 1)) ))
     end
-    return call
+    return expr
 end
 
-iterterms(destix::Nothing, myix, bc::Broadcasted{<:Termwise}) = iterterms(bc.f, map(arg -> iterterms(destix, 1, arg), bc.args)...)
-iterterms(f::Function, args...) = iterterms(f(args...))
+maybe_collect(x::Owned) = x
+maybe_collect(x::TermsBy) = Owned(copy(x), Val(true))
 
+maybe_instantiate_default(f, args...) = Owned(f, map(maybe_collect, args)...)
 
-function iterterms(op::typeof(+), a::TermsBy{Order}, b::TermsBy{Order}) where Order <: MonomialOrder
-    return merge(a, b, +, +, +, monomial, coefficient, Term)
+maybe_instantiate(x) = error("Please apply withownership before instantiating")
+maybe_instantiate(x::Owned) = x
+maybe_instantiate(op::Function, args...) = maybe_instantiate_default(op, args...)
+maybe_instantiate(bc::Broadcasted{<:Termwise}) = maybe_instantiate(bc.f, map(maybe_instantiate, bc.args)...)
+
+maybe_instantiate(op::typeof(+), a::TermsIterable, b::TermsIterable) = merge(a, b, +, +, +)
+maybe_instantiate(op::typeof(-), a::TermsIterable, b::TermsIterable) = merge(a, b, +, -, -)
+
+function maybe_instantiate(op::typeof(*), a::TermsIterable{Order}, b::Union{TermBy{Order}, MonomialBy{Order}, Number}) where Order
+    return TermsBy(
+        Order(),
+        promote_type(polynomialtype(a), typeof(b)),
+        eduction(
+            Map(a_i -> _ownedop(*, isowned(a), a_i, Val(false), b)) |> Filter(!iszero),
+            nzterms(a),
+        ),
+        Val(true),
+    )
 end
 
-function iterterms(op::typeof(-), a::TermsBy{Order}, b::TermsBy{Order}) where Order <: MonomialOrder
-    return merge(a, b, +, -, -, monomial, coefficient, Term)
+function maybe_instantiate(op::typeof(*), a::Union{TermBy{Order}, MonomialBy{Order}, Number}, b::TermsIterable{Order}) where Order
+    return TermsBy(
+        Order(),
+        promote_type(typeof(a), polynomialtype(b)),
+        eduction(
+            Map(b_i -> _ownedop(*, Val(false), a, isowned(b), b_i)) |> Filter(!iszero),
+            nzterms(b),
+        ),
+        Val(true),
+    )
 end
 
-function iterterms(op::typeof(*), a::TermsBy{Order}, b::Union{TermBy{Order}, MonomialBy{Order}, Number}) where Order <: MonomialOrder
-    iterterms(Order(), Map(a_i -> a_i * b), a.iter)
-end
+instantiate(bc::Broadcasted{<:Termwise}) = maybe_instantiate(bc)
 
-function iterterms(op::typeof(*), a::Union{TermBy{Order}, MonomialBy{Order}, Number}, b::TermsBy{Order}) where Order <: MonomialOrder
-    iterterms(Order(), Map(b_i -> a * b_i), b.iter)
-end
-
-similar(bc::Broadcasted{<:Termwise{Order}}, ::Type{P}) where P <: PolynomialBy{Order} where Order = zero(P)
-
+# -----------------------------------------------------------------------------
+#
+# Copy methods
+#
+# -----------------------------------------------------------------------------
 function copy(bc::Broadcasted{Termwise{Order, P}}) where P <: PolynomialBy{Order} where Order
-    result = zero(P)
-    sizehint!(result, termsbound(bc))
-    terms = _unalias(iterterms(nothing, nothing, bc)).iter
-    copy!(Transducer(terms), result, terms.coll)
-    @assertvalid result
+    @assertvalid copy(instantiate(withownership(bc, nothing)))
 end
 
-copyto!(dest::P, bc::Broadcasted{Termwise{Order, P}}) where P <: PolynomialBy{Order} where Order = _copyto!(dest, bc)
-
-# This is just the intended body of copyto! above, but I need to call it from
+# This is just the intended body of copyto! below, but I need to call it from
 # the handcrafted version as well. My solution with `invoke` gives a segfault
 # in Julia's code generator (Julia bug) so I'll just manually disentangle them.
 function _copyto!(dest, bc)
     destix = findlast(a -> dest === a, flatten(bc).args)
-    terms = _unalias(iterterms(destix, 1, bc)).iter
+    bc = withownership(bc, destix)
     if !isnothing(destix)
-        d = zero(dest)
-        sizehint!(d, termsbound(bc))
-        copy!(Transducer(terms), d, terms.coll)
+        d = copy(instantiate(bc))
         copy!(dest, d)
     else
-        sizehint!(dest, termsbound(bc))
-        copy!(Transducer(terms), dest, terms.coll)
+        copyto_unaliased!(dest, instantiate(bc))
+    end
+    @assertvalid dest
+end
+
+copyto_unaliased!(dest, x::Owned) = copy!(dest, x.value)
+copyto_unaliased!(dest, x::TermsBy) = copy!(dest, nzterms(x))
+
+function materialize!(dest::P, bc::Broadcasted{Termwise{Order, P}}) where P <: PolynomialBy{Order} where Order
+    destix = findlast(a -> dest === a, flatten(bc).args)
+    bc = withownership(bc, destix)
+    if !isnothing(destix)
+        # TODO: sizehint!
+        d = copy(instantiate(bc))
+        copy!(dest, d)
+    else
+        copyto_unaliased!(dest, instantiate(bc))
     end
     @assertvalid dest
 end
@@ -248,7 +298,6 @@ end
 #  termsbound base case and recursion
 #
 # -----------------------------------------------------------------------------
-const PlusMinus = Union{typeof(+), typeof(-)}
 termsbound(a::Polynomial) = nztermscount(a)
 termsbound(a::RefValue) = 1
 termsbound(a::AbstractMonomial) = 1
