@@ -148,6 +148,7 @@ struct TermsBy{Order, P, Iter, Owned}
     P     :: Type{P}
     iter  :: Iter
     owned :: Owned
+    bound :: Int
 end
 
 struct Owned{Value, IsOwned}
@@ -170,6 +171,8 @@ copy(x::TermsBy{<:Any, P}) where P = copy!(zero(P), nzterms(x))
 copy(x::Owned) = isowned(x) ? x.value : deepcopy(x.value)
 nzterms(x::TermsBy) = x.iter
 nzterms(x::Owned{<:Polynomial}) = nzterms(x.value)
+termsbound(x::TermsBy) = x.bound
+termsbound(x::Owned{<:Polynomial}) = nztermscount(x.value)
 polynomialtype(x::TermsBy) = x.P
 polynomialtype(x::Owned{<:Polynomial}) = typeof(x.value)
 
@@ -199,6 +202,7 @@ function merge(a::TermsIterable{Order}, b::TermsIterable{Order}, leftop, rightop
             nzterms(b),
         ),
         Val(true),
+        termsbound(a) + termsbound(b),
     )
 end
 
@@ -236,6 +240,7 @@ function maybe_instantiate(op::typeof(*), a::TermsIterable{Order}, b::Union{Term
             nzterms(a),
         ),
         Val(true),
+        termsbound(a),
     )
 end
 
@@ -248,6 +253,7 @@ function maybe_instantiate(op::typeof(*), a::Union{TermBy{Order}, MonomialBy{Ord
             nzterms(b),
         ),
         Val(true),
+        termsbound(b),
     )
 end
 
@@ -277,21 +283,12 @@ function _copyto!(dest, bc)
     @assertvalid dest
 end
 
-copyto_unaliased!(dest, x::Owned) = copy!(dest, x.value)
-copyto_unaliased!(dest, x::TermsBy) = copy!(dest, nzterms(x))
-
-function materialize!(dest::P, bc::Broadcasted{Termwise{Order, P}}) where P <: PolynomialBy{Order} where Order
-    destix = findlast(a -> dest === a, flatten(bc).args)
-    bc = withownership(bc, destix)
-    if !isnothing(destix)
-        # TODO: sizehint!
-        d = copy(instantiate(bc))
-        copy!(dest, d)
-    else
-        copyto_unaliased!(dest, instantiate(bc))
-    end
-    @assertvalid dest
+function copyto_unaliased!(dest, x::TermsIterable)
+    sizehint!(dest, termsbound(x))
+    copy!(dest, x.value)
 end
+
+materialize!(dest::P, bc::Broadcasted{Termwise{Order, P}}) where P <: PolynomialBy{Order} where Order = _copyto!(dest, bc)
 
 # -----------------------------------------------------------------------------
 #
