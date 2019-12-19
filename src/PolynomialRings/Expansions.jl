@@ -48,12 +48,12 @@ julia> using PolynomialRings
 julia> R = @ring! ℤ[x,y];
 
 julia> collect(expansion(x^3 + y^2, :y))
-2-element Array{Tuple{Tuple{Int16},ℤ[x]},1}:
+2-element Array{Tuple{TupleMonomial{1,Int16,PolynomialRings.MonomialOrderings.MonomialOrder{:degrevlex,PolynomialRings.NamingSchemes.Named{(:y,)}}},ℤ[x]},1}:
  (1, x^3)
  (y^2, 1)
 
 julia> collect(expansion(x^3 + y^2, :x, :y))
-2-element Array{Tuple{Tuple{Int16,Int16},BigInt},1}:
+2-element Array{Tuple{TupleMonomial{2,Int16,PolynomialRings.MonomialOrderings.MonomialOrder{:degrevlex,PolynomialRings.NamingSchemes.Named{(:x, :y)}}},BigInt},1}:
  (y^2, 1)
  (x^3, 1)
 ```
@@ -80,12 +80,12 @@ julia> using PolynomialRings
 julia> R = @ring! ℤ[x,y];
 
 julia> collect(expansion(x^3 + y^2, :y))
-2-element Array{Tuple{Tuple{Int16},ℤ[x]},1}:
+2-element Array{Tuple{TupleMonomial{1,Int16,PolynomialRings.MonomialOrderings.MonomialOrder{:degrevlex,PolynomialRings.NamingSchemes.Named{(:y,)}}},ℤ[x]},1}:
  (1, x^3)
  (y^2, 1)
 
 julia> collect(expansion(x^3 + y^2, :x, :y))
-2-element Array{Tuple{Tuple{Int16,Int16},BigInt},1}:
+2-element Array{Tuple{TupleMonomial{2,Int16,PolynomialRings.MonomialOrderings.MonomialOrder{:degrevlex,PolynomialRings.NamingSchemes.Named{(:x, :y)}}},BigInt},1}:
  (y^2, 1)
  (x^3, 1)
 ```
@@ -181,10 +181,15 @@ julia> using PolynomialRings
 julia> R = @ring! ℤ[x,y];
 
 julia> collect(expansion_terms(x^3 + y^2 + 1, :y))
-[x^3 + 1, y^2]
+2-element Array{ℤ[x,y],1}:
+ x^3 + 1
+ y^2
 
 julia> collect(expansion_terms(x^3 + y^2 + 1, :x, :y))
-[1, y^2, x^3]
+3-element Array{ℤ[x,y],1}:
+ 1
+ y^2
+ x^3
 ```
 # See also
 `@coefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
@@ -605,14 +610,14 @@ julia> using PolynomialRings
 julia> R = @ring! ℤ[x,y];
 
 julia> collect(@expand(x^3 + y^2, y))
-2-element Array{Tuple{Int64[y],ℤ[x]},1}:
- (1, x^3)
- (y^2, 1)
+2-element Array{Tuple{Tuple{Int16},ℤ[x]},1}:
+ ((0,), x^3)
+ ((2,), 1)
 
 julia> collect(@expand(x^3 + y^2, x, y))
-2-element Array{Tuple{Int64[x,y],BigInt},1}:
- (y^2, 1)
- (x^3, 1)
+2-element Array{Tuple{Tuple{Int16,Int16},BigInt},1}:
+ ((0, 2), 1)
+ ((3, 0), 1)
 ```
 # See also
 `expansion(...)`, `@coefficient` and `coefficient`
