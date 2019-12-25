@@ -244,7 +244,8 @@ function substitutedtype(P::Type; kwargs...)
     vars = fieldnames(kwtupletype)
     valtypes = fieldtypes(kwtupletype)
     if length(kwargs) == 1 && valtypes[1] <: Function
-        return promote_type(P, typeof(first(first(kwargs))(1)))
+        CoeffType = _coefftype(P, Numbered{vars[1], Inf}())
+        return promote_type(CoeffType, typeof(last(first(kwargs))(1)))
     else
         return promote_type(_coefftype(P, vars...), valtypes...)
     end
