@@ -96,30 +96,31 @@ function Base.iterate(it::IterBy{:degrevlex})
     return one(P), state
 end
 
+function next_degrevlex!(exponents, n=lastindex(exponents), totaldeg=sum(exponents[i] for i in 1:n))
+    if n == 1
+        exponents[1] += 1
+        return true
+    end
+    if next_degrevlex!(exponents, n - 1, totaldeg - exponents[n])
+        if exponents[n] > 0
+            exponents[n] -= 1
+            exponents[n - 1] = totaldeg - exponents[n]
+            exponents[1:n - 2] .= 0
+            return false
+        else
+            exponents[n] = totaldeg + 1
+            exponents[1:n - 1] .= 0
+            return true
+        end
+    end
+    return false
+end
+
 function Base.iterate(it::IterBy{:degrevlex}, state)
     M = monomialtype(it)
     P = eltype(it)
-    if length(state) == 1
-        state[1] += 1
-        return convert(P, _construct(M, i -> i <= length(state) ? state[i] : zero(eltype(state)), eachindex(state))), state
-    end
-    curdeg = sum(state)
-    substate = @view state[1:end-1]
-    subdeg = sum(substate)
-    _, substate = iterate(it, substate)
-    if sum(substate) > subdeg
-        if state[end] > 0
-            state[end] -= 1
-            state[end-1] = curdeg - state[end]
-            state[1:end-2] .= 0
-        else
-            state[end] = curdeg + 1
-            state[1:end-1] .= 0
-        end
-    else
-        #state[1:end-1] = substate
-    end
 
+    next_degrevlex!(state)
     return convert(P, _construct(M, i -> i <= length(state) ? state[i] : zero(eltype(state)), eachindex(state))), state
 end
 
