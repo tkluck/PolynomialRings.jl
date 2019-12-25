@@ -228,12 +228,12 @@ maybe_instantiate(bc::Broadcasted{<:Termwise}) = maybe_instantiate(bc.f, map(may
 maybe_instantiate(op::typeof(+), a::TermsIterable, b::TermsIterable) = merge(a, b, +, +, +)
 maybe_instantiate(op::typeof(-), a::TermsIterable, b::TermsIterable) = merge(a, b, +, -, -)
 
-function maybe_instantiate(op::typeof(*), a::TermsIterable{Order}, b::Union{TermBy{Order}, MonomialBy{Order}, Number}) where Order
+function maybe_instantiate(op::typeof(*), a::TermsIterable{Order}, b::Owned{<:Union{TermBy{Order}, MonomialBy{Order}, Number}}) where Order
     return TermsBy(
         Order(),
-        promote_type(polynomialtype(a), typeof(b)),
+        promote_type(polynomialtype(a), typeof(b.value)),
         eduction(
-            Map(a_i -> _ownedop(*, isowned(a), a_i, Val(false), b)) |> Filter(!iszero),
+            Map(a_i -> _ownedop(*, isowned(a), a_i, Val(false), b.value)) |> Filter(!iszero),
             nzterms(a),
         ),
         Val(true),
@@ -241,12 +241,12 @@ function maybe_instantiate(op::typeof(*), a::TermsIterable{Order}, b::Union{Term
     )
 end
 
-function maybe_instantiate(op::typeof(*), a::Union{TermBy{Order}, MonomialBy{Order}, Number}, b::TermsIterable{Order}) where Order
+function maybe_instantiate(op::typeof(*), a::Owned{<:Union{TermBy{Order}, MonomialBy{Order}, Number}}, b::TermsIterable{Order}) where Order
     return TermsBy(
         Order(),
-        promote_type(typeof(a), polynomialtype(b)),
+        promote_type(typeof(a.value), polynomialtype(b)),
         eduction(
-            Map(b_i -> _ownedop(*, Val(false), a, isowned(b), b_i)) |> Filter(!iszero),
+            Map(b_i -> _ownedop(*, Val(false), a.value, isowned(b), b_i)) |> Filter(!iszero),
             nzterms(b),
         ),
         Val(true),
