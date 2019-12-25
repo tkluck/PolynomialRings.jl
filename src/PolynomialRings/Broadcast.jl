@@ -107,7 +107,7 @@ import Base.Broadcast: broadcastable
 import Base: RefValue
 
 import InPlace: @inplace, inplace!
-import Transducers: eduction, Map, Filter
+import Transducers: eduction, Map, Filter, Eduction, Transducer, transduce
 
 import ..MonomialIterators: MonomialIter
 import ..MonomialOrderings: MonomialOrder
@@ -164,7 +164,7 @@ function Owned(f::MathOperator, args::Owned...)
     Owned(f(map(a -> a.value, args)...), Val(true))
 end
 
-copy(x::TermsBy{<:Any, P}) where P = copy!(zero(P), nzterms(x))
+copy(x::TermsBy{<:Any, P}) where P = copyto_unaliased!(zero(P), x)
 copy(x::Owned) = isowned(x) ? x.value : deepcopy(x.value)
 nzterms(x::TermsBy) = x.iter
 nzterms(x::Owned{<:Polynomial}) = nzterms(x.value)
@@ -282,23 +282,31 @@ end
 
 function copyto_unaliased!(dest, x::TermsIterable)
     sizehint!(dest, termsbound(x))
-    copy!(dest, x.value)
+    copy!(dest, nzterms(x))
+end
+
+function copyto_unaliased!(dest::PolynomialBy{Order}, src::TermsBy{Order, P, <:Eduction}) where {Order, P}
+    xf, coll = Transducer(src.iter), src.iter.coll
+
+    resize!(dest.coeffs, termsbound(src))
+    resize!(dest.monomials, termsbound(src))
+
+    function step(state, term)
+        state += 1
+        @inbounds dest.coeffs[state] = coefficient(term)
+        @inbounds dest.monomials[state] = monomial(term)
+        state
+    end
+    function step(state)
+        resize!(dest.coeffs, state)
+        resize!(dest.monomials, state)
+    end
+    transduce(xf, step, 0, coll)
+
+    return dest
 end
 
 materialize!(dest::P, bc::Broadcasted{Termwise{Order, P}}) where P <: PolynomialBy{Order} where Order = _copyto!(dest, bc)
-
-# -----------------------------------------------------------------------------
-#
-#  termsbound base case and recursion
-#
-# -----------------------------------------------------------------------------
-termsbound(a::Polynomial) = nztermscount(a)
-termsbound(a::RefValue) = 1
-termsbound(a::AbstractMonomial) = 1
-termsbound(a::Term) = 1
-termsbound(a::Number) = 1
-termsbound(bc::Broadcasted{<:Termwise, A, <:PlusMinus}) where A = sum(termsbound, bc.args)
-termsbound(bc::Broadcasted{<:Termwise, A, typeof(*)}) where A = prod(termsbound, bc.args)
 
 # -----------------------------------------------------------------------------
 #
@@ -424,9 +432,8 @@ function copyto!(dest::P, bc::HandOptimizedBroadcast{Order, C, M, P}) where {Ord
         ix2 += 1
     end
 
-    # copy!(..., @view ...) is slow because it needs to allocate the view.
-    empty!(dest.monomials); for ix = 1:n; push!(dest.monomials, monomials[ix]); end
-    empty!(dest.coeffs);    for ix = 1:n; push!(dest.coeffs,    coeffs[ix]);    end
+    resize!(dest.monomials, n); for ix in 1:n; dest.monomials[ix] = monomials[ix]; end
+    resize!(dest.coeffs, n);    for ix in 1:n; dest.coeffs[ix]    = coeffs[ix];    end
     @assertvalid dest
 end
 
