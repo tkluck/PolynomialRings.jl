@@ -457,7 +457,7 @@ const M4GBBroadcast = Broadcasted{
     },
 } where P <: Polynomial{M, C, MI} where M <: AbstractMonomial{Order} where MI <: MonomialIter where {C, Order}
 
-function materialize!(g::P, bc::M4GBBroadcast{C, Order, MI, M, P}) where {C, Order, MI, M, P <: PolynomialBy{Order, C}}
+function __disabled_materialize!(g::P, bc::M4GBBroadcast{C, Order, MI, M, P}) where {C, Order, MI, M, P <: PolynomialBy{Order, C}}
     applicable = g === bc.args[1]
     !applicable && return _copyto!(g, bc)
 
@@ -477,6 +477,7 @@ function materialize!(g::P, bc::M4GBBroadcast{C, Order, MI, M, P}) where {C, Ord
 
     m = something(findlast(!iszero, g.coeffs), 0)
     resize!(g.coeffs, m)
+    resize!(g.monomials, m)
 
     return @assertvalid g
 end
