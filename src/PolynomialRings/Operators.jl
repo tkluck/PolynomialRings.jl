@@ -520,7 +520,7 @@ function inplace!(::typeof(*), a::T, b::MonomialBy{Order}, c::T) where T <: Term
     else
         a = b * c
     end
-    @assertvalid a
+    a
 end
 
 function inplace!(::typeof(*), a::T, b::C, c::T) where T <: TermOver{C} where C
@@ -531,7 +531,7 @@ function inplace!(::typeof(*), a::T, b::C, c::T) where T <: TermOver{C} where C
     else
         a = b * c
     end
-    @assertvalid a
+    a
 end
 
 end
