@@ -24,14 +24,6 @@ import PolynomialRings: leading_row, leading_term, leading_monomial, leading_coe
 import PolynomialRings: maybe_div, divides, lcm_degree, lcm_multipliers, mutuallyprime
 import PolynomialRings: termtype, monomialtype, base_restrict
 
-# This should probably be in Base; see
-# https://github.com/JuliaLang/julia/pull/27749
-if VERSION < v"1.2-"
-    keytype(a::AbstractArray) = keytype(typeof(a))
-    keytype(T::Type{<:AbstractArray}) = CartesianIndex{ndims(T)}
-    keytype(::Type{<:AbstractVector}) = Int
-end
-
 iszero(x::SparseVector{<:Polynomial}) = all(iszero, nonzeros(x))
 """
     iszero(x::AbstractArray{<:Polynomial}, ix)
@@ -45,7 +37,6 @@ function iszero(x::SparseVector{<:Polynomial}, ix::Integer)
     r = searchsorted(x.nzind, ix)
     return isempty(r) || iszero(x.nzval[first(r)])
 end
-
 
 # see https://github.com/JuliaLang/julia/issues/31835
 zero(a::AbstractArray{<:Polynomial}) = map(_ -> zero(eltype(a)), a)
