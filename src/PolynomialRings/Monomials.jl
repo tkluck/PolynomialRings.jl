@@ -386,6 +386,8 @@ nzindices(a::VectorMonomial) = 1:length(a.e)
 # -----------------------------------------------------------------------------
 total_degree(a::TupleMonomial) = a.deg
 
+==(a::M, b::M) where M <: TupleMonomial = a.e == b.e
+
 # -----------------------------------------------------------------------------
 #
 # VectorMonomial: overloads for speedup
