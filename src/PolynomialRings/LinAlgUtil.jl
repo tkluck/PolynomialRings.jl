@@ -6,11 +6,8 @@ abstract type AbstractExactNumber <: Number end
 
 const ExactNumber = Union{Rational, AbstractExactNumber}
 
-function echelon(M::Matrix{N}) where N <: ExactNumber
-    # augment by an identity matrix
-    cols = size(M, 2)
-    eye = Matrix{N}(I, cols, cols)
-    M_aug = vcat(M, eye)
+function echelon(M::AbstractMatrix)
+    M_aug = vcat(M, I)
     i,j = size(M)
     while i > 0 && j > 0
         # find a pivot in the i'th row left of the j'th column (inclusive)
