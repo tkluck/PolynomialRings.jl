@@ -155,7 +155,7 @@ isless(a::M, b::M) where M <: AbstractMonomial = Base.Order.lt(monomialorder(M),
 iszero(a::AbstractMonomial) = false
 
 function exptype(::Type{M}, scheme::NamingScheme) where M <: AbstractMonomial
-    return isdisjoint(namingscheme(M), scheme) ? Int8 : exptype(M)
+    return isdisjoint(namingscheme(M), scheme) ? Int16 : exptype(M)
 end
 
 num_variables(::Type{M}) where M <: AbstractMonomial = num_variables(namingscheme(M))
