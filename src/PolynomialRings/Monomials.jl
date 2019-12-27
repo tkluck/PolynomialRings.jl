@@ -395,6 +395,18 @@ total_degree(a::VectorMonomial) = a.deg
 
 nzindices(a::VectorMonomial{V,I,Order}) where {V <: SparseVector,I,Order} = nonzeroinds(a.e)
 
+function iterate(enz::EnumerateNZ{<:VectorMonomial{<:SparseVector}}, state=1)
+    state > length(enz.a.e.nzind) && return nothing
+    (enz.a.e.nzind[state], enz.a.e.nzval[state]), state + 1
+end
+
+function ==(a::M, b::M) where M <: VectorMonomial{<:SparseVector}
+    m = min(length(a.e), length(b.e))
+    @views begin
+        iszero(a.e[m+1:end]) && iszero(b.e[m+1:end]) && a.e[1:m] == b.e[1:m]
+    end
+end
+
 # -----------------------------------------------------------------------------
 #
 # Conversion from Vector to tuple (sparse to dense)
