@@ -200,4 +200,15 @@ function monomialtype(order::MonomialOrder, exptype::Type{<:Integer}=Int16)
     end
 end
 
+function monomialtype(names::Symbol...; order=:degrevlex, exptype::Type{<:Integer}=Int16)
+    order = MonomialOrder{order, Named{names}}()
+    return monomialtype(order, exptype)
+end
+
+function monomialtype(name::Symbol, n::Number; order=:degrevlex, exptype::Type{<:Integer}=Int16)
+    @assert n isa Integer || n == Inf
+    order = MonomialOrder{order, Numbered{name, n}}()
+    return monomialtype(order, exptype)
+end
+
 end
