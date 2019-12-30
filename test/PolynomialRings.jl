@@ -300,11 +300,11 @@ end
 
         @test collect(expansion_terms([x*z 1; z+1 x], :z)) == [[0 1; 1 x], [x*z 0; z 0]]
 
-        @test collect(coefficients(x*y*z + x*z + z^2, :z)) == [x*y + x, 1]
-        @test collect(coefficients(x*y - x, :x, :y, :z)) == [-1, 1]
-        @test collect(coefficients(x*y - x, :z, :x, :y)) == [-1, 1]
-        @test collect(coefficients(x*y - x, :z, :x)) == [y - 1]
-        @test collect(coefficients([x*z 1; z+1 x], :z)) == [[0 1; 1 x], [x 0; 1 0]]
+        @test collect(expandcoefficients(x*y*z + x*z + z^2, :z)) == [x*y + x, 1]
+        @test collect(expandcoefficients(x*y - x, :x, :y, :z)) == [-1, 1]
+        @test collect(expandcoefficients(x*y - x, :z, :x, :y)) == [-1, 1]
+        @test collect(expandcoefficients(x*y - x, :z, :x)) == [y - 1]
+        @test collect(expandcoefficients([x*z 1; z+1 x], :z)) == [[0 1; 1 x], [x 0; 1 0]]
 
         @test collect(flat_coefficients([x*z 1; z+1 x], :z)) == [x, 1, 1, 1, x]
 
@@ -319,8 +319,8 @@ end
     T = @ring! R[c[]]
     c1,c2,c3 = c[]
     @testset "numbered variables" begin
-        @test [1] == @coefficients c1*c2*c3 c[]
-        @test [1,-1] == @coefficients c1-c1*c2*c3 c[]
+        @test [1] == @expandcoefficients c1*c2*c3 c[]
+        @test [1,-1] == @expandcoefficients c1-c1*c2*c3 c[]
 
         @test [0,1,-1] == @linear_coefficients c2-c3 c[]
         @test [] == @linear_coefficients c2^2-c3^2 c[]
@@ -417,7 +417,7 @@ end
 
     @testset "Arrays" begin
         R = @ring! ℚ[x,y]
-        @test [[0 1], [1 0]] == @coefficients [x y] x y
+        @test [[0 1], [1 0]] == @expandcoefficients [x y] x y
         @test [1 2] == [x y](x=1,y=2)
         @test [1 1] == @coefficient [x^2+y^2 x^2+1] x^2
         @test [1 1] == @coefficient [x^2+y^2 x^2+1] x^2

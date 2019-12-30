@@ -38,8 +38,8 @@ expansion
 @expand
 @coefficient
 coefficient
-@coefficients
-coefficients
+@expandcoefficients
+expandcoefficients
 @deg
 deg
 @linear_coefficients

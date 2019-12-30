@@ -162,7 +162,7 @@ julia> collect(expandcoefficients(x^3 + y^2, :x, :y))
  1
 ```
 # See also
-`@coefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
+`@expandcoefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
 """
 function expandcoefficients(p::P, spec...) where P <: Polynomial
     return [c for (_,c) in expansion(p, spec...)]
@@ -192,7 +192,7 @@ julia> collect(expansion_terms(x^3 + y^2 + 1, :x, :y))
  x^3
 ```
 # See also
-`@coefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
+`@expandcoefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
 """
 function expansion_terms(p::P, spec...) where P <: Polynomial
     return [
