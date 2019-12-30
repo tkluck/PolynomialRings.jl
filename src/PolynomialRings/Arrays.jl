@@ -13,8 +13,8 @@ import ..Expansions: constant_coefficient, linear_coefficients, expansion_terms
 import ..Expansions: expansion, coefficients, coefficient, deg
 import ..Expansions: substitutedtype
 import ..Monomials: AbstractMonomial, expstype
-import ..Operators: common_denominator, integral_fraction, map_coefficients
-import ..Polynomials: Polynomial, PolynomialOver
+import ..Operators: common_denominator, integral_fraction
+import ..Polynomials: Polynomial, PolynomialOver, map_coefficients
 import ..Terms: Term
 import PolynomialRings: base_restrict
 import PolynomialRings: monomialorder

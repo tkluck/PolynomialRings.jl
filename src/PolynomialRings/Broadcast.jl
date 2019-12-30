@@ -455,7 +455,7 @@ const M4GBBroadcast = Broadcasted{
             },
         },
     },
-} where P <: Polynomial{M, C, MI} where M <: AbstractMonomial{Order} where MI <: MonomialIter where {C, Order}
+} where P <: Polynomial{M, C} where M <: AbstractMonomial{Order} where {C, Order}
 
 function __disabled_materialize!(g::P, bc::M4GBBroadcast{C, Order, MI, M, P}) where {C, Order, MI, M, P <: PolynomialBy{Order, C}}
     applicable = g === bc.args[1]

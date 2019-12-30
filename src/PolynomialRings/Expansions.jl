@@ -10,7 +10,7 @@ import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
 import ..Monomials: AbstractMonomial, TupleMonomial, exptype, expstype, enumeratenz, total_degree, exponents
 import ..NamedPolynomials: NamedPolynomial, _lossy_convert_monomial
-import ..Polynomials: Polynomial, termtype, monomialtype, monomialorder, polynomial_ring, PolynomialBy
+import ..Polynomials: Polynomial, termtype, monomialtype, monomialorder, polynomial_ring, PolynomialBy, SparsePolynomial
 import ..Terms: Term, monomial, coefficient
 import ..Util: SingleItemIter
 import ..NamingSchemes: Named, Numbered, NamingScheme, remove_variables
@@ -99,7 +99,7 @@ expansion(p::Number, spec...) = ((one(monomialtype(spec...)), p),)
 
 _ofpolynomialtype(m::AbstractMonomial, c) = _ofpolynomialtype(Term(m, c))
 _ofpolynomialtype(m, c) = m * c
-_ofpolynomialtype(t::Term{M,C}) where {M,C} = Polynomial(M[monomial(t)], C[coefficient(t)])
+_ofpolynomialtype(t::Term{M,C}) where {M,C} = @assertvalid SparsePolynomial(M[monomial(t)], C[coefficient(t)])
 function expansion(p::Polynomial, spec::MonomialOrder)
     C = remove_variables(typeof(p), namingscheme(spec))
     M = monomialtype(spec, exptype(typeof(p), namingscheme(spec)))

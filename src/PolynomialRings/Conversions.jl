@@ -9,7 +9,7 @@ import LinearAlgebra: UniformScaling
 import ..Modules: AbstractModuleElement
 import ..Monomials: AbstractMonomial, total_degree
 import ..Operators: RedType
-import ..Polynomials: Polynomial, termtype, monomialtype, basering
+import ..Polynomials: Polynomial, termtype, monomialtype, basering, map_coefficients
 import ..Polynomials: PolynomialOver, NamedPolynomial, polynomialtype
 import ..Terms: Term, monomial, coefficient
 import PolynomialRings: fraction_field, integers, base_extend, base_restrict, namingscheme
@@ -71,7 +71,7 @@ end
 #
 # -----------------------------------------------------------------------------
 base_restrict(::Type{Term{M,C1}}, ::Type{C2}) where {M,C1,C2} = Term{M, base_restrict(C1,C2)}
-base_restrict(::Type{Polynomial{M,C1,MV}}, ::Type{C2}) where {M,MV,C1,C2} = polynomialtype(M, base_restrict(C1,C2))
+base_restrict(::Type{<:Polynomial{M,C1}}, ::Type{C2}) where {M,C1,C2} = polynomialtype(M, base_restrict(C1,C2))
 
 function base_restrict(t::T, ::Type{C}) where T<:Term where C
     TT = base_restrict(T, C)
@@ -80,9 +80,7 @@ function base_restrict(t::T, ::Type{C}) where T<:Term where C
 end
 
 function base_restrict(p::P, ::Type{C}) where P<:Polynomial where C
-    PP = base_restrict(P, C)
-    CC = basering(PP)
-    return Polynomial(p.monomials, unalias.(CC, p.coeffs))
+    return map_coefficients(p_i -> unalias(basering(base_restrict(P, C)), p_i), p)
 end
 
 base_restrict(p::P)      where P <: Union{Term,Polynomial} = base_restrict(p, integers(basering(p)))
@@ -125,8 +123,8 @@ base_extend(x, ::Type{C}) where C = convert(promote_type(typeof(x), C), x)
 /(a::T,b::Number)   where T <: Term = promote_type(T,    float(typeof(b)))(a.m, a.c/b)
 //(a::T,b::Number)  where T <: Term = promote_type(T, fraction_field(typeof(b)))(a.m, a.c//b)
 
-/(a::P, b::Number) where P <: Polynomial = Polynomial(copy(a.monomials), a.coeffs ./ b)
-//(a::P, b::Number) where P <: Polynomial = Polynomial(copy(a.monomials), a.coeffs .// b)
+/(a::P, b::Number) where P <: Polynomial = map_coefficients(a_i -> a_i/b, a)
+//(a::P, b::Number) where P <: Polynomial = map_coefficients(a_i -> a_i//b, a)
 
 function convert(::Type{T1}, t::T2) where T1<:Term{M} where T2<:Term{M} where M
     T1(monomial(t), convert(basering(T1), coefficient(t)))
@@ -176,14 +174,14 @@ promote_rule(::Type{M}, ::Type{C}) where M <: AbstractMonomial where C<:Number =
 # -----------------------------------------------------------------------------
 
 promote_rule(::Type{P}, ::Type{T}) where
-        P <: Polynomial{M,C,MV} where
+        P <: Polynomial{M,C} where
         T <: Term{M,C} where
-        {M <: AbstractMonomial, C, MV} = P
+        {M <: AbstractMonomial, C} = P
 
 convert(::Type{P}, a::T) where
-        P <: Polynomial{M,C,MV} where
+        P <: Polynomial{M,C} where
         T <: Term{M,C} where
-        {M <: AbstractMonomial, C, MV}  = iszero(a) ? zero(P) : P([monomial(a)], [deepcopy(coefficient(a))])
+        {M <: AbstractMonomial, C}  = iszero(a) ? zero(P) : P([monomial(a)], [deepcopy(coefficient(a))])
 
 # -----------------------------------------------------------------------------
 #

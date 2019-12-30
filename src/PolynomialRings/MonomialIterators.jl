@@ -63,17 +63,18 @@ end
 @inline degrevlex_exponents(n, index) = degrevlex_exponents(Val(n), index)
 @inline revlex_exponents(n, total_degree, index) = revlex_exponents(Val(n), total_degree, index)
 
-struct MonomialIter{M<:AbstractMonomial, P} end
+struct MonomialIter{M<:AbstractMonomial, P, Length} end
 monomialtype(::MonomialIter{M}) where M <: AbstractMonomial = M
-Base.eltype(::MonomialIter{M, P}) where M <: AbstractMonomial where P = P
-Base.copy(it::MonomialIter{M, P}) where M <: AbstractMonomial where P = it
+Base.eltype(::MonomialIter{M, P, Length}) where M <: AbstractMonomial where {Length, P} = P
+Base.copy(it::MonomialIter{M, P, Length}) where M <: AbstractMonomial where {Length, P} = it
+Base.length(it::MonomialIter{M, P, Length}) where M <: AbstractMonomial where {Length, P} = Length
 
-monomialiter(P) = MonomialIter{monomialtype(P), P}()
+monomialiter(P, len=Inf) = MonomialIter{monomialtype(P), P, len}()
 
-const IterBy{sym} = MonomialIter{<:AbstractMonomial{<:MonomialOrder{sym}}}
-const IndexedIter{sym} = MonomialIter{<:IndexedMonomial{<:MonomialOrder{sym}}}
+const IterBy{Rule} = MonomialIter{<:AbstractMonomial{<:MonomialOrder{Rule}}}
+const IndexedIterBy{Rule} = MonomialIter{<:IndexedMonomial{<:MonomialOrder{Rule}}}
 
-function Base.iterate(it::IndexedIter, state...)
+function Base.iterate(it::IndexedIterBy, state...)
     M = monomialtype(it)
     P = eltype(it)
     ix, newstate = iterate(1:typemax(Int), state...)
@@ -81,7 +82,7 @@ function Base.iterate(it::IndexedIter, state...)
 end
 
 # resolve ambiguity
-function Base.iterate(it::IndexedIter{:degrevlex}, state...)
+function Base.iterate(it::IndexedIterBy{:degrevlex}, state...)
     M = monomialtype(it)
     P = eltype(it)
     ix, newstate = iterate(1:typemax(Int), state...)
@@ -124,7 +125,7 @@ function Base.iterate(it::IterBy{:degrevlex}, state)
     return convert(P, _construct(M, i -> i <= length(state) ? state[i] : zero(eltype(state)), eachindex(state))), state
 end
 
-Base.IteratorSize(::MonomialIter) = Base.IsInfinite()
+Base.IteratorSize(it::MonomialIter) = length(it) == Inf ? Base.IsInfinite() : Base.HasLength()
 
 function _byindex(M::Type{<:TupleMonomial}, ix)
     @assert rulesymbol(monomialorder(M)) == :degrevlex
@@ -138,6 +139,7 @@ function _byindex(M::Type{<:IndexedMonomial}, ix)
 end
 
 function Base.getindex(it::MonomialIter, ix::Integer)
+    IteratorSize(it) == Base.IsInfinite() || ix <= length(it) || error("Index out of range")
     M = monomialtype(it)
     P = eltype(it)
     IxM = IndexedMonomial{typeof(monomialorder(M)), typeof(ix)}

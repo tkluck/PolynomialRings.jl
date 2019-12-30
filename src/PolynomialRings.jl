@@ -15,7 +15,6 @@ include("PolynomialRings/Constants.jl")
 include("PolynomialRings/Broadcast.jl")
 include("PolynomialRings/Operators.jl")
 include("PolynomialRings/NamedPolynomials.jl")
-include("PolynomialRings/DensePolynomials.jl")
 include("PolynomialRings/Expansions.jl")
 include("PolynomialRings/Arrays.jl")
 include("PolynomialRings/Display.jl")
@@ -33,10 +32,10 @@ basering(::Type{M}) where M <: Monomials.AbstractMonomial = Constants.One
 
 import .Monomials: TupleMonomial, VectorMonomial
 import .Terms: Term
-import .Polynomials: Polynomial, generators, polynomial_ring
+import .Polynomials: Polynomial, generators, polynomial_ring, map_coefficients
 import .Expansions: @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, coefficients, @coefficients, linear_coefficients, @linear_coefficients, deg, @deg, expansion_terms, @expansion_terms
 import .Arrays: flat_coefficients, @flat_coefficients
-import .Operators: content, common_denominator, integral_fraction, map_coefficients
+import .Operators: content, common_denominator, integral_fraction
 import .Reductions: interreduce, interreduce!
 import .Solve: matrix_solve_affine
 import .NamedPolynomials: minring, ofminring

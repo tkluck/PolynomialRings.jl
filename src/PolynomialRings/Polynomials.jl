@@ -1,6 +1,7 @@
 module Polynomials
 
-import Base: first, last, copy, hash
+import Base: first, last, copy, hash, convert
+import Base: zero, one, +, -, *, ==, div, iszero, diff, ^, gcd
 import Base: OneTo
 import SparseArrays: SparseVector, HigherOrderFns, issparse
 
@@ -11,6 +12,7 @@ import ..MonomialOrderings: MonomialOrder
 import ..Monomials: AbstractMonomial, TupleMonomial, VectorMonomial
 import ..NamingSchemes: Named, Numbered, NamingScheme, fullnamingscheme, isdisjoint, isvalid
 import ..Terms: Term, monomial, coefficient
+import ..Util: @assertvalid
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering, monomialtype
 import PolynomialRings: leading_coefficient, leading_monomial
 import PolynomialRings: leading_term, termtype, monomialorder, nzterms, exptype, namingscheme, expansion
@@ -20,42 +22,7 @@ import PolynomialRings: polynomialtype
 
 # -----------------------------------------------------------------------------
 #
-# Polynomial
-#
-# -----------------------------------------------------------------------------
-
-"""
-    Polynomial{M, C} where M <: AbstractMonomial where C
-
-This type represents a polynomial as a vector of monomials
-and a vector of coefficients. All methods guarantee and assume
-that the vector is sorted by increasing monomial order (see
-`PolynomialRings.MonomialOrderings`).
-"""
-struct Polynomial{M <: AbstractMonomial, C, MonomVector}
-    monomials :: MonomVector
-    coeffs    :: Vector{C}
-end
-
-Polynomial(monomials, coeffs::Vector) = Polynomial{eltype(monomials), eltype(coeffs), typeof(monomials)}(monomials, coeffs)
-
-function polynomialtype(M::Type{<:AbstractMonomial}, C::Type)
-    if !isdisjoint(namingscheme(M), fullnamingscheme(C)) || !isdisjoint(namingscheme(M), fullboundnames(C))
-        error("Duplicate veriable names while creating polynomialring in $M over $C")
-    end
-    if C <: AbstractMonomial
-        C = polynomialtype(C, Int)
-    elseif C <: Term
-        C = polynomialtype(C)
-    end
-    return Polynomial{M, C, Vector{M}}
-end
-
-polynomialtype(P::Type{<:Polynomial}) = P
-
-# -----------------------------------------------------------------------------
-#
-# Type shorthands
+# Type shorthands I
 #
 # -----------------------------------------------------------------------------
 
@@ -67,6 +34,34 @@ const MonomialBy{Order}       = AbstractMonomial{Order}
 const TermOver{C,Order}       = Term{<:AbstractMonomial{Order}, C}
 const TermBy{Order,C}        = TermOver{C,Order}
 const TermIn{M}              = Term{M}
+
+include("SparsePolynomials.jl")
+include("DensePolynomials.jl")
+
+const Polynomial{M, C} = Union{SparsePolynomial{M, C}, DensePolynomial{M, C}}
+
+function polynomialtype(M::Type{<:AbstractMonomial}, C::Type; sparse=true)
+    if !isdisjoint(namingscheme(M), fullnamingscheme(C)) || !isdisjoint(namingscheme(M), fullboundnames(C))
+        error("Duplicate veriable names while creating polynomialring in $M over $C")
+    end
+    if C <: AbstractMonomial
+        C = polynomialtype(C, Int)
+    elseif C <: Term
+        C = polynomialtype(C)
+    end
+    return sparse ? SparsePolynomial{M, C} : DensePolynomial{M, C}
+end
+
+function polynomialtype(P::Type{<:Polynomial}; sparse=true)
+     polynomialtype(monomialtype(P), basering(P), sparse=sparse)
+ end
+
+# -----------------------------------------------------------------------------
+#
+# Type shorthands II
+#
+# -----------------------------------------------------------------------------
+
 const PolynomialOver{C,Order} = Polynomial{<:AbstractMonomial{Order}, C}
 const NamedTerm{C}            = TermOver{C,<:NamedOrder}
 const NumberedTerm{C}         = TermOver{C,<:NumberedOrder}
@@ -80,20 +75,16 @@ const PolynomialIn{M}         = Polynomial{M}
 # Type information
 #
 # -----------------------------------------------------------------------------
-
-isstrictlysparse(P::Type{<:Polynomial}) = monomialstype(P) <: Vector
-isstrictlysparse(f::Polynomial) = isstrictlysparse(typeof(f))
-issparse(P::Type{<:Polynomial}) = monomialstype(P) <: Vector
-issparse(f::Polynomial) = issparse(typeof(f))
-
-termtype(::Type{Polynomial{M,C,MV}}) where {M,C,MV}  = Term{M,C}
-monomialstype(::Type{Polynomial{M,C,MV}}) where {M,C,MV} = MV
+termtype(::Type{<:Polynomial{M,C}}) where {M,C}  = Term{M,C}
 exptype(::Type{P}, scheme::NamingScheme...) where P<:Polynomial = exptype(termtype(P), scheme...)
 namingscheme(::Type{P}) where P<:Polynomial = namingscheme(termtype(P))
 monomialorder(::Type{P}) where P<:Polynomial = monomialorder(termtype(P))
 basering(::Type{P}) where P <: Polynomial = basering(termtype(P))
 monomialtype(::Type{P}) where P <: Polynomial = monomialtype(termtype(P))
 allvariablesymbols(::Type{P}) where P <: Polynomial = union(allvariablesymbols(basering(P)), variablesymbols(P))
+
+issparse(f::Polynomial) = issparse(typeof(f))
+isstrictlysparse(f::Polynomial) = isstrictlysparse(typeof(f))
 
 # -----------------------------------------------------------------------------
 #
@@ -103,9 +94,9 @@ allvariablesymbols(::Type{P}) where P <: Polynomial = union(allvariablesymbols(b
 struct Expansion{P <: Polynomial}
     p :: P
 end
-Base.iterate(ex::Expansion, state...) = iterate(zip(ex.p.monomials, ex.p.coeffs), state...)
+Base.iterate(ex::Expansion, state...) = iterate(zip(monomials(ex.p), coefficients(ex.p)), state...)
 Base.eltype(ex::Expansion) = Tuple{monomialtype(ex.p), basering(ex.p)}
-Base.length(ex::Expansion) = length(ex.p.coeffs)
+Base.length(ex::Expansion) = length(coefficients(ex.p))
 expansion(p::PolynomialBy{Order}, order::Order) where Order<:MonomialOrder = Expansion(p)
 
 struct NZTerms{P <: Polynomial}
@@ -115,9 +106,9 @@ Base.eltype(it::NZTerms) = termtype(it.p)
 Base.length(it::NZTerms) = nztermscount(it.p)
 function Base.iterate(it::NZTerms, state=1)
     while true
-        state <= length(it.p.coeffs) || return nothing
-        c = it.p.coeffs[state]
-        m = it.p.monomials[state]
+        state <= length(coefficients(it.p)) || return nothing
+        c = coefficients(it.p)[state]
+        m = monomials(it.p)[state]
         (isstrictlysparse(it.p) || !iszero(c)) && return (Term(m, c), state + 1)
         state += 1
     end
@@ -126,82 +117,29 @@ end
 nzterms(p::PolynomialBy{Order}, order::Order) where Order <: MonomialOrder = NZTerms(p)
 nzterms(p::Polynomial; order::MonomialOrder=monomialorder(p)) = nzterms(p, order)
 
-nztermscount(p::Polynomial) = isstrictlysparse(p) ? length(p.coeffs) : count(!iszero, p.coeffs)
+nztermscount(p::Polynomial) = isstrictlysparse(p) ? length(coefficients(p)) : count(!iszero, coefficients(p))
 
 nztailterms(p::PolynomialBy{Order}; order::Order=monomialorder(p)) where Order <: MonomialOrder = (
-    Term(p.monomials[ix], p.coeffs[ix])
+    Term(monomials(p)[ix], coefficients(p)[ix])
     for ix in reverse(1:_leading_term_ix(p, order) - 1) if
-    isstrictlysparse(p) || !iszero(p.coeffs[ix])
+    isstrictlysparse(p) || !iszero(coefficients(p)[ix])
 )
 nzrevterms(p::PolynomialBy{Order}; order::Order=monomialorder(p)) where Order <: MonomialOrder = (
-    Term(p.monomials[ix], p.coeffs[ix])
+    Term(monomials(p)[ix], coefficients(p)[ix])
     for ix in reverse(1:_leading_term_ix(p, order)) if
-    isstrictlysparse(p) || !iszero(p.coeffs[ix])
+    isstrictlysparse(p) || !iszero(coefficients(p)[ix])
 )
 # -----------------------------------------------------------------------------
 #
 # Methods for collection-of-terms
 #
 # -----------------------------------------------------------------------------
-function Base.empty!(p::Polynomial)
-    empty!(p.coeffs)
-    p.monomials isa Vector && empty!(p.monomials)
-    p
-end
-
-function Base.push!(p::PolynomialIn{M}, t::TermIn{M}) where M <: AbstractMonomial
-    if !(p.monomials isa Vector)
-        @inplace p += t
-    else
-        @assert isempty(p.monomials) || isless(last(p.monomials), monomial(t))
-        push!(p.monomials, monomial(t))
-        push!(p.coeffs, coefficient(t))
-    end
-    p
-end
-
-function Base.sizehint!(p::Polynomial, n)
-    sizehint!(p.coeffs, n)
-    p.monomials isa Vector && sizehint!(p.monomials, n)
-end
-
 Base.append!(dst::Polynomial, src) = for t in src; push!(dst, t); end
 Base.copy!(dst::Polynomial, src) = append!(empty!(dst), src)
 Base.copy!(x::Polynomial, ed::Eduction) = copy!(Transducer(ed), x, ed.coll)
 
-function Base.copy!(dst::Polynomial, src::Polynomial)
-    copy!(dst.coeffs, src.coeffs)
-    src.monomials isa Vector && copy!(dst.monomials, src.monomials)
-end
-
-hash(p::Polynomial, h::UInt) = hash(p.monomials, hash(p.coeffs, h))
 
 generators(::Type{P}) where P <: Polynomial = map(P, generators(termtype(P)))
-
-function to_dense_monomials(n, p::Polynomial)
-    coeffs = map(deepcopy, p.coeffs)
-    monomials = to_dense_monomials.(n, p.monomials)
-    return Polynomial(monomials, coeffs)
-end
-
-# FIXME: allow for infinite-length p.monomials
-max_variable_index(p::Polynomial) = iszero(p) ? 0 : maximum(max_variable_index(m) for m in p.monomials)
-
-_leading_term_ix(p::Polynomial, order::MonomialOrder) = argmax(order, p.monomials)
-_leading_term_ix(p::PolynomialBy{Order}, order::Order) where Order <: MonomialOrder = isstrictlysparse(p) ? length(p.coeffs) : findlast(!iszero, p.coeffs)
-function leading_term(p::Polynomial; order::MonomialOrder=monomialorder(p))
-    ix = _leading_term_ix(p, order)
-    Term(p.monomials[ix], p.coeffs[ix])
-end
-leading_monomial(p::Polynomial; order::MonomialOrder=monomialorder(p)) = p.monomials[_leading_term_ix(p, order)]
-leading_coefficient(p::Polynomial; order::MonomialOrder=monomialorder(p)) = p.coeffs[_leading_term_ix(p, order)]
-
-function tail(p::PolynomialBy{Order}, order::Order) where Order <: MonomialOrder
-    ix = _leading_term_ix(p, order)
-    typeof(p)(p.monomials[1:ix-1], p.coeffs[1:ix-1])
-end
-tail(p::Polynomial, order::MonomialOrder) = p - leading_term(p; order=order)
-tail(p::Polynomial; order::MonomialOrder=monomialorder(p)) = tail(p, order)
 
 """
     coeff = get(p::PolynomialIn{M}, m::M, default) where M <: AbstractMonomial
@@ -310,33 +248,48 @@ julia> x*y + z
 x*y + z
 ```
 """
-function polynomial_ring(symbols::Symbol...; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex)
+function polynomial_ring(symbols::Symbol...; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex, sparse=true)
     length(symbols) > 0 || throw(ArgumentError("Need at least one variable name"))
     allunique(symbols) || throw(ArgumentError("Duplicated symbols when extending $basering by $(Named{symbols}())"))
     scheme = Named{symbols}()
-    P = polynomial_ring(scheme, basering=basering, exptype=exptype, monomialorder=monomialorder)
+    P = polynomial_ring(scheme, basering=basering, exptype=exptype, monomialorder=monomialorder, sparse=sparse)
     return P, generators(P)
 end
 
-function numbered_polynomial_ring(symbol::Symbol; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex)
+function numbered_polynomial_ring(symbol::Symbol; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex, sparse=sparse)
     scheme =  Numbered{symbol, Inf}()
-    P = polynomial_ring(scheme, basering=basering, exptype=exptype, monomialorder=monomialorder)
+    P = polynomial_ring(scheme, basering=basering, exptype=exptype, monomialorder=monomialorder, sparse=sparse)
     return P
 end
 
-function numbered_polynomial_ring(symbol::Symbol, n::Integer; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex)
+function numbered_polynomial_ring(symbol::Symbol, n::Integer; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex, sparse=true)
     scheme =  Numbered{symbol, n}()
-    P = polynomial_ring(scheme, basering=basering, exptype=exptype, monomialorder=monomialorder)
+    P = polynomial_ring(scheme, basering=basering, exptype=exptype, monomialorder=monomialorder, sparse=sparse)
     return P, generators(P)
 end
 
-function polynomial_ring(scheme::NamingScheme; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex)
+function polynomial_ring(scheme::NamingScheme; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex, sparse=true)
     if !isdisjoint(scheme, fullnamingscheme(basering)) || !isdisjoint(scheme, fullboundnames(basering)) || !isvalid(scheme)
         throw(ArgumentError("Duplicated symbols when extending $basering by $scheme"))
     end
     order = MonomialOrder{monomialorder, typeof(scheme)}()
     M = monomialtype(order, exptype)
-    return polynomialtype(M, basering)
+    return polynomialtype(M, basering, sparse=sparse)
+end
+
+# -----------------------------------------------------------------------------
+#
+# To/from dense representation
+#
+# -----------------------------------------------------------------------------
+function todense(f::Polynomial)
+    P = polynomialtype(typeof(f), sparse=false)
+    P(f)
+end
+
+function tosparse(f::Polynomial)
+    P = polynomialtype(typeof(f), sparse=true)
+    P(f)
 end
 
 # -----------------------------------------------------------------------------

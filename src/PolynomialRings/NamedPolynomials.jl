@@ -7,9 +7,8 @@ import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, rulesymbol
 import ..Monomials: TupleMonomial, VectorMonomial, AbstractMonomial, _construct, exptype, num_variables, nzindices
 import ..NamingSchemes: Named, Numbered, NamingScheme, numberedvariablename, remove_variables, isdisjoint, boundnames, ≺
-import ..Operators: _filterzeros!, _collectsummands!
 import ..Polynomials:  NamedMonomial, NumberedMonomial, NamedTerm, NumberedTerm, TermOver, monomialorder, NamedOrder, NumberedOrder, polynomial_ring
-import ..Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolynomial, PolynomialBy, PolynomialIn, nzterms
+import ..Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolynomial, PolynomialBy, PolynomialIn, nzterms, SparsePolynomialOver, DensePolynomialOver
 import ..Terms: Term, basering, monomial, coefficient
 import PolynomialRings: termtype, namingscheme, variablesymbols, exptype, monomialtype, allvariablesymbols, iscanonical, canonicaltype, fullnamingscheme, fullboundnames, max_variable_index, polynomialtype
 import PolynomialRings: expansion
@@ -27,19 +26,12 @@ end
 unused_variable(p::Polynomial)                  = unused_variable(typeof(p), p)
 unused_variable(a::AbstractArray{<:Polynomial}) = unused_variable(eltype(a), a)
 
-# separate versions for N<:Named and N<:Numbered to resolve method ambiguity
-# with the version for which P and p do not have the same names.
-function convert(P::Type{<:PolynomialOver{C,O}}, p::PolynomialOver{D,O}) where {C,D,O<:NamedOrder}
-    res = Polynomial(p.monomials, convert.(C, p.coeffs))
-    _filterzeros!(res)
-end
-function convert(P::Type{<:PolynomialOver{C,O}}, p::PolynomialOver{D,O}) where {C,D,O<:NumberedOrder}
-    res = Polynomial(p.monomials, convert.(C, p.coeffs))
-    _filterzeros!(res)
-end
-# and short-circuit the non-conversions
-convert(::Type{P}, p::P) where P <: PolynomialOver{C,O} where {C,O<:NamedOrder} = p
-convert(::Type{P}, p::P) where P <: PolynomialOver{C,O} where {C,O<:NumberedOrder} = p
+# short-circuit the non-conversions
+convert(::Type{P}, p::P) where P <: SparsePolynomialOver{C,O} where {C,O<:NamedOrder} = p
+convert(::Type{P}, p::P) where P <: SparsePolynomialOver{C,O} where {C,O<:NumberedOrder} = p
+convert(::Type{P}, p::P) where P <: DensePolynomialOver{C,O} where {C,O<:NamedOrder} = p
+convert(::Type{P}, p::P) where P <: DensePolynomialOver{C,O} where {C,O<:NumberedOrder} = p
+
 # -----------------------------------------------------------------------------
 #
 # Promotions for different variable name sets
@@ -223,18 +215,12 @@ end
 using PolynomialRings
 
 function convert(::Type{P1}, a::P2) where P1 <: Polynomial where P2 #<: Polynomial
-    M = monomialtype(P1)
-    C = basering(P1)
-    monomials = M[]
-    coeffs = C[]
+    res = zero(P1)
     for (m, c) in expansion(a, monomialorder(P1))
-        push!(monomials, m)
-        push!(coeffs, c)
+        push!(res, Term(m, c))
     end
-    _collectsummands!(P1(monomials, coeffs))
+    return res
 end
-
-convert(::Type{P}, a::P) where P <: NamedPolynomial = a
 
 polynomialtype(T::Type{<:Term}) = polynomialtype(monomialtype(T), basering(T))
 
@@ -336,7 +322,7 @@ minring(x::Complex) = real(x) ≈ x ? minring(real(x)) : typeof(x)
 minring(x) = typeof(x)
 
 function minring(f::NamedPolynomial)
-    base = minring([coefficient(t) for t in nzterms(f)]...)
+    base = minring(f.coeffs...)
 
     m = prod(monomial(t) for t in nzterms(f))
     nz = findall(!iszero, m.e)
@@ -345,7 +331,7 @@ function minring(f::NamedPolynomial)
 end
 
 function minring(f::NumberedPolynomial)
-    base = minring([coefficient(t) for t in nzterms(f)]...)
+    base = minring(f.coeffs...)
 
     m = prod(monomial(t) for t in nzterms(f))
     isone(m) ? base : polynomial_ring(namingscheme(f), basering=base)
