@@ -113,7 +113,7 @@ import Transducers: eduction, Map, Filter, Eduction, Transducer, transduce
 import ..MonomialIterators: MonomialIter
 import ..MonomialOrderings: MonomialOrder
 import ..Monomials: AbstractMonomial
-import ..Polynomials: Polynomial, PolynomialBy, SparsePolynomialBy, DensePolynomialBy, nzterms, nztermscount, TermBy, MonomialBy, coefficients
+import ..Polynomials: Polynomial, DensePolynomial, PolynomialBy, SparsePolynomialBy, DensePolynomialBy, nzterms, nztermscount, TermBy, MonomialBy, coefficients
 import ..Terms: Term, monomial, coefficient, basering
 import ..Util: MergingTransducer, @assertvalid
 import PolynomialRings: monomialorder
@@ -317,6 +317,7 @@ end
 
     code = quote
         N = max($(poly_lengths_expr...))
+        # TODO: use in-place if we own any of the source polynomials
         coeffs = Vector{basering(P)}(undef, N)
     end
     for selection in combinations(poly_indices)
@@ -552,9 +553,9 @@ const M4GBBroadcast = Broadcasted{
             },
         },
     },
-} where P <: Polynomial{M, C} where M <: AbstractMonomial{Order} where {C, Order}
+} where P <: DensePolynomial{M, C} where M <: AbstractMonomial{Order} where {C, Order}
 
-function __disabled_materialize!(g::P, bc::M4GBBroadcast{C, Order, MI, M, P}) where {C, Order, MI, M, P <: PolynomialBy{Order, C}}
+function materialize!(g::P, bc::M4GBBroadcast{C, Order, M, P}) where {C, Order, M, P <: PolynomialBy{Order, C}}
     applicable = g === bc.args[1]
     !applicable && return _copyto!(g, bc)
 
@@ -574,7 +575,6 @@ function __disabled_materialize!(g::P, bc::M4GBBroadcast{C, Order, MI, M, P}) wh
 
     m = something(findlast(!iszero, g.coeffs), 0)
     resize!(g.coeffs, m)
-    resize!(g.monomials, m)
 
     return @assertvalid g
 end
