@@ -33,7 +33,8 @@ basering(::Type{M}) where M <: Monomials.AbstractMonomial = Constants.One
 import .Monomials: TupleMonomial, VectorMonomial
 import .Terms: Term
 import .Polynomials: Polynomial, generators, polynomial_ring, map_coefficients
-import .Expansions: @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, coefficients, @coefficients, linear_coefficients, @linear_coefficients, deg, @deg, expansion_terms, @expansion_terms
+import .Polynomials: tosparse, todense
+import .Expansions: @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, expandcoefficients, @expandcoefficients, linear_coefficients, @linear_coefficients, deg, @deg, expansion_terms, @expansion_terms
 import .Arrays: flat_coefficients, @flat_coefficients
 import .Operators: content, common_denominator, integral_fraction
 import .Reductions: interreduce, interreduce!
@@ -41,8 +42,9 @@ import .Solve: matrix_solve_affine
 import .NamedPolynomials: minring, ofminring
 
 export TupleMonomial, Term, Polynomial, generators, ⊗, polynomial_ring, variablesymbols
+export tosparse, todense
 export expansion, expand, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, expansion_terms, @expansion_terms
-export coefficients, @coefficients, linear_coefficients, @linear_coefficients
+export expandcoefficients, @expandcoefficients, linear_coefficients, @linear_coefficients
 export deg, @deg
 export flat_coefficients, @flat_coefficients
 export leaddiv, leadrem, leaddivrem, div!, rem!, xdiv!, xrem!, xdiv, xrem, xdivrem

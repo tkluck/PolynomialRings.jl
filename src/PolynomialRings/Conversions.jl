@@ -12,6 +12,7 @@ import ..Operators: RedType
 import ..Polynomials: Polynomial, termtype, monomialtype, basering, map_coefficients
 import ..Polynomials: PolynomialOver, NamedPolynomial, polynomialtype
 import ..Terms: Term, monomial, coefficient
+import ..Util: @assertvalid
 import PolynomialRings: fraction_field, integers, base_extend, base_restrict, namingscheme
 import PolynomialRings: ⊗, base_extend, base_restrict
 import PolynomialRings: xdiv, xrem, xdivrem
@@ -178,10 +179,14 @@ promote_rule(::Type{P}, ::Type{T}) where
         T <: Term{M,C} where
         {M <: AbstractMonomial, C} = P
 
-convert(::Type{P}, a::T) where
+function convert(::Type{P}, a::T) where
         P <: Polynomial{M,C} where
         T <: Term{M,C} where
-        {M <: AbstractMonomial, C}  = iszero(a) ? zero(P) : P([monomial(a)], [deepcopy(coefficient(a))])
+    {M <: AbstractMonomial, C}
+    res = zero(P)
+    push!(res, a)
+    return res
+end
 
 # -----------------------------------------------------------------------------
 #
@@ -201,7 +206,11 @@ convert(::Type{T}, a::M) where T <: Term{M,C} where {M<:AbstractMonomial,C} = T(
 
 promote_rule(::Type{P}, ::Type{M}) where P <: Polynomial{M} where M = P
 
-convert(::Type{P}, a::M) where P <: Polynomial{M} where M = P([a], [one(basering(P))])
+function convert(::Type{P}, a::M) where P <: Polynomial{M} where M
+    res = zero(P)
+    push!(res, Term(a, one(basering(P))))
+    @assertvalid res
+end
 
 # -----------------------------------------------------------------------------
 #

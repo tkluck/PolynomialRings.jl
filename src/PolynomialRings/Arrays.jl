@@ -10,7 +10,7 @@ import IterTools: groupby
 
 import ..Expansions: _expansion_expr, expansiontypes
 import ..Expansions: constant_coefficient, linear_coefficients, expansion_terms
-import ..Expansions: expansion, coefficients, coefficient, deg
+import ..Expansions: expansion, expandcoefficients, coefficient, deg
 import ..Expansions: substitutedtype
 import ..Monomials: AbstractMonomial, expstype
 import ..Operators: common_denominator, integral_fraction
@@ -76,7 +76,7 @@ function expansion(a::AbstractArray{P}, args...) where P <: Polynomial
     return res
 end
 
-function coefficients(a::AbstractArray{P}, args...) where P <: Polynomial
+function expandcoefficients(a::AbstractArray{P}, args...) where P <: Polynomial
     return [c for (p,c) in expansion(a, args...)]
 end
 

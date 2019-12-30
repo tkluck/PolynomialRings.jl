@@ -429,11 +429,21 @@ promote_rule(::Type{<:TupleMonomial{N,I,Order}}, ::Type{<:VectorMonomial{V,J,Ord
 
 # -----------------------------------------------------------------------------
 #
-# User-facing interface
+# To/from tuples of exponents
 #
 # -----------------------------------------------------------------------------
-(m::TupleMonomial)(args...)  = prod(args[i]^e for (i,e) in enumeratenz(m))
-(m::VectorMonomial)(args...) = prod(args[i]^e for (i,e) in enumeratenz(m))
+(m::AbstractMonomial)(args...)  = prod(args[i]^e for (i,e) in enumeratenz(m))
+
+function (::Type{<:M})(e::NTuple{N, <:Integer}) where M <: AbstractMonomial where N
+    @assert num_variables(M) == length(e)
+    return _construct(M, i -> e[i], eachindex(e))
+end
+
+function (::Type{<:M})(e::NTuple{N, <:Integer}) where M <: TupleMonomial where N
+    @assert num_variables(M) == length(e)
+    return M(e, sum(e))
+end
+
 
 
 end

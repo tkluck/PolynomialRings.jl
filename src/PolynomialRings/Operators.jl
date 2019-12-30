@@ -36,6 +36,25 @@ one(::P)        where P <: Polynomial = one(P)
 
 # -----------------------------------------------------------------------------
 #
+# multiplication
+#
+# -----------------------------------------------------------------------------
+function *(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
+    P = promote_type(typeof(a), typeof(b))
+    # FIXME(tkluck): promote_type currently only guarantees that
+    #     namingscheme(P) == namingscheme(Order)
+    # See NamedPolynomials.jl
+    @assert monomialorder(P) == Order()
+
+    res = zero(P)
+    for t_a in nzterms(a), t_b in nzterms(b)
+        res += t_a * t_b
+    end
+    return @assertvalid res
+end
+
+# -----------------------------------------------------------------------------
+#
 # long division
 #
 # -----------------------------------------------------------------------------

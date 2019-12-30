@@ -12,7 +12,7 @@ import ..Monomials: AbstractMonomial, TupleMonomial, exptype, expstype, enumerat
 import ..NamedPolynomials: NamedPolynomial, _lossy_convert_monomial
 import ..Polynomials: Polynomial, termtype, monomialtype, monomialorder, polynomial_ring, PolynomialBy, SparsePolynomial
 import ..Terms: Term, monomial, coefficient
-import ..Util: SingleItemIter
+import ..Util: SingleItemIter, @assertvalid
 import ..NamingSchemes: Named, Numbered, NamingScheme, remove_variables
 import PolynomialRings: basering, namingscheme, variablesymbols, expansion, expand, polynomialtype
 
@@ -140,7 +140,7 @@ end
 #
 # -----------------------------------------------------------------------------
 """
-    coefficients(f, symbol, [symbol...])
+    expandcoefficients(f, symbol, [symbol...])
 
 Return the coefficients of `f` when expanded as a polynomial in the given
 variables.
@@ -151,12 +151,12 @@ julia> using PolynomialRings
 
 julia> R = @ring! ℤ[x,y];
 
-julia> collect(coefficients(x^3 + y^2, :y))
+julia> collect(expandcoefficients(x^3 + y^2, :y))
 2-element Array{ℤ[x],1}:
  x^3
  1
 
-julia> collect(coefficients(x^3 + y^2, :x, :y))
+julia> collect(expandcoefficients(x^3 + y^2, :x, :y))
 2-element Array{BigInt,1}:
  1
  1
@@ -164,7 +164,7 @@ julia> collect(coefficients(x^3 + y^2, :x, :y))
 # See also
 `@coefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
 """
-function coefficients(p::P, spec...) where P <: Polynomial
+function expandcoefficients(p::P, spec...) where P <: Polynomial
     return [c for (_,c) in expansion(p, spec...)]
 end
 
@@ -669,7 +669,7 @@ macro expansion_terms(f, symbols...)
 end
 
 """
-    @coefficients(f, vars...)
+    @expandcoefficients(f, vars...)
 
 Return the coefficients of `f` when expanded as a polynomial in the given
 variables.
@@ -684,23 +684,23 @@ julia> using PolynomialRings
 
 julia> R = @ring! ℤ[x,y];
 
-julia> collect(@coefficients(x^3 + y^2, y))
+julia> collect(@expandcoefficients(x^3 + y^2, y))
 2-element Array{ℤ[x],1}:
  x^3
  1
 
-julia> collect(@coefficients(x^3 + y^2, x, y))
+julia> collect(@expandcoefficients(x^3 + y^2, x, y))
 2-element Array{BigInt,1}:
  1
  1
 ```
 # See also
-`coefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
+`expandcoefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
 """
-macro coefficients(f, symbols...)
+macro expandcoefficients(f, symbols...)
     expansion_expr = _expansion_expr(symbols)
     quote
-        coefficients($(esc(f)), $expansion_expr)
+        expandcoefficients($(esc(f)), $expansion_expr)
     end
 end
 

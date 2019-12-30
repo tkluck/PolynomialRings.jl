@@ -102,18 +102,19 @@ We represent both cases by keeping a `owned` value with the scalar or the
 module Broadcast
 
 import Base.Broadcast: AbstractArrayStyle, BroadcastStyle, Broadcasted
-import Base.Broadcast: materialize!, copyto!, copy, flatten
-import Base.Broadcast: broadcastable
+import Base.Broadcast: materialize!, copyto!, copy, flatten, dotview
+import Base.Broadcast: broadcastable, broadcasted
 import Base: RefValue
 
+import Combinatorics: combinations
 import InPlace: @inplace, inplace!
 import Transducers: eduction, Map, Filter, Eduction, Transducer, transduce
 
 import ..MonomialIterators: MonomialIter
 import ..MonomialOrderings: MonomialOrder
 import ..Monomials: AbstractMonomial
-import ..Polynomials: Polynomial, PolynomialBy, nzterms, nztermscount, TermBy, MonomialBy
-import ..Terms: Term, monomial, coefficient
+import ..Polynomials: Polynomial, PolynomialBy, SparsePolynomialBy, DensePolynomialBy, nzterms, nztermscount, TermBy, MonomialBy, coefficients
+import ..Terms: Term, monomial, coefficient, basering
 import ..Util: MergingTransducer, @assertvalid
 import PolynomialRings: monomialorder
 
@@ -148,12 +149,20 @@ struct TermsBy{Order, P, Iter, Owned}
     bound :: Int
 end
 
+struct CoeffsBy{Order, P, Coeffs, Owned}
+    order  :: Order
+    P      :: Type{P}
+    coeffs :: Coeffs
+    owned  :: Owned
+end
+
 struct Owned{Value, IsOwned}
     value :: Value
     owned :: IsOwned
 end
 
-const TermsIterable{Order} = Union{Owned{<:PolynomialBy{Order}}, TermsBy{Order}}
+const TermsIterable{Order} = Union{Owned{<:SparsePolynomialBy{Order}}, TermsBy{Order}}
+const CoeffsIterable{Order} = Union{Owned{<:DensePolynomialBy{Order}}, CoeffsBy{Order}}
 
 function Owned(f::Function, args::Owned...)
     Owned(f(map(a -> a.value, args)...), Val(false))
@@ -164,18 +173,25 @@ function Owned(f::MathOperator, args::Owned...)
     Owned(f(map(a -> a.value, args)...), Val(true))
 end
 
-copy(x::TermsBy{<:Any, P}) where P = copyto_unaliased!(zero(P), x)
+copy(x::TermsBy) = copyto_unaliased!(zero(x.P), x)
+copy(x::CoeffsBy) = x.P(copy(x.coeffs)) # TODO: no need to copy if it's already an array and we own it
 copy(x::Owned) = isowned(x) ? x.value : deepcopy(x.value)
 nzterms(x::TermsBy) = x.iter
+nzterms(x::CoeffsBy) = nzterms(x.P(x.coeffs))
 nzterms(x::Owned{<:Polynomial}) = nzterms(x.value)
+coefficients(x::CoeffsBy) = x.coeffs
+coefficients(x::Owned{<:Polynomial}) = coefficients(x.value)
 termsbound(x::TermsBy) = x.bound
+termsbound(x::CoeffsBy) = count(!iszero, x.coeffs)
 termsbound(x::Owned{<:Polynomial}) = nztermscount(x.value)
 polynomialtype(x::TermsBy) = x.P
+polynomialtype(x::CoeffsBy) = x.P
 polynomialtype(x::Owned{<:Polynomial}) = typeof(x.value)
 
 isowned(::Val{owned}) where owned = owned
 isowned(x::Bool) = x
 isowned(x::TermsBy) = isowned(x.owned)
+isowned(x::CoeffsBy) = isowned(x.owned)
 isowned(x::Owned) = isowned(x.owned)
 
 _ownedop(op, owned, x) = isowned(owned) ? inplace!(op, x, x) : op(x)
@@ -186,22 +202,6 @@ _ownedop(op, ownedx, x, ownedy, y) = isowned(ownedx) ?
                                      op(x, y)
 
 _constructterm(m, c) = Term(m, c)
-
-function merge(a::TermsIterable{Order}, b::TermsIterable{Order}, leftop, rightop, mergeop) where Order <: MonomialOrder
-    leftop′(x) = _ownedop(leftop, isowned(a), x)
-    rightop′(x) = _ownedop(rightop, isowned(b), x)
-    mergeop′(x, y) = _ownedop(mergeop, isowned(a), x, isowned(b), y)
-    return TermsBy(
-        Order(),
-        promote_type(polynomialtype(a), polynomialtype(b)),
-        eduction(
-            MergingTransducer(nzterms(a), Order(), leftop′, rightop′, mergeop′, monomial, coefficient, _constructterm) |> Filter(!iszero),
-            nzterms(b),
-        ),
-        Val(true),
-        termsbound(a) + termsbound(b),
-    )
-end
 
 withownership(x::Owned, args...) = error("Can't apply withownership twice!")
 withownership(x, destix) = withownership(x, destix, 1)
@@ -217,13 +217,44 @@ end
 
 maybe_collect(x::Owned) = x
 maybe_collect(x::TermsBy) = Owned(copy(x), Val(true))
+maybe_collect(x::CoeffsBy) = Owned(copy(x), Val(true))
 
 maybe_instantiate_default(f, args...) = Owned(f, map(maybe_collect, args)...)
 
 maybe_instantiate(x) = error("Please apply withownership before instantiating")
 maybe_instantiate(x::Owned) = x
 maybe_instantiate(op::Function, args...) = maybe_instantiate_default(op, args...)
-maybe_instantiate(bc::Broadcasted{<:Termwise}) = maybe_instantiate(bc.f, map(maybe_instantiate, bc.args)...)
+
+function maybe_instantiate(bc::Broadcasted{<:Termwise})
+    if maybe_instantiate_coeffwise(typeof(bc))
+        return maybe_instantiate_coeffs(bc)
+    else
+        return maybe_instantiate(bc.f, map(maybe_instantiate, bc.args)...)
+    end
+end
+
+instantiate(bc::Broadcasted{<:Termwise}) = maybe_instantiate(bc)
+
+# -----------------------------------------------------------------------------
+#
+# Optimized versions for term-by-term instantiating.
+#
+# -----------------------------------------------------------------------------
+function merge(a::TermsIterable{Order}, b::TermsIterable{Order}, leftop, rightop, mergeop) where Order <: MonomialOrder
+    leftop′(x) = _ownedop(leftop, isowned(a), x)
+    rightop′(x) = _ownedop(rightop, isowned(b), x)
+    mergeop′(x, y) = _ownedop(mergeop, isowned(a), x, isowned(b), y)
+    return TermsBy(
+        Order(),
+        promote_type(polynomialtype(a), polynomialtype(b)),
+        eduction(
+            MergingTransducer(nzterms(a), Order(), leftop′, rightop′, mergeop′, monomial, coefficient, _constructterm) |> Filter(!iszero),
+            nzterms(b),
+        ),
+        Val(true),
+        termsbound(a) + termsbound(b),
+    )
+end
 
 maybe_instantiate(op::typeof(+), a::TermsIterable, b::TermsIterable) = merge(a, b, +, +, +)
 maybe_instantiate(op::typeof(-), a::TermsIterable, b::TermsIterable) = merge(a, b, +, -, -)
@@ -253,8 +284,74 @@ function maybe_instantiate(op::typeof(*), a::Owned{<:Union{TermBy{Order}, Monomi
         termsbound(b),
     )
 end
+# -----------------------------------------------------------------------------
+#
+# Optimized versions for coefficient-wise instantiating
+#
+# -----------------------------------------------------------------------------
+maybe_instantiate_coeffwise(::Type) = false
+maybe_instantiate_coeffwise(::Type{<:Owned{<:DensePolynomialBy}}) = true
+maybe_instantiate_coeffwise(::Type{<:Owned{<:Number}}) = true
+@generated function maybe_instantiate_coeffwise(::Type{Broadcasted{Style, Nothing, F, Args}}) where {Style, F, Args}
+    return all(maybe_instantiate_coeffwise, Args.types)
+end
 
-instantiate(bc::Broadcasted{<:Termwise}) = maybe_instantiate(bc)
+function maybe_instantiate_coeffs(bc::Broadcasted{Termwise{Order, P}}) where {Order, P}
+    bcf = flatten(bc)
+    return maybe_instantiate_coeffs_generated(bcf)
+end
+
+@generated function maybe_instantiate_coeffs_generated(bcf::B) where
+            B <: Broadcasted{Termwise{Order, P}, Nothing, Op, Args} where
+            {Order, P, Op, Args}
+
+    indices = 1:length(Args.types)
+    poly_indices = filter(indices) do ix
+        Args.types[ix] <: Owned{<:DensePolynomialBy}
+    end
+    args_expr = [:(bcf.args[$ix].value) for ix in indices]
+    lengths_expr = [:(length($a.coeffs)) for a in args_expr]
+    zero_expr = [:(zero(basering($a))) for a in args_expr]
+    poly_args_expr = args_expr[poly_indices]
+    poly_lengths_expr = lengths_expr[poly_indices]
+
+    code = quote
+        N = max($(poly_lengths_expr...))
+        coeffs = Vector{basering(P)}(undef, N)
+    end
+    for selection in combinations(poly_indices)
+        complement = setdiff(poly_indices, selection)
+        selected_poly_lengths_expr   = lengths_expr[selection]
+        unselected_poly_lengths_expr = lengths_expr[complement]
+
+        args_expr = map(1:length(Args.types)) do ix
+            if ix in poly_indices
+                if ix in selection
+                    :(view(bcf.args[$ix].value.coeffs, lo:hi))
+                else
+                    zero_expr[ix]
+                end
+            else
+                args_expr[ix]
+            end
+        end
+        push!(code.args, :(let
+            lo = max(0, $(unselected_poly_lengths_expr...)) + 1
+            hi = min($(selected_poly_lengths_expr...))
+            if lo <= hi
+                broadcast!(bcf.f, dotview(coeffs, lo:hi), $(args_expr...))
+            end
+        end))
+    end
+
+    push!(code.args, quote
+        N = findlast(!iszero, coeffs)
+        resize!(coeffs, something(N, 0))
+        P(coeffs)
+    end)
+
+    return code
+end
 
 # -----------------------------------------------------------------------------
 #

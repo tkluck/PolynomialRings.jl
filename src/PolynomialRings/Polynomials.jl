@@ -10,6 +10,7 @@ import Transducers: Transducer, Eduction
 
 import ..MonomialOrderings: MonomialOrder
 import ..Monomials: AbstractMonomial, TupleMonomial, VectorMonomial
+import ..IndexedMonomials: IndexedMonomial
 import ..NamingSchemes: Named, Numbered, NamingScheme, fullnamingscheme, isdisjoint, isvalid
 import ..Terms: Term, monomial, coefficient
 import ..Util: @assertvalid
@@ -48,6 +49,9 @@ function polynomialtype(M::Type{<:AbstractMonomial}, C::Type; sparse=true)
         C = polynomialtype(C, Int)
     elseif C <: Term
         C = polynomialtype(C)
+    end
+    if !sparse
+        M = IndexedMonomial{typeof(monomialorder(M)), Int}
     end
     return sparse ? SparsePolynomial{M, C} : DensePolynomial{M, C}
 end
@@ -108,7 +112,7 @@ function Base.iterate(it::NZTerms, state=1)
     while true
         state <= length(coefficients(it.p)) || return nothing
         c = coefficients(it.p)[state]
-        m = monomials(it.p)[state]
+        m = _monomialbyindex(it.p, state)
         (isstrictlysparse(it.p) || !iszero(c)) && return (Term(m, c), state + 1)
         state += 1
     end
@@ -120,15 +124,25 @@ nzterms(p::Polynomial; order::MonomialOrder=monomialorder(p)) = nzterms(p, order
 nztermscount(p::Polynomial) = isstrictlysparse(p) ? length(coefficients(p)) : count(!iszero, coefficients(p))
 
 nztailterms(p::PolynomialBy{Order}; order::Order=monomialorder(p)) where Order <: MonomialOrder = (
-    Term(monomials(p)[ix], coefficients(p)[ix])
+    Term(_monomialbyindex(p, ix), coefficients(p)[ix])
     for ix in reverse(1:_leading_term_ix(p, order) - 1) if
     isstrictlysparse(p) || !iszero(coefficients(p)[ix])
 )
 nzrevterms(p::PolynomialBy{Order}; order::Order=monomialorder(p)) where Order <: MonomialOrder = (
-    Term(monomials(p)[ix], coefficients(p)[ix])
+    Term(_monomialbyindex(p, ix), coefficients(p)[ix])
     for ix in reverse(1:_leading_term_ix(p, order)) if
     isstrictlysparse(p) || !iszero(coefficients(p)[ix])
 )
+
+function leading_term(p::Polynomial; order::MonomialOrder=monomialorder(p))
+    ix = _leading_term_ix(p, order)
+    Term(_monomialbyindex(p, ix), coefficients(p)[ix])
+end
+leading_monomial(p::Polynomial; order::MonomialOrder=monomialorder(p)) = _monomialbyindex(p, _leading_term_ix(p, order))
+leading_coefficient(p::Polynomial; order::MonomialOrder=monomialorder(p)) = coefficients(p)[_leading_term_ix(p, order)]
+
+tail(p::Polynomial, order::MonomialOrder) = p - leading_term(p; order=order)
+tail(p::Polynomial; order::MonomialOrder=monomialorder(p)) = tail(p, order)
 # -----------------------------------------------------------------------------
 #
 # Methods for collection-of-terms
@@ -153,10 +167,10 @@ an allocation, and that's wasteful if the caller only wants to do `iszero(...)`.
 In this situation, `isnothing(get(p, m, nothing))` is much faster.
 """
 function Base.get(p::PolynomialIn{M}, m::M, default) where M <: AbstractMonomial
-    if (range = searchsorted(p.monomials, m)) |> !isempty
+    if (range = searchsorted(monomials(p), m)) |> !isempty
         ix = first(range)
-        if ix <= length(p.coeffs)
-            c = p.coeffs[ix]
+        if ix <= length(coefficients(p))
+            c = coefficients(p)[ix]
             return (isstrictlysparse(p) || !iszero(c)) ? c : default
         end
     end

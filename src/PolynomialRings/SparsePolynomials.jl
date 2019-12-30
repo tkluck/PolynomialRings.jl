@@ -55,15 +55,7 @@ end
 hash(p::SparsePolynomial, h::UInt) = hash(p.monomials, hash(p.coeffs, h))
 
 _leading_term_ix(p::SparsePolynomial, order::MonomialOrder) = argmax(order, p.monomials)
-function leading_term(p::SparsePolynomial; order::MonomialOrder=monomialorder(p))
-    ix = _leading_term_ix(p, order)
-    Term(p.monomials[ix], p.coeffs[ix])
-end
-leading_monomial(p::SparsePolynomial; order::MonomialOrder=monomialorder(p)) = p.monomials[_leading_term_ix(p, order)]
-leading_coefficient(p::SparsePolynomial; order::MonomialOrder=monomialorder(p)) = p.coeffs[_leading_term_ix(p, order)]
-
-tail(p::SparsePolynomial, order::MonomialOrder) = p - leading_term(p; order=order)
-tail(p::SparsePolynomial; order::MonomialOrder=monomialorder(p)) = tail(p, order)
+_monomialbyindex(p::SparsePolynomial, ix) = p.monomials[ix]
 
 
 _leading_term_ix(p::SparsePolynomialBy{Order}, order::Order) where Order <: MonomialOrder = isstrictlysparse(p) ? length(p.coeffs) : findlast(!iszero, p.coeffs)

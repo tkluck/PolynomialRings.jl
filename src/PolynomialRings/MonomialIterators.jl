@@ -4,6 +4,7 @@ import Base: *, ==, //, +, -
 import Base: iszero, zero
 import Base: hash, convert, getindex, iterate
 import Base: lcm
+import Base: IteratorSize
 
 import ProgressMeter: @showprogress
 
@@ -78,7 +79,7 @@ function Base.iterate(it::IndexedIterBy, state...)
     M = monomialtype(it)
     P = eltype(it)
     ix, newstate = iterate(1:typemax(Int), state...)
-    P(M(ByIndex(), ix)), newstate
+    convert(P, M(ByIndex(), ix)), newstate
 end
 
 # resolve ambiguity
@@ -86,7 +87,7 @@ function Base.iterate(it::IndexedIterBy{:degrevlex}, state...)
     M = monomialtype(it)
     P = eltype(it)
     ix, newstate = iterate(1:typemax(Int), state...)
-    P(M(ByIndex(), ix)), newstate
+    convert(P, M(ByIndex(), ix)), newstate
 end
 
 
@@ -125,7 +126,7 @@ function Base.iterate(it::IterBy{:degrevlex}, state)
     return convert(P, _construct(M, i -> i <= length(state) ? state[i] : zero(eltype(state)), eachindex(state))), state
 end
 
-Base.IteratorSize(it::MonomialIter) = length(it) == Inf ? Base.IsInfinite() : Base.HasLength()
+IteratorSize(it::MonomialIter) = length(it) == Inf ? Base.IsInfinite() : Base.HasLength()
 
 function _byindex(M::Type{<:TupleMonomial}, ix)
     @assert rulesymbol(monomialorder(M)) == :degrevlex
@@ -143,7 +144,7 @@ function Base.getindex(it::MonomialIter, ix::Integer)
     M = monomialtype(it)
     P = eltype(it)
     IxM = IndexedMonomial{typeof(monomialorder(M)), typeof(ix)}
-    return P(convert(M, IxM(ByIndex(), ix)))
+    return convert(P, convert(M, IxM(ByIndex(), ix)))
 end
 
 # TODO: ensure order congruence
