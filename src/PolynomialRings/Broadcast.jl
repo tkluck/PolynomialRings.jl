@@ -555,7 +555,7 @@ const M4GBBroadcast = Broadcasted{
     },
 } where P <: DensePolynomial{M, C} where M <: AbstractMonomial{Order} where {C, Order}
 
-function materialize!(g::P, bc::M4GBBroadcast{C, Order, M, P}) where {C, Order, M, P <: PolynomialBy{Order, C}}
+function materialize!(g::P, bc::M4GBBroadcast{C, Order, M, P}) where {C, Order, M, P <: DensePolynomialBy{Order, C}}
     applicable = g === bc.args[1]
     !applicable && return _copyto!(g, bc)
 
