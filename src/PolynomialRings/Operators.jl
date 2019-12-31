@@ -110,6 +110,81 @@ end
 
 # -----------------------------------------------------------------------------
 #
+# exponentiation
+#
+# -----------------------------------------------------------------------------
+function multinomial(n,k...)
+    @assert sum(k) == n
+
+    i = 1
+    for k_i in k
+        i *= binomial(n,k_i)
+        n -= k_i
+    end
+    i
+end
+
+function ^(f::Polynomial, n::Integer)
+    if n == 0
+        return one(f)
+    end
+    if n == 1 || iszero(f)
+        return deepcopy(f)
+    end
+
+    P = typeof(f)
+    M = monomialtype(f)
+    C = basering(f)
+    E = exptype(f)
+    I = typeof(n)
+
+    N = length(coefficients(f))
+
+    # need BigInts to do the multinom computation, but we'll cast
+    # back to I = typeof(n) when we use it as an exponent
+    bign = BigInt(n)
+    i = zeros(BigInt, N)
+    i[N] = bign
+
+    nterms = Int(multinomial(bign + N - 1, N - 1, bign))
+    result = zero(P)
+    sizehint!(result, nterms)
+
+    while true
+        c = try
+            C(multinomial(bign, i...))
+        catch
+            # FIXME: what's the Julian way of doing a typeassert e::InexactError
+            # and bubble up all other exceptions?
+            throw(OverflowError("Coefficient overflow while doing exponentiation; suggested fix is replacing `f^n` by `base_extend(f, BigInt)^n`"))
+        end
+        @inplace result += Term(
+                 prod(_monomialbyindex(f, k) ^ E(i[k]) for k = 1:N),
+             c * prod(coefficients(f)[k]     ^ I(i[k]) for k = 1:N),
+        )
+
+        carry = 1
+        for j = N - 1 : -1 : 1
+            i[j] += carry
+            i[N] -= carry
+            if i[N] < 0
+                carry = 1
+                i[N] += i[j]
+                i[j] = 0
+            else
+                carry = 0
+            end
+        end
+        if carry != 0
+            break
+        end
+    end
+    return @assertvalid result
+end
+
+
+# -----------------------------------------------------------------------------
+#
 # gcds and content
 #
 # -----------------------------------------------------------------------------

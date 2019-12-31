@@ -10,7 +10,7 @@ import ProgressMeter: @showprogress
 import ..Monomials: AbstractMonomial, _construct, num_variables, nzindices, maybe_div
 import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
 import ..NamingSchemes: NamingScheme
-import PolynomialRings: monomialtype, exptype, basering, monomialorder, tail, divides, mutuallyprime
+import PolynomialRings: monomialtype, exptype, basering, monomialorder, tail, divides, mutuallyprime, generators
 
 struct ByIndex end
 """
@@ -50,6 +50,8 @@ function _construct(::Type{M}, f, nz) where M <: IndexedMonomial
     N = densetype(M)
     convert(M, _construct(N, f, nz))
 end
+
+generators(::Type{M}) where M <: IndexedMonomial = map(m -> convert(M, m), generators(densetype(M)))
 
 function *(a::M, b::M) where M <: IndexedMonomial
     N = densetype(M)

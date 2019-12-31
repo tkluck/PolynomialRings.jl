@@ -30,7 +30,7 @@ function Base.empty!(p::SparsePolynomial)
     @assertvalid p
 end
 
-function Base.push!(p::SparsePolynomial{M}, t::Term{M}) where M <: AbstractMonomial
+function Base.push!(p::SparsePolynomialBy{Order}, t::TermBy{Order}) where Order <: MonomialOrder
     @assert isempty(p.monomials) || isless(last(p.monomials), monomial(t))
     c = convert(basering(p), coefficient(t))
     if !iszero(c)
@@ -237,81 +237,6 @@ function *(a::SparsePolynomialBy{Order}, b::SparsePolynomialBy{Order}) where Ord
     resize!(monomials, k)
     resize!(coeffs, k)
     return @assertvalid _filterzeros!(P(monomials, coeffs))
-end
-
-# -----------------------------------------------------------------------------
-#
-# exponentiation
-#
-# -----------------------------------------------------------------------------
-function multinomial(n,k...)
-    @assert sum(k) == n
-
-    i = 1
-    for k_i in k
-        i *= binomial(n,k_i)
-        n -= k_i
-    end
-    i
-end
-
-function ^(f::SparsePolynomial, n::Integer)
-    if n == 0
-        return one(f)
-    end
-    if n == 1 || iszero(f)
-        return deepcopy(f)
-    end
-
-    P = typeof(f)
-    M = monomialtype(f)
-    C = basering(f)
-    E = exptype(f)
-    I = typeof(n)
-
-    N = length(f.coeffs)
-
-    # need BigInts to do the multinom computation, but we'll cast
-    # back to I = typeof(n) when we use it as an exponent
-    bign = BigInt(n)
-    i = zeros(BigInt, N)
-    i[N] = bign
-
-    nterms = Int(multinomial(bign + N - 1, N - 1, bign))
-    monomials = Vector{M}(undef, nterms)
-    coeffs = Vector{C}(undef, nterms)
-    s = 0
-
-    while true
-        c = try
-            C(multinomial(bign, i...))
-        catch
-            # FIXME: what's the Julian way of doing a typeassert e::InexactError
-            # and bubble up all other exceptions?
-            throw(OverflowError("Coefficient overflow while doing exponentiation; suggested fix is replacing `f^n` by `base_extend(f, BigInt)^n`"))
-        end
-        s += 1
-        monomials[s] =     prod(f.monomials[k] ^ E(i[k]) for k = 1:N)
-        coeffs[s]    = c * prod(f.coeffs[k]    ^ I(i[k]) for k = 1:N)
-
-        carry = 1
-        for j = N - 1 : -1 : 1
-            i[j] += carry
-            i[N] -= carry
-            if i[N] < 0
-                carry = 1
-                i[N] += i[j]
-                i[j] = 0
-            else
-                carry = 0
-            end
-        end
-        if carry != 0
-            break
-        end
-    end
-
-    @assertvalid _collectsummands!(P(monomials, coeffs))
 end
 
 # -----------------------------------------------------------------------------
