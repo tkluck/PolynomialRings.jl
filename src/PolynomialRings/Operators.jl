@@ -7,7 +7,7 @@ import InPlace: @inplace, inplace!, inclusiveinplace!
 import ..Constants: Zero
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
 import ..Monomials: AbstractMonomial
-import ..Polynomials: Polynomial, termtype, nztermscount, monomialorder, monomialtype, monomials, coefficients, map_coefficients
+import ..Polynomials: Polynomial, termtype, nztermscount, monomialorder, monomialtype, monomials, coefficients, map_coefficients, _monomialbyindex
 import ..Polynomials: leading_term, nzrevterms, nztailterms, nzterms
 import ..Polynomials: PolynomialBy, TermBy, MonomialBy, isstrictlysparse, TermOver
 import ..Terms: Term, monomial, coefficient

@@ -50,6 +50,9 @@ function polynomialtype(M::Type{<:AbstractMonomial}, C::Type; sparse=true)
     elseif C <: Term
         C = polynomialtype(C)
     end
+    if !isconcretetype(C)
+        error("Cannot create a polynomial ring over $C as it is not concrete")
+    end
     if !sparse
         M = IndexedMonomial{typeof(monomialorder(M)), Int}
     end

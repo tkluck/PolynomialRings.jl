@@ -143,12 +143,12 @@ convert(::Type{P}, a::C) where P <: Polynomial where C<:Number = P(convert(baser
 
 # resolve ambiguity between C a coefficient and C a number
 function convert(::Type{P}, a::C)  where P<:PolynomialOver{C} where C<:Number
-    if iszero(a)
-        return zero(P)
-    else
-        M = monomialtype(P)
-        return P([one(M)],[deepcopy(a)])
+    M = monomialtype(P)
+    result = zero(P)
+    if !iszero(a)
+        push!(result, Term(one(M), deepcopy(a)))
     end
+    return @assertvalid result
 end
 
 # -----------------------------------------------------------------------------

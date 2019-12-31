@@ -78,6 +78,9 @@ isdisjoint(::NamingScheme, ::NoNamingScheme) = true
 isdisjoint(::NoNamingScheme, ::NamingScheme) = true
 isdisjoint(::NoNamingScheme, ::Nothing) = true
 
+isdisjoint(::Nothing, ::FullNamingScheme) = true
+isdisjoint(::FullNamingScheme, ::Nothing) = true
+
 @generated function isdisjoint(::S, ::T) where {S <: NamingScheme, T <: FullNamingScheme}
     return :($( all(t -> isdisjoint(S(), t), T()) ))
 end
