@@ -151,7 +151,7 @@ julia> collect(flat_coefficients([x^3 + y^2, y^5], :x, :y))
 `@expandcoefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
 """
 function flat_coefficients(a::AbstractArray{P}, args...) where P <: Polynomial
-    return vcat([coefficients(a_i, args...) for a_i in a]...)
+    return vcat([expandcoefficients(a_i, args...) for a_i in a]...)
 end
 
 """
