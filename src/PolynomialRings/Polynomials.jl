@@ -13,7 +13,7 @@ import ..Monomials: AbstractMonomial, TupleMonomial, VectorMonomial
 import ..IndexedMonomials: IndexedMonomial
 import ..NamingSchemes: Named, Numbered, NamingScheme, fullnamingscheme, isdisjoint, isvalid
 import ..Terms: Term, monomial, coefficient
-import ..Util: @assertvalid
+import ..Util: @assertvalid, _debug_isvalid
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering, monomialtype
 import PolynomialRings: leading_coefficient, leading_monomial
 import PolynomialRings: leading_term, termtype, monomialorder, nzterms, exptype, namingscheme, expansion
@@ -315,5 +315,15 @@ end
 #
 # -----------------------------------------------------------------------------
 HigherOrderFns._iszero(f::Polynomial) = iszero(f)
+
+function _debug_isvalid(f::SparsePolynomial)
+    length(f.monomials) == length(f.coeffs) &&
+    all(!iszero, f.coeffs) &&
+    issorted(f.monomials)
+end
+
+function _debug_isvalid(f::DensePolynomial)
+    true
+end
 
 end

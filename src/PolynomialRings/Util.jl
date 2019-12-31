@@ -294,13 +294,13 @@ end
 
 _debugassertions() = false
 
+function _debug_isvalid end
+
 macro assertvalid(p)
     if _debugassertions()
         quote
             res = $(esc(p))
-            @assert length(res.monomials) == length(res.coeffs)
-            @assert all(!iszero, res.coeffs)
-            @assert issorted(res.monomials)
+            @assert _debug_isvalid(res)
             res
         end
     else
