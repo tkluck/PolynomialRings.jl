@@ -54,21 +54,23 @@ typeconstructors = [
 randpoly() = rand(polyconstructors)()
 randtype() = rand(typeconstructors)()
 
-macro axiom(expr)
+macro axiom(name, expr)
     expr.head == :let || error("Usage: @axiom let x=randpoly(), y=randpoly(); x+y == y+x; end")
-    assignments = expr.args[1].args
-    block = expr.args[2]
-    blockrepr = repr(block)
+    assignments = [Expr(:(=), esc(a.args[1]), a.args[2]) for a in expr.args[1].args]
+    block = esc(expr.args[2])
+    blockrepr = repr(expr.args[2])
     vars = [asgn.args[1] for asgn in assignments]
     typeofvars = [:( typeof($v) ) for v in vars]
-    esc(quote
-        try
+    quote
+        @info $"Fuzzing axiom '$name'"
+        _, t, bytes, gctime, memallocs = @timed try
             let $(assignments...)
                 try
                     result = $block
                     if !result
                         @warn "Axiom violated: $($blockrepr)" $(vars...) $(typeofvars...)
                     end
+                    printstyled("[ Success\n", bold=true, color=:green)
                 catch ex
                     @warn "Exception during axiom check: $($blockrepr)" $(vars...) $(typeofvars...) exception=(ex, catch_backtrace())
                 end
@@ -76,53 +78,54 @@ macro axiom(expr)
         catch ex
             @warn "Exception during axiom initialization: $($blockrepr)" exception=(ex, catch_backtrace())
         end
-    end)
+        @info $"Done fuzzing axiom '$name'" t bytes gctime memallocs
+    end
 end
 
 @showprogress for i in 1:ITERATIONS
-    @axiom let x = randpoly(), y = randpoly() # commutative addition
+    @axiom "commutative addition" let x = randpoly(), y = randpoly()
         x + y == y + x
     end
-    @axiom let x = zero(randtype()), y = randpoly() # additive unit
+    @axiom "additive unit" let x = zero(randtype()), y = randpoly()
         y == x + y
     end
-    @axiom let x = randpoly(), y = randpoly(), z = randpoly() # additive associativity
+    @axiom "additive associativity" let x = randpoly(), y = randpoly(), z = randpoly()
         (x + y) + z == x + (y + z)
     end
-    @axiom let x = randpoly(), y = randpoly() # additive inverse
+    @axiom "additive inverse" let x = randpoly(), y = randpoly()
         x + y - y == x
     end
-    @axiom let x = randpoly(), y = randpoly() # commutative multiplication
+    @axiom "commutative multiplication" let x = randpoly(), y = randpoly()
         x * y == y * x
     end
-    @axiom let x = one(randtype()), y = randpoly() # multiplicative unit
+    @axiom "multiplicative unit" let x = one(randtype()), y = randpoly()
         y == x * y
     end
-    @axiom let x = randpoly(), y = randpoly(), z = randpoly() # multiplicative associativity
+    @axiom "multiplicative associativity" let x = randpoly(), y = randpoly(), z = randpoly()
         (x * y) * z == x * (y * z)
     end
-    @axiom let x = randpoly(), y = randpoly(), z = randpoly() # right distributive
+    @axiom "right distributive" let x = randpoly(), y = randpoly(), z = randpoly()
         (x + y) * z == x * z + y * z
     end
-    @axiom let x = randpoly(), y = randpoly(), z = randpoly() # left distributive
+    @axiom "left distributive" let x = randpoly(), y = randpoly(), z = randpoly()
         x * (y + z) == x * y + x * z
     end
 
-    @axiom let x = randpoly(), n = rand(1:10) # power implementation
+    @axiom "power implementation" let x = randpoly(), n = rand(1:10)
         x^n == prod(x for _=1:n)
     end
-    @axiom let T = randtype(), x = randpoly() # conversion preserves identity
+    @axiom "conversion preserves identity" let T = randtype(), x = randpoly()
         TT = promote_type(T, typeof(x))
         convert(TT, x) == x
     end
-    @axiom let T = randtype(), x = randpoly() # base extension preserves identity
+    @axiom "base extension preserves identity" let T = randtype(), x = randpoly()
         base_extend(x, T) == x
     end
-    @axiom let T = randtype(), S = randtype() # promotion is concrete
+    @axiom "promotion is concrete" let T = randtype(), S = randtype()
         isconcretetype(promote_type(T, S))
     end
 
-    @axiom let T = randtype(), S = randtype() # inference
+    @axiom "inference" let T = randtype(), S = randtype()
         Base._return_type(*, (T, S)) == promote_type(T, S)
     end
 end
