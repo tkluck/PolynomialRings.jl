@@ -1,7 +1,7 @@
 module NamedPolynomials
 
 import Base: promote_rule, convert, Bottom
-import SparseArrays: SparseVector
+import SparseArrays: SparseVector, issparse
 
 import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, rulesymbol
@@ -119,7 +119,7 @@ function remove_variables(::Type{P}, vars) where P <: Polynomial
     M = remove_variables(monomialtype(P), vars)
     C = remove_variables(basering(P), vars)
     M == One && return C
-    return polynomialtype(M, C)
+    return polynomialtype(M, C, sparse=issparse(P))
 end
 remove_variables(T::Type, vars) = T
 
@@ -131,7 +131,7 @@ fullboundnames(T::Type{<:Polynomial}) = fullboundnames(basering(T))
 _promote_rule(T1::Type{<:Polynomial}, T2::Type) = promote_rule(T1, T2)
 _promote_rule(T1::Type,               T2::Type) = (res = promote_type(T1, T2); res === Any ? Bottom : res)
 
-function promote_rule(T1::Type{<:Polynomial}, T2::Type)
+@generated function promote_rule(::Type{T1}, ::Type{T2}) where T1 <: Polynomial where T2
     if !isdisjoint(namingscheme(T1), fullboundnames(T2))
         # FIXME(tkluck): this loses information on the exptype associated to
         # the namingscheme of T1.
@@ -143,7 +143,7 @@ function promote_rule(T1::Type{<:Polynomial}, T2::Type)
         return _promote_rule(basering(T1), T2)
     elseif isdisjoint(namingscheme(T1), fullnamingscheme(T2))
         if (C = _promote_rule(basering(T1), T2)) !== Bottom
-            return polynomialtype(monomialtype(T1), C)
+            return polynomialtype(monomialtype(T1), C, sparse=issparse(T1))
         end
     end
     return Bottom
@@ -171,6 +171,11 @@ end
 #
 # -----------------------------------------------------------------------------
 
+joinsparse(x, y) = true
+joinsparse(x::Type{<:Polynomial}, y) = issparse(x)
+joinsparse(x, y::Type{<:Polynomial}) = issparse(y)
+joinsparse(x::Type{<:Polynomial}, y::Type{<:Polynomial}) = issparse(x) && issparse(y)
+
 promote_canonical_type(T1::Type, T2::Type) = promote_type(T1, T2)
 
 promote_canonical_type(T1::Type, T2::Type{<:Polynomial}) = promote_canonical_type(T2, T1)
@@ -189,15 +194,15 @@ function promote_canonical_type(T1::Type{<:Polynomial}, T2::Type)
     elseif namingscheme(T1) ≺ namingscheme(T2)
         M = monomialtype(T2)
         C = promote_canonical_type(T1, basering(T2))
-        return polynomialtype(M, C)
+        return polynomialtype(M, C, sparse=issparse(T2))
     elseif namingscheme(T2) ≺ namingscheme(T1)
         M = monomialtype(T1)
         C = promote_canonical_type(basering(T1), T2)
-        return polynomialtype(M, C)
+        return polynomialtype(M, C, sparse=issparse(T1))
     else
         M = promote_type(monomialtype(T1), monomialtype(T2))
         C = promote_type(basering(T1), basering(T2))
-        return polynomialtype(M, C)
+        return polynomialtype(M, C, sparse=joinsparse(T1, T2))
     end
 end
 
@@ -229,14 +234,14 @@ function canonicaltype(P::Type{<:PolynomialOver{<:Polynomial}})
     M1 = monomialtype(C)
     M2 = canonicaltype(monomialtype(P))
     if namingscheme(M1) ≺ namingscheme(M2)
-        P′ = polynomialtype(M2, C)
+        P′ = polynomialtype(M2, C, sparse=issparse(P))
     elseif namingscheme(M2) ≺ namingscheme(M1)
         C1 = basering(C)
-        P′ = polynomialtype(M1, polynomialtype(M2, C1))
+        P′ = polynomialtype(M1, polynomialtype(M2, C1), sparse=issparse(C))
     else
         M = promote_type(M1, M2)
         C1 = basering(C)
-        P′ = polynomialtype(M, C1)
+        P′ = polynomialtype(M, C1, sparse=joinsparse(P, C))
     end
     if P′ == P
         return P
@@ -248,7 +253,7 @@ end
 function canonicaltype(P::Type{<:Polynomial})
     C = canonicaltype(basering(P))
     M = canonicaltype(monomialtype(P))
-    return polynomialtype(M, C)
+    return polynomialtype(M, C, sparse=issparse(P))
 end
 @generated function canonicaltype(::Type{M}) where M <: NamedMonomial
     N = num_variables(M)
@@ -271,7 +276,7 @@ iscanonical(M::Type{<:AbstractMonomial}) = iscanonical(namingscheme(M)) && rules
 iscanonical(T::Type{<:Term})       = iscanonical(fullnamingscheme(T))
 iscanonical(P::Type{<:Polynomial}) = iscanonical(fullnamingscheme(P))
 
-function _promote_result(T, S, LTR, RTL)
+@generated function _promote_result(::Type{T}, ::Type{S}, ::Type{LTR}, ::Type{RTL}) where {T, S, LTR, RTL}
     if LTR == Bottom && RTL != Bottom
         return RTL
     elseif RTL == Bottom && LTR != Bottom
@@ -282,7 +287,7 @@ function _promote_result(T, S, LTR, RTL)
         if namingscheme(T) == namingscheme(S)
             M = promote_type(monomialtype(T), monomialtype(S))
             C = promote_type(basering(T), basering(S))
-            return polynomialtype(M, C)
+            return polynomialtype(M, C, sparse=joinsparse(T, S))
         else
             return promote_canonical_type(canonicaltype(T), canonicaltype(S))
         end
