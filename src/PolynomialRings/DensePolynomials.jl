@@ -84,8 +84,8 @@ iszero(a::P)    where P <: DensePolynomial = iszero(a.coeffs)
 function ==(a::P, b::P)  where P <: DensePolynomial
     N = min(length(a.coeffs), length(b.coeffs))
     all(i -> a.coeffs[i] == b.coeffs[i], 1:N) &&
-    all(i -> iszero(a.coeffs[i]), N + 1 : length(a)) &&
-    all(i -> iszero(b.coeffs[i]), N + 1 : length(b))
+    all(i -> iszero(a.coeffs[i]), N + 1 : length(a.coeffs)) &&
+    all(i -> iszero(b.coeffs[i]), N + 1 : length(b.coeffs))
 end
 
 #function Base.iterate(it::NZTerms{P}, state=(monomialiter(monomialtype(P)), 1)) where P <: DensePolynomial
