@@ -83,17 +83,5 @@ function mutuallyprime(a::M, b::M) where M <: IndexedMonomial
     return mutuallyprime(convert(N, a), convert(N, b))
 end
 
-struct MonomialSet
-    a::BitArray{1}
-    MonomialSet() = new(BitArray{1}())
-end
-
-function Base.push!(s::MonomialSet, m::IndexedMonomial)
-    length(s.a) <= m.ix && resize!(s.a, m.ix)
-    s.a[m.ix] = true
-end
-
-Base.in(m::IndexedMonomial, s::MonomialSet) = length(s.a) >= m.ix && s.a[m.ix]
-
 
 end
