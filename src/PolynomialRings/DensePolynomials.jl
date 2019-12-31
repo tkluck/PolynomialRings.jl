@@ -50,7 +50,7 @@ Base.copy!(dst::DensePolynomial, src::DensePolynomial) = copy!(dst.coeffs, src.c
 
 hash(p::DensePolynomial, h::UInt) = hash(hash(p.coeffs, h), hash(monomialtype(p)))
 
-_leading_term_ix(p::DensePolynomialBy{Order}, order::Order) where Order <: MonomialOrder = findlast(!iszero, p.coeffs)
+_leading_term_ix(p::DensePolynomialBy{Order}, order::Order) where Order <: MonomialOrder = something(findlast(!iszero, p.coeffs), 0)
 function _monomialbyindex(p::DensePolynomial, ix)
     M = monomialtype(p)
     IxM = IndexedMonomial{typeof(monomialorder(M)), typeof(ix)}
