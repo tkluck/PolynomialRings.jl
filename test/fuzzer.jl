@@ -17,8 +17,9 @@ function randring()
     available_varnames = filter(s->s∉allvariablesymbols(basering), varnames)
     isempty(available_varnames) && return basering
     varname = rand(available_varnames)
+    sparse = rand(Bool)
 
-    R, _ = polynomial_ring(varname, basering=basering, exptype=exptype)
+    R, _ = polynomial_ring(varname, basering=basering, exptype=exptype, sparse=sparse)
     return R
 end
 
