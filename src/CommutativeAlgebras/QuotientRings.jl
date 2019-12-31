@@ -14,6 +14,7 @@ import ..NamedPolynomials: minring
 import ..Polynomials: Polynomial, exptype, leading_term, basering, PolynomialOver
 import ..Polynomials: termtype, monomialtype, monomialorder
 import ..Terms: Term, monomial, coefficient
+import ..Util: @assertvalid
 import PolynomialRings: allvariablesymbols
 import PolynomialRings: construct_monomial, variablesymbols
 
@@ -227,8 +228,10 @@ function convert(::Type{P}, a::Q) where P <: PolynomialOver{Q} where Q <: Quotie
     if iszero(a)
         return zero(P)
     else
+        res = zero(P)
         M = monomialtype(P)
-        return P(M[one(M)], Q[deepcopy(a)])
+        push!(res, Term(one(M), deepcopy(a)))
+        return @assertvalid res
     end
 end
 
