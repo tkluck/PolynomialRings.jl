@@ -234,8 +234,16 @@ end
 
 convert(::Type{N}, a::QuotientRing) where N <: Union{Integer, Rational{Integer}} = convert(N, a.f)
 
-*(a::P, b::Q) where P <: PolynomialOver{Q} where Q <: QuotientRing = invoke(*, Tuple{PolynomialOver{C}, C} where C, a, b)
-*(a::Q, b::P) where P <: PolynomialOver{Q} where Q <: QuotientRing = invoke(*, Tuple{C, PolynomialOver{C}} where C, a, b)
+# resolve some ambiguity
+function *(a::Q, b::P) where P <: PolynomialOver{Q} where Q <: QuotientRing
+    iszero(a) && return zero(P)
+    map_coefficients(b_i -> a * b_i, b)
+end
+
+function *(a::P, b::Q) where P <: PolynomialOver{Q} where Q <: QuotientRing
+    iszero(b) && return zero(a)
+    map_coefficients(a_i -> a_i *b, a)
+end
 
 Base.Broadcast.broadcastable(q::QuotientRing) = Ref(q)
 
