@@ -113,23 +113,33 @@ function NumberField(Q::Type{<:QuotientRing})
     return F
 end
 
-function convert(::Type{F}, c::C) where F<:NumberField{P, C} where {P<:Polynomial, C}
-    coeffs = zeros(C, _extension_degree(F))
-    coeffs[1] = c
-    F(coeffs)
+convert(::Type{N}, c::N) where N <: NumberField = c
+convert(N::Type{<:NumberField}, c::Polynomial) = invoke(convert, Tuple{Type{N}, Any} where N <: NumberField, N, c)
+convert(N::Type{<:NumberField}, c::Number) = invoke(convert, Tuple{Type{N}, Any} where N <: NumberField, N, c)
+
+function convert(::Type{F}, c) where F <: NumberField
+    #=
+    We use a switch statement instead of many methods because there is too
+    much possibility of method ambiguity
+    =#
+    if c isa F
+        return c
+    elseif c isa ring(F)
+        return c(;_named_values(F)...)
+    elseif c isa quotientring(F)
+        return c.f(;_named_values(F)...)
+    elseif c isa basering(F) || c isa Number
+        coeffs = zeros(basering(F), _extension_degree(F))
+        coeffs[1] = c
+        return F(coeffs)
+    elseif c isa Polynomial
+        return convert(F, convert(quotientring(F), c))
+    elseif c isa Symbol
+        return _named_values(F)[c]
+    else
+        error("Do not know how to convert an element of type $(typeof(c)) to $F")
+    end
 end
-
-function convert(::Type{F}, c::C) where F<:NumberField{P, C} where {P<:Polynomial, C<:Number}
-    coeffs = zeros(C, _extension_degree(F))
-    coeffs[1] = c
-    F(coeffs)
-end
-
-convert(::Type{F}, f::P) where F<:NumberField{P, C} where {P<:Polynomial, C} =
-    f(;_named_values(F)...)
-
-convert(::Type{F}, f::Q) where F<:NumberField{P, C, Q} where {P<:Polynomial, C, Q} =
-    f.f(;_named_values(F)...)
 
 # -----------------------------------------------------------------------------
 #
@@ -256,14 +266,6 @@ function promote_rule(::Type{N}, ::Type{C}) where N<:NumberField where C
     end
 end
 
-function convert(::Type{N}, c::C) where N<:NumberField{P} where {P<:Polynomial,C}
-    N(convert(P, c))
-end
-
-function convert(::Type{N}, c::C) where N<:NumberField{P} where {P<:Polynomial,C<:Number}
-    N(convert(quotientring(N), c))
-end
-
 function convert(::Type{Q}, x::NumberField) where Q <: QuotientRing{P} where P<:Polynomial
     N = typeof(x)
     M = _extension_degree(N)
@@ -273,12 +275,6 @@ function convert(::Type{Q}, x::NumberField) where Q <: QuotientRing{P} where P<:
 end
 
 # resolve ambiguity
-function convert(::Type{N}, x::Polynomial) where N <: NumberField
-    N(convert(quotientring(N), x))
-end
-
-convert(::Type{N}, q::N) where N<:NumberField{P} where P<:Polynomial = q
-
 promote_rule(::Type{C}, ::Type{N}) where {P<:Polynomial,N<:NumberField{P},C<:PolynomialOver{N}} = C
 # -----------------------------------------------------------------------------
 #
