@@ -22,11 +22,14 @@ function randring()
     return R
 end
 
-polyconstructors = [
+leafpolyconstructors = [
     () -> rand(generators(randring())),
     () -> zero(randtype()),
     () -> one(randtype()),
     #() -> rand(rand(basetypes)),
+]
+
+nodepolyconstructors = [
     () -> randpoly() + randpoly(),
     () -> randpoly() * randpoly(),
     () -> -randpoly(),
@@ -51,7 +54,8 @@ typeconstructors = [
     () -> promote_type(randtype(), randtype()),
 ]
 
-randpoly() = rand(polyconstructors)()
+const P_LEAF = 0.8
+randpoly() = rand() < P_LEAF ? rand(leafpolyconstructors)() : rand(nodepolyconstructors)()
 randtype() = rand(typeconstructors)()
 
 macro axiom(name, expr)
