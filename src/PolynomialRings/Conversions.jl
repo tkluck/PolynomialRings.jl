@@ -281,8 +281,9 @@ function convert(::Type{P}, a::C) where P <: NamedPolynomial{C} where C<:Polynom
     if iszero(a)
         return zero(P)
     else
-        M = monomialtype(P)
-        return P([one(M)],[deepcopy(a)])
+        res = zero(P)
+        push!(res, Term(one(M), deepcopy(a)))
+        return @assertvalid res
     end
 end
 
