@@ -48,7 +48,7 @@ isvalid(scheme::Named) = allunique(variablesymbols(scheme))
 isvalid(scheme::Numbered) = true
 
 
-@generated issubset(::Named{Names1}, ::Named{Names2}) where {Names1, Names2} = :($( Names1 ⊆ Names2 && issorted(indexin(collect(Names1), collect(Names2))) ))
+@generated issubset(::Named{Names1}, ::Named{Names2}) where {Names1, Names2} = Names1 ⊆ Names2 && issorted(indexin(collect(Names1), collect(Names2)))
 issubset(::Named, ::Numbered) = false
 issubset(::Numbered, ::Named) = false
 issubset(::Numbered{Name1, Max1}, ::Numbered{Name2, Max2}) where {Name1, Name2, Max1, Max2} = Name1 == Name2 && Max1 <= Max2
@@ -62,10 +62,9 @@ issubset(S::NamingScheme, T::FullNamingScheme) = any(t -> S ⊆ t, T)
 issubset(S::FullNamingScheme, T::NamingScheme) = all(s -> s ⊆ T, S)
 @generated function issubset(::S, ::T) where {S <: FullNamingScheme, T <: FullNamingScheme}
     indices = map(s -> findfirst(t -> s ⊆ t, T()), S())
-    res = all(!isequal(nothing), indices) && issorted(indices)
-    return :($res)
+    return all(!isequal(nothing), indices) && issorted(indices)
 end
-@generated isdisjoint(::Named{Names1}, ::Named{Names2}) where {Names1, Names2} = :($( isempty(Names1 ∩ Names2) ))
+@generated isdisjoint(::Named{Names1}, ::Named{Names2}) where {Names1, Names2} = isempty(Names1 ∩ Names2)
 isdisjoint(::Named, ::Numbered) = true
 isdisjoint(::Numbered, ::Named) = true
 isdisjoint(::Numbered{Name1}, ::Numbered{Name2}) where {Name1, Name2} = Name1 != Name2
@@ -82,17 +81,17 @@ isdisjoint(::Nothing, ::FullNamingScheme) = true
 isdisjoint(::FullNamingScheme, ::Nothing) = true
 
 @generated function isdisjoint(::S, ::T) where {S <: NamingScheme, T <: FullNamingScheme}
-    return :($( all(t -> isdisjoint(S(), t), T()) ))
+    return all(t -> isdisjoint(S(), t), T())
 end
 
 @generated function isdisjoint(::S, ::T) where {S <: FullNamingScheme, T <: Union{FullNamingScheme, NamingScheme}}
-    return :($( all(s -> isdisjoint(s, T()), S()) ))
+    return all(s -> isdisjoint(s, T()), S())
 end
 
 @generated function remove_variables(::N, ::Vars) where N <: Named where Vars <: Named
     remaining = setdiff(variablesymbols(N()), variablesymbols(Vars()))
-    isempty(remaining) && return :( nothing )
-    :($( Named{tuple(remaining...)}() ))
+    isempty(remaining) && return nothing
+    return Named{tuple(remaining...)}()
 end
 
 remove_variables(N::Named, ::Numbered) = N
@@ -135,12 +134,12 @@ canonicalscheme(a::FullNamingScheme) = tuple(sort(map(canonicalscheme, a), lt=�
 @generated function promote_rule(::Type{N1}, ::Type{N2}) where {N1 <: Named, N2 <: Named}
     symbols = sort(variablesymbols(N1()) ∪ variablesymbols(N2()))
     Names = tuple(symbols...)
-    return :($( Named{Names} ))
+    return Named{Names}
 end
 
 @generated function promote_rule(::Type{N1}, ::Type{N2}) where {N1 <: Numbered{Name}, N2 <: Numbered{Name}} where Name
     max = max(num_variables(N1), num_variables(N2))
-    return :($( Numbered{Name, max} ))
+    return Numbered{Name, max}
 end
 
 function parse_namingscheme(expr)
