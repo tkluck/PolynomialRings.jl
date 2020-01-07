@@ -120,3 +120,49 @@ end
 function convert(P::Type{<:DensePolynomialOver{C,O}}, p::DensePolynomialOver{D,O}) where {C,D,O <: MonomialOrder}
     return P(convert.(C, p.coeffs))
 end
+
+# -----------------------------------------------------------------------------
+#
+# Adding terms/monomials/scalars
+#
+# -----------------------------------------------------------------------------
+function inclusiveinplace!(::typeof(+), a::P, b::T) where
+            P <: DensePolynomial{M, C} where
+            T <: Term{M, C} where
+            {M <: AbstractMonomial, C}
+    # XXX FIXME TODO XXX
+    m = monomial(b)
+    ix = m isa TupleMonomial ? degrevlex_index(m.e) : m.ix
+    _ensurecoeffs!(a.coeffs, ix)
+    a.coeffs[ix] += coefficient(b)
+
+    @assertvalid a
+end
+
+function inclusiveinplace!(::typeof(+), a::P, b::M) where
+            P <: DensePolynomial{M, C} where
+            {M <: AbstractMonomial, C}
+    # XXX FIXME TODO XXX
+    ix = b isa TupleMonomial ? degrevlex_index(b.e) : b.ix
+    _ensurecoeffs!(a.coeffs, ix)
+    a.coeffs[ix] += one(basering(P))
+
+    @assertvalid a
+end
+
+function inclusiveinplace!(::typeof(+), a::P, b::C) where
+            P <: DensePolynomial{M, C} where
+            {M <: AbstractMonomial, C}
+    _ensurecoeffs!(a.coeffs, 1)
+    a.coeffs[1] += b
+
+    @assertvalid a
+end
+
+function inclusiveinplace!(::typeof(*), a::P, b::C) where
+            P <: DensePolynomial{M, C} where
+            {M <: AbstractMonomial, C}
+    a.coeffs .*= b
+
+    @assertvalid a
+end

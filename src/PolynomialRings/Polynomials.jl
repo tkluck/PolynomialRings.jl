@@ -5,7 +5,7 @@ import Base: zero, one, +, -, *, ==, div, iszero, diff, ^, gcd
 import Base: OneTo
 import SparseArrays: SparseVector, HigherOrderFns, issparse
 
-import InPlace: @inplace
+import InPlace: @inplace, inplace!, inclusiveinplace!
 import Transducers: Transducer, Eduction
 
 import ..MonomialOrderings: MonomialOrder
