@@ -152,7 +152,7 @@ tail(p::Polynomial; order::MonomialOrder=monomialorder(p)) = tail(p, order)
 #
 # -----------------------------------------------------------------------------
 Base.append!(dst::Polynomial, src) = for t in src; push!(dst, t); end
-Base.copy!(dst::Polynomial, src) = append!(empty!(dst), src)
+Base.copy!(dst::Polynomial, src) = (append!(empty!(dst), src); dst)
 Base.copy!(x::Polynomial, ed::Eduction) = copy!(Transducer(ed), x, ed.coll)
 
 
