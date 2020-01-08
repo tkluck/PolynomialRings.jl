@@ -63,15 +63,15 @@ e.g. we may as well evaluate
 as `g * h` if `g` and `h` are polynomials. In this case, the allocation is probably
 negligible compared to the time spent multiplying.
 
-To achieve this, the default implementation for `maybe_instantiate` eagerly
+To achieve this, the default implementation for `termwise` eagerly
 evaluates the broadcast operation. Only those operations that we _know_ to work
 term-wise efficiently get a more specific override.
 
 ### Lazy evaluation
 
 For the operations that _do_ work well term-wise, we implement a function
-`maybe_instantiate` that takes a `Broadcasted` object or a scalar, and returns
-either an `Owned{<:Polynomial}` or a `TermsBy` object. These can be composed
+`termwise` that takes a `Broadcasted` object or a scalar, and returns
+either an `Owned{<:Polynomial}` or a `SparseTermsBy` object. These can be composed
 to form the full operation.
 
 ### In-place evaluation
@@ -97,28 +97,24 @@ We can do in-place evaluation in two cases:
    `... .+ h)` operation in-place.
 
 We represent both cases by keeping a `owned` value with the scalar or the
-`TermsBy` object.
+`SparseTermsBy` object.
 """
 module Broadcast
 
 import Base.Broadcast: AbstractArrayStyle, BroadcastStyle, Broadcasted
-import Base.Broadcast: materialize!, copyto!, copy, flatten, dotview
-import Base.Broadcast: broadcastable, broadcasted
-import Base: RefValue
+import Base.Broadcast: materialize!, materialize, copyto!, copy, flatten, dotview
+import Base.Broadcast: broadcastable, broadcasted, Unknown
 
 import Combinatorics: combinations
 import InPlace: @inplace, inplace!
 import Transducers: eduction, Map, Filter, Eduction, Transducer, transduce
 
-import ..MonomialIterators: MonomialIter
 import ..MonomialOrderings: MonomialOrder
 import ..Monomials: AbstractMonomial
-import ..Polynomials: Polynomial, DensePolynomial, PolynomialBy, SparsePolynomialBy, DensePolynomialBy, nzterms, nztermscount, TermBy, MonomialBy, coefficients
+import ..Polynomials: Polynomial, DensePolynomial, PolynomialBy, SparsePolynomialBy, DensePolynomialBy, nzterms, nztermscount, TermBy, MonomialBy
 import ..Terms: Term, monomial, coefficient, basering
 import ..Util: MergingTransducer, @assertvalid
 import PolynomialRings: monomialorder
-
-const PlusMinus = Union{typeof(+), typeof(-)}
 
 broadcastable(p::AbstractMonomial) = p
 broadcastable(p::Term) = p
@@ -134,78 +130,95 @@ struct Termwise{Order, P} <: BroadcastStyle end
 BroadcastStyle(::Type{<:P}) where P<:Polynomial = Termwise{typeof(monomialorder(P)), P}()
 BroadcastStyle(s::Termwise{Order, P}, t::Termwise{Order, Q}) where {Order,P,Q} = Termwise{Order, promote_type(P, Q)}()
 BroadcastStyle(s::Termwise, t::AbstractArrayStyle{0}) = s
-BroadcastStyle(s::Termwise, t::BroadcastStyle) = t
+BroadcastStyle(s::Termwise, t::AbstractArrayStyle) = t
+BroadcastStyle(s::Termwise, t::BroadcastStyle) = Unknown()
 
 # -----------------------------------------------------------------------------
 #
-# Return values for the `instantiate` function
+# Override `materialize(!)` so we can mark the destination as `owned` and
+# operate in-place.
 #
 # -----------------------------------------------------------------------------
-struct TermsBy{Order, P, Iter, Owned}
-    order :: Order
-    P     :: Type{P}
-    iter  :: Iter
-    owned :: Owned
-    bound :: Int
+function materialize(bc::Broadcasted{<:Termwise{P}}) where P
+    if can_termwise_vectorbroadcast(typeof(bc))
+        return termwise_vectorbroadcast(flatten(bc))
+    end
+    bc_withownership = withownership(bc)
+    copy(termwise(bc_withownership))
 end
 
-struct CoeffsBy{Order, P, Coeffs, Owned}
-    order  :: Order
-    P      :: Type{P}
-    coeffs :: Coeffs
-    owned  :: Owned
+function materialize!(dest::PolynomialBy{Order}, bc::Broadcasted{<:Termwise{Order}}) where Order
+    if can_termwise_vectorbroadcast(typeof(bc))
+        return termwise_vectorbroadcast(flatten(bc), dest)
+    end
+    destix = findlast(a -> dest === a, flatten(bc).args)
+    bc_withownership = withownership(bc, destix)
+    if !isnothing(destix)
+        d = copy(termwise(bc_withownership))
+        copy!(dest, d)
+    else
+        copyto!(dest, termwise(bc))
+    end
 end
 
+# -----------------------------------------------------------------------------
+#
+# A type for marking ownership either at runtime (when `dest` is also an
+# operand) or at compile time (intermediate results).
+#
+# -----------------------------------------------------------------------------
 struct Owned{Value, IsOwned}
     value :: Value
     owned :: IsOwned
 end
 
-const TermsIterable{Order} = Union{Owned{<:SparsePolynomialBy{Order}}, TermsBy{Order}}
-const CoeffsIterable{Order} = Union{Owned{<:DensePolynomialBy{Order}}, CoeffsBy{Order}}
+ownership(x::Owned) = x.owned
+
+isowned(::Val{owned}) where owned = owned
+isowned(x::Bool) = x
+isowned(x) = isowned(ownership(x))
+value(x::Owned) = x.value
 
 function Owned(f::Function, args::Owned...)
+    # we can't be sure the return value is owned if
+    # we don't know anything about `f`; the result
+    # will usually be owned but e.g. not in the case
+    # `f == identity`. So take Val(false) here.
     Owned(f(map(a -> a.value, args)...), Val(false))
 end
 
 const MathOperator = Union{typeof(+), typeof(-), typeof(*), typeof(/), typeof(//)}
-function Owned(f::MathOperator, args::Owned...)
-    Owned(f(map(a -> a.value, args)...), Val(true))
+function Owned(f::MathOperator, x::Owned, y::Owned)
+    res = isowned(x) ?
+              inplace!(f, value(x), value(x), value(y)) :
+          isowned(y) ?
+              inplace!(f, value(y), value(x), value(y)) :
+              f(value(x), value(y))
+    Owned(res, Val(true))
 end
 
-copy(x::TermsBy) = copyto_unaliased!(zero(x.P), x)
-copy(x::CoeffsBy) = x.P(copy(x.coeffs)) # TODO: no need to copy if it's already an array and we own it
-copy(x::Owned) = isowned(x) ? x.value : deepcopy(x.value)
-nzterms(x::TermsBy) = x.iter
-nzterms(x::CoeffsBy) = nzterms(x.P(x.coeffs))
-nzterms(x::Owned{<:Polynomial}) = nzterms(x.value)
-coefficients(x::CoeffsBy) = x.coeffs
-coefficients(x::Owned{<:Polynomial}) = coefficients(x.value)
-termsbound(x::TermsBy) = x.bound
-termsbound(x::CoeffsBy) = count(!iszero, x.coeffs)
-termsbound(x::Owned{<:Polynomial}) = nztermscount(x.value)
-polynomialtype(x::TermsBy) = x.P
-polynomialtype(x::CoeffsBy) = x.P
-polynomialtype(x::Owned{<:Polynomial}) = typeof(x.value)
-
-isowned(::Val{owned}) where owned = owned
-isowned(x::Bool) = x
-isowned(x::TermsBy) = isowned(x.owned)
-isowned(x::CoeffsBy) = isowned(x.owned)
-isowned(x::Owned) = isowned(x.owned)
-
-_ownedop(op, owned, x) = isowned(owned) ? inplace!(op, x, x) : op(x)
-_ownedop(op, ownedx, x, ownedy, y) = isowned(ownedx) ?
-                                     inplace!(op, x, x, y) :
-                                     isowned(ownedy) ?
-                                     inplace!(op, y, x, y) :
-                                     op(x, y)
-
-_constructterm(m, c) = Term(m, c)
+ownedop(f, owned...) = (args...) -> value(Owned(f, map(Owned, args, owned)...))
 
 withownership(x::Owned, args...) = error("Can't apply withownership twice!")
-withownership(x, destix) = withownership(x, destix, 1)
-withownership(x, destix, myix) = Owned(x, isbitstype(typeof(x)) ? Val(true) : destix == myix)
+withownership(x, destix=nothing) = withownership(x, destix, 1)
+function withownership(x, destix, myix)
+    owned = isbitstype(typeof(x)) ?
+                Val(true) :
+            isnothing(destix) ?
+                Val(false) :
+                destix == myix
+    Owned(x, owned)
+end
+"""
+    withownership(bc::Broadcasted, destix)
+
+Wrap the leaf arguments of a (possibly) nested broadcast structure in
+`Owned` objects, with `isowned(...) = true` if and only if its flat
+index is equal to `destix`. Suggested use:
+
+    destix = findlast(a -> dest === a, flatten(bc).args)
+    bc_withownership = withownership(bc, destix)
+"""
 @generated function withownership(bc::BC, destix, myix) where BC <: Broadcasted{Tw, Axes, F, Args} where {Tw <: Termwise, Axes, F, Args}
     argtuple = :( tuple() )
     expr = :( Broadcasted{Tw}(bc.f, $argtuple) )
@@ -215,115 +228,133 @@ withownership(x, destix, myix) = Owned(x, isbitstype(typeof(x)) ? Val(true) : de
     return expr
 end
 
-maybe_collect(x::Owned) = x
-maybe_collect(x::TermsBy) = Owned(copy(x), Val(true))
-maybe_collect(x::CoeffsBy) = Owned(copy(x), Val(true))
+# -----------------------------------------------------------------------------
+#
+# Lazy return values for the `termwise` function
+#
+# -----------------------------------------------------------------------------
+struct SparseTermsBy{Order, P, Iter, Owned}
+    order :: Order
+    P     :: Type{P}
+    iter  :: Iter
+    owned :: Owned
+    bound :: Int
+end
 
-maybe_instantiate_default(f, args...) = Owned(f, map(maybe_collect, args)...)
+struct DenseTermsBy{Order, P, Coeffs, Owned}
+    order  :: Order
+    P      :: Type{P}
+    coeffs :: Coeffs
+    owned  :: Owned
+end
 
-maybe_instantiate(x) = error("Please apply withownership before instantiating")
-maybe_instantiate(x::Owned) = x
-maybe_instantiate(op::Function, args...) = maybe_instantiate_default(op, args...)
+const TermsIterable{Order} = Union{Owned{<:PolynomialBy{Order}}, SparseTermsBy{Order}, DenseTermsBy{Order}}
 
-function maybe_instantiate(bc::Broadcasted{<:Termwise})
-    if maybe_instantiate_coeffwise(typeof(bc))
-        return maybe_instantiate_coeffs(bc)
+ownership(x::SparseTermsBy) = x.owned
+ownership(x::DenseTermsBy) = x.owned
+
+nzterms(x::Owned{<:Polynomial}) = nzterms(x.value)
+nzterms(x::SparseTermsBy) = x.iter
+nzterms(x::DenseTermsBy) = nzterms(x.P(x.coeffs))
+
+termsbound(x::SparseTermsBy) = x.bound
+termsbound(x::DenseTermsBy) = count(!iszero, x.coeffs)
+termsbound(x::Owned{<:Polynomial}) = nztermscount(x.value)
+
+polynomialtype(x::SparseTermsBy) = x.P
+polynomialtype(x::DenseTermsBy) = x.P
+polynomialtype(x::Owned{<:Polynomial}) = typeof(x.value)
+
+# -----------------------------------------------------------------------------
+#
+# Implement the `copy` methods for everything that we can get from `termwise`
+#
+# -----------------------------------------------------------------------------
+copy(x::Owned) = isowned(x) ? x.value : deepcopy(x.value)
+copy(x::SparseTermsBy) = copyto!(zero(x.P), x)
+copy(x::DenseTermsBy) = if isowned(x) && x.coeffs isa Vector
+    x.P(x.coeffs)
+else
+    x.P(copy(x.coeffs))
+end
+
+# TODO: do we own it?
+copyto!(dest::Polynomial, x::Owned) = copy!(dest, nzterms(x))
+copyto!(dest::Polynomial, x::SparseTermsBy) = copy!(dest, nzterms(x))
+copyto!(dest::Polynomial, x::DenseTermsBy) = copy(dest, nzterms(x))
+
+# -----------------------------------------------------------------------------
+#
+# compute how to handle a broadcast operation term-wise
+#
+# -----------------------------------------------------------------------------
+function termwise(bc::Broadcasted{<:Termwise})
+    if can_termwise_vectorbroadcast(typeof(bc))
+        return termwise_vectorbroadcast(flatten(bc))
     else
-        return maybe_instantiate(bc.f, map(maybe_instantiate, bc.args)...)
+        return termwise(bc.f, map(termwise, bc.args)...)
     end
 end
 
-instantiate(bc::Broadcasted{<:Termwise}) = maybe_instantiate(bc)
+termwise(x) = error("Please apply withownership before instantiating")
+termwise(x::Owned) = x
+# fallback implementation: apply `f` to the materialized arguments
+termwise(f, args...) = Owned(f(map(copy, args)...), Val(true))
 
 # -----------------------------------------------------------------------------
 #
-# Optimized versions for term-by-term instantiating.
+# Implement the vector-broadcasted operation
 #
 # -----------------------------------------------------------------------------
-function merge(a::TermsIterable{Order}, b::TermsIterable{Order}, leftop, rightop, mergeop) where Order <: MonomialOrder
-    leftop′(x) = _ownedop(leftop, isowned(a), x)
-    rightop′(x) = _ownedop(rightop, isowned(b), x)
-    mergeop′(x, y) = _ownedop(mergeop, isowned(a), x, isowned(b), y)
-    return TermsBy(
-        Order(),
-        promote_type(polynomialtype(a), polynomialtype(b)),
-        eduction(
-            MergingTransducer(nzterms(a), Order(), leftop′, rightop′, mergeop′, monomial, coefficient, _constructterm) |> Filter(!iszero),
-            nzterms(b),
-        ),
-        Val(true),
-        termsbound(a) + termsbound(b),
-    )
+can_termwise_vectorbroadcast(::Type) = false
+can_termwise_vectorbroadcast(::Type{<:Owned{<:DensePolynomialBy}}) = true
+can_termwise_vectorbroadcast(::Type{<:Owned{<:Number}}) = true
+@generated function can_termwise_vectorbroadcast(::Type{Broadcasted{Style, Nothing, F, Args}}) where {Style, F, Args}
+    # TODO: should also check the operation (F)
+    return all(can_termwise_vectorbroadcast, Args.types)
 end
 
-maybe_instantiate(op::typeof(+), a::TermsIterable, b::TermsIterable) = merge(a, b, +, +, +)
-maybe_instantiate(op::typeof(-), a::TermsIterable, b::TermsIterable) = merge(a, b, +, -, -)
-
-function maybe_instantiate(op::typeof(*), a::TermsIterable{Order}, b::Owned{<:Union{TermBy{Order}, MonomialBy{Order}, Number}}) where Order
-    return TermsBy(
-        Order(),
-        promote_type(polynomialtype(a), typeof(b.value)),
-        eduction(
-            Map(a_i -> _ownedop(*, isowned(a), a_i, Val(false), b.value)) |> Filter(!iszero),
-            nzterms(a),
-        ),
-        Val(true),
-        termsbound(a),
-    )
-end
-
-function maybe_instantiate(op::typeof(*), a::Owned{<:Union{TermBy{Order}, MonomialBy{Order}, Number}}, b::TermsIterable{Order}) where Order
-    return TermsBy(
-        Order(),
-        promote_type(typeof(a.value), polynomialtype(b)),
-        eduction(
-            Map(b_i -> _ownedop(*, Val(false), a.value, isowned(b), b_i)) |> Filter(!iszero),
-            nzterms(b),
-        ),
-        Val(true),
-        termsbound(b),
-    )
-end
-# -----------------------------------------------------------------------------
-#
-# Optimized versions for coefficient-wise instantiating
-#
-# -----------------------------------------------------------------------------
-maybe_instantiate_coeffwise(::Type) = false
-maybe_instantiate_coeffwise(::Type{<:Owned{<:DensePolynomialBy}}) = true
-maybe_instantiate_coeffwise(::Type{<:Owned{<:Number}}) = true
-@generated function maybe_instantiate_coeffwise(::Type{Broadcasted{Style, Nothing, F, Args}}) where {Style, F, Args}
-    return all(maybe_instantiate_coeffwise, Args.types)
-end
-
-function maybe_instantiate_coeffs(bc::Broadcasted{Termwise{Order, P}}) where {Order, P}
-    bcf = flatten(bc)
-    return maybe_instantiate_coeffs_generated(bcf)
-end
-
-@generated function maybe_instantiate_coeffs_generated(bcf::B) where
+@generated function termwise_vectorbroadcast(bcf::B, dest=zero(P)) where
             B <: Broadcasted{Termwise{Order, P}, Nothing, Op, Args} where
             {Order, P, Op, Args}
+    #=
+    In general, the coefficient vectors have different lengths, and
+    we need to broadcast them by extending with zeros. For example,
+    in the case of two arguments, we want to do
 
+        f = bcf.f; a, b = bcf.args
+        N = min(length(a), length(b))
+        res[1 : hi] .= @views f.(a[1 : hi], b[1 : hi])
+        res[hi + 1 : length(a)] .= @views f.(a[hi + 1 : length(a)], zero(eltype(b)))
+        res[hi + 1 : length(b)] .= @views f.(zero(eltype(a)), b[hi + 1 : length(b)])
+
+    When there's more than two arguments, we need to have one such line for
+    every possible combination of arguments that are shorter than a given
+    length. This is what we are generating below.
+    =#
     indices = 1:length(Args.types)
     poly_indices = filter(indices) do ix
         Args.types[ix] <: Owned{<:DensePolynomialBy}
     end
     args_expr = [:(bcf.args[$ix].value) for ix in indices]
+    lengths_names = [Symbol(:length, ix) for ix in indices]
     lengths_expr = [:(length($a.coeffs)) for a in args_expr]
     zero_expr = [:(zero(basering($a))) for a in args_expr]
     poly_args_expr = args_expr[poly_indices]
+    poly_lengths_names = lengths_names[poly_indices]
     poly_lengths_expr = lengths_expr[poly_indices]
+    poly_lengths_assgn = [:( $name = $expr ) for (name, expr) in zip(poly_lengths_names, poly_lengths_expr)]
 
     code = quote
-        N = max($(poly_lengths_expr...))
-        # TODO: use in-place if we own any of the source polynomials
-        coeffs = Vector{basering(P)}(undef, N)
+        $(poly_lengths_assgn...)
+        N = max($(poly_lengths_names...))
+        coeffs = dest.coeffs
+        resize!(coeffs, N)
     end
     for selection in combinations(poly_indices)
         complement = setdiff(poly_indices, selection)
-        selected_poly_lengths_expr   = lengths_expr[selection]
-        unselected_poly_lengths_expr = lengths_expr[complement]
+        selected_poly_lengths_expr   = lengths_names[selection]
+        unselected_poly_lengths_expr = lengths_names[complement]
 
         args_expr = map(1:length(Args.types)) do ix
             if ix in poly_indices
@@ -348,7 +379,7 @@ end
     push!(code.args, quote
         N = findlast(!iszero, coeffs)
         resize!(coeffs, something(N, 0))
-        P(coeffs)
+        Owned(P(coeffs), Val(true))
     end)
 
     return code
@@ -356,34 +387,62 @@ end
 
 # -----------------------------------------------------------------------------
 #
-# Copy methods
+# Optimized versions for term-by-term instantiating.
 #
 # -----------------------------------------------------------------------------
-function copy(bc::Broadcasted{Termwise{Order, P}}) where P <: PolynomialBy{Order} where Order
-    @assertvalid copy(instantiate(withownership(bc, nothing)))
+function merge(a::TermsIterable{Order}, b::TermsIterable{Order}, leftop, rightop, mergeop) where Order <: MonomialOrder
+    leftop′ = ownedop(leftop, ownership(a))
+    rightop′ = ownedop(rightop, ownership(b))
+    mergeop′ = ownedop(mergeop, ownership(a), ownership(b))
+    constructterm(m, c) = Term(m, c)
+
+    return SparseTermsBy(
+        Order(),
+        promote_type(polynomialtype(a), polynomialtype(b)),
+        eduction(
+            MergingTransducer(nzterms(a), Order(), leftop′, rightop′, mergeop′, monomial, coefficient, constructterm) |> Filter(!iszero),
+            nzterms(b),
+        ),
+        Val(true),
+        termsbound(a) + termsbound(b),
+    )
 end
 
-# This is just the intended body of copyto! below, but I need to call it from
-# the handcrafted version as well. My solution with `invoke` gives a segfault
-# in Julia's code generator (Julia bug) so I'll just manually disentangle them.
-function _copyto!(dest, bc)
-    destix = findlast(a -> dest === a, flatten(bc).args)
-    bc = withownership(bc, destix)
-    if !isnothing(destix)
-        d = copy(instantiate(bc))
-        copy!(dest, d)
-    else
-        copyto_unaliased!(dest, instantiate(bc))
-    end
-    @assertvalid dest
+termwise(op::typeof(+), a::TermsIterable, b::TermsIterable) = merge(a, b, +, +, +)
+termwise(op::typeof(-), a::TermsIterable, b::TermsIterable) = merge(a, b, +, -, -)
+
+function termwise(op::typeof(*), a::TermsIterable{Order}, b::Owned{<:Union{TermBy{Order}, MonomialBy{Order}, Number}}) where Order
+    return SparseTermsBy(
+        Order(),
+        promote_type(polynomialtype(a), typeof(b.value)),
+        eduction(
+            Map(a_i -> value(Owned(*, Owned(a_i, Val(false)), b))) |> Filter(!iszero),
+            nzterms(a),
+        ),
+        Val(true),
+        termsbound(a),
+    )
 end
 
-function copyto_unaliased!(dest, x::TermsIterable)
-    sizehint!(dest, termsbound(x))
-    copy!(dest, nzterms(x))
+function termwise(op::typeof(*), a::Owned{<:Union{TermBy{Order}, MonomialBy{Order}, Number}}, b::TermsIterable{Order}) where Order
+    return SparseTermsBy(
+        Order(),
+        promote_type(typeof(a.value), polynomialtype(b)),
+        eduction(
+            Map(b_i -> value(Owned(*, a, Owned(b_i, Val(false))))) |> Filter(!iszero),
+            nzterms(b),
+        ),
+        Val(true),
+        termsbound(b),
+    )
 end
 
-function copyto_unaliased!(dest::PolynomialBy{Order}, src::TermsBy{Order, P, <:Eduction}) where {Order, P}
+# -----------------------------------------------------------------------------
+#
+# Copy method
+#
+# -----------------------------------------------------------------------------
+function copyto!(dest::SparsePolynomialBy{Order}, src::SparseTermsBy{Order, P, <:Eduction}) where {Order, P}
     xf, coll = Transducer(src.iter), src.iter.coll
 
     resize!(dest.coeffs, termsbound(src))
@@ -403,8 +462,6 @@ function copyto_unaliased!(dest::PolynomialBy{Order}, src::TermsBy{Order, P, <:E
 
     return dest
 end
-
-materialize!(dest::P, bc::Broadcasted{Termwise{Order, P}}) where P <: PolynomialBy{Order} where Order = _copyto!(dest, bc)
 
 # -----------------------------------------------------------------------------
 #
@@ -445,9 +502,9 @@ const HandOptimizedBroadcast = Broadcasted{
             },
         },
     },
-} where P<:Polynomial where M<:AbstractMonomial{Order} where C where Order
+} where P<:SparsePolynomialBy{Order} where M<:AbstractMonomial{Order} where C where Order
 
-function materialize!(dest::P, bc::HandOptimizedBroadcast{Order, C, M, P}) where {Order, C, M, P <: PolynomialBy{Order, C}}
+function materialize!(dest::P, bc::HandOptimizedBroadcast{Order, C, M, P}) where {Order, C, M, P <: SparsePolynomialBy{Order, C}}
     ≺(a,b) = Base.Order.lt(monomialorder(dest), a, b)
 
     m1 = bc.args[1].args[1]
@@ -457,9 +514,11 @@ function materialize!(dest::P, bc::HandOptimizedBroadcast{Order, C, M, P}) where
     v2 = bc.args[2].args[2].args[2]
 
     applicable = dest === v1 && dest !== v2
-    # The solution with `invoke` segfaults on Julia Version 1.3.0-DEV.377 (2019-06-09)
-    # Commit 5d02c59185
-    !applicable && return _copyto!(dest, bc) #invoke(copyto!, Tuple{P, Broadcasted{Termwise{Order, P}}} where P <: PolynomialBy{Order} where Order <: MonomialOrder, dest, bc)
+    if !applicable
+        destix = findlast(a -> dest === a, flatten(bc).args)
+        bc_withownership = withownership(bc, destix)
+        return copyto!(dest, termwise(bc_withownership))
+    end
 
     d = zero(dest)
 
