@@ -48,7 +48,7 @@ function *(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
 
     res = zero(P)
     for t_a in nzterms(a), t_b in nzterms(b)
-        res += t_a * t_b
+        @inplace res += t_a * t_b
     end
     return @assertvalid res
 end
