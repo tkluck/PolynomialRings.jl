@@ -94,9 +94,9 @@ function Base.Order.lt(m::MonomialOrder, a::T, b::T) where T <: Tuple
                 return false
             end
         else
-            if isless(exponent(a, i), exponent(b, i))
+            if isless(a[i], b[i])
                 return true
-            elseif isless(exponent(b, i), exponent(a, i))
+            elseif isless(b[i], a[i])
                 return false
             end
         end
