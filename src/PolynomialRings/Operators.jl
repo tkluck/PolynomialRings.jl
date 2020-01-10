@@ -153,9 +153,8 @@ function ^(f::Polynomial, n::Integer)
     while true
         c = try
             C(multinomial(bign, i...))
-        catch
-            # FIXME: what's the Julian way of doing a typeassert e::InexactError
-            # and bubble up all other exceptions?
+        catch e
+            e isa InexactError || rethrow()
             throw(OverflowError("Coefficient overflow while doing exponentiation; suggested fix is replacing `f^n` by `base_extend(f, BigInt)^n`"))
         end
         @inplace result += Term(
