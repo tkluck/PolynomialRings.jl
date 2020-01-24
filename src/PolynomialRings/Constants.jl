@@ -5,6 +5,7 @@ recursions, e.g. in expansion().
 module Constants
 
 import Base: promote_rule, convert, +, *, -, zero, one
+import Base: to_power_type
 import Base: iszero, isone
 
 import InPlace: inplace!
@@ -19,6 +20,12 @@ struct One <: Constant end
 struct Zero <: Constant end
 struct MinusOne <: Constant end
 
++(::One) = One()
++(::Zero) = Zero()
++(::MinusOne) = MinusOne()
+-(::One) = MinusOne()
+-(::Zero) = Zero()
+-(::MinusOne) = One()
 
 *(x, ::One) = deepcopy(x)
 *(::One, x) = deepcopy(x)
@@ -34,6 +41,19 @@ struct MinusOne <: Constant end
 -(::Zero, x) = -x
 *(::Zero, x) = zero(x)
 
+*(::One, ::One) = One()
+*(::Zero, ::Zero) = Zero()
+*(::Zero, ::One) = Zero()
+*(::One, ::Zero) = Zero()
+
++(::Zero, ::Zero) = Zero()
++(::Zero, ::One) = One()
++(::One, ::Zero) = One()
+
+-(::Zero, ::Zero) = Zero()
+-(::Zero, ::One) = MinusOne()
+-(::One, ::Zero) = One()
+
 zero(::Type{C}) where C <: Constant = Zero()
 one(::Type{C})  where C <: Constant = One()
 
@@ -42,6 +62,9 @@ isone(::Constant) = false
 iszero(::Zero) = true
 isone(::One) = true
 
+to_power_type(::Zero) = Zero()
+to_power_type(::One) = One()
+
 for N = [Number, AbstractMonomial, Term, Polynomial]
     @eval begin
         promote_rule(::Type{T}, ::Type{C}) where {T<:$N, C <: Constant} = T
@@ -49,6 +72,10 @@ for N = [Number, AbstractMonomial, Term, Polynomial]
         convert(::Type{T}, ::One)      where T<:$N = one(T)
         convert(::Type{T}, ::Zero)     where T<:$N = zero(T)
         convert(::Type{T}, ::MinusOne) where T<:$N = -one(T)
+
+        convert(::Type{Union{T, One}}, ::One)           where T<:$N = One()
+        convert(::Type{Union{T, Zero}}, ::Zero)         where T<:$N = Zero()
+        convert(::Type{Union{T, MinusOne}}, ::MinusOne) where T<:$N = MinusOne()
 
         # fix method ambiguities
         *(x::$N, ::One) = deepcopy(x)
@@ -62,6 +89,12 @@ for N = [Number, AbstractMonomial, Term, Polynomial]
         +(::Zero, x::$N) = deepcopy(x)
         -(::Zero, x::$N) = -x
         *(::Zero, x::$N) = zero(x)
+    end
+end
+
+for C in [One, Zero, MinusOne]
+    @eval begin
+        convert(::Type{$C}, ::$C) = $C()
     end
 end
 
