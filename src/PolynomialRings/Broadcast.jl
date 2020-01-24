@@ -157,7 +157,7 @@ function materialize!(dest::PolynomialBy{Order}, bc::Broadcasted{<:Termwise{Orde
         d = copy(termwise(bc_withownership))
         copy!(dest, d)
     else
-        copyto!(dest, termwise(bc))
+        copyto!(dest, termwise(bc_withownership))
     end
 end
 
