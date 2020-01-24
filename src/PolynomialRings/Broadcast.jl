@@ -278,6 +278,10 @@ else
     x.P(copy(x.coeffs))
 end
 
+owned(x::Owned) = x
+owned(x::SparseTermsBy) = Owned(copy(x), Val(true))
+owned(x::DenseTermsBy) = Owned(copy(x), Val(true))
+
 # TODO: do we own it?
 copyto!(dest::Polynomial, x::Owned) = copy!(dest, nzterms(x))
 copyto!(dest::Polynomial, x::SparseTermsBy) = copy!(dest, nzterms(x))
@@ -299,7 +303,7 @@ end
 termwise(x) = error("Please apply withownership before instantiating")
 termwise(x::Owned) = x
 # fallback implementation: apply `f` to the materialized arguments
-termwise(f, args...) = Owned(f(map(copy, args)...), Val(true))
+termwise(f, args...) = Owned(f, map(owned, args)...)
 
 # -----------------------------------------------------------------------------
 #
