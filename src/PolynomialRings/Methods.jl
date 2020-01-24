@@ -50,6 +50,7 @@ allvariablesymbols(::Type) = Set()
 function expand end
 function expansion end
 function nzterms end
+function checkconstant end
 function leading_term end
 function leading_monomial end
 function leading_coefficient end

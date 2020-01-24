@@ -1,6 +1,6 @@
 module Operators
 
-import Base: zero, one, +, -, *, ==, div, iszero, diff, ^, gcd
+import Base: zero, one, +, -, *, ==, /, //, inv, div, iszero, diff, ^, gcd
 
 import InPlace: @inplace, inplace!, inclusiveinplace!
 
@@ -14,7 +14,7 @@ import ..Terms: Term, monomial, coefficient
 import ..Util: @assertvalid
 import PolynomialRings: basering, exptype, base_extend, base_restrict
 import PolynomialRings: lcm_multipliers, expansion
-import PolynomialRings: leading_monomial, leading_coefficient
+import PolynomialRings: leading_monomial, leading_coefficient, checkconstant
 import PolynomialRings: maybe_div
 
 # -----------------------------------------------------------------------------
@@ -52,6 +52,17 @@ function *(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
     end
     return @assertvalid res
 end
+
+# -----------------------------------------------------------------------------
+#
+# Operations when it is constant
+#
+# -----------------------------------------------------------------------------
+inv(a::Polynomial) = inv(checkconstant(a))
+/(a::Polynomial, b::Polynomial) = a / checkconstant(b)
+/(a::Number, b::Polynomial) = a / checkconstant(b)
+//(a::Polynomial, b::Polynomial) = a // checkconstant(b)
+//(a::Number, b::Polynomial) = a // checkconstant(b)
 
 # -----------------------------------------------------------------------------
 #

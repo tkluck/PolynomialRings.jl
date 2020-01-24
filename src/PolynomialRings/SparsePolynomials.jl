@@ -1,6 +1,7 @@
 import DataStructures: enqueue!, dequeue!
 
 import ..Util: BoundedHeap, @assertvalid
+import PolynomialRings: checkconstant
 
 """
     SparsePolynomial{M, C} where M <: AbstractMonomial where C
@@ -237,6 +238,20 @@ function *(a::SparsePolynomialBy{Order}, b::SparsePolynomialBy{Order}) where Ord
     resize!(monomials, k)
     resize!(coeffs, k)
     return @assertvalid _filterzeros!(P(monomials, coeffs))
+end
+
+# -----------------------------------------------------------------------------
+#
+# Constant-ness
+#
+# -----------------------------------------------------------------------------
+function checkconstant(f::SparsePolynomial)
+    iszero(f) && return zero(basering(f))
+    if length(f.monomials) == 1 && isone(f.monomials[1])
+        return f.coeffs[1]
+    else
+        error("checkconstant: not a constant polynomial")
+    end
 end
 
 # -----------------------------------------------------------------------------
