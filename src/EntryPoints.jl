@@ -214,6 +214,8 @@ function _ring(definition)
             I = $( _ideal(:R, definition.args[3]) )
             R / I
         end
+    elseif definition.head == :curly
+        return definition
     else
         return quote
             $(_polynomial_ring(definition))
