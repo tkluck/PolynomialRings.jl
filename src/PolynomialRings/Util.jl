@@ -157,7 +157,7 @@ macro showprogress(desc, exprs...)
         expr.args[1].args[2].args[1] == :isempty
     if !ourpattern
         return esc(:(
-            $ProgressMeter.@showprogress $desc $expr
+            $ProgressMeter.@showprogress 1 $desc $expr
         ))
     end
     P = expr.args[1].args[2].args[2]
@@ -171,16 +171,16 @@ macro showprogress(desc, exprs...)
     infovals = map(infoval, infos)
 
     quote
-        progress = $Progress($length($(esc(P))), $desc)
+        progress = Progress(length($(esc(P))), 1, $desc)
         loops = 0
         while $(esc(condition))
             $(esc(body))
 
             loops += 1
-            progress.n = $length($(esc(P))) + loops
-            $next!(progress, showvalues = [$(infovals...)])
+            progress.n = length($(esc(P))) + loops
+            next!(progress, showvalues = [$(infovals...)])
         end
-        $finish!(progress)
+        finish!(progress)
     end
 end
 
