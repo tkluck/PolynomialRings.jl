@@ -2,9 +2,18 @@ module LinAlgUtil
 
 import LinearAlgebra: nullspace, I
 
+import InPlace: @inplace
+
 abstract type AbstractExactNumber <: Number end
 
 const ExactNumber = Union{Rational, AbstractExactNumber}
+
+reduceratios!(v::AbstractVector) = v
+reduceratios!(v::AbstractVector{<:Integer}) = @inplace v .÷= gcd(v)
+function reduceratios!(v::AbstractVector{<:Rational{<:Integer}})
+    @inplace v ./= gcd(numerator.(v))
+    @inplace v .*= gcd(denominator.(v))
+end
 
 function echelon(M::AbstractMatrix)
     M_aug = vcat(M, I)
@@ -26,6 +35,7 @@ function echelon(M::AbstractMatrix)
         for k=(j-1):-1:1
             if !iszero(M_aug[i,k])
                 M_aug[:,k] = M_aug[i,j]*M_aug[:,k] - M_aug[i,k] * M_aug[:,j]
+                reduceratios!(@view M_aug[:, k])
             end
         end
 
@@ -55,6 +65,5 @@ function nullspace(M::StridedMatrix{N}) where N <: ExactNumber
 
     return M_aug[(size(M,1)+1):end, zero_cols]
 end
-
 
 end
