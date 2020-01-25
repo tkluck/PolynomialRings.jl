@@ -4,11 +4,13 @@ using PolynomialRings
 import Base: +,-,*,/,//,==,!=
 import Base: promote_rule, convert
 import Base: show
+import Base: @pure
 import Base: zero, one, inv, copy
 import LinearAlgebra: nullspace
 import LinearAlgebra: tr, norm
 
 import ..Constants: Constant, One, MinusOne, Zero
+import ..ExtensionFields: ExtensionField
 import ..Ideals: ring
 import ..Monomials: AbstractMonomial
 import ..NamingSchemes: boundnames, fullboundnames
@@ -34,9 +36,9 @@ basering(::Type{<:NumberField{P}}) where P = basering(P)
 quotientring(::Type{<:NumberField{P,C,Q}}) where {P,C,Q} = Q
 
 _values = Dict()
-_primitive_element(N) = _values[N].primitive_element
-_minimal_polynomial(N) = _values[N].minimal_polynomial
-_extension_degree(N) = _values[N].extension_degree
+_primitive_element(N) = _values[N].primitive_element :: quotientring(N)
+_minimal_polynomial(N) = _values[N].minimal_polynomial :: Vector{basering(N)}
+_extension_degree(N) = _values[N].extension_degree :: Int
 _named_values(N) = _values[N].named_values
 
 # -----------------------------------------------------------------------------
@@ -86,6 +88,8 @@ function NumberField(Q::Type{<:QuotientRing})
         if size(K,2) == 1 && !iszero(K[end,1])
             # TODO: check that the polynomial is irreducible.
             K = K[:,1]
+            K .//= K[end]
+            #K .*= lcm(denominator.(K))
             α = α₁
             found = true
             break
@@ -114,10 +118,12 @@ function NumberField(Q::Type{<:QuotientRing})
 end
 
 convert(::Type{N}, c::N) where N <: NumberField = c
-convert(N::Type{<:NumberField}, c::Polynomial) = invoke(convert, Tuple{Type{N}, Any} where N <: NumberField, N, c)
-convert(N::Type{<:NumberField}, c::Number) = invoke(convert, Tuple{Type{N}, Any} where N <: NumberField, N, c)
+convert(N::Type{<:NumberField}, c::Polynomial) = _convert(N, c)
+convert(::Type{N}, c::PolynomialOver{N}) where N <: NumberField = _convert(N, c)
+convert(N::Type{<:NumberField}, c::Number) = _convert(N, c)
+convert(::Type{F}, c) where F <: NumberField = _convert(F, c)
 
-function convert(::Type{F}, c) where F <: NumberField
+function _convert(::Type{F}, c) where F <: NumberField
     #=
     We use a switch statement instead of many methods because there is too
     much possibility of method ambiguity
@@ -132,6 +138,9 @@ function convert(::Type{F}, c) where F <: NumberField
         coeffs = zeros(basering(F), _extension_degree(F))
         coeffs[1] = c
         return F(coeffs)
+    elseif c isa PolynomialOver{F}
+        # TODO: assert it is constant
+        return iszero(c) ? zero(basering(c)) : c.coeffs[1]
     elseif c isa Polynomial
         return convert(F, convert(quotientring(F), c))
     elseif c isa Symbol
@@ -226,17 +235,39 @@ end
 
 _gcd(a, b) = ( (d,u,v) = _gcdx(a, b); d )
 
+@inline _convolution(N, lo, hi, vec1, vec2) = reduce(+, (vec1[i] * vec2[N - i + 1] for i in lo:hi if !iszero(vec1[i]) && !iszero(vec2[N - i + 1])), init=zero(promote_type(eltype(vec1), eltype(vec2))))
+
+@pure @generated function _pow_of_generator_rem(::Type{Q}, m) where Q <: NumberField
+    N = _extension_degree(Q)
+    pows = map(N : 2N - 2) do i
+        c = zeros(basering(Q), 2N - 1)
+        c[i + 1] = one(basering(Q))
+        (i, Q(_rem(c, _minimal_polynomial(Q))[1:N]))
+    end
+    quote
+        $(
+        map(pows) do p
+            :( m == $(p[1]) && return $(p[2]) )
+        end...
+        )
+        error()
+    end
+end
+
 function *(a::Q, b::Q) where Q<:NumberField
     N = _extension_degree(Q)
-    coeffs = zeros(basering(Q), 2N-1)
-
-    for (i, a_i) in enumerate(a.coeffs)
-        for (j, b_j) in enumerate(b.coeffs)
-            coeffs[i+j-1] += a_i*b_j
+    coeffs = zeros(basering(Q), N)
+    for j in 1 : N
+        coeffs[j] = _convolution(j, 1, j, a.coeffs, b.coeffs)
+    end
+    for i in N + 1 : 2N - 1
+        if (q = _convolution(i, i + 1 - N, N, a.coeffs, b.coeffs)) |> !iszero
+            coeffs .+= q .* _pow_of_generator_rem(Q, i - 1).coeffs
         end
     end
 
-    return Q(_rem(coeffs, _minimal_polynomial(Q))[1:N])
+    return Q(coeffs)
+    #return Q(_rem(coeffs, _minimal_polynomial(Q))[1:N])
 end
 
 function inv(a::Q) where Q<:NumberField
@@ -245,7 +276,7 @@ function inv(a::Q) where Q<:NumberField
     if iszero(d[1]) || any(!iszero(d[2:end]))
         throw(DivideError("$a is not invertible"))
     end
-    return Q( u[1:N] // d[1] )
+    return Q( u[1:N] // d[1] ) :: Q
 end
 
 //(a::Q, b::Q) where Q<:NumberField = a * inv(b)
@@ -320,7 +351,7 @@ NumberFieldOver{C} = NumberField{P,C} where P<:Polynomial
 #
 # -----------------------------------------------------------------------------
 function tr(a::NumberField)
-    N = _extension_degree(Q)
+    N = _extension_degree(typeof(a))
     minpoly = _minimal_polynomial(typeof(a))
 
     N*a.coeffs[1] + minpoly[end-1]//minpoly[end] + xxx
@@ -351,7 +382,7 @@ end
 # Resolve method ambiguity
 #
 # -----------------------------------------------------------------------------
-for N = [QuotientRing, NumberField]
+for N = [QuotientRing, NumberField, ExtensionField]
     @eval begin
         promote_rule(::Type{T}, ::Type{C}) where {T<:$N, C <: Constant} = T
 
