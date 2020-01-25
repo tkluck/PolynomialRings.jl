@@ -87,7 +87,7 @@ function _variables_in_ring_definition(definition)
     elseif all(var isa Symbol for var in variable_spec)
         variables = variable_spec
     else
-        throw(RuntimeError("Cannot find variables in $definition"))
+        error("Cannot find variables in $definition")
     end
 
     if basering_spec isa Expr && basering_spec.head == :ref
@@ -101,7 +101,7 @@ function _inject_var(::Type{Outer}, ::Type{Inner}, name) where Outer where Inner
     if name in allvariablesymbols(Inner)
         return Outer(convert(Inner, name))
     else
-        throw(RuntimeError("Cannot find variable $name in $Inner"))
+        error("Cannot find variable $name in $Inner")
     end
 end
 
