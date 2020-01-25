@@ -94,7 +94,16 @@ function coefficient(a::AbstractArray{P}, args...) where P <: Polynomial
 end
 
 function constant_coefficient(a::AbstractArray{P}, args...) where P <: Polynomial
-    return map(a_i->constant_coefficient(a_i, args...), a)
+    MonomialType, CoeffType = expansiontypes(P, args...)
+    res = issparse(a) ? spzeros(CoeffType, size(a)...) : zeros(CoeffType, size(a))
+
+    ix = findfirst(!iszero, a)
+    while ix != nothing
+        res[ix] = constant_coefficient(a[ix], args...)
+        ix = findnext(!iszero, a, nextind(a, ix))
+    end
+
+    return res
 end
 
 function linear_coefficients(a::AbstractArray{P}, args...) where P <: Polynomial
