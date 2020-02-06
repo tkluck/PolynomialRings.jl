@@ -138,8 +138,6 @@ iterate(i::SingleItemIter, ::Nothing) = nothing
 
 include("LinAlgUtil.jl")
 
-isstrictlysorted(itr; lt) = issorted(itr; lt = (a, b) -> !lt(b, a))
-
 # -----------------------------------------------------------------------------
 #
 # Utility for showing progress on Gröbner basis computations

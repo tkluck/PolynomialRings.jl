@@ -14,7 +14,7 @@ function monomialorder end
 function termtype end
 function exptype end
 function namingscheme end
-function fullnamingscheme end
+function nestednamingscheme end
 function boundnames end
 function fullboundnames end
 function num_variables end
@@ -89,6 +89,9 @@ function lift end
 function syzygies end
 const groebner_basis = gröbner_basis
 const groebner_transformation = gröbner_transformation
+
+# TODO remove
+const fullnamingscheme = nestednamingscheme
 
 
 export generators, ⊗, to_dense_monomials, max_variable_index, base_extend

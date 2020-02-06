@@ -4,7 +4,8 @@ include("PolynomialRings/Methods.jl")
 include("PolynomialRings/Util.jl")
 include("PolynomialRings/Backends.jl")
 
-include("PolynomialRings/NamingSchemes.jl")
+include("NamingSchemes.jl")
+
 include("PolynomialRings/NamedValues.jl")
 include("PolynomialRings/Monomials.jl")
 include("PolynomialRings/MonomialOrderings.jl")
