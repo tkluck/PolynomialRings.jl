@@ -7,9 +7,9 @@ import Base: lcm
 
 import ProgressMeter: @showprogress
 
-import ..Monomials: AbstractMonomial, _construct, num_variables, nzindices, maybe_div
-import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
-import ..NamingSchemes: NamingScheme
+import ...AbstractMonomials: AbstractMonomial, _construct, num_variables, nzindices, maybe_div
+import ...MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
+import ...NamingSchemes: NamingScheme
 import PolynomialRings: monomialtype, exptype, basering, monomialorder, tail, divides, mutuallyprime, generators
 
 struct ByIndex end

@@ -8,7 +8,7 @@ import IterTools: groupby
 
 import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
-import ..Monomials: AbstractMonomial, TupleMonomial, exptype, expstype, enumeratenz, total_degree, exponents
+import ..AbstractMonomials: AbstractMonomial, TupleMonomial, exptype, expstype, enumeratenz, total_degree, exponents
 import ..NamedPolynomials: NamedPolynomial, _lossy_convert_monomial
 import ..Polynomials: Polynomial, termtype, monomialtype, monomialorder, polynomial_ring, PolynomialBy, SparsePolynomial
 import ..Terms: Term, monomial, coefficient

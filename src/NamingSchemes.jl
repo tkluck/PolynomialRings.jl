@@ -8,7 +8,7 @@ symbol together with an integer, e.g., `c[2]`).
 """
 module NamingSchemes
 
-import Base: issubset, *, promote_rule
+import Base: issubset, *, promote_rule, promote_type
 import Base: @pure
 
 import PolynomialRings: variablesymbols, namingscheme, nestednamingscheme, num_variables
@@ -199,6 +199,8 @@ end
     max = max(num_variables(N1), num_variables(N2))
     return Numbered{Name, max}
 end
+
+promote_type(args::NamingScheme...) = promote_type(typeof.(args)...)()
 
 # -----------------------------------------------------------------------------
 #

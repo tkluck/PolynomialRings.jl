@@ -4,8 +4,7 @@ import Base: *, ^, +, -, one, ==, iszero, diff
 import Base: hash
 
 import ..MonomialOrderings: MonomialOrder
-import ..Monomials: AbstractMonomial
-import ..Monomials: total_degree
+import ..AbstractMonomials: AbstractMonomial, total_degree
 import ..NamingSchemes: NamingScheme
 import ..Util: lazymap
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering

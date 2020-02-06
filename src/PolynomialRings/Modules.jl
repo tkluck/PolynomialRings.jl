@@ -10,7 +10,7 @@ import InPlace: @inplace, inclusiveinplace!
 
 import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
-import ..Monomials: AbstractMonomial
+import ..AbstractMonomials: AbstractMonomial
 import ..Monomials: total_degree
 import ..Operators: RedType, Lead, Full, Tail
 import ..Operators: one_step_div!, one_step_xdiv!, content, integral_fraction

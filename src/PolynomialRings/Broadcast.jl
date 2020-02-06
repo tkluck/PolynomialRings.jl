@@ -110,7 +110,7 @@ import InPlace: @inplace, inplace!
 import Transducers: eduction, Map, Filter, Eduction, Transducer, transduce
 
 import ..MonomialOrderings: MonomialOrder
-import ..Monomials: AbstractMonomial
+import ..AbstractMonomials: AbstractMonomial
 import ..Polynomials: Polynomial, DensePolynomial, PolynomialBy, SparsePolynomialBy, DensePolynomialBy, nzterms, nztermscount, TermBy, MonomialBy
 import ..Terms: Term, monomial, coefficient, basering
 import ..Util: MergingTransducer, @assertvalid

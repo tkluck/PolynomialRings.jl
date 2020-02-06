@@ -10,7 +10,7 @@ import Base: iszero, isone
 
 import InPlace: inplace!
 
-import ..Monomials: AbstractMonomial
+import ..AbstractMonomials: AbstractMonomial
 import ..Polynomials: Polynomial
 import ..Terms: Term
 

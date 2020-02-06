@@ -3,7 +3,7 @@ module Display
 import Base: show
 
 import ..MonomialOrderings: MonomialOrder
-import ..Monomials: AbstractMonomial, enumeratenz
+import ..AbstractMonomials: AbstractMonomial, enumeratenz
 import ..Polynomials: Polynomial, nzrevterms, basering
 import ..Terms: Term, coefficient, monomial
 import ..NamingSchemes: Named, Numbered

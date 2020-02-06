@@ -9,8 +9,8 @@ import InPlace: @inplace, inplace!, inclusiveinplace!
 import Transducers: Transducer, Eduction
 
 import ..MonomialOrderings: MonomialOrder
-import ..Monomials: AbstractMonomial, TupleMonomial, VectorMonomial
-import ..IndexedMonomials: IndexedMonomial
+import ..AbstractMonomials: AbstractMonomial
+import ..Monomials.IndexedMonomials: IndexedMonomial
 import ..NamingSchemes: Named, Numbered, NamingScheme, fullnamingscheme, isdisjoint, isvalid
 import ..Terms: Term, monomial, coefficient
 import ..Util: @assertvalid, _debug_isvalid

@@ -7,10 +7,11 @@ include("PolynomialRings/Backends.jl")
 include("NamingSchemes.jl")
 include("MonomialOrderings.jl")
 
+include("AbstractMonomials.jl")
+include("Monomials.jl")
+
 include("PolynomialRings/NamedValues.jl")
-include("PolynomialRings/Monomials.jl")
-include("PolynomialRings/IndexedMonomials.jl")
-include("PolynomialRings/MonomialIterators.jl")
+#include("PolynomialRings/MonomialIterators.jl")
 include("PolynomialRings/Terms.jl")
 include("PolynomialRings/Polynomials.jl")
 include("PolynomialRings/Constants.jl")
@@ -25,12 +26,12 @@ include("PolynomialRings/Reductions.jl")
 include("PolynomialRings/Groebner.jl")
 include("PolynomialRings/GroebnerGWV.jl")
 include("PolynomialRings/GroebnerSig.jl")
-include("PolynomialRings/GroebnerM4GB.jl")
+#include("PolynomialRings/GroebnerM4GB.jl")
 include("PolynomialRings/Conversions.jl")
 include("PolynomialRings/Solve.jl")
 
 # define this here to resolve a dependency cycle
-basering(::Type{M}) where M <: Monomials.AbstractMonomial = Constants.One
+basering(::Type{M}) where M <: AbstractMonomials.AbstractMonomial = Constants.One
 
 import .Monomials: TupleMonomial, VectorMonomial
 import .Terms: Term
@@ -72,7 +73,7 @@ end
 export construct_monomial
 # --------------------------
 
-import .Monomials: AbstractMonomial
+import .AbstractMonomials: AbstractMonomial
 const _P = Union{Polynomial,Term,AbstractMonomial}
 generators(x::_P)    = generators(typeof(x))
 basering(x::_P)      = basering(typeof(x))

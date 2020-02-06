@@ -12,7 +12,7 @@ import ..Expansions: _expansion_expr, expansiontypes
 import ..Expansions: constant_coefficient, linear_coefficients, expansion_terms
 import ..Expansions: expansion, expandcoefficients, coefficient, deg
 import ..Expansions: substitutedtype
-import ..Monomials: AbstractMonomial, expstype
+import ..AbstractMonomials: AbstractMonomial, expstype
 import ..Operators: common_denominator, integral_fraction
 import ..Polynomials: Polynomial, PolynomialOver, map_coefficients
 import ..Terms: Term

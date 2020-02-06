@@ -34,8 +34,10 @@ built-in one.
 """
 struct MonomialOrder{Rule, Names <: NamingScheme} <: Ordering end
 
-const NamedMonomialOrder    = MonomialOrder{Rule, <:Named}    where Rule
-const NumberedMonomialOrder = MonomialOrder{Rule, <:Numbered} where Rule
+const MonomialOrderIn{Scheme <: NamingScheme, Rule} = MonomialOrder{Rule, Scheme}
+
+const NamedMonomialOrder    = MonomialOrderIn{<:Named}
+const NumberedMonomialOrder = MonomialOrderIn{<:Numbered}
 
 rulesymbol(::O)       where O <: MonomialOrder{Rule, Names} where {Rule, Names} = Rule
 rulesymbol(::Type{O}) where O <: MonomialOrder{Rule, Names} where {Rule, Names} = Rule
@@ -196,26 +198,6 @@ macro withmonomialorder(order)
         lc(f) = $leading_coefficient(f, order=$order)
         tail(f) = $tail(f, order=$order)
     end)
-end
-
-function monomialtype(order::MonomialOrder, exptype::Type{<:Integer}=Int16)
-    N = num_variables(namingscheme(order))
-    if N < Inf
-        return TupleMonomial{N, exptype, typeof(order)}
-    else
-        return VectorMonomial{SparseVector{exptype, Int}, exptype, typeof(order)}
-    end
-end
-
-function monomialtype(names::Symbol...; order=:degrevlex, exptype::Type{<:Integer}=Int16)
-    order = MonomialOrder{order, Named{names}}()
-    return monomialtype(order, exptype)
-end
-
-function monomialtype(name::Symbol, n::Number; order=:degrevlex, exptype::Type{<:Integer}=Int16)
-    @assert n isa Integer || n == Inf
-    order = MonomialOrder{order, Numbered{name, n}}()
-    return monomialtype(order, exptype)
 end
 
 function syms_from_comparison(expr, macroname)
