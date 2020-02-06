@@ -201,11 +201,19 @@ macro withmonomialorder(order)
 end
 
 function syms_from_comparison(expr, macroname)
-    expr.head == :comparison || error("Use $macroname as follows: $macroname(x > y > z)")
-    syms = expr.args[1:2:end]
-    comparisons = expr.args[2:2:end]
-    all(isequal(:>), comparisons) || error("Use $macroname as follows: $macroname(x > y > z)")
-    return tuple(reverse(syms)...)
+    if expr isa Symbol
+        return tuple(expr)
+    elseif expr.head == :call && expr.args[1] == :>
+        syms = expr.args[2:3]
+        return tuple(reverse(syms)...)
+    elseif expr.head == :comparison
+        syms = expr.args[1:2:end]
+        comparisons = expr.args[2:2:end]
+        all(isequal(:>), comparisons) || error("Use $macroname as follows: $macroname(x > y > z)")
+        return tuple(reverse(syms)...)
+    else
+        error("Use $macroname as follows: $macroname(x > y > z)")
+    end
 end
 
 macro degrevlex(expr)

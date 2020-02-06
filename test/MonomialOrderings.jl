@@ -8,6 +8,8 @@ import PolynomialRings: @ring!
 
 @testset "MonomialOrderings" begin
     @testset "Constructors" begin
+        @test @degrevlex(x) isa MonomialOrder
+        @test @degrevlex(x > y) isa MonomialOrder
         @test @degrevlex(x > y > z) isa MonomialOrder
         @test @deglex(x > y > z) isa MonomialOrder
         @test @lex(x > y > z) isa MonomialOrder
