@@ -5,10 +5,10 @@ include("PolynomialRings/Util.jl")
 include("PolynomialRings/Backends.jl")
 
 include("NamingSchemes.jl")
+include("MonomialOrderings.jl")
 
 include("PolynomialRings/NamedValues.jl")
 include("PolynomialRings/Monomials.jl")
-include("PolynomialRings/MonomialOrderings.jl")
 include("PolynomialRings/IndexedMonomials.jl")
 include("PolynomialRings/MonomialIterators.jl")
 include("PolynomialRings/Terms.jl")

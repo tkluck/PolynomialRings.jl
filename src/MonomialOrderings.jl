@@ -7,7 +7,7 @@ import Base: promote_rule
 
 import SparseArrays: SparseVector
 
-import ..Monomials: AbstractMonomial, TupleMonomial, VectorMonomial, total_degree, index_union, rev_index_union
+#import ..Monomials: AbstractMonomial, TupleMonomial, VectorMonomial, total_degree, index_union, rev_index_union
 import ..NamingSchemes: NamingScheme, Named, Numbered
 import PolynomialRings: namingscheme, to_dense_monomials, variablesymbols, num_variables
 import PolynomialRings: leading_monomial, leading_coefficient, leading_term, tail
@@ -45,38 +45,45 @@ namingscheme(::Type{O}) where O <: MonomialOrder{Rule, Names} where {Rule, Names
 
 to_dense_monomials(n::Integer, o::MonomialOrder) = MonomialOrder{rulesymbol(o), typeof(to_dense_monomials(n, namingscheme(o)))}()
 
-function Base.Order.lt(::MonomialOrder{:degrevlex}, a::M,b::M) where M <: AbstractMonomial
-
-    if total_degree(a) == total_degree(b)
-        for i in rev_index_union(a,b)
-            if exponent(a, i) != exponent(b, i)
-                return exponent(a, i) > exponent(b, i)
+function Base.Order.lt(order::MonomialOrder{:degrevlex}, a, b)
+    a = leading_monomial(a, order)
+    b = leading_monomial(b, order)
+    scheme = namingscheme(order)
+    if deg(a, scheme) == deg(b, scheme)
+        for (_, (d, e)) in nzexponents(scheme, a, b, rev=true)
+            if d != e
+                return d > e
             end
         end
         return false
     else
-        return total_degree(a) < total_degree(b)
+        return deg(a, scheme) < deg(b, scheme)
     end
 end
 
-function Base.Order.lt(::MonomialOrder{:deglex}, a::M,b::M) where M <: AbstractMonomial
-
-    if total_degree(a) == total_degree(b)
-        for i in index_union(a,b)
-            if exponent(a, i) != exponent(b, i)
-                return exponent(a, i) < exponent(b, i)
+function Base.Order.lt(order::MonomialOrder{:deglex}, a, b)
+    a = leading_monomial(a, order)
+    b = leading_monomial(b, order)
+    scheme = namingscheme(order)
+    if deg(a, scheme) == deg(b, scheme)
+        for (_, (d, e)) in nzexponents(scheme, a, b)
+            if d != e
+                return d < e
             end
         end
         return false
     else
-        return total_degree(a) < total_degree(b)
+        return deg(a, scheme) < deg(b, scheme)
     end
 end
 
-function Base.Order.lt(::MonomialOrder{:lex}, a::M,b::M) where M <: AbstractMonomial
-    for i in index_union(a,b)
-        if exponent(a, i) != exponent(b, i)
-            return exponent(a, i) < exponent(b, i)
+function Base.Order.lt(order::MonomialOrder{:lex}, a, b)
+    a = leading_monomial(a, order)
+    b = leading_monomial(b, order)
+    scheme = namingscheme(order)
+    for (_, (d, e)) in nzexponents(scheme, a, b)
+        if d != e
+            return d < e
         end
     end
     return false
@@ -209,6 +216,29 @@ function monomialtype(name::Symbol, n::Number; order=:degrevlex, exptype::Type{<
     @assert n isa Integer || n == Inf
     order = MonomialOrder{order, Numbered{name, n}}()
     return monomialtype(order, exptype)
+end
+
+function syms_from_comparison(expr, macroname)
+    expr.head == :comparison || error("Use $macroname as follows: $macroname(x > y > z)")
+    syms = expr.args[1:2:end]
+    comparisons = expr.args[2:2:end]
+    all(isequal(:>), comparisons) || error("Use $macroname as follows: $macroname(x > y > z)")
+    return tuple(reverse(syms)...)
+end
+
+macro degrevlex(expr)
+    syms = syms_from_comparison(expr, "@degrevlex")
+    return MonomialOrder{:degrevlex, Named{syms}}()
+end
+
+macro deglex(expr)
+    syms = syms_from_comparison(expr, "@deglex")
+    return MonomialOrder{:deglex, Named{syms}}()
+end
+
+macro lex(expr)
+    syms = syms_from_comparison(expr, "@lex")
+    return MonomialOrder{:lex, Named{syms}}()
 end
 
 end
