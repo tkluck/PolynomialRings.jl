@@ -7,12 +7,12 @@ import SparseArrays: SparseVector, sparsevec, sparse
 
 import DataStructures: SortedDict, DefaultDict
 
+import ..AbstractMonomials: any_divisor
 import ..Backends.Gröbner: GWV
 import ..Constants: Zero
 import ..Modules: AbstractModuleElement, modulebasering, leading_row
 import ..Modules: withtransformations, separatetransformation
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
-import ..Monomials: any_divisor
 import ..Operators: Lead, Full, content, integral_fraction
 import ..Polynomials: Polynomial, monomialorder, monomialtype, PolynomialBy
 import ..Reductions: interreduce!, one_step_xdiv!

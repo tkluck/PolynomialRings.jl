@@ -5,7 +5,7 @@ import SparseArrays: SparseVector, issparse
 
 import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, rulesymbol
-import ..AbstractMonomials: AbstractMonomial, exptype, num_variables, nzindices
+import ..AbstractMonomials: AbstractMonomial, exptype, num_variables
 import ..Monomials.TupleMonomials: TupleMonomial
 import ..Monomials.VectorMonomials: VectorMonomial
 import ..NamingSchemes: Named, Numbered, NamingScheme, numberedvariablename, remove_variables, isdisjoint, boundnames, canonicalscheme

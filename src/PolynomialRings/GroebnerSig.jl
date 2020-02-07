@@ -9,10 +9,10 @@ import DataStructures: DefaultDict
 import DataStructures: PriorityQueue, enqueue!, dequeue!
 import IterTools: chain
 
+import ..AbstractMonomials: deg, any_divisor
 import ..Backends.Gröbner: Backend, F5C, Arri
 import ..Modules: AbstractModuleElement, modulebasering
 import ..MonomialOrderings: MonomialOrder, degreecompatible, @withmonomialorder
-import ..Monomials: deg, any_divisor
 import ..Operators: Lead, Full, integral_fraction, content
 import ..Polynomials: Polynomial, monomialorder, monomialtype
 import ..Terms: monomial, coefficient

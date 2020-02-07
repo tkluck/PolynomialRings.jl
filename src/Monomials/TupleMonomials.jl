@@ -28,7 +28,6 @@ end
 
 num_variables(::Type{TupleMonomial{N,I,Order}}) where {N,I,Order} = N
 exptype(::Type{TupleMonomial{N,I,Order}}) where I <: Integer where {N,Order} = I
-expstype(::Type{TupleMonomial{N,I,Order}}) where I <: Integer where {N,Order} = NTuple{N,I}
 
 exp(::Type{M}, exps::NTuple, deg=sum(exps)) where M <: TupleMonomial = M(exps, deg)
 exp(::Type{M}, exps, deg=sum(exps)) where M <: TupleMonomial = M(ntuple(i -> get(exps, i, 0), num_variables(M)), deg)

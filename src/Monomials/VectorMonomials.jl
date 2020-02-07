@@ -40,7 +40,6 @@ exp(::Type{M}, exps::Tuple, deg=sum(exps)) where M <: VectorMonomial = exp(M, co
 exp(::Type{M}, exps::AbstractVector, deg=sum(exps)) where M <: SparseVectorMonomial = M(sparse(exps), deg)
 
 exptype(::Type{VectorMonomial{V,I,Order}}) where {V,I,Order} = I
-expstype(::Type{VectorMonomial{V,I,Order}}) where {V,I,Order} = V
 @inline exponent(m::VectorMonomial, i::Integer) = i <= length(m.e) ? m.e[i] : zero(exptype(m))
 
 # special case for sparsevectors; for some reason, SparseVector{Int,Int}() does not give

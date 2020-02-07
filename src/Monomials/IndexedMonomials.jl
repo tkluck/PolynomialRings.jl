@@ -7,7 +7,7 @@ import Base: lcm
 
 import ProgressMeter: @showprogress
 
-import ...AbstractMonomials: AbstractMonomial, num_variables, nzindices, maybe_div
+import ...AbstractMonomials: AbstractMonomial, num_variables, maybe_div
 import ...MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
 import ...NamingSchemes: NamingScheme
 import PolynomialRings: monomialtype, exptype, basering, monomialorder, tail, divides, mutuallyprime, generators
