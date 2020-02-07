@@ -8,7 +8,7 @@ symbol together with an integer, e.g., `c[2]`).
 """
 module NamingSchemes
 
-import Base: issubset, *, diff, promote_rule, promote_type
+import Base: issubset, *, diff, indexin, promote_rule, promote_type
 import Base: @pure
 
 import PolynomialRings: variablesymbols, namingscheme, nestednamingscheme, num_variables
@@ -74,6 +74,9 @@ function isvalid(scheme::NestedNamingScheme)
     all(isvalid, scheme) || return false
 
 end
+
+indexin(x::Symbol, n::Named{Names}) where Names = findfirst(isequal(x), Names)
+indexin(x::Symbol, n::Numbered) = nothing
 
 @generated issubset(::Named{Names1}, ::Named{Names2}) where {Names1, Names2} = Names1 ⊆ Names2 && issorted(indexin(collect(Names1), collect(Names2)))
 issubset(::Named, ::Numbered) = false

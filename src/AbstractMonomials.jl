@@ -12,7 +12,7 @@ import SparseArrays: nonzeroinds
 # FIXME: reference cycle
 struct One end
 
-import ..NamingSchemes: Named, Numbered, NamingScheme, isdisjoint
+import ..NamingSchemes: Named, Numbered, NamingScheme, isdisjoint, variablesymbols
 import ..MonomialOrderings: MonomialOrderIn
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, monomialtype, num_variables, divides, mutuallyprime
 import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namingscheme, monomialorder, deg
@@ -264,5 +264,12 @@ end
 
 convert(::Type{M}, m::One) where M <: AbstractMonomial = exp(M, exponents(m, namingscheme(M)))
 convert(::Type{M}, m::M) where M <: AbstractMonomial = m
+
+function convert(::Type{M}, m::Symbol) where M <: NamedMonomial
+    ix = indexin(m, namingscheme(M))
+    exp(M, sparsevec([ix], [1]))
+end
+
+generators(::Type{M}) where M <: NamedMonomial = (convert(M, s) for s in variablesymbols(M))
 
 end # module

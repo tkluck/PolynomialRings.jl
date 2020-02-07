@@ -30,7 +30,7 @@ exptype(::Type{TupleMonomial{N,I,Order}}) where I <: Integer where {N,Order} = I
 expstype(::Type{TupleMonomial{N,I,Order}}) where I <: Integer where {N,Order} = NTuple{N,I}
 
 exp(::Type{M}, exps::NTuple, deg=sum(exps)) where M <: TupleMonomial = M(exps, deg)
-exp(::Type{M}, exps, deg=sum(exps)) where M <: TupleMonomial = M(ntuple(i -> exps[i], num_variables(M)), deg)
+exp(::Type{M}, exps, deg=sum(exps)) where M <: TupleMonomial = M(ntuple(i -> get(exps, i, 0), num_variables(M)), deg)
 
 @inline exponent(m::TupleMonomial, i::Integer) = m.e[i]
 

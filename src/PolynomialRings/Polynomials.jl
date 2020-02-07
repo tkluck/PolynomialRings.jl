@@ -11,7 +11,7 @@ import Transducers: Transducer, Eduction
 import ..MonomialOrderings: MonomialOrder
 import ..AbstractMonomials: AbstractMonomial
 import ..Monomials.IndexedMonomials: IndexedMonomial
-import ..NamingSchemes: Named, Numbered, NamingScheme, fullnamingscheme, isdisjoint, isvalid
+import ..NamingSchemes: Named, Numbered, NamingScheme, nestednamingscheme, isdisjoint, isvalid
 import ..Terms: Term, monomial, coefficient
 import ..Util: @assertvalid, _debug_isvalid
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering, monomialtype
@@ -37,12 +37,15 @@ const TermBy{Order,C}        = TermOver{C,Order}
 const TermIn{M}              = Term{M}
 
 include("SparsePolynomials.jl")
-include("DensePolynomials.jl")
+#include("DensePolynomials.jl")
+abstract type DensePolynomial{M, C} end
+abstract type DensePolynomialBy{M, C} end
+abstract type DensePolynomialOver{M, C} end
 
 const Polynomial{M, C} = Union{SparsePolynomial{M, C}, DensePolynomial{M, C}}
 
 function polynomialtype(M::Type{<:AbstractMonomial}, C::Type; sparse=true)
-    if !isdisjoint(namingscheme(M), fullnamingscheme(C)) || !isdisjoint(namingscheme(M), fullboundnames(C))
+    if !isdisjoint(namingscheme(M), nestednamingscheme(C)) || !isdisjoint(namingscheme(M), fullboundnames(C))
         error("Duplicate veriable names while creating polynomialring in $M over $C")
     end
     if C <: AbstractMonomial
@@ -286,7 +289,7 @@ function numbered_polynomial_ring(symbol::Symbol, n::Integer; basering::Type=Rat
 end
 
 function polynomial_ring(scheme::NamingScheme; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex, sparse=true)
-    if !isdisjoint(scheme, fullnamingscheme(basering)) || !isdisjoint(scheme, fullboundnames(basering)) || !isvalid(scheme)
+    if !isdisjoint(scheme, nestednamingscheme(basering)) || !isdisjoint(scheme, fullboundnames(basering)) || !isvalid(scheme)
         throw(ArgumentError("Duplicated symbols when extending $basering by $scheme"))
     end
     order = MonomialOrder{monomialorder, typeof(scheme)}()
