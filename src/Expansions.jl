@@ -2,20 +2,18 @@ module Expansions
 
 import Base: @pure
 import Base: diff
-import Base: promote_rule, convert
 import SparseArrays: spzeros, SparseVector
 
 import IterTools: groupby
 
-import ..AbstractMonomials: AbstractMonomial, TupleMonomial, exptype, expstype, enumeratenz, exponents
+import ..AbstractMonomials: AbstractMonomial, exptype, exponents
 import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
-import ..NamedPolynomials: NamedPolynomial
-import ..Polynomials: Polynomial, termtype, monomialtype, monomialorder, polynomial_ring, PolynomialBy, SparsePolynomial
+import ..Polynomials: Polynomial, monomialtype, monomialorder, SparsePolynomial
 import ..Terms: Term, monomial, coefficient
 import ..Util: @assertvalid
 import ..NamingSchemes: Named, Numbered, NamingScheme, remove_variables
-import PolynomialRings: basering, namingscheme, variablesymbols, expansion, expand, polynomialtype
+import PolynomialRings: namingscheme, variablesymbols, expansion, expand, polynomialtype
 import PolynomialRings: deg
 
 # -----------------------------------------------------------------------------
