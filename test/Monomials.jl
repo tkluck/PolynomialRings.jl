@@ -5,7 +5,7 @@ import PolynomialRings.MonomialOrderings: @lex
 import PolynomialRings.AbstractMonomials: exponents, exponentsnz
 import PolynomialRings.Monomials: @monomial
 import PolynomialRings: monomialtype
-import PolynomialRings: maybe_div, lcm, gcd, divides, lcm_multipliers
+import PolynomialRings: maybe_div, lcm, gcd, divides, lcm_multipliers, deg
 
 @testset "Monomials" begin
     @testset "Constructors" begin
@@ -31,6 +31,10 @@ import PolynomialRings: maybe_div, lcm, gcd, divides, lcm_multipliers
             (3, (0, 1)),
             (4, (2, 0)),
         ]
+
+        @test deg(@monomial(x*y^2), @namingscheme(x)) == 1
+        @test deg(@monomial(x*y^2), @namingscheme(y)) == 2
+        @test deg(@monomial(x*y^2), @namingscheme((x,y))) == 3
     end
 
     sometypes = [
