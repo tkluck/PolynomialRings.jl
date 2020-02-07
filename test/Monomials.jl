@@ -1,7 +1,9 @@
 using Test
 
 import PolynomialRings.NamingSchemes: @namingscheme
+import PolynomialRings.MonomialOrderings: @lex
 import PolynomialRings.Monomials: @monomial, maybe_div
+import PolynomialRings: monomialtype
 
 @testset "Monomials" begin
     @testset "Constructors" begin
@@ -17,8 +19,8 @@ import PolynomialRings.Monomials: @monomial, maybe_div
     end
 
     @testset "Exponents" begin
-        @test exponents(@monomial(x*y^2), @namingscheme(x,y)) == [1,2]
-        @test exponents(@monomial(y^2), @namingscheme(x,y)) == [0,2]
+        @test exponents(@monomial(x*y^2), @namingscheme((x,y))) == [1,2]
+        @test exponents(@monomial(y^2), @namingscheme((x,y))) == [0,2]
         @test exponents(@monomial(c[2]^2*c[3]), @namingscheme(c[])) == [0,2,1]
         @test exponents(@monomial(c[2]^2*c[3]), @namingscheme(c[1:5])) == [0,2,1,0,0]
 
@@ -29,15 +31,20 @@ import PolynomialRings.Monomials: @monomial, maybe_div
         ]
     end
 
-    @test "Arithmetic in $M" for M in [
+    sometypes = [
         monomialtype(:x, :y),
         monomialtype(@namingscheme(c[])),
         monomialtype(@lex(x > y)),
     ]
+
+    @testset "Arithmetic in $M" for M in sometypes
         x = rand(M, 100)
         y = rand(M, 100)
         @test x .* one(M) == x
         @test one(M) .* y == y
+
+        @test x .^ 2 == x .* x
+        @test x .^ 5 == x .* x .* x .* x .* x
 
         z = x .* y
         @test maybe_div.(z, x) == y
