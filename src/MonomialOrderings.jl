@@ -5,13 +5,9 @@ import Base: min, max, minimum, maximum
 import Base: findmin, findmax, argmin, argmax
 import Base: promote_rule
 
-import SparseArrays: SparseVector
-
-#import ..Monomials: AbstractMonomial, TupleMonomial, VectorMonomial, total_degree, index_union, rev_index_union
 import ..NamingSchemes: NamingScheme, Named, Numbered
 import PolynomialRings: namingscheme, to_dense_monomials, variablesymbols, num_variables
 import PolynomialRings: leading_monomial, leading_coefficient, leading_term, tail
-import PolynomialRings: monomialtype
 
 """
     struct MonomialOrder{Rule, Names} <: Ordering end
@@ -19,10 +15,10 @@ import PolynomialRings: monomialtype
 For implementing your own monomial order, do the following:
 
 1. Choose a symbol to represent it, say `:myorder`
-2. `Base.Order.lt(::MonomialOrder{:myorder}, a::M, b::M) where M <: AbstractMonomial = ...`
+2. `Base.Order.lt(::MonomialOrder{:myorder}, a, b) = ...`
 
-A few useful functions are [`enumeratenz`](@ref), [`index_union`](@ref), and
-[`rev_index_union`](@ref). See [`PolynomialRings.Monomials`](@ref) and
+A few useful functions are [`exponents`](@ref) and [`exponentsnz`](@ref). See
+[`PolynomialRings.AbstractMonomials`](@ref) and
 [`PolynomialRings.MonomialOrderings`](@ref) for details.
 
 You can then create a ring that uses it by calling
@@ -46,72 +42,6 @@ namingscheme(::O)       where O <: MonomialOrder{Rule, Names} where {Rule, Names
 namingscheme(::Type{O}) where O <: MonomialOrder{Rule, Names} where {Rule, Names} = Names()
 
 to_dense_monomials(n::Integer, o::MonomialOrder) = MonomialOrder{rulesymbol(o), typeof(to_dense_monomials(n, namingscheme(o)))}()
-
-function Base.Order.lt(order::MonomialOrder{:degrevlex}, a, b)
-    a = leading_monomial(a, order)
-    b = leading_monomial(b, order)
-    scheme = namingscheme(order)
-    if deg(a, scheme) == deg(b, scheme)
-        for (_, (d, e)) in nzexponents(scheme, a, b, rev=true)
-            if d != e
-                return d > e
-            end
-        end
-        return false
-    else
-        return deg(a, scheme) < deg(b, scheme)
-    end
-end
-
-function Base.Order.lt(order::MonomialOrder{:deglex}, a, b)
-    a = leading_monomial(a, order)
-    b = leading_monomial(b, order)
-    scheme = namingscheme(order)
-    if deg(a, scheme) == deg(b, scheme)
-        for (_, (d, e)) in nzexponents(scheme, a, b)
-            if d != e
-                return d < e
-            end
-        end
-        return false
-    else
-        return deg(a, scheme) < deg(b, scheme)
-    end
-end
-
-function Base.Order.lt(order::MonomialOrder{:lex}, a, b)
-    a = leading_monomial(a, order)
-    b = leading_monomial(b, order)
-    scheme = namingscheme(order)
-    for (_, (d, e)) in nzexponents(scheme, a, b)
-        if d != e
-            return d < e
-        end
-    end
-    return false
-end
-
-# This method is mostly for supporting leading monomials of elements of a free
-# f.g. module which is a tuple (index, monomial). That's in use in Gröbner,
-# and maybe this implementation detail should move there.
-function Base.Order.lt(m::MonomialOrder, a::T, b::T) where T <: Tuple
-    for i = 1:fieldcount(T)
-        if fieldtype(T,i) <: AbstractMonomial
-            if Base.Order.lt(m, exponent(a, i), exponent(b, i))
-                return true
-            elseif Base.Order.lt(m, exponent(b, i), exponent(a, i))
-                return false
-            end
-        else
-            if isless(a[i], b[i])
-                return true
-            elseif isless(b[i], a[i])
-                return false
-            end
-        end
-    end
-    return false
-end
 
 min(m::MonomialOrder, x, y) = Base.Order.lt(m, x, y) ? x : y
 max(m::MonomialOrder, x, y) = Base.Order.lt(m, x, y) ? y : x

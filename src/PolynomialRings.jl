@@ -6,8 +6,9 @@ include("PolynomialRings/Backends.jl")
 
 include("NamingSchemes.jl")
 include("MonomialOrderings.jl")
-
 include("AbstractMonomials.jl")
+
+include("StandardMonomialOrderings.jl")
 include("Monomials.jl")
 
 include("PolynomialRings/NamedValues.jl")
