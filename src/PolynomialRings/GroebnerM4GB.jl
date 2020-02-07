@@ -13,7 +13,7 @@ import ..IndexedMonomials: ByIndex, IndexedMonomial
 import ..Modules: AbstractModuleElement, modulebasering, Signature, leading_row
 import ..MonomialIterators: monomialiter
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
-import ..Monomials: AbstractMonomial, total_degree, lcm_degree, num_variables
+import ..Monomials: AbstractMonomial, lcm_degree, num_variables
 import ..NamingSchemes: namingscheme
 import ..Operators: integral_fraction
 import ..Polynomials: Polynomial, nzterms, nztailterms, nzrevterms, leading_monomial

@@ -4,7 +4,7 @@ import Base: *, ^, +, -, one, ==, iszero, zero, diff
 import Base: hash
 
 import ..MonomialOrderings: MonomialOrder
-import ..AbstractMonomials: AbstractMonomial, total_degree
+import ..AbstractMonomials: AbstractMonomial
 import ..NamingSchemes: NamingScheme, Variable
 import ..Util: lazymap
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering
@@ -105,7 +105,6 @@ function diff(t::T, x::Variable) where T <: Term
     end
 end
 
-total_degree(a::Term) = total_degree(monomial(a))
 lcm_degree(a::T, b::T) where T<:Term = lcm_degree(monomial(a), monomial(b))
 
 Base.Order.lt(o::MonomialOrder, a::T,b::T) where T <: Term = Base.Order.lt(o, monomial(a), monomial(b))

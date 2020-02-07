@@ -12,7 +12,7 @@ import ..Constants: Zero
 import ..Modules: AbstractModuleElement, modulebasering, leading_row
 import ..Modules: withtransformations, separatetransformation
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
-import ..Monomials: total_degree, any_divisor
+import ..Monomials: any_divisor
 import ..Operators: Lead, Full, content, integral_fraction
 import ..Polynomials: Polynomial, monomialorder, monomialtype, PolynomialBy
 import ..Reductions: interreduce!, one_step_xdiv!

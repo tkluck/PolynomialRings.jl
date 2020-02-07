@@ -7,8 +7,8 @@ import SparseArrays: SparseVector, sparsevec, sparse
 import SparseArrays: nonzeroinds
 
 import ...AbstractMonomials: AbstractMonomial, MonomialIn, exponents
-import ...NamingSchemes: Numbered
-import PolynomialRings: exptype, max_variable_index
+import ...NamingSchemes: NamingScheme, Numbered
+import PolynomialRings: exptype, max_variable_index, deg
 
 # -----------------------------------------------------------------------------
 #
@@ -69,7 +69,7 @@ end
 # VectorMonomial: overloads for speedup
 #
 # -----------------------------------------------------------------------------
-total_degree(a::VectorMonomial) = a.deg
+deg(a::typeintersect(VectorMonomial, MonomialIn{Scheme}), ::Scheme) where Scheme <: NamingScheme = a.deg
 
 #= TODO
 function iterate(enz::EnumerateNZ{<:VectorMonomial{<:SparseVector}}, state=1)

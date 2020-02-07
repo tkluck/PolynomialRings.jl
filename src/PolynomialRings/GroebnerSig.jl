@@ -12,7 +12,7 @@ import IterTools: chain
 import ..Backends.Gröbner: Backend, F5C, Arri
 import ..Modules: AbstractModuleElement, modulebasering
 import ..MonomialOrderings: MonomialOrder, degreecompatible, @withmonomialorder
-import ..Monomials: total_degree, any_divisor
+import ..Monomials: deg, any_divisor
 import ..Operators: Lead, Full, integral_fraction, content
 import ..Polynomials: Polynomial, monomialorder, monomialtype
 import ..Terms: monomial, coefficient
@@ -143,7 +143,7 @@ function gröbner_basis_sig_incremental(alg::Backend, polynomials::AbstractVecto
         for p in polynomials[2:end]
             m_a, m_b = lcm_multipliers(leading_monomial(new_p), leading_monomial(p))
             s = Signature(1, m_a)
-            enqueue!(P[total_degree(m_a)], (s, new_p, p), s)
+            enqueue!(P[deg(m_a)], (s, new_p, p), s)
         end
     end
     for (i,p) in enumerate(polynomials)
@@ -222,10 +222,10 @@ function gröbner_basis_sig_incremental(alg::Backend, polynomials::AbstractVecto
                             divisible = maybe_div(μ, τ) !== nothing
                             divisible
                         end
-                            if total_degree(μ) == current_degree
+                            if deg(μ) == current_degree
                                 S[μ,p,q] = μ
                             else
-                                P[total_degree(μ)][μ,p,q] = μ
+                                P[deg(μ)][μ,p,q] = μ
                             end
                         end
                     end

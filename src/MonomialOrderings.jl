@@ -7,7 +7,7 @@ import Base: promote_rule
 
 import ..NamingSchemes: NamingScheme, Named, Numbered
 import PolynomialRings: namingscheme, to_dense_monomials, variablesymbols, num_variables
-import PolynomialRings: leading_monomial, leading_coefficient, leading_term, tail
+import PolynomialRings: leading_monomial, leading_coefficient, leading_term, tail, deg
 
 """
     struct MonomialOrder{Rule, Names} <: Ordering end
@@ -127,6 +127,7 @@ macro withmonomialorder(order)
         lt(f) = $leading_term(f, order=$order)
         lc(f) = $leading_coefficient(f, order=$order)
         tail(f) = $tail(f, order=$order)
+        deg(f) = $deg(f, $namingscheme($order))
     end)
 end
 

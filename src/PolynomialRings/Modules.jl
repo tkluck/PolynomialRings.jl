@@ -11,7 +11,6 @@ import InPlace: @inplace, inclusiveinplace!
 import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
 import ..AbstractMonomials: AbstractMonomial
-import ..Monomials: total_degree
 import ..Operators: RedType, Lead, Full, Tail
 import ..Operators: one_step_div!, one_step_xdiv!, content, integral_fraction
 import ..Polynomials: Polynomial, monomialorder, basering, tail
@@ -22,7 +21,7 @@ import ..Util: nzpairs, isnonzero
 import PolynomialRings: leaddiv, leadrem, leaddivrem
 import PolynomialRings: leading_row, leading_term, leading_monomial, leading_coefficient, base_extend
 import PolynomialRings: maybe_div, divides, lcm_degree, lcm_multipliers, mutuallyprime
-import PolynomialRings: termtype, monomialtype, base_restrict
+import PolynomialRings: termtype, monomialtype, base_restrict, deg
 
 iszero(x::SparseVector{<:Polynomial}) = all(iszero, nonzeros(x))
 """
@@ -77,7 +76,7 @@ mutuallyprime(s::Signature, t::Signature)        = s.i == t.i ? mutuallyprime(s.
 lcm_degree(s::Signature, t::Signature)           = s.i == t.i ? lcm_degree(s.m, t.m) : nothing
 lcm_multipliers(s::Signature, t::Signature)      = s.i == t.i ? lcm_multipliers(s.m, t.m) : nothing
 lcm(s::Signature, t::Signature)                  = s.i == t.i ? Signature(s.i, lcm(s.m, t.m)) : nothing
-total_degree(s::Signature)                       = total_degree(s.m)
+deg(s::Signature, scheme)                        = deg(s.m, scheme)
 Base.Order.lt(o::MonomialOrder, s::Signature, t::Signature) = s.i > t.i || (s.i == t.i && Base.Order.lt(o, s.m, t.m))
 ==(s::S, t::S) where S <: Signature = s.i == t.i && s.m == t.m
 iszero(s::Signature{<:Term}) = iszero(s.m)

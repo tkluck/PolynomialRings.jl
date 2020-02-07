@@ -4,8 +4,9 @@ import Base: exp, rand
 
 import Random: AbstractRNG, SamplerType
 
-import ...AbstractMonomials: AbstractMonomial, num_variables, maybe_div
-import PolynomialRings: exptype
+import ...AbstractMonomials: AbstractMonomial, MonomialIn, num_variables, maybe_div
+import ...NamingSchemes: NamingScheme
+import PolynomialRings: exptype, deg
 
 # -----------------------------------------------------------------------------
 #
@@ -39,7 +40,7 @@ exp(::Type{M}, exps, deg=sum(exps)) where M <: TupleMonomial = M(ntuple(i -> get
 # TupleMonomial: overloads for speedup
 #
 # -----------------------------------------------------------------------------
-total_degree(a::TupleMonomial) = a.deg
+deg(a::typeintersect(TupleMonomial, MonomialIn{Scheme}), ::Scheme) where Scheme <: NamingScheme = a.deg
 
 ==(a::M, b::M) where M <: TupleMonomial = a.e == b.e
 
