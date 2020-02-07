@@ -9,10 +9,10 @@ import IterTools: groupby
 import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
 import ..AbstractMonomials: AbstractMonomial, TupleMonomial, exptype, expstype, enumeratenz, total_degree, exponents
-import ..NamedPolynomials: NamedPolynomial, _lossy_convert_monomial
+import ..NamedPolynomials: NamedPolynomial
 import ..Polynomials: Polynomial, termtype, monomialtype, monomialorder, polynomial_ring, PolynomialBy, SparsePolynomial
 import ..Terms: Term, monomial, coefficient
-import ..Util: SingleItemIter, @assertvalid
+import ..Util: @assertvalid
 import ..NamingSchemes: Named, Numbered, NamingScheme, remove_variables
 import PolynomialRings: basering, namingscheme, variablesymbols, expansion, expand, polynomialtype
 
@@ -61,7 +61,7 @@ julia> collect(expansion(x^3 + y^2, :x, :y))
 `@expansion(...)`, `@coefficient` and `coefficient`
 """
 expand(p, spec...) = (
-    (exponents(m), c)
+    (exponents(m, namingscheme(m)), c)
     for (m, c) in expansion(p, spec...)
 )
 
@@ -97,6 +97,16 @@ expansion(p::Term, spec...) = expansion(p, _expansionspec(spec...))
 expansion(p::AbstractMonomial, spec...) = expansion(p, _expansionspec(spec...))
 expansion(p::Number, spec...) = ((one(monomialtype(spec...)), p),)
 
+function _splitmonomial(M1, M2, m)
+    m1 = exp(M1, exponents(m, namingscheme(M1)))
+    m2 = exp(M2, exponents(m, namingscheme(M2)))
+    return (m1, m2)
+end
+
+function _splitmonomial(M1, M2::Type{One}, m)
+    return (convert(M1, m), One())
+end
+
 _ofpolynomialtype(m::AbstractMonomial, c) = _ofpolynomialtype(Term(m, c))
 _ofpolynomialtype(m, c) = m * c
 _ofpolynomialtype(t::Term{M,C}) where {M,C} = @assertvalid SparsePolynomial(M[monomial(t)], C[coefficient(t)])
@@ -106,8 +116,7 @@ function expansion(p::Polynomial, spec::MonomialOrder)
     M′ = remove_variables(monomialtype(p), namingscheme(spec))
     exploded = Tuple{M, C}[
         (
-            m = _lossy_convert_monomial(M, m1);
-            m′ = _lossy_convert_monomial(M′, m1);
+            (m, m′) = _splitmonomial(M, M′, m1);
             c′ = _ofpolynomialtype(m′, c);
             (m * m2, c′)
         )
@@ -129,8 +138,7 @@ end
 function expansion(a::AbstractMonomial, spec::MonomialOrder)
     C = remove_variables(typeof(a), namingscheme(spec))
     M = monomialtype(spec, exptype(typeof(a), namingscheme(spec)))
-    c = _lossy_convert_monomial(C, a)
-    m = _lossy_convert_monomial(M, a)
+    c, m = _splitmonomial(C, M, a)
     return ((m, c),)
 end
 
