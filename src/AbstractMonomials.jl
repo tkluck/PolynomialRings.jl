@@ -12,7 +12,7 @@ import SparseArrays: nonzeroinds
 # FIXME: reference cycle
 struct One end
 
-import ..NamingSchemes: Named, Numbered, NamingScheme, isdisjoint, variablesymbols
+import ..NamingSchemes: Variable, Named, Numbered, NamingScheme, isdisjoint, variablesymbols
 import ..MonomialOrderings: MonomialOrderIn
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, monomialtype, num_variables, divides, mutuallyprime
 import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namingscheme, monomialorder, deg
@@ -134,12 +134,24 @@ function lcm_multipliers(a::AbstractMonomial, b::AbstractMonomial)
     )
 end
 
-function diff(a::M, i::Integer) where M <: AbstractMonomial
-    n = exponent(a, i)
+function exponent(a::AbstractMonomial, x::Variable)
+    if (ix = indexin(x, namingscheme(a))) |> !isnothing
+        if ix <= length(a.e)
+            return a.e[ix]
+        end
+    end
+    return zero(exptype(a))
+end
+
+function diff(a::M, x::Variable) where M <: AbstractMonomial
+    n = exponent(a, x)
     if iszero(n)
         return (n, one(M))
     else
-        return (n, _construct(M, j -> (j==i ? exponent(a, j) - one(exptype(M)) : exponent(a, j)), nzindices(a)))
+        i = indexin(x, namingscheme(a))
+        exps = exponents(a, namingscheme(a))
+        newexps = map(((j, e),) -> j == i ? e - one(e) : e, enumerate(exps))
+        return (n, exp(M, newexps))
     end
 end
 

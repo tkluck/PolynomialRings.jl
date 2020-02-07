@@ -1,6 +1,6 @@
 using Test
 
-import PolynomialRings.NamingSchemes: @namingscheme
+import PolynomialRings.NamingSchemes: @namingscheme, @variable
 import PolynomialRings.MonomialOrderings: @lex
 import PolynomialRings.AbstractMonomials: exponents, exponentsnz
 import PolynomialRings.Monomials: @monomial
@@ -61,6 +61,16 @@ import PolynomialRings: maybe_div, lcm, gcd, divides, lcm_multipliers, deg
         @test maybe_div.(x .* y, gcd.(x, y)) == lcm.(x, y)
 
         # TODO: more arithmetic
+    end
+
+    @testset "Differentiation" begin
+        @test diff(@monomial(x^2*y), @variable(x)) == (2, @monomial(x*y))
+        @test diff(@monomial(x^2*y), @variable(y)) == (1, @monomial(x^2))
+        @test diff(@monomial(x^2*y), @variable(z)) == (0, 1)
+
+        @test diff(@monomial(c[1]^2*c[2]), @variable(c[1])) == (2, @monomial(c[1]*c[2]))
+        @test diff(@monomial(c[1]^2*c[2]), @variable(c[2])) == (1, @monomial(c[1]^2))
+        @test diff(@monomial(c[1]^2*c[2]), @variable(c[3])) == (0, 1)
     end
 
     @testset "Conversions" begin

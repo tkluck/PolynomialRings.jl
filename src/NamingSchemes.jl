@@ -50,6 +50,16 @@ end
 
 # -----------------------------------------------------------------------------
 #
+# Variables
+#
+# -----------------------------------------------------------------------------
+abstract type Variable end
+
+struct NamedVariable{Name}        <: Variable end
+struct NumberedVariable{Name, Ix} <: Variable end
+
+# -----------------------------------------------------------------------------
+#
 # Finite enumeration of variable names
 #
 # -----------------------------------------------------------------------------
@@ -75,8 +85,11 @@ function isvalid(scheme::NestedNamingScheme)
 
 end
 
-indexin(x::Symbol, n::Named{Names}) where Names = findfirst(isequal(x), Names)
+@pure indexin(x::Symbol, n::Named{Names}) where Names = findfirst(isequal(x), Names)
 indexin(x::Symbol, n::Numbered) = nothing
+@pure indexin(x::NamedVariable{Name}, n::Named{Names}) where {Name, Names} = findfirst(isequal(Name), Names)
+indexin(x::NumberedVariable{Name, Ix}, n::Numbered{Name}) where {Name, Ix} = Ix
+indexin(x::Variable, n::NamingScheme) = nothing
 
 @generated issubset(::Named{Names1}, ::Named{Names2}) where {Names1, Names2} = Names1 ⊆ Names2 && issorted(indexin(collect(Names1), collect(Names2)))
 issubset(::Named, ::Numbered) = false
@@ -212,6 +225,17 @@ promote_type(args::NamingScheme...) = promote_type(typeof.(args)...)()
 # Constructors
 #
 # -----------------------------------------------------------------------------
+macro variable(x)
+    if x isa Symbol
+        return NamedVariable{x}()
+    elseif x isa Expr && x.head == :ref
+        sym, ix = x.args
+        return NumberedVariable{sym, ix}()
+    else
+        error("Usage: @variable(x) or @variable(x[3])")
+    end
+end
+
 parse_namingscheme(s::Symbol) = Named{(s,)}()
 
 function parse_namingscheme(expr::Expr)

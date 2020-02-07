@@ -1,10 +1,23 @@
 using Test
 
-using PolynomialRings.NamingSchemes: @namingscheme, @nestednamingscheme
+using PolynomialRings.NamingSchemes: @variable, @namingscheme, @nestednamingscheme
 using PolynomialRings.NamingSchemes: iscanonical, canonicalscheme
 using PolynomialRings.NamingSchemes: NamingSchemeError
 
 @testset "NamingSchemes" begin
+    @testset "Variables" begin
+        @test @variable(x) == @variable(x)
+        @test @variable(x) != @variable(y)
+        @test @variable(x[1]) == @variable(x[1])
+        @test @variable(x[1]) != @variable(x[2])
+        @test @variable(x[1]) != @variable(x)
+
+        @test indexin(@variable(x), @namingscheme(x)) == 1
+        @test indexin(@variable(x), @namingscheme((x,y))) == 1
+        @test indexin(@variable(y), @namingscheme((x,y))) == 2
+        @test indexin(@variable(z), @namingscheme((x,y))) == nothing
+    end
+
     @testset "Composition" begin
         @test @namingscheme(x) * @namingscheme(y) == @nestednamingscheme(x,y)
         @test @namingscheme(c[]) * @namingscheme(y) == @nestednamingscheme(c[],y)
