@@ -114,6 +114,7 @@ joinsparse(x::Type{<:Polynomial}, y::Type{<:Polynomial}) = issparse(x) && isspar
 ≺(a::Numbered, b::Named) = true
 ≺(a::Numbered, b::Numbered) = numberedvariablename(a) < numberedvariablename(b)
 ≺(a::Named, b::Named) = false
+≺(a::Named, b::Numbered) = false
 
 promote_canonical_type(T1::Type, T2::Type) = promote_type(T1, T2)
 
