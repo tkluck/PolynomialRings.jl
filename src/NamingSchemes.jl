@@ -8,11 +8,11 @@ symbol together with an integer, e.g., `c[2]`).
 """
 module NamingSchemes
 
-import Base: issubset, *, diff, indexin, promote_rule, promote_type
 import Base: @pure
+import Base: issubset, *, diff, indexin, promote_rule, promote_type
 
-import PolynomialRings: variablesymbols, namingscheme, nestednamingscheme, num_variables
 import PolynomialRings: boundnames, fullboundnames, iscanonical, canonicaltype
+import PolynomialRings: variablesymbols, namingscheme, nestednamingscheme, num_variables
 
 variablesymbols(a) = variablesymbols(namingscheme(a))
 numberedvariablename(a) = numberedvariablename(namingscheme(a))

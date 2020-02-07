@@ -1,16 +1,16 @@
 module MonomialIterators
 
 import Base: *, ==, //, +, -
-import Base: iszero, zero
-import Base: hash, convert, getindex, iterate
-import Base: lcm
 import Base: IteratorSize
+import Base: hash, convert, getindex, iterate
+import Base: iszero, zero
+import Base: lcm
 
 import ProgressMeter: @showprogress
 
 import ..IndexedMonomials: IndexedMonomial, ByIndex
-import ..Monomials: TupleMonomial, AbstractMonomial, num_variables, nzindices, maybe_div
 import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder, rulesymbol
+import ..Monomials: TupleMonomial, AbstractMonomial, num_variables, nzindices, maybe_div
 import ..NamingSchemes: NamingScheme
 import PolynomialRings: monomialtype, exptype, basering, monomialorder, tail, divides
 

@@ -1,23 +1,21 @@
 module Util
 
 import Base: delete!, similar
+import Base: filter, filter!
 import Base: iterate
 import Base: length, isempty
 import Base: length, iterate
-import Base: filter, filter!
 import Base: pairs
-
 import SparseArrays: SparseVector, SparseMatrixCSC
-
-import Transducers: Transducer, R_, inner, wrap, xform
-import Transducers: wrapping, unwrap
-import Transducers: start, next, complete
 
 import DataStructures: PriorityQueue, SortedSet, OrderedSet, OrderedDict
 import DataStructures: percolate_down!, percolate_up!, enqueue!, dequeue!, peek
 import OrderedCollections: ht_keyindex, rehash!
 import ProgressMeter
 import ProgressMeter: Progress, next!, finish!
+import Transducers: Transducer, R_, inner, wrap, xform
+import Transducers: start, next, complete
+import Transducers: wrapping, unwrap
 
 # -----------------------------------------------------------------------------
 #

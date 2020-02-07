@@ -6,16 +6,16 @@ import Base: promote_op, promote
 import Base: promote_rule, convert, Bottom
 import LinearAlgebra: UniformScaling
 
-import ..Modules: AbstractModuleElement
 import ..AbstractMonomials: AbstractMonomial
+import ..Modules: AbstractModuleElement
 import ..Operators: RedType
 import ..Polynomials: Polynomial, termtype, monomialtype, basering, map_coefficients
 import ..Polynomials: PolynomialOver, NamedPolynomial, polynomialtype
 import ..Terms: Term, monomial, coefficient
 import ..Util: @assertvalid
 import PolynomialRings: fraction_field, integers, base_extend, base_restrict, namingscheme
-import PolynomialRings: ⊗, base_extend, base_restrict
 import PolynomialRings: xdiv, xrem, xdivrem
+import PolynomialRings: ⊗, base_extend, base_restrict
 
 # -----------------------------------------------------------------------------
 #

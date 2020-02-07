@@ -4,9 +4,9 @@ recursions, e.g. in expansion().
 """
 module Constants
 
+import Base: iszero, isone
 import Base: promote_rule, convert, +, *, -, zero, one
 import Base: to_power_type
-import Base: iszero, isone
 
 import InPlace: inplace!
 

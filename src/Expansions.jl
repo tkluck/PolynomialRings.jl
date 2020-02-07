@@ -9,13 +9,13 @@ import IterTools: groupby
 import ..AbstractMonomials: AbstractMonomial, exptype, exponents
 import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
+import ..NamingSchemes: Named, Numbered, NamingScheme, remove_variables
 import ..NamingSchemes: NamedVariable
 import ..Polynomials: Polynomial, monomialtype, monomialorder, SparsePolynomial
 import ..Terms: Term, monomial, coefficient
 import ..Util: @assertvalid
-import ..NamingSchemes: Named, Numbered, NamingScheme, remove_variables
-import PolynomialRings: namingscheme, variablesymbols, expansion, expand, polynomialtype
 import PolynomialRings: deg
+import PolynomialRings: namingscheme, variablesymbols, expansion, expand, polynomialtype
 
 # -----------------------------------------------------------------------------
 #

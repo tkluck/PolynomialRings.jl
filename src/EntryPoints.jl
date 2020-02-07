@@ -7,12 +7,12 @@ import SparseArrays: spzeros
 import ..Ideals: Ideal
 import ..Monomials: TupleMonomial, VectorMonomial
 import ..NamedPolynomials: NamedPolynomial, NumberedPolynomial
+import ..NamingSchemes: Numbered, numberedvariablename, parse_namingscheme, num_variables, namingscheme
 import ..NumberFields: NumberField
 import ..Polynomials: Polynomial, polynomial_ring, numbered_polynomial_ring
 import ..QuotientRings: QuotientRing
 import ..Terms: Term, basering
 import ..Util: lazymap
-import ..NamingSchemes: Numbered, numberedvariablename, parse_namingscheme, num_variables, namingscheme
 import PolynomialRings: construct_monomial, exptype
 import PolynomialRings: generators, base_extend, variablesymbols, allvariablesymbols, ⊗
 

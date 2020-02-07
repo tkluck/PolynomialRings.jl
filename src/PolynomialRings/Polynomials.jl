@@ -1,15 +1,15 @@
 module Polynomials
 
+import Base: OneTo
 import Base: first, last, copy, hash, convert
 import Base: zero, one, +, -, *, ==, div, iszero, ^, gcd
-import Base: OneTo
 import SparseArrays: SparseVector, HigherOrderFns, issparse
 
 import InPlace: @inplace, inplace!, inclusiveinplace!
 import Transducers: Transducer, Eduction
 
-import ..MonomialOrderings: MonomialOrder
 import ..AbstractMonomials: AbstractMonomial
+import ..MonomialOrderings: MonomialOrder
 import ..Monomials.IndexedMonomials: IndexedMonomial
 import ..NamingSchemes: Named, Numbered, NamingScheme, nestednamingscheme, isdisjoint, isvalid
 import ..Terms: Term, monomial, coefficient
@@ -17,9 +17,9 @@ import ..Util: @assertvalid, _debug_isvalid
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering, monomialtype
 import PolynomialRings: leading_coefficient, leading_monomial
 import PolynomialRings: leading_term, termtype, monomialorder, nzterms, exptype, namingscheme, expansion
+import PolynomialRings: polynomialtype
 import PolynomialRings: tail
 import PolynomialRings: variablesymbols, allvariablesymbols, fullboundnames
-import PolynomialRings: polynomialtype
 
 # -----------------------------------------------------------------------------
 #

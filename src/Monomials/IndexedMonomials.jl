@@ -1,8 +1,8 @@
 module IndexedMonomials
 
 import Base: *, ==, //, +, -
-import Base: iszero, zero
 import Base: hash, convert, exponent, iterate
+import Base: iszero, zero
 import Base: lcm
 
 import ProgressMeter: @showprogress

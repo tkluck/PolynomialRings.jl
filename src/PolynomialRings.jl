@@ -62,6 +62,7 @@ export minring, ofminring
 
 # TODO: maybe we can remove this one soon?
 import SparseArrays: nonzeroinds, SparseVector
+
 _nzindices(t::Tuple) = 1:length(t)
 _nzindices(t::AbstractVector) = eachindex(t)
 _nzindices(t::SparseVector) = nonzeroinds(t)

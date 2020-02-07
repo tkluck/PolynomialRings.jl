@@ -1,10 +1,10 @@
 module Ideals
 
 import Base: +,-,*,^,/,//,==,!=, hash
+import Base: iterate, length
 import Base: promote_rule, convert
 import Base: show
 import Base: zero, one, in, div, rem, divrem, rem, issubset, inv
-import Base: iterate, length
 
 import ..Polynomials: Polynomial
 import PolynomialRings: allvariablesymbols, fraction_field

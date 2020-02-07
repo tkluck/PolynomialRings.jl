@@ -102,15 +102,15 @@ We represent both cases by keeping a `owned` value with the scalar or the
 module Broadcast
 
 import Base.Broadcast: AbstractArrayStyle, BroadcastStyle, Broadcasted
-import Base.Broadcast: materialize!, materialize, copyto!, copy, flatten, dotview
 import Base.Broadcast: broadcastable, broadcasted, Unknown
+import Base.Broadcast: materialize!, materialize, copyto!, copy, flatten, dotview
 
 import Combinatorics: combinations
 import InPlace: @inplace, inplace!
 import Transducers: eduction, Map, Filter, Eduction, Transducer, transduce
 
-import ..MonomialOrderings: MonomialOrder
 import ..AbstractMonomials: AbstractMonomial
+import ..MonomialOrderings: MonomialOrder
 import ..Polynomials: Polynomial, DensePolynomial, PolynomialBy, SparsePolynomialBy, DensePolynomialBy, nzterms, nztermscount, TermBy, MonomialBy
 import ..Terms: Term, monomial, coefficient, basering
 import ..Util: MergingTransducer, @assertvalid

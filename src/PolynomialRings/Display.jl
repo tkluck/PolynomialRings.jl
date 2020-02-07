@@ -2,11 +2,11 @@ module Display
 
 import Base: show
 
-import ..MonomialOrderings: MonomialOrder
 import ..AbstractMonomials: AbstractMonomial, exponentsnz
+import ..MonomialOrderings: MonomialOrder
+import ..NamingSchemes: Named, Numbered
 import ..Polynomials: Polynomial, nzrevterms, basering
 import ..Terms: Term, coefficient, monomial
-import ..NamingSchemes: Named, Numbered
 import PolynomialRings: namingscheme
 
 # -----------------------------------------------------------------------------

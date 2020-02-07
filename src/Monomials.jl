@@ -3,8 +3,9 @@ module Monomials
 import SparseArrays: SparseVector, sparsevec
 
 import ..AbstractMonomials: AbstractMonomial
-import ..NamingSchemes: NamingScheme, Named, Numbered, namingscheme, num_variables
 import ..MonomialOrderings: MonomialOrder
+import ..NamingSchemes: NamingScheme, Named, Numbered, namingscheme, num_variables
+import PolynomialRings: monomialtype
 
 include("Monomials/TupleMonomials.jl")
 include("Monomials/VectorMonomials.jl")
@@ -12,8 +13,6 @@ include("Monomials/IndexedMonomials.jl")
 
 import .TupleMonomials: TupleMonomial
 import .VectorMonomials: VectorMonomial
-
-import PolynomialRings: monomialtype
 
 # -----------------------------------------------------------------------------
 #

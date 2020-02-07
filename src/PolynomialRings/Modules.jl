@@ -8,9 +8,9 @@ import SparseArrays: AbstractSparseArray, SparseVector, sparsevec, spzeros, nonz
 
 import InPlace: @inplace, inclusiveinplace!
 
+import ..AbstractMonomials: AbstractMonomial
 import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
-import ..AbstractMonomials: AbstractMonomial
 import ..Operators: RedType, Lead, Full, Tail
 import ..Operators: one_step_div!, one_step_xdiv!, content, integral_fraction
 import ..Polynomials: Polynomial, monomialorder, basering, tail

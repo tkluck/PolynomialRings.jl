@@ -8,15 +8,15 @@ import Base: promote_rule, convert
 import SparseArrays: SparseVector, sparsevec
 import SparseArrays: nonzeroinds
 
+import ..MonomialOrderings: MonomialOrderIn
+import ..NamingSchemes: Variable, Named, Numbered, NamingScheme, isdisjoint, variablesymbols
+import PolynomialRings: generators, to_dense_monomials, max_variable_index, monomialtype, num_variables, divides, mutuallyprime
+import PolynomialRings: leading_monomial
+import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namingscheme, monomialorder, deg
+
 #import ..Constants: One
 # FIXME: reference cycle
 struct One end
-
-import ..NamingSchemes: Variable, Named, Numbered, NamingScheme, isdisjoint, variablesymbols
-import ..MonomialOrderings: MonomialOrderIn
-import PolynomialRings: generators, to_dense_monomials, max_variable_index, monomialtype, num_variables, divides, mutuallyprime
-import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namingscheme, monomialorder, deg
-import PolynomialRings: leading_monomial
 
 """
     AbstractMonomial{Order}

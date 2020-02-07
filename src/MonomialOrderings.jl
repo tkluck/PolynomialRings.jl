@@ -1,13 +1,13 @@
 module MonomialOrderings
 
 import Base.Order: Ordering
-import Base: min, max, minimum, maximum
 import Base: findmin, findmax, argmin, argmax
+import Base: min, max, minimum, maximum
 import Base: promote_rule
 
 import ..NamingSchemes: NamingScheme, Named, Numbered
-import PolynomialRings: namingscheme, to_dense_monomials, variablesymbols, num_variables
 import PolynomialRings: leading_monomial, leading_coefficient, leading_term, tail, deg
+import PolynomialRings: namingscheme, to_dense_monomials, variablesymbols, num_variables
 
 """
     struct MonomialOrder{Rule, Names} <: Ordering end

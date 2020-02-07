@@ -3,17 +3,17 @@ module NamedPolynomials
 import Base: promote_rule, convert, Bottom
 import SparseArrays: SparseVector, issparse
 
+import ..AbstractMonomials: AbstractMonomial, exptype, num_variables
 import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, rulesymbol
-import ..AbstractMonomials: AbstractMonomial, exptype, num_variables
 import ..Monomials.TupleMonomials: TupleMonomial
 import ..Monomials.VectorMonomials: VectorMonomial
 import ..NamingSchemes: Named, Numbered, NamingScheme, numberedvariablename, remove_variables, isdisjoint, boundnames, canonicalscheme
 import ..Polynomials:  NamedMonomial, NumberedMonomial, NamedTerm, NumberedTerm, TermOver, monomialorder, NamedOrder, NumberedOrder, polynomial_ring
 import ..Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolynomial, PolynomialBy, PolynomialIn, nzterms, SparsePolynomialOver, DensePolynomialOver
 import ..Terms: Term, basering, monomial, coefficient
-import PolynomialRings: termtype, namingscheme, variablesymbols, exptype, monomialtype, allvariablesymbols, iscanonical, canonicaltype, nestednamingscheme, fullboundnames, max_variable_index, polynomialtype
 import PolynomialRings: expansion
+import PolynomialRings: termtype, namingscheme, variablesymbols, exptype, monomialtype, allvariablesymbols, iscanonical, canonicaltype, nestednamingscheme, fullboundnames, max_variable_index, polynomialtype
 
 # short-circuit the non-conversions
 convert(::Type{P}, p::P) where P <: SparsePolynomialOver{C,O} where {C,O<:NamedOrder} = p

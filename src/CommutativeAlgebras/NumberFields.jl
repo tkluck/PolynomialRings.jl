@@ -1,7 +1,7 @@
 module NumberFields
 
-import Base: @pure, power_by_squaring, literal_pow
 import Base: +, -, *, /, //, ^, inv, ==
+import Base: @pure, power_by_squaring, literal_pow
 import Base: deepcopy
 import Base: numerator, denominator
 import Base: promote_rule, convert

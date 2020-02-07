@@ -3,8 +3,8 @@ module Terms
 import Base: *, ^, +, -, one, ==, iszero, zero, diff
 import Base: hash
 
-import ..MonomialOrderings: MonomialOrder
 import ..AbstractMonomials: AbstractMonomial
+import ..MonomialOrderings: MonomialOrder
 import ..NamingSchemes: NamingScheme, Variable
 import ..Util: lazymap
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering

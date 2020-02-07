@@ -9,8 +9,8 @@ import Base: zero, iszero, one, rem, copy
 import ..Expansions: expansion
 import ..Ideals: Ideal, _grb
 import ..Ideals: ring
-import ..NamingSchemes: boundnames, fullboundnames, namingscheme, nestednamingscheme
 import ..NamedPolynomials: minring
+import ..NamingSchemes: boundnames, fullboundnames, namingscheme, nestednamingscheme
 import ..Polynomials: Polynomial, exptype, leading_term, basering, PolynomialOver
 import ..Polynomials: termtype, monomialtype, monomialorder
 import ..Terms: Term, monomial, coefficient

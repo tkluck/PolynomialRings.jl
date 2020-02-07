@@ -13,8 +13,8 @@ import ..Polynomials: PolynomialBy
 import ..Util: @showprogress
 import PolynomialRings: basering
 import PolynomialRings: div!, rem!, xdiv!, xrem!, xdiv, xrem, xdivrem
-import PolynomialRings: leaddiv, leaddivrem, leadrem
 import PolynomialRings: gröbner_basis, syzygies
+import PolynomialRings: leaddiv, leaddivrem, leadrem
 
 """
     f_red = rem(f, G)
