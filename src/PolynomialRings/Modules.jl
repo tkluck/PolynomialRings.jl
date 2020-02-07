@@ -37,9 +37,13 @@ function iszero(x::SparseVector{<:Polynomial}, ix::Integer)
     return isempty(r) || iszero(x.nzval[first(r)])
 end
 
-# see https://github.com/JuliaLang/julia/issues/31835
+# un-alias the polynomials
 zero(a::AbstractArray{<:Polynomial}) = map(_ -> zero(eltype(a)), a)
-zero(a::AbstractSparseArray{<:Polynomial}) = spzeros(eltype(a), size(a)...)
+
+# see https://github.com/JuliaLang/julia/issues/31835
+if VERSION < v"1.4-"
+    zero(a::AbstractSparseArray{<:Polynomial}) = spzeros(eltype(a), size(a)...)
+end
 
 base_extend(x::AbstractArray{P}, ::Type{C}) where P<:Polynomial where C = map(p->base_extend(p,C), x)
 base_extend(x::AbstractArray{P})            where P<:Polynomial         = map(base_extend, x)
