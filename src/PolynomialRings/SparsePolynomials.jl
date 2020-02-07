@@ -310,6 +310,7 @@ function inclusiveinplace!(::typeof(+), a::P, b::T) where
             P <: SparsePolynomial{M, C} where
             T <: Term{M, C} where
             {M <: AbstractMonomial, C}
+    iszero(b) && return a
     ix = searchsorted(a.monomials, monomial(b))
     if length(ix) == 1
         i = first(ix)

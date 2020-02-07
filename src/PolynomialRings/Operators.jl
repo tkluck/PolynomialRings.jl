@@ -1,12 +1,13 @@
 module Operators
 
-import Base: zero, one, +, -, *, ==, /, //, inv, div, iszero, diff, ^, gcd
+import Base: zero, one, +, -, *, ==, /, //, inv, diff, div, iszero, ^, gcd
 
 import InPlace: @inplace, inplace!, inclusiveinplace!
 
 import ..Constants: Zero
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
 import ..AbstractMonomials: AbstractMonomial
+import ..NamingSchemes: Variable
 import ..Polynomials: Polynomial, termtype, nztermscount, monomialorder, monomialtype, monomials, coefficients, map_coefficients, _monomialbyindex
 import ..Polynomials: leading_term, nzrevterms, nztailterms, nzterms
 import ..Polynomials: PolynomialBy, TermBy, MonomialBy, isstrictlysparse, TermOver
@@ -192,6 +193,18 @@ function ^(f::Polynomial, n::Integer)
     return @assertvalid result
 end
 
+# -----------------------------------------------------------------------------
+#
+# exponentiation
+#
+# -----------------------------------------------------------------------------
+function diff(f::Polynomial, x::Variable)
+    res = zero(f)
+    for t in nzterms(f)
+        @inplace res += diff(t, x)
+    end
+    return res
+end
 
 # -----------------------------------------------------------------------------
 #

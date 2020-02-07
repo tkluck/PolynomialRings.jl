@@ -1,11 +1,11 @@
 module Terms
 
-import Base: *, ^, +, -, one, ==, iszero, diff
+import Base: *, ^, +, -, one, ==, iszero, zero, diff
 import Base: hash
 
 import ..MonomialOrderings: MonomialOrder
 import ..AbstractMonomials: AbstractMonomial, total_degree
-import ..NamingSchemes: NamingScheme
+import ..NamingSchemes: NamingScheme, Variable
 import ..Util: lazymap
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering
 import PolynomialRings: maybe_div, divides, lcm_multipliers, monomialtype, exptype, lcm_degree, namingscheme, monomialorder
@@ -94,9 +94,15 @@ end
 
 (t::Term)(args...) = coefficient(t) * monomial(t)(args...)
 
-function diff(t::T, i::Integer) where T <: Term
-    n,m = diff(monomial(t),i)
-    return T(m, n*coefficient(t))
+diff(a, x::Variable) = zero(a)
+
+function diff(t::T, x::Variable) where T <: Term
+    if isnothing(indexin(x, namingscheme(t)))
+        return Term(monomial(t), diff(coefficient(t), x))
+    else
+        n, m = diff(monomial(t), x)
+        return Term(m, n * coefficient(t))
+    end
 end
 
 total_degree(a::Term) = total_degree(monomial(a))

@@ -9,6 +9,7 @@ import IterTools: groupby
 import ..AbstractMonomials: AbstractMonomial, exptype, exponents
 import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
+import ..NamingSchemes: NamedVariable
 import ..Polynomials: Polynomial, monomialtype, monomialorder, SparsePolynomial
 import ..Terms: Term, monomial, coefficient
 import ..Util: @assertvalid
@@ -307,14 +308,7 @@ julia> diff(x^3, :y)
 0
 ```
 """
-function diff(p::Polynomial, variable::Symbol)
-    for (i,s) in enumerate(variablesymbols(typeof(p)))
-        if s == variable
-            return diff(p, i)
-        end
-    end
-    throw(ArgumentError("Variable $variable does not appear in $(typeof(p))"))
-end
+diff(p::Polynomial, variable::Symbol) = diff(p, NamedVariable{variable}())
 
 """
     coefficient(f, exponent_tuple, symbol, [symbol...])

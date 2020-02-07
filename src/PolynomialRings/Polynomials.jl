@@ -1,7 +1,7 @@
 module Polynomials
 
 import Base: first, last, copy, hash, convert
-import Base: zero, one, +, -, *, ==, div, iszero, diff, ^, gcd
+import Base: zero, one, +, -, *, ==, div, iszero, ^, gcd
 import Base: OneTo
 import SparseArrays: SparseVector, HigherOrderFns, issparse
 
