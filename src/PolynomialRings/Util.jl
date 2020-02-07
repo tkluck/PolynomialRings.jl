@@ -286,9 +286,7 @@ function Base.deepcopy(x::Rational)
     T = typeof(x)
     n = deepcopy(numerator(x))
     d = numerator(x) === denominator(x) ? n : deepcopy(denominator(x))
-    y = ccall(:jl_new_struct_uninit, Any, (Any,), T)
-    ccall(:jl_set_nth_field, Cvoid, (Any, Csize_t, Any), y, 0, n)
-    ccall(:jl_set_nth_field, Cvoid, (Any, Csize_t, Any), y, 1, d)
+    y = ccall(:jl_new_structt, Any, (Any, Any), T, (n, d))
     return y::T
 end
 
