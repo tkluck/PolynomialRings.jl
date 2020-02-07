@@ -50,8 +50,6 @@ const NumberedMonomial = MonomialIn{<:Numbered}
 # Abstract fallbacks
 #
 # -----------------------------------------------------------------------------
-@inline _construct(::Type{M}, f, nzindices, deg) where M <: AbstractMonomial = _construct(M, f, nzindices)
-@inline _construct(::Type{M}, f, nzindices) where M <: AbstractMonomial = _construct(M, f, nzindices, exptype(M)(mapreduce(f, +, nzindices, init=zero(exptype(M)))))
 
 one(::Type{M}) where M <: AbstractMonomial = convert(M, One())
 one(::M) where M <: AbstractMonomial = one(M)
@@ -243,7 +241,6 @@ function exponents(m::One, scheme::Numbered)
 end
 
 deg(m::AbstractMonomial, scheme::NamingScheme) = sum(exponents(scheme, m))
-
 
 function exponentsnz(scheme::NamingScheme, ms::AbstractMonomial...)
     return enumerate(zip(exponents(scheme, ms...)...))

@@ -9,7 +9,7 @@ import Base: IteratorSize
 import ProgressMeter: @showprogress
 
 import ..IndexedMonomials: IndexedMonomial, ByIndex
-import ..Monomials: TupleMonomial, AbstractMonomial, _construct, num_variables, nzindices, maybe_div
+import ..Monomials: TupleMonomial, AbstractMonomial, num_variables, nzindices, maybe_div
 import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder, rulesymbol
 import ..NamingSchemes: NamingScheme
 import PolynomialRings: monomialtype, exptype, basering, monomialorder, tail, divides
@@ -123,7 +123,7 @@ function Base.iterate(it::IterBy{:degrevlex}, state)
     P = eltype(it)
 
     next_degrevlex!(state)
-    return convert(P, _construct(M, i -> i <= length(state) ? state[i] : zero(eltype(state)), eachindex(state))), state
+    return convert(P, exp(M, state)), state
 end
 
 IteratorSize(it::MonomialIter) = length(it) == Inf ? Base.IsInfinite() : Base.HasLength()

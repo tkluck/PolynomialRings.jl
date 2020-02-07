@@ -7,7 +7,7 @@ import Base: lcm
 
 import ProgressMeter: @showprogress
 
-import ...AbstractMonomials: AbstractMonomial, _construct, num_variables, nzindices, maybe_div
+import ...AbstractMonomials: AbstractMonomial, num_variables, nzindices, maybe_div
 import ...MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
 import ...NamingSchemes: NamingScheme
 import PolynomialRings: monomialtype, exptype, basering, monomialorder, tail, divides, mutuallyprime, generators
@@ -45,11 +45,6 @@ function exponent(m::IndexedMonomial, ix)
 end
 
 Base.lt(::Order, a::M, b::M) where M <: IndexedMonomial{Order} where Order <: MonomialOrder{:degrevlex} = a.ix < b.ix
-
-function _construct(::Type{M}, f, nz) where M <: IndexedMonomial
-    N = densetype(M)
-    convert(M, _construct(N, f, nz))
-end
 
 generators(::Type{M}) where M <: IndexedMonomial = map(m -> convert(M, m), generators(densetype(M)))
 

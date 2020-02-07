@@ -39,25 +39,6 @@ exp(::Type{M}, exps::V, deg=sum(exps)) where M <: VectorMonomial{V} where V = M(
 exp(::Type{M}, exps::Tuple, deg=sum(exps)) where M <: VectorMonomial = exp(M, collect(exps), deg)
 exp(::Type{M}, exps::AbstractVector, deg=sum(exps)) where M <: SparseVectorMonomial = M(sparse(exps), deg)
 
-function _construct(::Type{M}, f::Function, nonzero_indices, deg) where M <: VectorMonomial{V,I,Order} where V <: AbstractVector{I} where I <: Integer where Order
-    if findlast(nonzero_indices) == 0
-        return M(V(), deg)
-    else
-        e = zeros(I, last(nonzero_indices))
-        for i in nonzero_indices
-            e[i] = f(i)
-        end
-        return M(e, deg)
-    end
-end
-
-function _construct(::Type{M}, f::Function, nonzero_indices, deg) where M <: VectorMonomial{V,I,Order} where V <: SparseVector{I,J} where I <: Integer where J <: Integer where Order
-    indices = collect(J, nonzero_indices)
-    len = !isempty(indices) ? last(indices) : 0
-    e = V(len, indices, map(i->I(f(i)), indices))
-    return M(e, deg)
-end
-
 exptype(::Type{VectorMonomial{V,I,Order}}) where {V,I,Order} = I
 expstype(::Type{VectorMonomial{V,I,Order}}) where {V,I,Order} = V
 @inline exponent(m::VectorMonomial, i::Integer) = i <= length(m.e) ? m.e[i] : zero(exptype(m))

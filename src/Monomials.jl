@@ -59,7 +59,7 @@ to_dense_monomials(n::Integer, scheme::Numbered{Name}) where Name = (@assert n <
 function to_dense_monomials(n::Integer, m::AbstractMonomial)
     Order = to_dense_monomials(n, monomialorder(m))
     M = TupleMonomial{n, exptype(m), typeof(Order)}
-    _construct(M, i -> exponent(m, i), 1:n)
+    return convert(M, m)
 end
 
 promote_rule(::Type{<:TupleMonomial{N,I,Order}}, ::Type{<:VectorMonomial{V,J,Order}}) where {N,V,I,J,Order} = TupleMonomial{N,promote_type(I,J),Order}

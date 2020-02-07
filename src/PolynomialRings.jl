@@ -43,6 +43,7 @@ import .Operators: content, common_denominator, integral_fraction
 import .Reductions: interreduce, interreduce!
 import .Solve: matrix_solve_affine
 import .NamedPolynomials: minring, ofminring
+import .Util: @assertvalid
 
 export TupleMonomial, Term, Polynomial, generators, ⊗, polynomial_ring, variablesymbols
 export tosparse, todense
@@ -57,8 +58,7 @@ export interreduce, interreduce!
 export matrix_solve_affine
 export minring, ofminring
 
-# TODO: needs a better place
-import .Monomials: _construct
+# TODO: maybe we can remove this one soon?
 import SparseArrays: nonzeroinds, SparseVector
 _nzindices(t::Tuple) = 1:length(t)
 _nzindices(t::AbstractVector) = eachindex(t)
@@ -67,8 +67,8 @@ function construct_monomial(::Type{P}, e::T) where P<:Polynomial where T<:Union{
     @assert all(e.>=0)
     M = monomialtype(P)
     C = basering(P)
-    m = _construct(M, i -> e[i], _nzindices(e))
-    P([m], [one(C)])
+    m = exp(M, e)
+    @assertvalid P([m], [one(C)])
 end
 export construct_monomial
 # --------------------------

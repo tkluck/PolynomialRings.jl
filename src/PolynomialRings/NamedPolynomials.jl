@@ -5,7 +5,7 @@ import SparseArrays: SparseVector, issparse
 
 import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, rulesymbol
-import ..AbstractMonomials: AbstractMonomial, _construct, exptype, num_variables, nzindices
+import ..AbstractMonomials: AbstractMonomial, exptype, num_variables, nzindices
 import ..Monomials.TupleMonomials: TupleMonomial
 import ..Monomials.VectorMonomials: VectorMonomial
 import ..NamingSchemes: Named, Numbered, NamingScheme, numberedvariablename, remove_variables, isdisjoint, boundnames, canonicalscheme
@@ -14,19 +14,6 @@ import ..Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolyn
 import ..Terms: Term, basering, monomial, coefficient
 import PolynomialRings: termtype, namingscheme, variablesymbols, exptype, monomialtype, allvariablesymbols, iscanonical, canonicaltype, nestednamingscheme, fullboundnames, max_variable_index, polynomialtype
 import PolynomialRings: expansion
-
-# -----------------------------------------------------------------------------
-#
-# Generating symbols that do not conflict with existing ones
-#
-# -----------------------------------------------------------------------------
-function unused_variable(P, a)
-    E = exptype(P)
-    N = max_variable_index(a)
-    P(_construct(monomialtype(P), i->i==(N+1) ? one(E) : zero(E), N+1:N+1))
-end
-unused_variable(p::Polynomial)                  = unused_variable(typeof(p), p)
-unused_variable(a::AbstractArray{<:Polynomial}) = unused_variable(eltype(a), a)
 
 # short-circuit the non-conversions
 convert(::Type{P}, p::P) where P <: SparsePolynomialOver{C,O} where {C,O<:NamedOrder} = p
