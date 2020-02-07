@@ -1,5 +1,6 @@
 using Test
 
+using LinearAlgebra: I
 using SparseArrays: sparse
 
 using PolynomialRings: @ring!, @ring, polynomial_ring
@@ -11,6 +12,7 @@ using PolynomialRings: @linear_coefficients, linear_coefficients
 using PolynomialRings: @flat_coefficients, flat_coefficients
 using PolynomialRings: @constant_coefficient, constant_coefficient
 using PolynomialRings: @expansion_terms, expansion_terms
+using PolynomialRings: common_denominator, integral_fraction
 
 @testset "Expansions" begin
 
@@ -139,7 +141,14 @@ using PolynomialRings: @expansion_terms, expansion_terms
         end
     end
 
+
     @testset "New types" begin
+        struct Foo end
+        Base.one(::Type{Foo})  = Foo()
+        Base.zero(::Type{Foo}) = 0
+        Base.one(::Foo)        = Foo()
+        Base.zero(::Foo)       = 0
+
         R = @ring Foo[x]
         @test one(R) == one(R)
     end

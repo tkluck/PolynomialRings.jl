@@ -37,7 +37,7 @@ import .Monomials: TupleMonomial, VectorMonomial
 import .Terms: Term
 import .Polynomials: Polynomial, generators, polynomial_ring, map_coefficients
 import .Polynomials: tosparse, todense
-import .Expansions: @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, expandcoefficients, @expandcoefficients, linear_coefficients, @linear_coefficients, deg, @deg, expansion_terms, @expansion_terms
+import .Expansions: @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, expandcoefficients, @expandcoefficients, linear_coefficients, @linear_coefficients, @deg, expansion_terms, @expansion_terms
 import .Arrays: flat_coefficients, @flat_coefficients
 import .Operators: content, common_denominator, integral_fraction
 import .Reductions: interreduce, interreduce!

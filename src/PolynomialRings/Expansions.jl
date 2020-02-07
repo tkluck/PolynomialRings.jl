@@ -1,20 +1,22 @@
 module Expansions
 
+import Base: @pure
 import Base: diff
 import Base: promote_rule, convert
 import SparseArrays: spzeros, SparseVector
 
 import IterTools: groupby
 
+import ..AbstractMonomials: AbstractMonomial, TupleMonomial, exptype, expstype, enumeratenz, exponents
 import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
-import ..AbstractMonomials: AbstractMonomial, TupleMonomial, exptype, expstype, enumeratenz, total_degree, exponents
 import ..NamedPolynomials: NamedPolynomial
 import ..Polynomials: Polynomial, termtype, monomialtype, monomialorder, polynomial_ring, PolynomialBy, SparsePolynomial
 import ..Terms: Term, monomial, coefficient
 import ..Util: @assertvalid
 import ..NamingSchemes: Named, Numbered, NamingScheme, remove_variables
 import PolynomialRings: basering, namingscheme, variablesymbols, expansion, expand, polynomialtype
+import PolynomialRings: deg
 
 # -----------------------------------------------------------------------------
 #
@@ -22,7 +24,7 @@ import PolynomialRings: basering, namingscheme, variablesymbols, expansion, expa
 #
 # -----------------------------------------------------------------------------
 
-function expansiontypes(::Type{P}, order::MonomialOrder) where P <: Polynomial
+@pure function expansiontypes(::Type{P}, order::MonomialOrder) where P <: Polynomial
     C = remove_variables(P, namingscheme(order))
     M = monomialtype(order, exptype(P, namingscheme(order)))
     return M, C
@@ -105,6 +107,10 @@ end
 
 function _splitmonomial(M1, M2::Type{One}, m)
     return (convert(M1, m), One())
+end
+
+function _splitmonomial(M1::Type{One}, M2, m)
+    return (One(), convert(M2, m))
 end
 
 _ofpolynomialtype(m::AbstractMonomial, c) = _ofpolynomialtype(Term(m, c))
@@ -218,14 +224,12 @@ function _substitute(p::Polynomial, names::Named, values::SubstitutionType...) w
     if !isconcretetype(ReturnType)
         throw(ArgumentError("Cannot substitute $SubstitutionType for $names into $p; result no more specific than $ReturnType"))
     end
-    return reduce(
-        +,
-        (
-            reduce(*, (values[i]^exponent(m, i) for i=1:length(values)), init=c)
-            for (m, c) in expansion(p, MonomialOrder{:degrevlex, typeof(names)}())
-        ),
-        init=zero(ReturnType)
-    )::ReturnType
+    res = zero(ReturnType)
+    for (m, c) in expansion(p, names)
+        powers = values .^ exponents(m, names)
+        res += *(c, powers...)
+    end
+    return res::ReturnType
 end
 
 function _substitute(p::Polynomial, names::Numbered, valuesfunc)
@@ -234,14 +238,18 @@ function _substitute(p::Polynomial, names::Numbered, valuesfunc)
     if !isconcretetype(ReturnType)
         throw(ArgumentError("Cannot substitute $SubstitutionType for $names into $p; result no more specific than $ReturnType"))
     end
-    return reduce(
-        +,
-        (
-            reduce(*, (valuesfunc(i)^k for (i,k) in enumeratenz(m)), init=c)
-            for (m, c) in expansion(p, MonomialOrder{:degrevlex, typeof(names)}())
-        ),
-        init=zero(ReturnType)
-    )::ReturnType
+    res = zero(ReturnType)
+    for (m, c) in expansion(p, names)
+        term = c
+        exps = exponents(m, names)
+        ix = findfirst(!iszero, exps)
+        while !isnothing(ix)
+            term *= valuesfunc(ix) ^ exps[ix]
+            ix = findnext(!iszero, exps, nextind(exps, ix))
+        end
+        res += term
+    end
+    return res::ReturnType
 end
 
 # helper for inspecting the types of substitution values
@@ -269,14 +277,13 @@ function (p::Polynomial)(; kwargs...)
     kwtupletype = _kwtupletype(typeof(kwargs))
     vars = fieldnames(kwtupletype)
     valtypes = fieldtypes(kwtupletype)
-    values = [v for (k,v) in kwargs]
 
     if isempty(kwargs)
         return copy(p)
     elseif !any(v <: Function for v in valtypes)
-        return _substitute(p, Named{tuple(vars...)}(), values...)
+        return _substitute(p, Named{tuple(vars...)}(), values(kwargs)...)
     elseif length(kwargs) == 1 && valtypes[1] <: Function
-        return _substitute(p, Numbered{vars[1], Inf}(), values[1])
+        return _substitute(p, Numbered{vars[1], Inf}(), kwargs[1])
     else
         throw(ArgumentError("Don't know how to substitute $kwargs"))
     end
@@ -339,12 +346,13 @@ julia> coefficient(x^3*y + x, (3,1), :x, :y)
 `@coefficient`, `expansion` and `@expansion`
 """
 function coefficient(f::Polynomial, t::Tuple, vars...)
-    for (w,p) in expansion(f, vars...)
-        if all(exponent(w, i) == t[i] for i=1:length(t))
+    spec = _expansionspec(vars...)
+    for (w,p) in expansion(f, spec)
+        if exponents(w, namingscheme(spec)) == t
             return p
         end
     end
-    return zero(_coefftype(typeof(f), vars...))
+    return zero(_coefftype(typeof(f), spec))
 end
 
 function coefficient(f::Polynomial, t::Polynomial, vars...)
@@ -417,7 +425,7 @@ linear_coefficients(f::Polynomial, spec...) = linear_coefficients(f, _expansions
 function linear_coefficients(f::Polynomial, spec::NamedMonomialOrder)
     res = zeros(_coefftype(typeof(f), spec), length(variablesymbols(spec)))
     for (w, p) in expansion(f, spec)
-        if total_degree(w) == 1
+        if deg(w, namingscheme(spec)) == 1
             res[findfirst(!iszero,w.e)] = p
         end
     end
@@ -428,7 +436,7 @@ end
 function linear_coefficients(f::Polynomial, spec::NumberedMonomialOrder)
     res = spzeros(_coefftype(typeof(f), spec), 0)
     for (w, p) in expansion(f, spec)
-        if total_degree(w) == 1
+        if deg(w, namingscheme(spec)) == 1
             ix = findfirst(!iszero,w.e)
             newlength = max(ix, length(res))
             # there is no resize!() because SparseVector is an
@@ -464,7 +472,8 @@ julia> deg(x^2, :y)
 """
 function deg(f::Polynomial, args...)
     iszero(f) && return -1
-    return maximum(total_degree(w) for (w,p) in expansion(f, args...))
+    spec = _expansionspec(args...)
+    return maximum(deg(w, namingscheme(spec)) for (w,p) in expansion(f, spec))
 end
 
 # -----------------------------------------------------------------------------
