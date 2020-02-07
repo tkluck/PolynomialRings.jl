@@ -1,5 +1,5 @@
 import ..MonomialIterators: monomialiter, IndexedMonomial, ByIndex, degrevlex_index
-import ..MonomialOrderings: rulesymbol
+import ..StandardMonomialOrderings: rulesymbol
 
 """
     DensePolynomial{M, C} where M <: AbstractMonomial where C

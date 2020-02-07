@@ -12,6 +12,7 @@ import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialO
 import ..NamingSchemes: Named, Numbered, NamingScheme, remove_variables
 import ..NamingSchemes: NamedVariable
 import ..Polynomials: Polynomial, monomialtype, monomialorder, SparsePolynomial
+import ..StandardMonomialOrderings: MonomialOrdering
 import ..Terms: Term, monomial, coefficient
 import ..Util: @assertvalid
 import PolynomialRings: deg
@@ -30,7 +31,7 @@ import PolynomialRings: namingscheme, variablesymbols, expansion, expand, polyno
 end
 
 _expansionspec(sym::Symbol...) = _expansionspec(Named{sym}())
-_expansionspec(scheme::NamingScheme) = _expansionspec(MonomialOrder{:degrevlex, typeof(scheme)}())
+_expansionspec(scheme::NamingScheme) = _expansionspec(MonomialOrdering{:degrevlex, typeof(scheme)}())
 _expansionspec(spec::MonomialOrder) = spec
 _coefftype(::Type{P}, spec...) where P <: Polynomial = expansiontypes(P, _expansionspec(spec...))[2]
 
@@ -474,8 +475,8 @@ end
 #
 # -----------------------------------------------------------------------------
 
-_expansion_expr(vars::NTuple{N,Symbol}) where N = MonomialOrder{:degrevlex, Named{vars}}()
-_expansion_expr(vars::Tuple{Expr}) = (v = vars[1]; @assert(v.head == :ref && length(v.args) == 1); MonomialOrder{:degrevlex, Numbered{v.args[1], Inf}}())
+_expansion_expr(vars::NTuple{N,Symbol}) where N = MonomialOrdering{:degrevlex, Named{vars}}()
+_expansion_expr(vars::Tuple{Expr}) = (v = vars[1]; @assert(v.head == :ref && length(v.args) == 1); MonomialOrdering{:degrevlex, Numbered{v.args[1], Inf}}())
 
 
 function _parse_monomial_expression(expr)

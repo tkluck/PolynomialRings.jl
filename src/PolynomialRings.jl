@@ -8,14 +8,14 @@ include("NamingSchemes.jl")
 include("MonomialOrderings.jl")
 include("AbstractMonomials.jl")
 
-include("StandardMonomialOrderings.jl")
-include("Monomials.jl")
 
 include("PolynomialRings/NamedValues.jl")
 include("PolynomialRings/Terms.jl")
 include("PolynomialRings/Polynomials.jl")
 include("PolynomialRings/Constants.jl")
 
+include("StandardMonomialOrderings.jl")
+include("Monomials.jl")
 include("Expansions.jl")
 
 include("PolynomialRings/Broadcast.jl")

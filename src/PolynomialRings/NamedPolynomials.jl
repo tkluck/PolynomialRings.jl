@@ -5,21 +5,22 @@ import SparseArrays: SparseVector, issparse
 
 import ..AbstractMonomials: AbstractMonomial, exptype, num_variables
 import ..Constants: One
-import ..MonomialOrderings: MonomialOrder, rulesymbol
+import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
 import ..Monomials.TupleMonomials: TupleMonomial
 import ..Monomials.VectorMonomials: VectorMonomial
 import ..NamingSchemes: Named, Numbered, NamingScheme, numberedvariablename, remove_variables, isdisjoint, boundnames, canonicalscheme
-import ..Polynomials:  NamedMonomial, NumberedMonomial, NamedTerm, NumberedTerm, TermOver, monomialorder, NamedOrder, NumberedOrder, polynomial_ring
+import ..Polynomials:  NamedMonomial, NumberedMonomial, NamedTerm, NumberedTerm, TermOver, monomialorder, polynomial_ring
 import ..Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolynomial, PolynomialBy, PolynomialIn, nzterms, SparsePolynomialOver, DensePolynomialOver
+import ..StandardMonomialOrderings: MonomialOrdering, rulesymbol
 import ..Terms: Term, basering, monomial, coefficient
 import PolynomialRings: expansion
 import PolynomialRings: termtype, namingscheme, variablesymbols, exptype, monomialtype, allvariablesymbols, iscanonical, canonicaltype, nestednamingscheme, fullboundnames, max_variable_index, polynomialtype
 
 # short-circuit the non-conversions
-convert(::Type{P}, p::P) where P <: SparsePolynomialOver{C,O} where {C,O<:NamedOrder} = p
-convert(::Type{P}, p::P) where P <: SparsePolynomialOver{C,O} where {C,O<:NumberedOrder} = p
-convert(::Type{P}, p::P) where P <: DensePolynomialOver{C,O} where {C,O<:NamedOrder} = p
-convert(::Type{P}, p::P) where P <: DensePolynomialOver{C,O} where {C,O<:NumberedOrder} = p
+convert(::Type{P}, p::P) where P <: SparsePolynomialOver{C,O} where {C,O<:NamedMonomialOrder} = p
+convert(::Type{P}, p::P) where P <: SparsePolynomialOver{C,O} where {C,O<:NumberedMonomialOrder} = p
+convert(::Type{P}, p::P) where P <: DensePolynomialOver{C,O} where {C,O<:NamedMonomialOrder} = p
+convert(::Type{P}, p::P) where P <: DensePolynomialOver{C,O} where {C,O<:NumberedMonomialOrder} = p
 
 # -----------------------------------------------------------------------------
 #
@@ -33,7 +34,7 @@ promote_rule(::Type{P}, ::Type{C}) where P<:PolynomialOver{C} where C <: Polynom
 function remove_variables(O::MonomialOrder, vars)
     O′ = remove_variables(namingscheme(O), vars)
     O′ == nothing && return nothing
-    return MonomialOrder{rulesymbol(O), typeof(O′)}()
+    return MonomialOrdering{rulesymbol(O), typeof(O′)}()
 end
 
 function remove_variables(::Type{M}, vars) where M <: AbstractMonomial
@@ -199,13 +200,13 @@ end
     N = num_variables(M)
     I = exptype(M)
     names = tuple(sort(collect(variablesymbols(M)))...)
-    res = TupleMonomial{N, I, MonomialOrder{:degrevlex, Named{names}}}
+    res = TupleMonomial{N, I, MonomialOrdering{:degrevlex, Named{names}}}
     return :($res)
 end
 function canonicaltype(M::Type{<:NumberedMonomial})
     I = exptype(M)
     name = numberedvariablename(M)
-    VectorMonomial{SparseVector{I,Int}, I, MonomialOrder{:degrevlex, Numbered{name, Inf}}}
+    VectorMonomial{SparseVector{I,Int}, I, MonomialOrdering{:degrevlex, Numbered{name, Inf}}}
 end
 canonicaltype(T::Type{<:Term}) = termtype(canonicaltype(polynomialtype(T)))
 canonicaltype(T::Type) = T

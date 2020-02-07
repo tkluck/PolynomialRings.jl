@@ -10,12 +10,14 @@ import DataStructures: SortedDict, DefaultDict
 import ..AbstractMonomials: any_divisor
 import ..Backends.Gröbner: GWV
 import ..Constants: Zero
+import ..NamingSchemes: namingscheme
 import ..Modules: AbstractModuleElement, modulebasering, leading_row
 import ..Modules: withtransformations, separatetransformation
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
 import ..Operators: Lead, Full, content, integral_fraction
 import ..Polynomials: Polynomial, monomialorder, monomialtype, PolynomialBy
 import ..Reductions: interreduce!, one_step_xdiv!
+import ..StandardMonomialOrderings: LexCombinationOrder, KeyOrder
 import ..Terms: monomial, coefficient
 import ..Util: @showprogress
 import PolynomialRings: gröbner_basis, gröbner_transformation, xrem!
@@ -111,7 +113,7 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
     G = DefaultDict{Union{Ix, Nothing}, Vector{Tuple{Signature, Union{LM, Nothing}, S}} }(Vector{Tuple{Signature, Union{LM, Nothing}, S}})
     G_by_sig = DefaultDict{Any, Vector{Tuple{Signature, Union{LM, Nothing}, S}} }(Vector{Tuple{Signature, Union{LM, Nothing}, S}})
     H = DefaultDict{Int, Set{monomialtype(R)}}(Set{monomialtype(R)})
-    JP = SortedDict{Signature, MM}(order)
+    JP = SortedDict{Signature, MM}(LexCombinationOrder(KeyOrder(), order))
 
     n = length(polynomials)
     @showprogress "Gröbner: preparing inputs" for (i,p) in enumerate(polynomials)
@@ -198,7 +200,7 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
                             Jsig = lhs
                             Jpair = (t1*T, t1*v)
                         end
-                        if !any_divisor(Jsig.m) do d
+                        if !any_divisor(Jsig.m, namingscheme(order)) do d
                             d in H[Jsig.i]
                         end
                             # (storing only one J-pair for each distinct signature

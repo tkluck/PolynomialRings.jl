@@ -2,8 +2,8 @@ using Test
 
 import Base.Order: lt
 
-import PolynomialRings.MonomialOrderings: @degrevlex, @deglex, @lex
 import PolynomialRings.MonomialOrderings: MonomialOrder, degreecompatible
+import PolynomialRings.StandardMonomialOrderings: @degrevlex, @deglex, @lex, KeyOrder
 import PolynomialRings: @ring!
 
 @testset "MonomialOrderings" begin
@@ -13,7 +13,8 @@ import PolynomialRings: @ring!
         @test @degrevlex(x > y > z) isa MonomialOrder
         @test @deglex(x > y > z) isa MonomialOrder
         @test @lex(x > y > z) isa MonomialOrder
-        #@test @lex(x > @degrevlex(y > z) > w) isa MonomialOrder
+        @test @lex(x > @degrevlex(y > z) > w) isa MonomialOrder
+        @test @lex(@keyorder() > x > y) isa MonomialOrder
     end
 
     @testset "Comparisons" begin
@@ -47,14 +48,33 @@ import PolynomialRings: @ring!
         @test sort([x,y,z,x*y,y^5,z^5,y*z], order=O3) == [z,z^5,y,y*z,y^5,x,x*y]
         @test !degreecompatible(O3)
 
-        #=
         O4 = @lex(x > @degrevlex(y > z) > w)
         @test lt(O4, w, z)
         @test lt(O4, z, y)
+        @test !lt(O4, z^2, y)
         @test lt(O4, y, x)
         @test lt(O4, y^5, x*y)
-        @test lt(O4, z^5, y*z)
+        @test !lt(O4, z^5, y*z)
         @test !degreecompatible(O4)
-        =#
+    end
+
+    @testset "KeyOrder" begin
+        @ring! Int[x, y, z, w]
+
+        @test lt(KeyOrder(), [0, 1], [1, 0])
+        @test !lt(KeyOrder(), [1, 0], [0, 1])
+        @test !lt(KeyOrder(), [0, 0], [0, 0])
+
+        O5 = @lex(@keyorder() > x > y)
+        @test lt(O5, [0, x], [x, 0])
+        @test lt(O5, [y, x], [x, 0])
+        @test lt(O5, [y^2, x], [x, 0])
+        @test !lt(O5, [0, 0], [0, 0])
+        @test !degreecompatible(O5)
+
+        O6 = @lex(@degrevlex(x) > @keyorder())
+        @test lt(O6, [x^3, 0], [0, x^4])
+        @test !lt(O6, [x^4, 0], [0, x^4])
+        @test !lt(O6, [0, 0], [0, 0])
     end
 end

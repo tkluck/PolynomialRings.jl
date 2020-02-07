@@ -9,8 +9,9 @@ symbol together with an integer, e.g., `c[2]`).
 module NamingSchemes
 
 import Base: @pure
-import Base: issubset, *, diff, indexin, promote_rule, promote_type
+import Base: issubset, isvalid, *, diff, indexin, promote_rule, promote_type
 
+import ..Util: isdisjoint
 import PolynomialRings: boundnames, fullboundnames, iscanonical, canonicaltype
 import PolynomialRings: variablesymbols, namingscheme, nestednamingscheme, num_variables
 
@@ -166,7 +167,7 @@ fullboundnames(T::Type) = isnothing(boundnames(T)) ? NoNamingScheme() : (boundna
 iscanonical(T::NamingScheme) = (T,) == canonicalscheme(T)
 iscanonical(T::NestedNamingScheme) = T == canonicalscheme(T)
 
-@generated function canonicalscheme(N::Named{Names}) where Names
+@pure function canonicalscheme(N::Named{Names}) where Names
     sortedsyms = sort(collect(Names))
     return composeschemes(Named{tuple(sortedsyms...)}())
 end
@@ -176,12 +177,12 @@ canonicalscheme(a::Numbered, b::Named) = composeschemes(a, b)
 canonicalscheme(a::Named, b::Numbered) = composeschemes(b, a)
 @generated function canonicalscheme(a::Numbered{Name1}, b::Numbered{Name2}) where {Name1, Name2}
     if Name1 < Name2
-        return composeschemes(a, b)
+        return composeschemes(a(), b())
     else
-        return composeschemes(b, a)
+        return composeschemes(b(), a())
     end
 end
-@generated function canonicalscheme(a::Named{Names1}, b::Named{Names2}) where {Names1, Names2}
+@pure function canonicalscheme(a::Named{Names1}, b::Named{Names2}) where {Names1, Names2}
     sortedsyms = sort(Names1 ∪ Names2)
     return composeschemes(Named{tuple(sortedsyms...)}())
 end

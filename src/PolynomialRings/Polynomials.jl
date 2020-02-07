@@ -9,8 +9,9 @@ import InPlace: @inplace, inplace!, inclusiveinplace!
 import Transducers: Transducer, Eduction
 
 import ..AbstractMonomials: AbstractMonomial
-import ..MonomialOrderings: MonomialOrder
-import ..Monomials.IndexedMonomials: IndexedMonomial
+import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
+import ..MonomialOrderings: monomialorderkey
+#import ..Monomials.IndexedMonomials: IndexedMonomial
 import ..NamingSchemes: Named, Numbered, NamingScheme, nestednamingscheme, isdisjoint, isvalid
 import ..Terms: Term, monomial, coefficient
 import ..Util: @assertvalid, _debug_isvalid
@@ -27,10 +28,8 @@ import PolynomialRings: variablesymbols, allvariablesymbols, fullboundnames
 #
 # -----------------------------------------------------------------------------
 
-const NamedOrder              = MonomialOrder{Rule,<:Named}    where Rule
-const NumberedOrder           = MonomialOrder{Rule,<:Numbered} where Rule
-const NamedMonomial           = AbstractMonomial{<:NamedOrder}
-const NumberedMonomial        = AbstractMonomial{<:NumberedOrder}
+const NamedMonomial           = AbstractMonomial{<:NamedMonomialOrder}
+const NumberedMonomial        = AbstractMonomial{<:NumberedMonomialOrder}
 const MonomialBy{Order}       = AbstractMonomial{Order}
 const TermOver{C,Order}       = Term{<:AbstractMonomial{Order}, C}
 const TermBy{Order,C}        = TermOver{C,Order}
@@ -73,10 +72,10 @@ function polynomialtype(P::Type{<:Polynomial}; sparse=true)
 # -----------------------------------------------------------------------------
 
 const PolynomialOver{C,Order} = Polynomial{<:AbstractMonomial{Order}, C}
-const NamedTerm{C}            = TermOver{C,<:NamedOrder}
-const NumberedTerm{C}         = TermOver{C,<:NumberedOrder}
-const NamedPolynomial{C}      = PolynomialOver{C,<:NamedOrder}
-const NumberedPolynomial{C}   = PolynomialOver{C,<:NumberedOrder}
+const NamedTerm{C}            = TermOver{C,<:NamedMonomialOrder}
+const NumberedTerm{C}         = TermOver{C,<:NumberedMonomialOrder}
+const NamedPolynomial{C}      = PolynomialOver{C,<:NamedMonomialOrder}
+const NumberedPolynomial{C}   = PolynomialOver{C,<:NumberedMonomialOrder}
 const PolynomialBy{Order,C}   = PolynomialOver{C,Order}
 const PolynomialIn{M}         = Polynomial{M}
 
@@ -146,6 +145,8 @@ function leading_term(p::Polynomial; order::MonomialOrder=monomialorder(p))
 end
 leading_monomial(p::Polynomial; order::MonomialOrder=monomialorder(p)) = _monomialbyindex(p, _leading_term_ix(p, order))
 leading_coefficient(p::Polynomial; order::MonomialOrder=monomialorder(p)) = coefficients(p)[_leading_term_ix(p, order)]
+
+monomialorderkey(order, a::Polynomial) = leading_monomial(a, order=order)
 
 tail(p::Polynomial, order::MonomialOrder) = p - leading_term(p; order=order)
 tail(p::Polynomial; order::MonomialOrder=monomialorder(p)) = tail(p, order)
@@ -286,7 +287,7 @@ function polynomial_ring(scheme::NamingScheme; basering::Type=Rational{BigInt}, 
     if !isdisjoint(scheme, nestednamingscheme(basering)) || !isdisjoint(scheme, fullboundnames(basering)) || !isvalid(scheme)
         throw(ArgumentError("Duplicated symbols when extending $basering by $scheme"))
     end
-    order = MonomialOrder{monomialorder, typeof(scheme)}()
+    order = MonomialOrdering{monomialorder, typeof(scheme)}()
     M = monomialtype(order, exptype)
     return polynomialtype(M, basering, sparse=sparse)
 end

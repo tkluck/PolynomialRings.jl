@@ -4,7 +4,7 @@ import Base: *, ^, +, -, one, ==, iszero, zero, diff
 import Base: hash
 
 import ..AbstractMonomials: AbstractMonomial
-import ..MonomialOrderings: MonomialOrder
+import ..MonomialOrderings: MonomialOrder, monomialorderkey
 import ..NamingSchemes: NamingScheme, Variable
 import ..Util: lazymap
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering
@@ -73,6 +73,8 @@ zero(t::T) where T <: Term = zero(typeof(t))
 
 monomial(a::Term) = a.m
 coefficient(a::Term) = a.c
+
+monomialorderkey(order, a::Term) = (monomialorder(a) == order || error("Not implemented!"); monomial(a))
 
 hash(a::Term, h::UInt) = hash(a.m, hash(a.c, h))
 

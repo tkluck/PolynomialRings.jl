@@ -3,7 +3,6 @@ module Display
 import Base: show
 
 import ..AbstractMonomials: AbstractMonomial, exponentsnz
-import ..MonomialOrderings: MonomialOrder
 import ..NamingSchemes: Named, Numbered
 import ..Polynomials: Polynomial, nzrevterms, basering
 import ..Terms: Term, coefficient, monomial
@@ -78,10 +77,6 @@ function defaultshow(io, t)
     else
         print(io, "<undisplayable>")
     end
-end
-
-function show(io::IO, t::MonomialOrder{Name}) where Name
-    print(io, Name)
 end
 
 function show(io::IO, ::Named{Names}) where Names

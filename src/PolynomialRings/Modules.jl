@@ -11,10 +11,12 @@ import InPlace: @inplace, inclusiveinplace!
 import ..AbstractMonomials: AbstractMonomial
 import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
+import ..MonomialOrderings: monomialorderkey, monomialorderkeypair
 import ..Operators: RedType, Lead, Full, Tail
 import ..Operators: one_step_div!, one_step_xdiv!, content, integral_fraction
 import ..Polynomials: Polynomial, monomialorder, basering, tail
 import ..Polynomials: nzterms, nzrevterms, nztailterms
+import ..StandardMonomialOrderings: LexCombinationOrder, KeyOrder
 import ..Terms: Term
 import ..Terms: coefficient, monomial
 import ..Util: nzpairs, isnonzero
@@ -63,12 +65,17 @@ struct Signature{M,I}
     m::M
 end
 
+# TODO: Signature should keep a record of what KeyOrder the I type is ordered by
+monomialorderkey(order, s::Signature) = monomialorderkey(order, s.m)
+monomialorderkey(order::typeof(KeyOrder()), s::Signature) = s.i
+monomialorderkeypair(order::typeof(KeyOrder()), s::Signature) = (s.i, s.m)
+
 termtype(p::AbstractArray{<:Polynomial}) = Signature{termtype(eltype(p)), keytype(p)}
 termtype(P::Type{<:AbstractArray{<:Polynomial}}) = Signature{termtype(eltype(P)), keytype(P)}
 monomialtype(p::AbstractArray{<:Polynomial}) = Signature{monomialtype(eltype(p)), keytype(p)}
 monomialtype(p::Type{<:AbstractArray{<:Polynomial}}) = Signature{monomialtype(eltype(p)), keytype(p)}
-monomialorder(p::AbstractArray{<:Polynomial}) = monomialorder(eltype(p))
-monomialorder(p::Type{<:AbstractArray{<:Polynomial}}) = monomialorder(eltype(p))
+monomialorder(p::Type{<:AbstractArray{<:Polynomial}}) = LexCombinationOrder(KeyOrder(), monomialorder(eltype(p)))
+monomialorder(p::AbstractArray{<:Polynomial}) = monomialorder(typeof(p))
 
 leading_row(s::Signature) = s.i
 
@@ -81,9 +88,8 @@ lcm_degree(s::Signature, t::Signature)           = s.i == t.i ? lcm_degree(s.m, 
 lcm_multipliers(s::Signature, t::Signature)      = s.i == t.i ? lcm_multipliers(s.m, t.m) : nothing
 lcm(s::Signature, t::Signature)                  = s.i == t.i ? Signature(s.i, lcm(s.m, t.m)) : nothing
 deg(s::Signature, scheme)                        = deg(s.m, scheme)
-Base.Order.lt(o::MonomialOrder, s::Signature, t::Signature) = s.i > t.i || (s.i == t.i && Base.Order.lt(o, s.m, t.m))
 ==(s::S, t::S) where S <: Signature = s.i == t.i && s.m == t.m
-iszero(s::Signature{<:Term}) = iszero(s.m)
+iszero(s::Signature) = iszero(s.m)
 
 *(::One, s::Signature) = deepcopy(s)
 *(s::Signature, ::One) = deepcopy(s)
@@ -110,13 +116,15 @@ function leading_monomial(x::AbstractArray{P}; order::MonomialOrder=monomialorde
     return Signature(ix, leading_monomial(x[ix], order=order))
 end
 
-leading_coefficient(x::AbstractArray{P}; order::MonomialOrder=monomialorder(x)) where P<:Polynomial = leading_coefficient(x[leading_row(x)], order=order)
-
-function Base.Order.lt(order::MonomialOrder, s::A, t::A) where A<:AbstractArray{P} where P<:Polynomial
-    iszero(t) && return false
-    iszero(s) && return true
-    Base.Order.lt(order, leading_monomial(s, order=order), leading_monomial(t, order=order))
+function monomialorderkey(order, a::AbstractArray{<:Polynomial})
+    maximum(order, (monomialorderkey(order, x) for x in a if !iszero(x)))
 end
+
+function monomialorderkey(order, a::SparseVector{<:Polynomial})
+    maximum(order, (monomialorderkey(order, x) for x in a.nzval))
+end
+
+leading_coefficient(x::AbstractArray{P}; order::MonomialOrder=monomialorder(x)) where P<:Polynomial = leading_coefficient(x[leading_row(x)], order=order)
 
 Base.get(a::AbstractArray{<:Polynomial}, s::Signature{<:AbstractMonomial}, default) = get(a[s.i], s.m, default)
 
@@ -275,7 +283,12 @@ leading_coefficient(m::TransformedModuleElement; order) = leading_coefficient(m.
 leading_term(m::TransformedModuleElement; order) = leading_term(m.p, order=order)
 leading_row(m::TransformedModuleElement) = leading_row(m.p)
 content(m::TransformedModuleElement) = content(m.p)
-Base.Order.lt(o::MonomialOrder, a::T, b::T) where T<:TransformedModuleElement = Base.Order.lt(o, a.p, b.p)
+
+monomialorderkey(order, a::TransformedModuleElement) = monomialorderkey(order, a.p)
+monomialorderkeypair(order, a::TransformedModuleElement) = monomialorderkeypair(order, a.p)
+# resolve ambiguity
+monomialorderkeypair(order::typeof(KeyOrder()), a::TransformedModuleElement) = monomialorderkeypair(order, a.p)
+
 # linear operations
 *(f, g::TransformedModuleElement) = TransformedModuleElement(f*g.p, f*g.tr, g.n)
 *(f::TransformedModuleElement, g) = TransformedModuleElement(f.p*g, f.tr*g, f.n)

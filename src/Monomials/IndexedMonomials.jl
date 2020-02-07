@@ -8,8 +8,9 @@ import Base: lcm
 import ProgressMeter: @showprogress
 
 import ...AbstractMonomials: AbstractMonomial, num_variables, maybe_div
-import ...MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
+import ...MonomialOrderings: MonomialOrder
 import ...NamingSchemes: NamingScheme
+import ...StandardMonomialOrderings: MonomialOrdering
 import PolynomialRings: monomialtype, exptype, basering, monomialorder, tail, divides, mutuallyprime, generators
 
 struct ByIndex end
@@ -44,7 +45,7 @@ function exponent(m::IndexedMonomial, ix)
     exponent(convert(N, m), ix)
 end
 
-Base.lt(::Order, a::M, b::M) where M <: IndexedMonomial{Order} where Order <: MonomialOrder{:degrevlex} = a.ix < b.ix
+Base.lt(::Order, a::M, b::M) where M <: IndexedMonomial{Order} where Order <: MonomialOrdering{:degrevlex} = a.ix < b.ix
 
 generators(::Type{M}) where M <: IndexedMonomial = map(m -> convert(M, m), generators(densetype(M)))
 

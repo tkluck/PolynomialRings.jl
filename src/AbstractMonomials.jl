@@ -5,10 +5,10 @@ import Base: hash
 import Base: iterate
 import Base: last, findlast, length
 import Base: promote_rule, convert
-import SparseArrays: SparseVector, sparsevec
+import SparseArrays: sparsevec, sparse
 import SparseArrays: nonzeroinds
 
-import ..MonomialOrderings: MonomialOrderIn
+import ..MonomialOrderings: MonomialOrder
 import ..NamingSchemes: Variable, Named, Numbered, NamingScheme, isdisjoint, variablesymbols
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, monomialtype, num_variables, divides, mutuallyprime
 import PolynomialRings: leading_monomial
@@ -41,7 +41,7 @@ other functions, as well.
 """
 abstract type AbstractMonomial{Order} end
 
-const MonomialIn{Names} = AbstractMonomial{<:MonomialOrderIn{Names}}
+const MonomialIn{Names} = AbstractMonomial{<:MonomialOrder{Names}}
 const NamedMonomial = MonomialIn{<:Named}
 const NumberedMonomial = MonomialIn{<:Numbered}
 
@@ -168,22 +168,16 @@ function mutuallyprime(a::AbstractMonomial, b::AbstractMonomial)
 end
 
 
-function any_divisor(f::Function, a::M) where M <: AbstractMonomial
-    if isempty(nzindices(a))
-        return f(a)
-    end
+function any_divisor(f::Function, a::M, scheme::NamingScheme) where M <: AbstractMonomial
+    isone(a) && return f(a)
 
-
-    n = last(nzindices(a))
-    nzinds = collect(nzindices(a))
-    nonzeros_a = map(i -> exponent(a, i), nzinds)
-    nonzeros = copy(nonzeros_a)
-    e = SparseVector{exptype(M), Int}(n, nzinds, nonzeros)
-
-    N = VectorMonomial{typeof(e), exptype(M), typeof(monomialorder(M))}
+    nonzeros_a = sparse(collect(exponents(a, scheme)))
+    e = copy(nonzeros_a)
+    nzinds = e.nzind
+    nonzeros = e.nzval
 
     while true
-        m = N(e, sum(e))
+        m = exp(M, e)
         if f(m)
             return true
         end

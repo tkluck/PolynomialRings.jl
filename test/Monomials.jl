@@ -1,7 +1,7 @@
 using Test
 
 import PolynomialRings.NamingSchemes: @namingscheme, @variable
-import PolynomialRings.MonomialOrderings: @lex
+import PolynomialRings.StandardMonomialOrderings: @lex
 import PolynomialRings.AbstractMonomials: exponents, exponentsnz
 import PolynomialRings.Monomials: @monomial
 import PolynomialRings: monomialtype
