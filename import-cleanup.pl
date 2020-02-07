@@ -9,10 +9,10 @@ my @rest;
 my $last_was_import = 0;
 
 while(<>) {
-    if     (/^(?:using|import) (Core|Base|LinearAlgebra|SparseArrays)\b(.*)$/) {
+    if     (/^(?:using|import) (Core|Base|LinearAlgebra|Random|SparseArrays|Test)\b(.*)$/) {
         push @stdlib_imports, "import $1$2\n";
         $last_was_import = 1;
-    } elsif(/^(?:using|import) (Combinatorics|DataStructures|IterTools|InPlace)\b(.*)$/) {
+    } elsif(/^(?:using|import) (Combinatorics|DataStructures|Documenter|IterTools|InPlace|OrderedCollections|ProgressMeter|Transducers)\b(.*)$/) {
         push @dependency_imports, "import $1$2\n";
         $last_was_import = 1;
     } elsif(/^(?:using|import) (PolynomialRings\.)(.*)$/) {
