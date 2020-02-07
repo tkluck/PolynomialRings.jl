@@ -14,8 +14,8 @@ import ..NamingSchemes: namingscheme
 import PolynomialRings: deg, leading_monomial
 
 function Base.Order.lt(order::MonomialOrder{:degrevlex}, a, b)
-    a = leading_monomial(a, order)
-    b = leading_monomial(b, order)
+    a = leading_monomial(a, order=order)
+    b = leading_monomial(b, order=order)
     scheme = namingscheme(order)
     if deg(a, scheme) == deg(b, scheme)
         for (_, (d, e)) in revexponentsnz(scheme, a, b)
@@ -30,8 +30,8 @@ function Base.Order.lt(order::MonomialOrder{:degrevlex}, a, b)
 end
 
 function Base.Order.lt(order::MonomialOrder{:deglex}, a, b)
-    a = leading_monomial(a, order)
-    b = leading_monomial(b, order)
+    a = leading_monomial(a, order=order)
+    b = leading_monomial(b, order=order)
     scheme = namingscheme(order)
     if deg(a, scheme) == deg(b, scheme)
         for (_, (d, e)) in exponentsnz(scheme, a, b)
@@ -46,8 +46,8 @@ function Base.Order.lt(order::MonomialOrder{:deglex}, a, b)
 end
 
 function Base.Order.lt(order::MonomialOrder{:lex}, a, b)
-    a = leading_monomial(a, order)
-    b = leading_monomial(b, order)
+    a = leading_monomial(a, order=order)
+    b = leading_monomial(b, order=order)
     scheme = namingscheme(order)
     for (_, (d, e)) in exponentsnz(scheme, a, b)
         if d != e

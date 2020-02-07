@@ -11,7 +11,8 @@ import SparseArrays: nonzeroinds
 import ..NamingSchemes: Named, Numbered, NamingScheme, isdisjoint
 import ..MonomialOrderings: MonomialOrderIn
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, monomialtype, num_variables, divides, mutuallyprime
-import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namingscheme, monomialorder
+import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namingscheme, monomialorder, deg
+import PolynomialRings: leading_monomial
 
 """
     AbstractMonomial{Order}
@@ -41,99 +42,6 @@ const MonomialIn{Names} = AbstractMonomial{<:MonomialOrderIn{Names}}
 
 # -----------------------------------------------------------------------------
 #
-# Utility: iterate over the union of two index sets
-#
-# -----------------------------------------------------------------------------
-struct IndexUnion{I,J,lt}
-    left  :: I
-    right :: J
-end
-
-struct Start end
-iterate(a, b::Start) = iterate(a)
-iterate(a::Array, b::Start) = iterate(a)
-iterate(a::OrdinalRange, b::Start) = iterate(a)
-iterate(i::IndexUnion) = iterate(i, (Start(), Start()))
-@inline function iterate(i::IndexUnion{I,J,lt}, state) where {I,J,lt}
-    lstate, rstate = state
-    liter = iterate(i.left, lstate)
-    riter = iterate(i.right, rstate)
-    if liter === nothing && riter === nothing
-        return nothing
-    elseif liter === nothing || (riter !== nothing && lt(riter[1], liter[1]))
-        return riter[1], (lstate, riter[2])
-    elseif riter === nothing || (liter !== nothing && lt(liter[1], riter[1]))
-        return liter[1], (liter[2], rstate)
-    elseif liter[1] == riter[1]
-        return liter[1], (liter[2], riter[2])
-    else
-        @assert(false) # unreachable?
-    end
-end
-
-findlast(i::IndexUnion) = max(findlast(i.left), findlast(i.right))
-
-function last(i::IndexUnion)
-    l = findlast(i.left)
-    r = findlast(i.right)
-    if l == 0
-        return i.right[r]
-    elseif r == 0
-        return i.left[l]
-    else
-        return max(i.left[l], i.right[r])
-    end
-end
-
-length(i::IndexUnion) = (len=0; for _ in i; len += 1; end; len)
-
-function index_union(a::AbstractMonomial, b::AbstractMonomial)
-    l = nzindices(a)
-    r = nzindices(b)
-    IndexUnion{typeof(l),typeof(r),<}(l,r)
-end
-
-# part of julia 0.7; doing a poor-man's version here as it is a significant
-# performance win (monomial comparisons being part of many inner loops)
-struct ReversedVector{A<:AbstractVector}
-    a::A
-end
-iterate(r::ReversedVector) = iterate(r, Start())
-iterate(r::ReversedVector, ::Start) = isempty(r.a) ? nothing : (r.a[end], 1)
-iterate(r::ReversedVector, state) = length(r.a) <= state ? nothing : (r.a[end-state], state+1)
-start(r::ReversedVector) = length(r.a)
-done(r::ReversedVector, state) = state == 0
-next(r::ReversedVector, state) = r.a[state], state-1
-reverseview(a) = reverse(a)
-reverseview(a::AbstractVector) = ReversedVector(a)
-function rev_index_union(a::AbstractMonomial, b::AbstractMonomial)
-    l = reverseview(nzindices(a))
-    r = reverseview(nzindices(b))
-    IndexUnion{typeof(l),typeof(r),>}(l,r)
-end
-
-struct EnumerateNZ{M<:AbstractMonomial}
-    a :: M
-end
-function iterate(enz::EnumerateNZ)
-    it = iterate(nzindices(enz.a))
-    it === nothing && return nothing
-    i, next_state = it
-    (i, exponent(enz.a, i)), next_state
-end
-function iterate(enz::EnumerateNZ, state)
-    it = iterate(nzindices(enz.a), state)
-    it === nothing && return nothing
-    i, next_state = it
-    (i, exponent(enz.a, i)), next_state
-end
-start(enz::EnumerateNZ) = start(nzindices(enz.a))
-done(enz::EnumerateNZ, state) = done(nzindices(enz.a), state)
-next(enz::EnumerateNZ, state) = ((i,next_state) = next(nzindices(enz.a), state); ((i, exponent(enz.a, i)), next_state))
-length(enz::EnumerateNZ) = length(nzindices(enz.a))
-
-# -----------------------------------------------------------------------------
-#
 # Abstract fallbacks
 #
 # -----------------------------------------------------------------------------
@@ -146,9 +54,6 @@ exp(::Type{M}, exps::Pair...) where M <: AbstractMonomial = (exps = Dict(exps...
 one(::Type{M}) where M <: AbstractMonomial = _construct(M, i->0, 1:0)
 one(::M) where M <: AbstractMonomial = one(M)
 
-*(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _construct(promote_type(typeof(a), typeof(b)),i -> exponent(a, i) + exponent(b, i), index_union(a,b), total_degree(a) + total_degree(b))
-^(a::M, n::Integer) where M <: AbstractMonomial = _construct(M,i -> exponent(a, i)*n, nzindices(a), total_degree(a)*n)
-
 function *(a::AbstractMonomial, b::AbstractMonomial)
     N = promote_type(namingscheme(a), namingscheme(b))
     N isa NamingScheme || error("Cannot multiply $(typeof(a)) and $(typeof(b)); convert to polynomials first")
@@ -156,7 +61,11 @@ function *(a::AbstractMonomial, b::AbstractMonomial)
     exp(T, exponents(a, N) .+ exponents(b, N))
 end
 
+^(a::AbstractMonomial, n::Integer) = exp(typeof(a), n .* exponents(a, namingscheme(a)))
+
 total_degree(a::A) where A <: AbstractMonomial = mapreduce(i->exponent(a, i), +, nzindices(a), init=zero(exptype(a)))
+
+leading_monomial(a::AbstractMonomial; order) = a # note that we don't need order congruence
 
 lcm(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _construct(promote_type(typeof(a), typeof(b)),i -> max(exponent(a, i), exponent(b, i)), index_union(a,b))
 gcd(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _construct(promote_type(typeof(a), typeof(b)),i -> min(exponent(a, i), exponent(b, i)), index_union(a,b))
@@ -288,23 +197,33 @@ function any_divisor(f::Function, a::M) where M <: AbstractMonomial
 end
 
 exponents(m::MonomialIn{Scheme}, scheme::Scheme) where Scheme <: NamingScheme = m.e
+deg(m::MonomialIn{Scheme}, scheme::Scheme) where Scheme <: NamingScheme = m.deg
 
 @generated function exponents(m::MonomialIn{Named{SourceNames}}, scheme::Named{TargetNames}) where {SourceNames, TargetNames}
     # create an expression that calls the tuple constructor. No arguments -- so far
-    converter = :( tuple() )
+    exps = :( tuple() )
     for d in TargetNames
         # for every result field, add the constant 0 as an argument
-        push!(converter.args, :( zero(exptype(m)) ))
+        push!(exps.args, :( zero(exptype(m)) ))
         for (j,s) in enumerate(SourceNames)
             if d == s
                 # HOWEVER, if it actually also exists in src, then replace the 0
                 # by reading from exponent_tuple
-                converter.args[end]= :( m.e[$j] )
+                exps.args[end]= :( m.e[$j] )
                 break
             end
         end
     end
-    return converter
+    return exps
 end
+
+deg(m::AbstractMonomial, scheme::NamingScheme) = sum(exponents(m, scheme))
+
+function exponentsnz(scheme::NamingScheme, ms::AbstractMonomial...)
+    exps(m) = exponents(m, scheme)
+    return enumerate(zip(map(exps, ms)...))
+end
+
+revexponentsnz(scheme::NamingScheme, ms::AbstractMonomial...) = Iterators.reverse(exponentsnz(scheme, ms...))
 
 end # module

@@ -12,7 +12,6 @@ include("StandardMonomialOrderings.jl")
 include("Monomials.jl")
 
 include("PolynomialRings/NamedValues.jl")
-#include("PolynomialRings/MonomialIterators.jl")
 include("PolynomialRings/Terms.jl")
 include("PolynomialRings/Polynomials.jl")
 include("PolynomialRings/Constants.jl")

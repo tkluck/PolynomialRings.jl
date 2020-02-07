@@ -52,6 +52,7 @@ function expansion end
 function exponents end
 function nzexponents end
 function nzterms end
+function deg end
 function checkconstant end
 function leading_term end
 function leading_monomial end
