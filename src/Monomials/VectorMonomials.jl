@@ -1,7 +1,8 @@
 module VectorMonomials
 
-import Base: exp
+import Base: exp, rand
 
+import Random: AbstractRNG, SamplerType, randsubseq
 import SparseArrays: SparseVector, sparsevec
 import SparseArrays: nonzeroinds
 
@@ -101,6 +102,14 @@ function ==(a::M, b::M) where M <: VectorMonomial{<:SparseVector}
     @views begin
         iszero(a.e[m+1:end]) && iszero(b.e[m+1:end]) && a.e[1:m] == b.e[1:m]
     end
+end
+
+function rand(rng::AbstractRNG, ::SamplerType{M}) where M <: VectorMonomial{<:SparseVector}
+    maxexp = 2 ^ (leading_zeros(zero(exptype(M))) ÷ 2)
+    numvars = rand(1:100)
+    nzind = randsubseq(1:numvars, 1/sqrt(numvars))
+    exps = rand(1:maxexp, length(nzind))
+    return exp(M, SparseVector(numvars, nzind, exps))
 end
 
 

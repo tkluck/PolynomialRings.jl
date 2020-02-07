@@ -1,6 +1,8 @@
 module TupleMonomials
 
-import Base: exp
+import Base: exp, rand
+
+import Random: AbstractRNG, SamplerType
 
 import ...AbstractMonomials: AbstractMonomial, _construct, num_variables, nzindices, maybe_div
 import PolynomialRings: exptype
@@ -47,6 +49,12 @@ nzindices(a::TupleMonomial{N,I,Order}) where {N,I,Order} = 1:N
 total_degree(a::TupleMonomial) = a.deg
 
 ==(a::M, b::M) where M <: TupleMonomial = a.e == b.e
+
+function rand(rng::AbstractRNG, ::SamplerType{M}) where M <: TupleMonomial
+    maxexp = 2 ^ (leading_zeros(zero(exptype(M))) ÷ 2)
+    exps = ntuple(i -> rand(rng, 1:maxexp), num_variables(M))
+    return exp(M, exps)
+end
 
 
 end
