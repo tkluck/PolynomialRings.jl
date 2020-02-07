@@ -15,10 +15,12 @@ include("PolynomialRings/NamedValues.jl")
 include("PolynomialRings/Terms.jl")
 include("PolynomialRings/Polynomials.jl")
 include("PolynomialRings/Constants.jl")
+
+include("Expansions.jl")
+
 include("PolynomialRings/Broadcast.jl")
 include("PolynomialRings/Operators.jl")
 include("PolynomialRings/NamedPolynomials.jl")
-include("PolynomialRings/Expansions.jl")
 include("PolynomialRings/Arrays.jl")
 include("PolynomialRings/Display.jl")
 include("PolynomialRings/Modules.jl")
