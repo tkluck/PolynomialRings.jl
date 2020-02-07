@@ -1,6 +1,6 @@
 module Monomials
 
-import SparseArrays: SparseVector
+import SparseArrays: SparseVector, sparsevec
 
 import ..NamingSchemes: NamingScheme, Named, Numbered, namingscheme, num_variables
 import ..MonomialOrderings: MonomialOrder
@@ -75,7 +75,7 @@ recurse_monomial_from_expr(x::Symbol) = :(exp(monomialtype($(QuoteNode(x))), (1,
 function recurse_monomial_from_expr(expr::Expr)
     if expr.head == :ref
         x, i = expr.args
-        return :(exp(monomialtype($(QuoteNode(x)), $i), ($i => 1,)))
+        return :(exp(monomialtype($(QuoteNode(x)), Inf), sparsevec([$i], [1])))
     elseif expr.head == :call
         args = map(recurse_monomial_from_expr, expr.args[2:end])
         return Expr(expr.head, expr.args[1], args...)

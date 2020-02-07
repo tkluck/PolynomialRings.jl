@@ -4,9 +4,13 @@ import Base: exponent, gcd, lcm, one, *, ^, ==, diff, isless, iszero, exp
 import Base: hash
 import Base: iterate
 import Base: last, findlast, length
-import Base: promote_rule
+import Base: promote_rule, convert
 import SparseArrays: SparseVector, sparsevec
 import SparseArrays: nonzeroinds
+
+#import ..Constants: One
+# FIXME: reference cycle
+struct One end
 
 import ..NamingSchemes: Named, Numbered, NamingScheme, isdisjoint
 import ..MonomialOrderings: MonomialOrderIn
@@ -28,9 +32,8 @@ of the variables.
 
 Each concrete implementation `M` should implement for elements `m`:
 
-    exponent(m, i)
-    nzindices(m)
-    _construct(M, i -> exponent, nonzero_indices, [total_degree])
+    exp(M, exponents, deg=sum(exponents))
+    exponents(scheme::NamingScheme, m::M)
     exptype(M)
 
 In addition, one may choose to add specific optimizations by overloading
@@ -39,6 +42,8 @@ other functions, as well.
 abstract type AbstractMonomial{Order} end
 
 const MonomialIn{Names} = AbstractMonomial{<:MonomialOrderIn{Names}}
+const NamedMonomial = MonomialIn{<:Named}
+const NumberedMonomial = MonomialIn{<:Numbered}
 
 # -----------------------------------------------------------------------------
 #
@@ -48,27 +53,28 @@ const MonomialIn{Names} = AbstractMonomial{<:MonomialOrderIn{Names}}
 @inline _construct(::Type{M}, f, nzindices, deg) where M <: AbstractMonomial = _construct(M, f, nzindices)
 @inline _construct(::Type{M}, f, nzindices) where M <: AbstractMonomial = _construct(M, f, nzindices, exptype(M)(mapreduce(f, +, nzindices, init=zero(exptype(M)))))
 
-exp(::Type{M}, exps, deg=sum(exps)) where M <: AbstractMonomial = _construct(M, i -> exps[i], 1:length(exps), deg)
-exp(::Type{M}, exps::Pair...) where M <: AbstractMonomial = (exps = Dict(exps...); _construct(M, i -> exps[i], keys(exps), deg))
-
-one(::Type{M}) where M <: AbstractMonomial = _construct(M, i->0, 1:0)
+one(::Type{M}) where M <: AbstractMonomial = convert(M, One())
 one(::M) where M <: AbstractMonomial = one(M)
 
-function *(a::AbstractMonomial, b::AbstractMonomial)
-    N = promote_type(namingscheme(a), namingscheme(b))
-    N isa NamingScheme || error("Cannot multiply $(typeof(a)) and $(typeof(b)); convert to polynomials first")
-    T = monomialtype(N) # FIXME: get exptype from a and b
-    exp(T, exponents(a, N) .+ exponents(b, N))
+function exponentwise(op, ms::AbstractMonomial...)
+    M = promote_type(map(typeof, ms)...)
+    N = namingscheme(M)
+    exp(M, broadcast(op, exponents(N, ms...)...))
 end
+
+*(a::AbstractMonomial, b::AbstractMonomial) = exponentwise(+, a, b)
+lcm(a::AbstractMonomial, b::AbstractMonomial) = exponentwise(max, a, b)
+gcd(a::AbstractMonomial, b::AbstractMonomial) = exponentwise(min, a, b)
 
 ^(a::AbstractMonomial, n::Integer) = exp(typeof(a), n .* exponents(a, namingscheme(a)))
 
-total_degree(a::A) where A <: AbstractMonomial = mapreduce(i->exponent(a, i), +, nzindices(a), init=zero(exptype(a)))
+function ==(a::AbstractMonomial, b::AbstractMonomial)
+    N = promote_type(namingscheme(a), namingscheme(b))
+    N isa NamingScheme || return false
+    return all(((_, (a,b)),) -> a == b, exponentsnz(N, a, b))
+end
 
 leading_monomial(a::AbstractMonomial; order) = a # note that we don't need order congruence
-
-lcm(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _construct(promote_type(typeof(a), typeof(b)),i -> max(exponent(a, i), exponent(b, i)), index_union(a,b))
-gcd(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = _construct(promote_type(typeof(a), typeof(b)),i -> min(exponent(a, i), exponent(b, i)), index_union(a,b))
 
 monomialorder(::Type{M}) where M <: AbstractMonomial{Order} where Order = Order()
 monomialtype(::Type{M}) where M <: AbstractMonomial = M
@@ -80,21 +86,10 @@ function exptype(::Type{M}, scheme::NamingScheme) where M <: AbstractMonomial
     return isdisjoint(namingscheme(M), scheme) ? Int16 : exptype(M)
 end
 
+exptype(a::AbstractMonomial) = exptype(typeof(a))
+
 num_variables(::Type{M}) where M <: AbstractMonomial = num_variables(namingscheme(M))
 
-"""
-    enumeratenz(monomial)
-
-Enumerate (i.e. return an iterator) for `(variable index, exponent)` tuples for `monomial`,
-where `exponent` is a structural nonzero (hence `nz`).
-
-This means that, depending on implementation details, the variable indices with
-zero exponent *may* be skipped, but this is not guaranteed. In practice, this
-only happens if the storage format is sparse.
-"""
-enumeratenz(a::M) where M <: AbstractMonomial = EnumerateNZ(a)
-
-exptype(a::AbstractMonomial) = exptype(typeof(a))
 
 """
     hash(monomial)
@@ -109,34 +104,42 @@ equal.
 TODO: add test cases for that!
 """
 function hash(a::AbstractMonomial, h::UInt)
-    for (i,e) in enumeratenz(a)
+    for (i, (e,)) in exponentsnz(namingscheme(a), a)
         if !iszero(e)
-            h = hash((i,e), h)
+            h = hash((i, e), h)
         end
     end
     h
 end
 
-==(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order = all(i->exponent(a, i) == exponent(b, i), index_union(a,b))
-
-function maybe_div(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order
-    M = promote_type(typeof(a), typeof(b))
-    if all(i -> exponent(a, i) >= exponent(b, i), index_union(a,b))
-        return _construct(M,i -> exponent(a, i) - exponent(b, i), index_union(a,b))
+function maybe_div(a::AbstractMonomial, b::AbstractMonomial)
+    N = promote_type(namingscheme(a), namingscheme(b))
+    N isa NamingScheme || error()
+    T = monomialtype(N) # FIXME: get exptype from a and b
+    ea = exponents(N, a)
+    eb = exponents(N, b)
+    if all(a ≥ b for (a, b) in zip(ea, eb))
+        return exp(T, ea .- eb)
     else
         return nothing
     end
 end
 
-function divides(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order
-    return all(i -> exponent(a, i) <= exponent(b, i), index_union(a,b))
+function divides(a::AbstractMonomial, b::AbstractMonomial)
+    N = promote_type(namingscheme(a), namingscheme(b))
+    N isa NamingScheme || error()
+    ea = exponents(N, a)
+    eb = exponents(N, b)
+    return all(a ≤ b for (a, b) in zip(ea, eb))
 end
 
-function lcm_multipliers(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order
+function lcm_multipliers(a::AbstractMonomial, b::AbstractMonomial)
     M = promote_type(typeof(a), typeof(b))
+    ea = exponents(namingscheme(M), a)
+    eb = exponents(namingscheme(M), b)
     return (
-        _construct(M, i -> max(exponent(a, i), exponent(b, i)) - exponent(a, i), index_union(a,b)),
-        _construct(M, i -> max(exponent(a, i), exponent(b, i)) - exponent(b, i), index_union(a,b)),
+        exp(M, max.(ea, eb) .- ea),
+        exp(M, max.(ea, eb) .- eb),
     )
 end
 
@@ -149,16 +152,17 @@ function diff(a::M, i::Integer) where M <: AbstractMonomial
     end
 end
 
-function lcm_degree(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order
+function lcm_degree(a::AbstractMonomial, b::AbstractMonomial)
+    M = promote_type(typeof(a), typeof(b))
     # avoid summing empty iterator
-    iszero(total_degree(a)) && iszero(total_degree(b)) && return zero(exptype(M))
-    return sum(max(exponent(a, i), exponent(b, i)) for i in index_union(a,b))
+    isone(a) && isone(b) && return zero(exptype(M))
+    return sum(max(d, e) for (_, (d, e)) in exponentsnz(namingscheme(M), a, b))
 end
 
-function mutuallyprime(a::AbstractMonomial{Order}, b::AbstractMonomial{Order}) where Order
-    return all(iszero(min(exponent(a, i), exponent(b, i))) for i in index_union(a, b))
+function mutuallyprime(a::AbstractMonomial, b::AbstractMonomial)
+    N = promote_type(namingscheme(a), namingscheme(b))
+    return all(iszero(min(d, e)) for (_, (d, e)) in exponentsnz(N, a, b))
 end
-
 
 
 function any_divisor(f::Function, a::M) where M <: AbstractMonomial
@@ -217,13 +221,43 @@ deg(m::MonomialIn{Scheme}, scheme::Scheme) where Scheme <: NamingScheme = m.deg
     return exps
 end
 
-deg(m::AbstractMonomial, scheme::NamingScheme) = sum(exponents(m, scheme))
+
+function exponents(scheme::NamingScheme, ms::AbstractMonomial...)
+    exps(m) = exponents(m, scheme)
+    map(exps, ms)
+end
+
+const InfiniteScheme{Name} = Numbered{Name, Inf}
+
+function exponents(scheme::InfiniteScheme, ms::AbstractMonomial...;
+                   max_variable_index = maximum(max_variable_index(scheme, m) for m in ms))
+    exps(m) = exponents(m, scheme, max_variable_index=max_variable_index)
+    map(exps, ms)
+end
+
+function exponents(m::MonomialIn{<:Numbered{Name}}, scheme::Numbered{Name, N}) where {Name, N}
+    infscheme = Numbered{Name, Inf}()
+    max_variable_index(infscheme, m) <= N || error("Retrieving too few exponents")
+    return exponents(m, infscheme, max_variable_index=N)
+end
+
+@generated function exponents(m::One, scheme::Named{TargetNames}) where TargetNames
+    ntuple(_ -> zero(Int16), length(TargetNames))
+end
+
+deg(m::AbstractMonomial, scheme::NamingScheme) = sum(exponents(scheme, m))
+
 
 function exponentsnz(scheme::NamingScheme, ms::AbstractMonomial...)
-    exps(m) = exponents(m, scheme)
-    return enumerate(zip(map(exps, ms)...))
+    return enumerate(zip(exponents(scheme, ms...)...))
 end
 
 revexponentsnz(scheme::NamingScheme, ms::AbstractMonomial...) = Iterators.reverse(exponentsnz(scheme, ms...))
+
+# conversions
+
+convert(::Type{M}, m::AbstractMonomial) where M <: AbstractMonomial = exp(M, exponents(namingscheme(M), m))
+convert(::Type{M}, m::One) where M <: AbstractMonomial = exp(M, exponents(namingscheme(M), m))
+convert(::Type{M}, m::M) where M <: AbstractMonomial = m
 
 end # module
