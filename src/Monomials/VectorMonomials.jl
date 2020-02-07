@@ -3,10 +3,10 @@ module VectorMonomials
 import Base: exp, rand
 
 import Random: AbstractRNG, SamplerType, randsubseq
-import SparseArrays: SparseVector, sparsevec
+import SparseArrays: SparseVector, sparsevec, sparse
 import SparseArrays: nonzeroinds
 
-import ...AbstractMonomials: AbstractMonomial, MonomialIn, num_variables, nzindices, maybe_div, exponents
+import ...AbstractMonomials: AbstractMonomial, MonomialIn, nzindices, exponents
 import ...NamingSchemes: Numbered
 import PolynomialRings: exptype, max_variable_index
 
@@ -33,7 +33,11 @@ struct VectorMonomial{V,I,Order} <: AbstractMonomial{Order}
     VectorMonomial{V,I,Order}(e, deg) where V<:AbstractVector{I} where {I<:Integer,Order} = new(e, deg)
 end
 
-exp(::Type{M}, exps, deg=sum(exps)) where M <: VectorMonomial = M(exps, deg)
+SparseVectorMonomial{I, Order} = VectorMonomial{<:SparseVector, I, Order}
+
+exp(::Type{M}, exps::V, deg=sum(exps)) where M <: VectorMonomial{V} where V = M(exps, deg)
+exp(::Type{M}, exps::Tuple, deg=sum(exps)) where M <: VectorMonomial = exp(M, collect(exps), deg)
+exp(::Type{M}, exps::AbstractVector, deg=sum(exps)) where M <: SparseVectorMonomial = M(sparse(exps), deg)
 
 function _construct(::Type{M}, f::Function, nonzero_indices, deg) where M <: VectorMonomial{V,I,Order} where V <: AbstractVector{I} where I <: Integer where Order
     if findlast(nonzero_indices) == 0

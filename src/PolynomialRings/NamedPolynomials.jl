@@ -40,19 +40,6 @@ convert(::Type{P}, p::P) where P <: DensePolynomialOver{C,O} where {C,O<:Numbere
 #
 # -----------------------------------------------------------------------------
 
-convert(::Type{M}, monomial::M) where M<:NamedMonomial = monomial
-
-@generated function convert(::Type{M}, monomial::AbstractMonomial) where M<:NamedMonomial
-    src = variablesymbols(monomial)
-    dest = variablesymbols(M)
-    for s in src
-        if !(s in dest)
-            throw(ArgumentError("Cannot convert variables $src to variables $dest"))
-        end
-    end
-    :( _lossy_convert_monomial(M, monomial) )
-end
-
 _lossy_convert_monomial(::Type{M}, ::One) where M<:AbstractMonomial = one(M)
 _lossy_convert_monomial(::Type{M}, ::NumberedMonomial) where M<:NamedMonomial = one(M)
 _lossy_convert_monomial(::Type{M}, ::NamedMonomial) where M<:NumberedMonomial = one(M)

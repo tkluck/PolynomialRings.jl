@@ -251,9 +251,17 @@ end
 
 revexponentsnz(scheme::NamingScheme, ms::AbstractMonomial...) = Iterators.reverse(exponentsnz(scheme, ms...))
 
-# conversions
+# -----------------------------------------------------------------------------
+#
+# Conversions
+#
+# -----------------------------------------------------------------------------
+function convert(::Type{M}, m::AbstractMonomial) where M <: AbstractMonomial
+    N = diff(namingscheme(m), namingscheme(M))
+    isnothing(N) || all(iszero, exponents(m, N)) || throw(InexactError(:convert, M, m))
+    exp(M, exponents(m, namingscheme(M)))
+end
 
-convert(::Type{M}, m::AbstractMonomial) where M <: AbstractMonomial = exp(M, exponents(m, namingscheme(M)))
 convert(::Type{M}, m::One) where M <: AbstractMonomial = exp(M, exponents(m, namingscheme(M)))
 convert(::Type{M}, m::M) where M <: AbstractMonomial = m
 

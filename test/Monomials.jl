@@ -60,4 +60,37 @@ import PolynomialRings: maybe_div, lcm, gcd, divides, lcm_multipliers
 
         # TODO: more arithmetic
     end
+
+    @testset "Conversions" begin
+        M1 = monomialtype(@namingscheme((x,y,z)))
+        M2 = monomialtype(@namingscheme((y,z,w)))
+
+        @test convert(M1, @monomial(y)) isa M1
+        @test convert(M2, @monomial(y)) isa M2
+        @test convert(M1, @monomial(y*z)) == convert(M2, @monomial(y*z))
+
+        @test_throws InexactError convert(M1, @monomial(w))
+        @test_throws InexactError convert(M1, convert(M2, @monomial(w)))
+
+        @test convert(M1, @monomial(x)) * convert(M2, @monomial(w)) isa monomialtype(@namingscheme((w,x,y,z)))
+
+        M3 = monomialtype(@namingscheme(c[]))
+        M4 = monomialtype(@namingscheme(c[1:20]))
+
+        @test convert(M3, @monomial(c[1])) isa M3
+        @test convert(M4, @monomial(c[1])) isa M4
+        @test convert(M3, @monomial(c[21])) isa M3
+        @test_throws InexactError convert(M4, @monomial(c[21]))
+
+        @test convert(M3, @monomial(c[1]*c[2])) == convert(M4, @monomial(c[1]*c[2]))
+        @test convert(M3, @monomial(c[1])) * convert(M4, @monomial(c[1])) isa monomialtype(@namingscheme(c[]))
+    end
+
+    @testset "Overflow behaviour" begin
+        M1 = monomialtype(@namingscheme(x), Int8)
+        @test exp(M1, (64,)) * exp(M1, (64,)) == exp(M1, (typemin(Int8),))
+
+        M2 = monomialtype(@namingscheme(x[]), Int8)
+        @test exp(M2, (64,)) * exp(M2, (64,)) == exp(M2, (typemin(Int8),))
+    end
 end
