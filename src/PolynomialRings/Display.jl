@@ -3,7 +3,7 @@ module Display
 import Base: show
 
 import ..MonomialOrderings: MonomialOrder
-import ..AbstractMonomials: AbstractMonomial, enumeratenz
+import ..AbstractMonomials: AbstractMonomial, exponentsnz
 import ..Polynomials: Polynomial, nzrevterms, basering
 import ..Terms: Term, coefficient, monomial
 import ..NamingSchemes: Named, Numbered
@@ -24,7 +24,7 @@ function show(io::IO, m::AbstractMonomial)
         return
     end
     factors = String[]
-    for (ix, i) in enumeratenz(m)
+    for (ix, (i,)) in exponentsnz(namingscheme(m), m)
         symbol = _variable(namingscheme(m), ix)
         if i == 1
             push!(factors, "$symbol")

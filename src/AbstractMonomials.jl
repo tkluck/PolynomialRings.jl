@@ -256,8 +256,8 @@ revexponentsnz(scheme::NamingScheme, ms::AbstractMonomial...) = Iterators.revers
 
 # conversions
 
-convert(::Type{M}, m::AbstractMonomial) where M <: AbstractMonomial = exp(M, exponents(namingscheme(M), m))
-convert(::Type{M}, m::One) where M <: AbstractMonomial = exp(M, exponents(namingscheme(M), m))
+convert(::Type{M}, m::AbstractMonomial) where M <: AbstractMonomial = exp(M, exponents(m, namingscheme(M)))
+convert(::Type{M}, m::One) where M <: AbstractMonomial = exp(M, exponents(m, namingscheme(M)))
 convert(::Type{M}, m::M) where M <: AbstractMonomial = m
 
 end # module
