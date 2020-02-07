@@ -245,6 +245,10 @@ end
     ntuple(_ -> zero(Int16), length(TargetNames))
 end
 
+function exponents(m::One, scheme::Numbered)
+    Int16[]
+end
+
 deg(m::AbstractMonomial, scheme::NamingScheme) = sum(exponents(scheme, m))
 
 
