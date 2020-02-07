@@ -96,8 +96,8 @@ using PolynomialRings
     end
 
     @testset "Bound names" begin
-        import PolynomialRings: boundnames, fullnamingscheme
+        import PolynomialRings: boundnames, nestednamingscheme
 
-        @test boundnames(@ring ℤ[x][y]/(x^2 - y^3)) == fullnamingscheme(@ring ℤ[x][y])
+        @test boundnames(@ring ℤ[x][y]/(x^2 - y^3)) == nestednamingscheme(@ring ℤ[x][y])
     end
 end

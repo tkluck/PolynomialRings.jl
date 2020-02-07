@@ -93,8 +93,4 @@ function syzygies end
 const groebner_basis = gröbner_basis
 const groebner_transformation = gröbner_transformation
 
-# TODO remove
-const fullnamingscheme = nestednamingscheme
-
-
 export generators, ⊗, to_dense_monomials, max_variable_index, base_extend

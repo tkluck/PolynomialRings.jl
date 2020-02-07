@@ -9,7 +9,7 @@ import Base: zero, iszero, one, rem, copy
 import ..Expansions: expansion
 import ..Ideals: Ideal, _grb
 import ..Ideals: ring
-import ..NamingSchemes: boundnames, fullboundnames, namingscheme, fullnamingscheme
+import ..NamingSchemes: boundnames, fullboundnames, namingscheme, nestednamingscheme
 import ..NamedPolynomials: minring
 import ..Polynomials: Polynomial, exptype, leading_term, basering, PolynomialOver
 import ..Polynomials: termtype, monomialtype, monomialorder
@@ -73,8 +73,8 @@ iszero(a::QuotientRing) = iszero(a.f)
 allvariablesymbols(::Type{Q}) where Q<:QuotientRing = allvariablesymbols(ring(Q))
 # boundnames and fullboundnames return the same result: need to assume all
 # variables may appear in _ideal(Q).
-boundnames(::Type{Q})         where Q<:QuotientRing = fullnamingscheme(ring(Q))
-fullboundnames(::Type{Q})     where Q<:QuotientRing = fullnamingscheme(ring(Q))
+boundnames(::Type{Q})         where Q<:QuotientRing = nestednamingscheme(ring(Q))
+fullboundnames(::Type{Q})     where Q<:QuotientRing = nestednamingscheme(ring(Q))
 
 expansion(q::QuotientRing, spec...) = ((one(monomialtype(spec...)), q),)
 
