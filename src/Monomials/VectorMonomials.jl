@@ -6,7 +6,7 @@ import Random: AbstractRNG, SamplerType, randsubseq
 import SparseArrays: SparseVector, sparsevec, sparse
 import SparseArrays: nonzeroinds
 
-import ...AbstractMonomials: AbstractMonomial, MonomialIn, nzindices, exponents
+import ...AbstractMonomials: AbstractMonomial, MonomialIn, exponents
 import ...NamingSchemes: Numbered
 import PolynomialRings: exptype, max_variable_index
 
@@ -56,8 +56,6 @@ generators(::Type{VectorMonomial{V,I,Order}}) where {V,I,Order} = Channel(ctype=
     throw(AssertionError("typemax exhausted"))
 end
 
-nzindices(a::VectorMonomial) = 1:length(a.e)
-
 function max_variable_index(scheme::Scheme, m::typeintersect(VectorMonomial, MonomialIn{Scheme})) where Scheme <: Numbered{Name, Inf} where Name
     return something(findlast(!iszero, m.e), 0)
 end
@@ -72,8 +70,6 @@ end
 #
 # -----------------------------------------------------------------------------
 total_degree(a::VectorMonomial) = a.deg
-
-nzindices(a::VectorMonomial{V,I,Order}) where {V <: SparseVector,I,Order} = nonzeroinds(a.e)
 
 #= TODO
 function iterate(enz::EnumerateNZ{<:VectorMonomial{<:SparseVector}}, state=1)

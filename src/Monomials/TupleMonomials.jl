@@ -4,7 +4,7 @@ import Base: exp, rand
 
 import Random: AbstractRNG, SamplerType
 
-import ...AbstractMonomials: AbstractMonomial, num_variables, nzindices, maybe_div
+import ...AbstractMonomials: AbstractMonomial, num_variables, maybe_div
 import PolynomialRings: exptype
 
 # -----------------------------------------------------------------------------
@@ -33,8 +33,6 @@ exp(::Type{M}, exps::NTuple, deg=sum(exps)) where M <: TupleMonomial = M(exps, d
 exp(::Type{M}, exps, deg=sum(exps)) where M <: TupleMonomial = M(ntuple(i -> get(exps, i, 0), num_variables(M)), deg)
 
 @inline exponent(m::TupleMonomial, i::Integer) = m.e[i]
-
-nzindices(a::TupleMonomial{N,I,Order}) where {N,I,Order} = 1:N
 
 # -----------------------------------------------------------------------------
 #
