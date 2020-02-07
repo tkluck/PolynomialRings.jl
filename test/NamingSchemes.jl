@@ -35,6 +35,13 @@ using PolynomialRings.NamingSchemes: NamingSchemeError
         @test !(@nestednamingscheme(x,c[]) ⊆ @nestednamingscheme(c[],x))
     end
 
+    @testset "Differences" begin
+        @test diff(@namingscheme((x,y)), @namingscheme(y)) == @namingscheme(x)
+        @test diff(@namingscheme((x,y)), @namingscheme(y[])) == @namingscheme((x,y))
+        @test diff(@namingscheme((x,y)), @namingscheme((x,y))) == nothing
+        @test diff(@namingscheme(x[]), @namingscheme(x[])) == nothing
+    end
+
     @testset "Canonical (nested) naming schemes" begin
         @test iscanonical(@namingscheme(x))
         @test canonicalscheme(@namingscheme(x)) == @nestednamingscheme(x)

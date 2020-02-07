@@ -8,7 +8,7 @@ symbol together with an integer, e.g., `c[2]`).
 """
 module NamingSchemes
 
-import Base: issubset, *, promote_rule, promote_type
+import Base: issubset, *, diff, promote_rule, promote_type
 import Base: @pure
 
 import PolynomialRings: variablesymbols, namingscheme, nestednamingscheme, num_variables
@@ -139,6 +139,8 @@ function remove_variables(N::Numbered, vars::NestedNamingScheme)
     end
     return N
 end
+
+diff(x::Union{NamingScheme, NestedNamingScheme}, y::Union{NamingScheme, NestedNamingScheme}) = remove_variables(x, y)
 
 namingscheme(::Type) = nothing
 nestednamingscheme(T::Type) = isnothing(namingscheme(T)) ? NoNamingScheme() : (namingscheme(T),)
