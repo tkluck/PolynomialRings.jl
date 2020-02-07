@@ -112,31 +112,24 @@ function hash(a::AbstractMonomial, h::UInt)
     h
 end
 
-function maybe_div(a::AbstractMonomial, b::AbstractMonomial)
+function divides(a::AbstractMonomial, b::AbstractMonomial)
     N = promote_type(namingscheme(a), namingscheme(b))
-    N isa NamingScheme || error()
-    T = monomialtype(N) # FIXME: get exptype from a and b
-    ea = exponents(N, a)
-    eb = exponents(N, b)
-    if all(a ≥ b for (a, b) in zip(ea, eb))
-        return exp(T, ea .- eb)
+    return all(d ≤ e for (_, (d, e)) in exponentsnz(N, a, b))
+end
+
+function maybe_div(a::AbstractMonomial, b::AbstractMonomial)
+    if divides(b, a)
+        M = typeof(a)
+        ea, eb = exponents(namingscheme(M), a, b)
+        return exp(M, ea .- eb)
     else
         return nothing
     end
 end
 
-function divides(a::AbstractMonomial, b::AbstractMonomial)
-    N = promote_type(namingscheme(a), namingscheme(b))
-    N isa NamingScheme || error()
-    ea = exponents(N, a)
-    eb = exponents(N, b)
-    return all(a ≤ b for (a, b) in zip(ea, eb))
-end
-
 function lcm_multipliers(a::AbstractMonomial, b::AbstractMonomial)
     M = promote_type(typeof(a), typeof(b))
-    ea = exponents(namingscheme(M), a)
-    eb = exponents(namingscheme(M), b)
+    ea, eb = exponents(namingscheme(M), a, b)
     return (
         exp(M, max.(ea, eb) .- ea),
         exp(M, max.(ea, eb) .- eb),

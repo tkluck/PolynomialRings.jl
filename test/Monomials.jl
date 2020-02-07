@@ -28,7 +28,7 @@ import PolynomialRings: maybe_div, lcm, gcd, divides, lcm_multipliers
         @test exponents(@monomial(c[2]^2*c[3]), @namingscheme(c[])) == [0, 2, 1]
         @test exponents(@monomial(c[2]^2*c[3]), @namingscheme(c[1:5])) == [0, 2, 1, 0, 0]
 
-        @test collect(exponentsnz(@monomial(x[2]*x[4]^2), @monomial(x[3]))) == [
+        @test collect(exponentsnz(@namingscheme(x[]), @monomial(x[2]*x[4]^2), @monomial(x[3]))) == [
             (2, (1, 0)),
             (3, (0, 1)),
             (4, (2, 0)),
