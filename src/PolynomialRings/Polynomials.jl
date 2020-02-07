@@ -230,12 +230,6 @@ for Number in [Polynomial, Term, AbstractMonomial]
     end
 end
 
-function Base.Order.lt(order::MonomialOrder, a::P, b::P) where P <: Polynomial
-    iszero(b) && return false
-    iszero(a) && return true
-    Base.Order.lt(order, leading_monomial(a, order=order), leading_monomial(b, order=order))
-end
-
 # -----------------------------------------------------------------------------
 #
 # Constructor function

@@ -3,7 +3,7 @@ using Test
 import Base.Order: lt
 
 import PolynomialRings.MonomialOrderings: @degrevlex, @deglex, @lex
-import PolynomialRings.MonomialOrderings: MonomialOrder
+import PolynomialRings.MonomialOrderings: MonomialOrder, degreecompatible
 import PolynomialRings: @ring!
 
 @testset "MonomialOrderings" begin
@@ -24,7 +24,7 @@ import PolynomialRings: @ring!
         @test lt(O1, y, x)
         @test lt(O1, y^2, x^3)
         @test lt(O1, x*z, y^2)
-        @test sort([x,y,z,y^2,x^3,x*z], order=O1) == [z,y,x,y^2,x*z,x^3]
+        @test sort([x,y,z,y^2,x^3,x*z], order=O1) == [z,y,x,x*z,y^2,x^3]
         @test minimum(O1, [x,y,z,y^2,x^3,x*z]) == z
         @test maximum(O1, [x,y,z,y^2,x^3,x*z]) == x^3
         @test degreecompatible(O1)
@@ -34,7 +34,7 @@ import PolynomialRings: @ring!
         @test lt(O2, y, x)
         @test lt(O2, y^2, x^3)
         @test lt(O2, y^2, x*z)
-        @test sort([x,y,z,y^2,x^3,x*z], order=O2) == [z,y,x,x*z,y^2,x^3]
+        @test sort([x,y,z,y^2,x^3,x*z], order=O2) == [z,y,x,y^2,x*z,x^3]
         @test minimum(O2, [x,y,z,y^2,x^3,x*z]) == z
         @test maximum(O2, [x,y,z,y^2,x^3,x*z]) == x^3
         @test degreecompatible(O2)

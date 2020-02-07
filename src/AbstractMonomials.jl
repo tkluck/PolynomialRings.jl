@@ -240,7 +240,7 @@ function exponents(m::One, scheme::Numbered)
     Int16[]
 end
 
-deg(m::AbstractMonomial, scheme::NamingScheme) = sum(exponents(scheme, m))
+deg(m::AbstractMonomial, scheme::NamingScheme) = sum(exponents(m, scheme))
 
 function exponentsnz(scheme::NamingScheme, ms::AbstractMonomial...)
     return enumerate(zip(exponents(scheme, ms...)...))
