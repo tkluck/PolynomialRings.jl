@@ -1,7 +1,5 @@
 using Test
 
-import SparseArrays: sparse
-
 import PolynomialRings.NamingSchemes: @namingscheme
 import PolynomialRings.MonomialOrderings: @lex
 import PolynomialRings.AbstractMonomials: exponents, exponentsnz
@@ -17,7 +15,7 @@ import PolynomialRings: maybe_div, lcm, gcd, divides, lcm_multipliers
         M1 = monomialtype(:x, :y)
         @test exp(M1, (2, 0)) == @monomial(x^2)
         M2 = monomialtype(@namingscheme(c[]))
-        @test exp(M2, sparse([0,0,1,0,2])) == @monomial(c[3]*c[5]^2)
+        @test exp(M2, [0,0,1,0,2]) == @monomial(c[3]*c[5]^2)
         M3 = monomialtype(@lex(x > y))
         @test exp(M3, [1, 2]) == @monomial(x*y^2)
     end
