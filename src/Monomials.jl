@@ -16,36 +16,6 @@ import .VectorMonomials: VectorMonomial
 
 # -----------------------------------------------------------------------------
 #
-# Default concrete implementation for orderings
-#
-# -----------------------------------------------------------------------------
-function monomialtype(order::MonomialOrder, exptype::Type{<:Integer}=Int16)
-    N = num_variables(namingscheme(order))
-    if N < Inf
-        return TupleMonomial{N, exptype, typeof(order)}
-    else
-        return VectorMonomial{SparseVector{exptype, Int}, exptype, typeof(order)}
-    end
-end
-
-function monomialtype(scheme::NamingScheme, exptype::Type{<:Integer}=Int16)
-    order = MonomialOrder{:degrevlex, typeof(scheme)}()
-    return monomialtype(order, exptype)
-end
-
-function monomialtype(names::Symbol...; order=:degrevlex, exptype::Type{<:Integer}=Int16)
-    order = MonomialOrder{order, Named{names}}()
-    return monomialtype(order, exptype)
-end
-
-function monomialtype(name::Symbol, n::Number; order=:degrevlex, exptype::Type{<:Integer}=Int16)
-    @assert n isa Integer || n == Inf
-    order = MonomialOrder{order, Numbered{name, n}}()
-    return monomialtype(order, exptype)
-end
-
-# -----------------------------------------------------------------------------
-#
 # Conversion from Vector to tuple (sparse to dense)
 #
 # -----------------------------------------------------------------------------

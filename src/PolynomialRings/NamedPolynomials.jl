@@ -168,8 +168,6 @@ function convert(::Type{P1}, a::P2) where P1 <: Polynomial where P2 #<: Polynomi
     return res
 end
 
-polynomialtype(T::Type{<:Term}) = polynomialtype(monomialtype(T), basering(T))
-
 function canonicaltype(P::Type{<:PolynomialOver{<:Polynomial}})
     C = canonicaltype(basering(P))
     M1 = monomialtype(C)

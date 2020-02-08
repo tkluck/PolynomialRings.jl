@@ -78,12 +78,24 @@ variablesymbols(::Numbered{Name}) where Name = tuple()
 numberedvariablename(::Numbered{Name}) where Name = Name
 num_variables(::Numbered{Name, Max}) where {Name, Max} = Max
 
+function namingscheme(names::Symbol...)
+    res = Named{names}()
+    isvalid(res) || error("Not a valid naming scheme: $names")
+    return res
+end
+
+function namingscheme(name::Symbol, n::Number)
+    n isa Integer || n == Inf || error("Not a valid naming scheme count: $n")
+    res = Numbered{name, n}()
+    isvalid(res) || error("Not a valid naming scheme: $name, $n")
+    return res
+end
+
 isvalid(scheme::Named) = allunique(variablesymbols(scheme))
 isvalid(scheme::Numbered) = true
 
 function isvalid(scheme::NestedNamingScheme)
     all(isvalid, scheme) || return false
-
 end
 
 @pure indexin(x::Symbol, n::Named{Names}) where Names = findfirst(isequal(x), Names)
