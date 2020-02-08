@@ -169,10 +169,12 @@ function ^(f::Polynomial, n::Integer)
             e isa InexactError || rethrow()
             throw(OverflowError("Coefficient overflow while doing exponentiation; suggested fix is replacing `f^n` by `base_extend(f, BigInt)^n`"))
         end
-        @inplace result += Term(
-                 prod(_monomialbyindex(f, k) ^ E(i[k]) for k = 1:N),
-             c * prod(coefficients(f)[k]     ^ I(i[k]) for k = 1:N),
-        )
+        m = one(M)
+        for k in 1 : N
+            m *= _monomialbyindex(f, k)      ^ E(i[k])
+            @inplace c *= coefficients(f)[k] ^ I(i[k])
+        end
+        @inplace result += Term(m, c)
 
         carry = 1
         for j = N - 1 : -1 : 1
