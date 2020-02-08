@@ -66,15 +66,21 @@ import PolynomialRings: @ring!
         @test !lt(KeyOrder(), [0, 0], [0, 0])
 
         O5 = @lex(@keyorder() > x > y)
+        @test !degreecompatible(O5)
         @test lt(O5, [0, x], [x, 0])
         @test lt(O5, [y, x], [x, 0])
         @test lt(O5, [y^2, x], [x, 0])
         @test !lt(O5, [0, 0], [0, 0])
-        @test !degreecompatible(O5)
+        @test lt(O5, 4 => x^2, 3 => x)
+        @test !lt(O5, 4 => x^2, 4 => x)
 
         O6 = @lex(@degrevlex(x) > @keyorder())
         @test lt(O6, [x^3, 0], [0, x^4])
         @test !lt(O6, [x^4, 0], [0, x^4])
         @test !lt(O6, [0, 0], [0, 0])
+        @test lt(O6, 3 => x, 4 => x^2)
+        @test !lt(O6, 3 => x^2, 4 => x)
+        @test lt(O6, 4 => x, 3 => x)
+
     end
 end

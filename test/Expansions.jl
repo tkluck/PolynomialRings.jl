@@ -133,6 +133,70 @@ using PolynomialRings: common_denominator, integral_fraction
             (1 => x^2, 2),
             (2 => x^3, 3),
         ]
+
+        O5 = @lex(@keyorder() > x > @keyorder())
+        O6 = @lex(@keyorder() > @keyorder() > x)
+
+        @test expansion([[2x^2 + x, x], [3x^3 + x, 2x^2]], O5) == [
+            (2 => 1 => x, 2),
+            (2 => 2 => x^2, 2),
+            (2 => 1 => x^3, 3),
+            (1 => 2 => x, 1),
+            (1 => 1 => x, 1),
+            (1 => 1 => x^2, 2),
+        ]
+
+        @test expansion([[2x^2 + x, x], [3x^3 + x, 2x^2]], O6) == [
+            (2 => 2 => x^2, 2),
+            (2 => 1 => x, 2),
+            (2 => 1 => x^3, 3),
+            (1 => 2 => x, 1),
+            (1 => 1 => x, 1),
+            (1 => 1 => x^2, 2),
+        ]
+
+        @ring! Int[x,y]
+        O7 = @lex(@keyorder() > @degrevlex(x > y) > @keyorder())
+        O8 = @lex(@keyorder() > y > @keyorder() > x)
+
+        @test expansion([[2x^2 + x*y, x], [2x^2 + x, 2x^2*y]], O7) == [
+            (2 => 1 => x, 2),
+            (2 => 1 => x^2, 2),
+            (2 => 2 => x^2*y, 2),
+            (1 => 2 => x, 1),
+            (1 => 1 => x*y, 1),
+            (1 => 1 => x^2, 2),
+        ]
+
+        @test expansion([[2x^2 + x*y, x], [2x^2 + x, 2x^2*y]], O8) == [
+            (2 => 1 => x, 2),
+            (2 => 1 => x^2, 2),
+            (2 => 2 => x^2*y, 2),
+            (1 => 2 => x, 1),
+            (1 => 1 => x^2, 2),
+            (1 => 1 => x*y, 1),
+        ]
+
+        O9 = @lex(@keyorder() > @degrevlex(x > y))
+        O10 = @lex(y > @keyorder() > x)
+
+        @test expansion([[2x^2 + x*y, x], [2x^2 + x, 2x^2*y]], O9) == [
+            (2 => x, [1, 0]),
+            (2 => x^2, [2, 0]),
+            (2 => x^2*y, [0, 2]),
+            (1 => x, [0, 1]),
+            (1 => x*y, [1, 0]),
+            (1 => x^2, [2, 0]),
+        ]
+
+        @test expansion([[2x^2 + x*y, x], [2x^2 + x, 2x^2*y]], O10) == [
+            (2 => x, [1, 0]),
+            (2 => x^2, [2, 0]),
+            (1 => x, [0, 1]),
+            (1 => x^2, [2, 0]),
+            (2 => x^2*y, [0, 2]),
+            (1 => x*y, [1, 0]),
+        ]
     end
 
     @testset "Arrays" begin

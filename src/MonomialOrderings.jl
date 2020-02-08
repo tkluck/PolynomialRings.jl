@@ -42,7 +42,7 @@ NumberedMonomialOrder{Name, Max} = MonomialOrder{Numbered{Name, Max}}
 degreecompatible(::MonomialOrder) = false
 
 monomialorderkey(order, a) = a
-monomialorderkeypair(order, a) = (1, a)
+function monomialorderkeypair end
 
 to_dense_monomials(n::Integer, o::MonomialOrder) = MonomialOrder{rulesymbol(o), typeof(to_dense_monomials(n, namingscheme(o)))}()
 

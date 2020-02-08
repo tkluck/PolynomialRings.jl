@@ -154,8 +154,13 @@ end
 
 KeyOrder() = KeyOrder{typeof(Base.Order.Reverse)}(Base.Order.Reverse)
 
-function monomialorderkeypair(order::KeyOrder{typeof(Base.Order.Reverse)}, a)
-    if (ix = findfirst(!iszero, a)) |> !isnothing
+monomialorderkeypair(order, a::Pair) = a
+
+maxnonzero(::typeof(Base.Order.Forward), a) = findlast(!iszero, a)
+maxnonzero(::typeof(Base.Order.Reverse), a) = findfirst(!iszero, a)
+
+function monomialorderkeypair(order, a)
+    if (ix = maxnonzero(order, a)) |> !isnothing
         return (ix, a[ix])
     else
         return (ix, nothing)
@@ -163,8 +168,8 @@ function monomialorderkeypair(order::KeyOrder{typeof(Base.Order.Reverse)}, a)
 end
 
 function Base.Order.lt(order::KeyOrder, a, b)
-    ixa, _ = monomialorderkeypair(order, a)
-    ixb, _ = monomialorderkeypair(order, b)
+    ixa, _ = monomialorderkeypair(order.order, a)
+    ixb, _ = monomialorderkeypair(order.order, b)
 
     isnothing(ixb) && return false
     isnothing(ixa) && return true
@@ -203,8 +208,8 @@ Base.Order.lt(order::LexCombinationOrder{<:Tuple{}}, a, b) = false
 function Base.Order.lt(order::LexCombinationOrder{<:Tuple{KeyOrder, Vararg}}, a, b)
     o, os = first(order), Base.tail(order)
 
-    ixa, aval = monomialorderkeypair(o, a)
-    ixb, bval = monomialorderkeypair(o, b)
+    ixa, aval = monomialorderkeypair(o.order, a)
+    ixb, bval = monomialorderkeypair(o.order, b)
 
     isnothing(ixb) && return false
     isnothing(ixa) && return true
@@ -215,11 +220,14 @@ function Base.Order.lt(order::LexCombinationOrder{<:Tuple{KeyOrder, Vararg}}, a,
     return Base.Order.lt(os, aval, bval)
 end
 
+innerval(x) = x
+innerval(x::Pair) = x.second
+
 function Base.Order.lt(order::LexCombinationOrder{<:Tuple}, a, b)
     o, os = first(order), Base.tail(order)
-    if Base.Order.lt(o, a, b)
+    if Base.Order.lt(o, innerval(a), innerval(b))
         return true
-    elseif Base.Order.lt(o, b, a)
+    elseif Base.Order.lt(o, innerval(b), innerval(a))
         return false
     else
         return Base.Order.lt(os, a, b)
