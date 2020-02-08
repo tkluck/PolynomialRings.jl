@@ -233,6 +233,8 @@ function exponents(scheme::InfiniteScheme, ms::AbstractMonomial...;
 end
 
 function exponents(m::MonomialIn{<:Numbered{Name}}, scheme::Numbered{Name, N}) where {Name, N}
+    namingscheme(m) == scheme && return m.e
+
     infscheme = Numbered{Name, Inf}()
     max_variable_index(infscheme, m) <= N || error("Retrieving too few exponents")
     return exponents(m, infscheme, max_variable_index=N)
