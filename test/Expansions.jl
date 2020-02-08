@@ -100,57 +100,38 @@ using PolynomialRings: common_denominator, integral_fraction
         @test eltype(@linear_coefficients(y + y^2, y)) == @ring(Int64[x,z])
     end
 
-    @testset "Nested types" begin
-        @testset "Explicit types" begin
-            R = @ring! ℤ[x]
-            S = @ring! ℤ[y]
-            T = @ring S[x]
-            U = @ring ℤ[y][x]
-            V = @ring ℤ[x][y]
+    @testset "KeyOrder" begin
+        @ring! Int[x]
 
-            @test U != V
+        O1 = KeyOrder()
+        O2 = @degrevlex(x)
+        O3 = @lex(@keyorder() > x)
+        O4 = @lex(x > @keyorder())
 
-            @test U(x+y) == V(x+y)
+        @test expansion([2x^2 + x, 3x^3 + 2x^2], O1) == [
+            (2, 3x^3 + 2x^2),
+            (1, 2x^2 + x),
+        ]
 
-            @test typeof(U(:y)) == typeof(U(:x))
+        @test expansion([2x^2 + x, 3x^3 + 2x^2], O2) == [
+            (x, [1, 0]),
+            (x^2, [2, 2]),
+            (x^3, [0, 3]),
+        ]
 
-            # test which variables get injected by @ring!
-            A = @ring ℤ[a]
-            B = @ring! A[b]
-            @test B == @ring ℤ[a][b]
-            @test typeof(b) == B
-            @test_throws UndefVarError typeof(a)
+        @test expansion([2x^2 + x, 3x^3 + 2x^2], O3) == [
+            (2 => x^2, 2),
+            (2 => x^3, 3),
+            (1 => x, 1),
+            (1 => x^2, 2),
+        ]
 
-            @ring! ℤ[a][x,y]
-            #@test @expansion(x + y, x) == [(1, y), (x, 1)]
-        end
-        @testset "Variable duplication" begin
-            @test_throws ArgumentError @ring ℚ[x,x]
-            @test_throws ArgumentError @ring ℚ[x][x]
-            @test_throws ArgumentError @ring ℚ[x][y][x]
-        end
-        @testset "Operations" begin
-            @ring! ℤ[a][x,y]
-            @test (x+y)(x=x+y, y=y) == x + 2y
-            @test (x+y)(x=x+y) == x + 2y
-
-            A = @ring Int[a][b][c]
-            B = @ring Int[b][a][c]
-            @test one(A) + one(B) == 2
-            @test one(A) * one(B) == 1
-        end
-    end
-
-
-    @testset "New types" begin
-        struct Foo end
-        Base.one(::Type{Foo})  = Foo()
-        Base.zero(::Type{Foo}) = 0
-        Base.one(::Foo)        = Foo()
-        Base.zero(::Foo)       = 0
-
-        R = @ring Foo[x]
-        @test one(R) == one(R)
+        @test expansion([2x^2 + x, 3x^3 + 2x^2], O4) == [
+            (1 => x, 1),
+            (2 => x^2, 2),
+            (1 => x^2, 2),
+            (2 => x^3, 3),
+        ]
     end
 
     @testset "Arrays" begin
