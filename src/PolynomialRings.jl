@@ -37,7 +37,7 @@ basering(::Type{M}) where M <: AbstractMonomials.AbstractMonomial = Constants.On
 
 import .Monomials: TupleMonomial, VectorMonomial
 import .Terms: Term
-import .Polynomials: Polynomial, generators, polynomial_ring, map_coefficients
+import .Polynomials: Polynomial, generators, map_coefficients
 import .Polynomials: tosparse, todense
 import .Expansions: @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, expandcoefficients, @expandcoefficients, linear_coefficients, @linear_coefficients, @deg, expansion_terms, @expansion_terms
 import .Arrays: flat_coefficients, @flat_coefficients
@@ -89,8 +89,8 @@ namingscheme(x::_P)  = namingscheme(typeof(x))
 include("CommutativeAlgebras.jl")
 
 include("EntryPoints.jl")
-import .EntryPoints: formal_coefficients, formal_coefficient, @ring, @ring!, @polynomial, @polyvar, @numberfield, @numberfield!
-export formal_coefficients, formal_coefficient, @ring, @ring!, @polynomial, @polyvar, @numberfield, @numberfield!
+import .EntryPoints: polynomial_ring, formal_coefficients, formal_coefficient, @ring, @ring!, @polynomial, @polyvar, @numberfield, @numberfield!
+export polynomial_ring, formal_coefficients, formal_coefficient, @ring, @ring!, @polynomial, @polyvar, @numberfield, @numberfield!
 
 include("PolynomialRings/Library.jl")
 

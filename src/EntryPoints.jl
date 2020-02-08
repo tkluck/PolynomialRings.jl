@@ -7,13 +7,14 @@ import SparseArrays: spzeros
 import ..Ideals: Ideal
 import ..Monomials: TupleMonomial, VectorMonomial
 import ..NamedPolynomials: NamedPolynomial, NumberedPolynomial
-import ..NamingSchemes: Numbered, numberedvariablename, parse_namingscheme, num_variables, namingscheme
+import ..NamingSchemes: NamingScheme, Named, Numbered, numberedvariablename, parse_namingscheme, num_variables, namingscheme, nestednamingscheme
 import ..NumberFields: NumberField
-import ..Polynomials: Polynomial, polynomial_ring, numbered_polynomial_ring
+import ..Polynomials: Polynomial
 import ..QuotientRings: QuotientRing
+import ..StandardMonomialOrderings: MonomialOrdering
 import ..Terms: Term, basering
-import ..Util: lazymap
-import PolynomialRings: construct_monomial, exptype
+import ..Util: lazymap, isdisjoint
+import PolynomialRings: construct_monomial, exptype, fullboundnames, monomialtype, polynomialtype
 import PolynomialRings: generators, base_extend, variablesymbols, allvariablesymbols, ⊗
 
 # -----------------------------------------------------------------------------
@@ -431,5 +432,67 @@ getindex(g::NumberedVariableGenerator) = Channel() do ch
         push!(ch, g[i])
     end
 end
+
+# -----------------------------------------------------------------------------
+#
+# Constructor function
+#
+# -----------------------------------------------------------------------------
+"""
+    polynomial_ring(symbols::Symbol...; basering=Rational{BigInt}, exptype=Int16, monomialorder=:degrevlex)
+
+Create a type for the polynomial ring over `basering` in variables with names
+specified by `symbols`, and return the type and a tuple of these variables.
+
+The `exptype` parameter defines the integer type for the exponents.
+
+The `monomialorder` defines an order for the monomials for e.g. Gröbner basis computations;
+it also defines the internal sort order. Built-in values are `:degrevlex`,
+`:deglex` and `:lex`. This function will accept any symbol, though, and you can
+define your own monomial order by implementing
+
+    Base.Order.lt(::MonomialOrder{:myorder}, a::M, b::M) where M <: AbstractMonomial
+
+See `PolynomialRings.MonomialOrderings` for examples.
+
+# Examples
+```jldoctest
+julia> using PolynomialRings
+
+julia> R,(x,y,z) = polynomial_ring(:x, :y, :z);
+
+julia> x*y + z
+x*y + z
+```
+"""
+function polynomial_ring(symbols::Symbol...; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex, sparse=true)
+    length(symbols) > 0 || throw(ArgumentError("Need at least one variable name"))
+    allunique(symbols) || throw(ArgumentError("Duplicated symbols when extending $basering by $(Named{symbols}())"))
+    scheme = Named{symbols}()
+    P = polynomial_ring(scheme, basering=basering, exptype=exptype, monomialorder=monomialorder, sparse=sparse)
+    return P, generators(P)
+end
+
+function numbered_polynomial_ring(symbol::Symbol; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex, sparse=sparse)
+    scheme =  Numbered{symbol, Inf}()
+    P = polynomial_ring(scheme, basering=basering, exptype=exptype, monomialorder=monomialorder, sparse=sparse)
+    return P
+end
+
+function numbered_polynomial_ring(symbol::Symbol, n::Integer; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex, sparse=true)
+    scheme =  Numbered{symbol, n}()
+    P = polynomial_ring(scheme, basering=basering, exptype=exptype, monomialorder=monomialorder, sparse=sparse)
+    return P, generators(P)
+end
+
+function polynomial_ring(scheme::NamingScheme; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex, sparse=true)
+    if !isdisjoint(scheme, nestednamingscheme(basering)) || !isdisjoint(scheme, fullboundnames(basering)) || !isvalid(scheme)
+        throw(ArgumentError("Duplicated symbols when extending $basering by $scheme"))
+    end
+    order = MonomialOrdering{monomialorder, typeof(scheme)}()
+    M = monomialtype(order, exptype)
+    return polynomialtype(M, basering, sparse=sparse)
+end
+
 
 end

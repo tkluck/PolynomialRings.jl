@@ -302,4 +302,16 @@ macro assertvalid(p)
     end
 end
 
+# -----------------------------------------------------------------------------
+#
+# isdisjoint function: import from Base if it exists
+#
+# -----------------------------------------------------------------------------
+if VERSION >= v"1.5-"
+    import Base: isdisjoint
+else
+    function isdisjoint end
+end
+
+
 end

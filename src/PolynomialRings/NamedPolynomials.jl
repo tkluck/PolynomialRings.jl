@@ -9,7 +9,7 @@ import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialO
 import ..Monomials.TupleMonomials: TupleMonomial
 import ..Monomials.VectorMonomials: VectorMonomial
 import ..NamingSchemes: Named, Numbered, NamingScheme, numberedvariablename, remove_variables, isdisjoint, boundnames, canonicalscheme
-import ..Polynomials:  NamedMonomial, NumberedMonomial, NamedTerm, NumberedTerm, TermOver, monomialorder, polynomial_ring
+import ..Polynomials:  NamedMonomial, NumberedMonomial, NamedTerm, NumberedTerm, TermOver, monomialorder
 import ..Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolynomial, PolynomialBy, PolynomialIn, nzterms, SparsePolynomialOver, DensePolynomialOver
 import ..StandardMonomialOrderings: MonomialOrdering, rulesymbol
 import ..Terms: Term, basering, monomial, coefficient
@@ -273,14 +273,14 @@ function minring(f::NamedPolynomial)
     m = prod(monomial(t) for t in nzterms(f))
     nz = findall(!iszero, m.e)
     syms = variablesymbols(namingscheme(f))
-    isempty(nz) ? base : polynomial_ring(syms[nz]..., basering=base)[1]
+    isempty(nz) ? base : polynomialtype(Named{syms[nz]}(), base, sparse=issparse(f))
 end
 
 function minring(f::NumberedPolynomial)
     base = minring(f.coeffs...)
 
     m = prod(monomial(t) for t in nzterms(f))
-    isone(m) ? base : polynomial_ring(namingscheme(f), basering=base)
+    isone(m) ? base : polynomialtype(namingscheme(f), base, sparse=issparse(f))
 end
 
 """

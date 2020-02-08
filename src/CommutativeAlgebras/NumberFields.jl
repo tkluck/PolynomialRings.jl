@@ -15,6 +15,7 @@ import Random: AbstractRNG, SamplerType
 import InPlace: @inplace, inclusiveinplace!, inplace!
 
 import ..Constants: Constant, One, MinusOne, Zero
+#import ..EntryPoints: polynomial_ring
 import ..Ideals: ring
 import ..Monomials: AbstractMonomial
 import ..NamedValues: type_with_named_values, knownvalue, knownnames, knownvalues
@@ -24,7 +25,7 @@ import ..QuotientRings: QuotientRing, monomial_basis
 import ..QuotientRings: _ideal
 import ..Terms: coefficient
 import PolynomialRings: allvariablesymbols, fraction_field, basering
-import PolynomialRings: integers, polynomial_ring, generators
+import PolynomialRings: integers, generators
 
 # -----------------------------------------------------------------------------
 #
