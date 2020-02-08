@@ -3,6 +3,7 @@ using Test
 using LinearAlgebra: I
 using SparseArrays: sparse
 
+using PolynomialRings.StandardMonomialOrderings: @degrevlex, @lex, KeyOrder
 using PolynomialRings: @ring!, @ring, polynomial_ring
 using PolynomialRings: @expand, expand
 using PolynomialRings: @expansion, expansion
