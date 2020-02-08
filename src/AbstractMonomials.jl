@@ -72,9 +72,7 @@ function ==(a::AbstractMonomial, b::AbstractMonomial)
     return all(((_, (a,b)),) -> a == b, exponentsnz(N, a, b))
 end
 
-leading_monomial(a::AbstractMonomial; order) = a # note that we don't need order congruence
-
-monomialorder(::Type{M}) where M <: AbstractMonomial{Order} where Order = Order()
+monomialorder(::Type{M}) where M <: AbstractMonomial{Order} where Order = Order.instance
 monomialtype(::Type{M}) where M <: AbstractMonomial = M
 namingscheme(::Type{M}) where M <: AbstractMonomial = namingscheme(monomialorder(M))
 isless(a::M, b::M) where M <: AbstractMonomial = Base.Order.lt(monomialorder(M), a, b)
