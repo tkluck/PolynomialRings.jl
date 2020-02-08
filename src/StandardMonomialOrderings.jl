@@ -14,7 +14,7 @@ import Base.Order: Ordering
 import ..AbstractMonomials: AbstractMonomial, exponentsnz, revexponentsnz
 import ..MonomialOrderings: AtomicMonomialOrder, MonomialOrder, degreecompatible
 import ..MonomialOrderings: monomialorderkey, monomialorderkeypair
-import ..NamingSchemes: namingscheme, Named
+import ..NamingSchemes: namingscheme, Named, NamingScheme
 import ..Polynomials: Polynomial
 import ..Terms: Term
 import PolynomialRings: deg, leading_monomial
