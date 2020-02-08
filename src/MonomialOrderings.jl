@@ -98,12 +98,37 @@ end
 
 argmin(m::MonomialOrder, iter) = findmin(m, iter)[2]
 argmax(m::MonomialOrder, iter) = findmax(m, iter)[2]
-minimum(m::MonomialOrder, iter) = findmin(m, iter)[1]
-maximum(m::MonomialOrder, iter) = findmax(m, iter)[1]
-# resolve ambiguity
-minimum(m::MonomialOrder, iter::AbstractArray) = findmin(m, iter)[1]
-maximum(m::MonomialOrder, iter::AbstractArray) = findmax(m, iter)[1]
 
+function _minimum(order, iter)
+    y = iterate(iter)
+    isnothing(y) && throw(ArgumentError("collection must be non-empty"))
+    (v, state) = y
+    while true
+        y = iterate(iter, state)
+        isnothing(y) && break
+        (vv, state) = y
+        Base.Order.lt(order, vv, v) && (v = vv)
+    end
+    return v
+end
+
+function _maximum(order, iter)
+    y = iterate(iter)
+    isnothing(y) && throw(ArgumentError("collection must be non-empty"))
+    (v, state) = y
+    while true
+        y = iterate(iter, state)
+        isnothing(y) && break
+        (vv, state) = y
+        Base.Order.lt(order, v, vv) && (v = vv)
+    end
+    return v
+end
+
+minimum(order::MonomialOrder, iter) = _minimum(order, iter)
+minimum(order::MonomialOrder, iter::AbstractArray) = _minimum(order, iter)
+maximum(order::MonomialOrder, iter) = _maximum(order, iter)
+maximum(order::MonomialOrder, iter::AbstractArray) = _maximum(order, iter)
 
 macro withmonomialorder(order)
     esc(quote
