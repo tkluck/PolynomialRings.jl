@@ -167,7 +167,7 @@ fullboundnames(T::Type) = isnothing(boundnames(T)) ? NoNamingScheme() : (boundna
 iscanonical(T::NamingScheme) = (T,) == canonicalscheme(T)
 iscanonical(T::NestedNamingScheme) = T == canonicalscheme(T)
 
-@pure function canonicalscheme(N::Named{Names}) where Names
+@generated function canonicalscheme(N::Named{Names}) where Names
     sortedsyms = sort(collect(Names))
     return composeschemes(Named{tuple(sortedsyms...)}())
 end
