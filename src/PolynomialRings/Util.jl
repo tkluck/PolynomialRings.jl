@@ -201,13 +201,6 @@ nzpairs(iter::SparseVector) = (
 
 nzpairs(iter::SparseMatrixCSC) = ((i, iter[i]) for i in findall(!iszero, iter))
 
-isnonzero(array, ix...) = !iszero(array[ix...])
-function isnonzero(array::SparseVector, ix::Integer)
-    r = searchsorted(array.nzind, ix)
-    isempty(r) && return false
-    return !iszero(array.nzval[first(r)])
-end
-
 # -----------------------------------------------------------------------------
 #
 # A transducer that merges two iterables like a zipper
