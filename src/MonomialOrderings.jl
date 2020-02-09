@@ -41,7 +41,9 @@ NumberedMonomialOrder{Name, Max} = MonomialOrder{Numbered{Name, Max}}
 # -----------------------------------------------------------------------------
 degreecompatible(::MonomialOrder) = false
 
-monomialorderkey(order, a) = a
+monomialorderkey(order, a) = a # TODO: rename! because typeof(monomialorderkey()) != monomialorderkeytype
+monomialorderkeytype(T) = keytype(T)
+monomialordereltype(T) = eltype(T)
 function monomialorderkeypair end
 
 to_dense_monomials(n::Integer, o::MonomialOrder) = MonomialOrder{rulesymbol(o), typeof(to_dense_monomials(n, namingscheme(o)))}()

@@ -15,10 +15,11 @@ import ..Util: isdisjoint
 import PolynomialRings: boundnames, fullboundnames, iscanonical, canonicaltype
 import PolynomialRings: variablesymbols, namingscheme, nestednamingscheme, num_variables
 
+abstract type NamingScheme end
+
+namingscheme(scheme::NamingScheme) = scheme
 variablesymbols(a) = variablesymbols(namingscheme(a))
 numberedvariablename(a) = numberedvariablename(namingscheme(a))
-
-abstract type NamingScheme end
 
 struct NamingSchemeError end
 

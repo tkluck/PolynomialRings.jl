@@ -13,7 +13,7 @@ import Base.Order: Ordering
 
 import ..AbstractMonomials: AbstractMonomial, exponentsnz, revexponentsnz
 import ..MonomialOrderings: AtomicMonomialOrder, MonomialOrder, degreecompatible
-import ..MonomialOrderings: monomialorderkey, monomialorderkeypair
+import ..MonomialOrderings: monomialorderkey, monomialorderkeytype, monomialordereltype, monomialorderkeypair
 import ..NamingSchemes: namingscheme, Named, NamingScheme
 import ..Polynomials: Polynomial
 import ..Terms: Term
@@ -154,6 +154,8 @@ end
 
 KeyOrder() = KeyOrder{typeof(Base.Order.Reverse)}(Base.Order.Reverse)
 
+monomialorderkeytype(::Pair{T, S}) where {T, S} = T
+monomialordereltype(::Pair{T, S})  where {T, S} = S
 monomialorderkeypair(order, a::Pair) = a
 
 maxnonzero(::typeof(Base.Order.Forward), a) = findlast(!iszero, a)

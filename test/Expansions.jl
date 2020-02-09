@@ -3,6 +3,9 @@ using Test
 using LinearAlgebra: I
 using SparseArrays: sparse
 
+
+using PolynomialRings.Expansions: expansiontypes
+using PolynomialRings.NamingSchemes: @namingscheme
 using PolynomialRings.StandardMonomialOrderings: @degrevlex, @lex, KeyOrder
 using PolynomialRings: @ring!, @ring, polynomial_ring
 using PolynomialRings: @expand, expand
@@ -14,8 +17,55 @@ using PolynomialRings: @flat_coefficients, flat_coefficients
 using PolynomialRings: @constant_coefficient, constant_coefficient
 using PolynomialRings: @expansion_terms, expansion_terms
 using PolynomialRings: common_denominator, integral_fraction
+using PolynomialRings: monomialtype
 
 @testset "Expansions" begin
+
+    @testset "types" begin
+        @test @inferred(expansiontypes(Float64, @namingscheme(x))) ==
+                (monomialtype(@namingscheme(x)), Float64)
+
+        R = @ring Int[z,x,y,w]
+
+        @test @inferred(expansiontypes(R, @namingscheme(x))) ==
+                (monomialtype(@namingscheme(x)), @ring(Int[z,y,w]))
+        @test @inferred(expansiontypes(R, @namingscheme(y))) ==
+                (monomialtype(@namingscheme(y)), @ring(Int[z,x,w]))
+        @test @inferred(expansiontypes(R, @namingscheme((y,z)))) ==
+                (monomialtype(@namingscheme((y,z))), @ring(Int[x,w]))
+        @test @inferred(expansiontypes(R, @namingscheme((x,q)))) ==
+                (monomialtype(@namingscheme((x,q))), @ring(Int[z,y,w]))
+
+        S = @ring Int[c[]][y,x]
+        @test @inferred(expansiontypes(S, @namingscheme(x))) ==
+                (monomialtype(@namingscheme(x)), @ring(Int[c[]][y]))
+        @test @inferred(expansiontypes(S, @namingscheme((x,y)))) ==
+                (monomialtype(@namingscheme((x,y))), @ring(Int[c[]]))
+        @test @inferred(expansiontypes(S, @namingscheme(c[]))) ==
+                (monomialtype(@namingscheme(c[])), @ring(Int[y,x]))
+
+        T = @ring Int[y,x][c[]]
+        @test @inferred(expansiontypes(T, @namingscheme(x))) ==
+                (monomialtype(@namingscheme(x)), @ring(Int[y][c[]]))
+        @test @inferred(expansiontypes(T, @namingscheme((x,y)))) ==
+                (monomialtype(@namingscheme((x,y))), @ring(Int[c[]]))
+        @test @inferred(expansiontypes(T, @namingscheme(c[]))) ==
+                (monomialtype(@namingscheme(c[])), @ring(Int[y,x]))
+
+        A = Vector{@ring(Int[x,y])}
+        @test @inferred(expansiontypes(A, @namingscheme(x))) ==
+                (monomialtype(@namingscheme(x)), Vector{@ring(Int[y])})
+        @test @inferred(expansiontypes(A, @lex(@keyorder() > x))) ==
+                (Pair{Int, monomialtype(@lex(x))}, @ring(Int[y]))
+
+        B = Vector{Vector{@ring(Int[x,y])}}
+        @test @inferred(expansiontypes(B, @namingscheme(x))) ==
+                (monomialtype(@namingscheme(x)), Vector{Vector{@ring(Int[y])}})
+        @test @inferred(expansiontypes(B, @lex(@keyorder() > x))) ==
+                (Pair{Int, monomialtype(@lex(x))}, Vector{@ring(Int[y])})
+        @test @inferred(expansiontypes(B, @lex(@keyorder() > x > @keyorder()))) ==
+                (Pair{Int, Pair{Int, monomialtype(@lex(x))}}, @ring(Int[y]))
+    end
 
     R,(x,y,z) = polynomial_ring(:x, :y, :z, basering=Int64)
     @ring! ℚ[ε]

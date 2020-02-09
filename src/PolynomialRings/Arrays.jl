@@ -13,6 +13,7 @@ import ..Expansions: _expansion_expr, expansiontypes
 import ..Expansions: constant_coefficient, linear_coefficients, expansion_terms
 import ..Expansions: expansion, expandcoefficients, coefficient, deg
 import ..Expansions: substitutedtype
+import ..NamingSchemes: remove_variables
 import ..Operators: common_denominator, integral_fraction
 import ..Polynomials: Polynomial, PolynomialOver, map_coefficients
 import ..Terms: Term
@@ -25,6 +26,10 @@ function to_dense_monomials(a::AbstractArray{P}) where P <: Polynomial
     n = max_variable_index(a)
     to_dense_monomials.(n, a)
 end
+
+remove_variables(::Type{Array{P, N}}, scheme) where {P, N} = Array{remove_variables(P, scheme), N}
+remove_variables(::Type{SparseVector{P, I}}, scheme) where {P, I} = SparseVector{remove_variables(P, scheme), I}
+remove_variables(::Type{SparseMatrixCSC{P, I}}, scheme) where {P, I} = SparseMatrixCSC{remove_variables(P, scheme), I}
 
 # -----------------------------------------------------------------------------
 #

@@ -1,10 +1,15 @@
 using Test
 
 using PolynomialRings.NamingSchemes: @variable, @namingscheme, @nestednamingscheme
-using PolynomialRings.NamingSchemes: iscanonical, canonicalscheme
+using PolynomialRings.NamingSchemes: iscanonical, canonicalscheme, namingscheme
 using PolynomialRings.NamingSchemes: NamingSchemeError
 
 @testset "NamingSchemes" begin
+    @testset "Type properties" begin
+        @test namingscheme(@namingscheme(x)) == @namingscheme(x)
+        @test namingscheme(@namingscheme(x[])) == @namingscheme(x[])
+    end
+
     @testset "Variables" begin
         @test @variable(x) == @variable(x)
         @test @variable(x) != @variable(y)

@@ -9,10 +9,11 @@ import IterTools: groupby
 import ..AbstractMonomials: AbstractMonomial, exptype, exponents
 import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
+import ..MonomialOrderings: monomialorderkeytype, monomialordereltype
 import ..NamingSchemes: Named, Numbered, NamingScheme, remove_variables
 import ..NamingSchemes: NamedVariable
 import ..Polynomials: Polynomial, monomialtype, monomialorder, SparsePolynomial
-import ..StandardMonomialOrderings: MonomialOrdering
+import ..StandardMonomialOrderings: MonomialOrdering, LexCombinationOrder, KeyOrder
 import ..Terms: Term, monomial, coefficient
 import ..Util: @assertvalid
 import PolynomialRings: deg
@@ -24,10 +25,34 @@ import PolynomialRings: namingscheme, variablesymbols, expansion, expand, polyno
 #
 # -----------------------------------------------------------------------------
 
-@pure function expansiontypes(::Type{P}, order::MonomialOrder) where P <: Polynomial
-    C = remove_variables(P, namingscheme(order))
-    M = monomialtype(order, exptype(P, namingscheme(order)))
-    return M, C
+const EmptyLexCombinationOrder = LexCombinationOrder{<:Tuple{}}
+const KeyLexCombinationOrder = LexCombinationOrder{<:Tuple{KeyOrder, Vararg}}
+const OtherLexCombinationOrder = LexCombinationOrder{<:Tuple}
+
+withkeys(o, P, M) = M
+withkeys(o::EmptyLexCombinationOrder, P, M) = M
+withkeys(o::OtherLexCombinationOrder, P, M) = withkeys(Base.tail(o), P, M)
+withkeys(o::KeyLexCombinationOrder, P, M) = Pair{
+    monomialorderkeytype(P),
+    withkeys(Base.tail(o), monomialordereltype(P), M),
+}
+
+atomicorder(o) = o
+atomicorder(o::EmptyLexCombinationOrder) = o
+atomicorder(o::OtherLexCombinationOrder) = LexCombinationOrder(first(o), atomicorder(Base.tail(o)))
+atomicorder(o::KeyLexCombinationOrder) = atomicorder(Base.tail(o))
+
+removenesting(o, C) = C
+removenesting(o::EmptyLexCombinationOrder, C) = C
+removenesting(o::OtherLexCombinationOrder, C) = removenesting(Base.tail(o), C)
+removenesting(o::KeyLexCombinationOrder, C) = removenesting(Base.tail(o), monomialordereltype(C))
+
+@pure function expansiontypes(P, spec)
+    C = remove_variables(P, namingscheme(spec))
+    M = monomialtype(atomicorder(spec), exptype(P, namingscheme(spec)))
+    KeyedM = withkeys(spec, P, M)
+    UnnestedC = removenesting(spec, C)
+    return KeyedM, UnnestedC
 end
 
 _expansionspec(sym::Symbol...) = _expansionspec(Named{sym}())
