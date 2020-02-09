@@ -161,9 +161,9 @@ maxnonzero(::typeof(Base.Order.Reverse), a) = findfirst(!iszero, a)
 
 function monomialorderkeypair(order, a)
     if (ix = maxnonzero(order, a)) |> !isnothing
-        return (ix, a[ix])
+        return ix => a[ix]
     else
-        return (ix, nothing)
+        return ix => nothing
     end
 end
 
