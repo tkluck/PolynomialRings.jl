@@ -300,7 +300,7 @@ end
 #
 # -----------------------------------------------------------------------------
 
-function show(io::IO, T::Type{<:MonomialOrdering})
+function show(io::IO, T::Type{<:MonomialOrder})
     print(io, "typeof(")
     show(io, T.instance)
     print(io, ")")

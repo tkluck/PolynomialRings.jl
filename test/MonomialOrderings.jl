@@ -115,5 +115,6 @@ import PolynomialRings: @ring!
         @test repr(KeyOrder(Base.Order.Forward)) == "KeyOrder(Base.Order.Forward)"
 
         @test repr(typeof(@degrevlex(x))) == "typeof(@degrevlex(x))"
+        @test repr(typeof(@lex(x > @keyorder()))) == "typeof(@lex(x > @keyorder()))"
     end
 end
