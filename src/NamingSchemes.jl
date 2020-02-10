@@ -9,7 +9,7 @@ symbol together with an integer, e.g., `c[2]`).
 module NamingSchemes
 
 import Base: @pure
-import Base: issubset, isvalid, *, diff, indexin, promote_rule, promote_type
+import Base: issubset, isempty, isvalid, *, diff, indexin, promote_rule, promote_type
 
 import ..Util: isdisjoint
 import PolynomialRings: boundnames, fullboundnames, iscanonical, canonicaltype
@@ -23,28 +23,29 @@ numberedvariablename(a) = numberedvariablename(namingscheme(a))
 
 struct NamingSchemeError end
 
-const NestedNamingScheme = NTuple{N, NamingScheme} where N
-const NoNamingScheme     = Tuple{}
+const NestedNamingScheme      = NTuple{N, NamingScheme} where N
+const EmptyNestedNamingScheme = Tuple{}
+
+isempty(scheme::NestedNamingScheme) = all(isempty, scheme)
 
 (A::Type{<:NestedNamingScheme})() = ntuple(i -> fieldtype(A, i)(), fieldcount(A))
 
-function composeschemes(scheme)
-    isvalid(scheme) || throw(NamingSchemeError())
-    return (scheme,)
-end
+
+composeschemes() = ()
 
 function composeschemes(scheme, schemes...)
-    s = composeschemes(schemes...)
-    isdisjoint(scheme, s) || throw(NamingSchemeError())
-    return tuple(scheme, s...)
+    isvalid(scheme) || throw(NamingSchemeError())
+    if isempty(scheme)
+        return composeschemes(schemes...)
+    else
+        s = composeschemes(schemes...)
+        isdisjoint(scheme, s) || throw(NamingSchemeError())
+        return tuple(scheme, s...)
+    end
 end
 
 *(a::NamingScheme) = a
 *(a::NestedNamingScheme) = a
-*(::Nothing, a::NamingScheme) = composeschemes(a)
-*(a::NamingScheme, ::Nothing) = composeschemes(a)
-*(::Nothing, a::NestedNamingScheme) = composeschemes(a...)
-*(a::NestedNamingScheme, ::Nothing) = composeschemes(a...)
 *(a::NamingScheme, b::NamingScheme) = composeschemes(a, b)
 *(a::NamingScheme, b::NestedNamingScheme) = composeschemes(a, b...)
 *(a::NestedNamingScheme, b::NamingScheme) = composeschemes(a..., b)
@@ -69,6 +70,8 @@ struct Named{Names} <: NamingScheme end
 variablesymbols(::Named{Names}) where Names = Names
 num_variables(named::Named) = length(variablesymbols(named))
 
+const EmptyNamingScheme = Named{()}
+
 # -----------------------------------------------------------------------------
 #
 # Indexed series of variable names (1-based)
@@ -92,6 +95,10 @@ function namingscheme(name::Symbol, n::Number)
     return res
 end
 
+isempty(::Named) = false
+isempty(::EmptyNamingScheme) = true
+isempty(::Numbered) = false
+
 isvalid(scheme::Named) = allunique(variablesymbols(scheme))
 isvalid(scheme::Numbered) = true
 
@@ -109,12 +116,9 @@ indexin(x::Variable, n::NamingScheme) = nothing
 issubset(::Named, ::Numbered) = false
 issubset(::Numbered, ::Named) = false
 issubset(::Numbered{Name1, Max1}, ::Numbered{Name2, Max2}) where {Name1, Name2, Max1, Max2} = Name1 == Name2 && Max1 <= Max2
-issubset(::NamingScheme, ::Nothing) = false
-issubset(::Nothing, ::NamingScheme) = true
-issubset(::Nothing, ::Nothing) = true
 
-issubset(::NamingScheme, ::NoNamingScheme) = false
-issubset(::NoNamingScheme, ::NamingScheme) = true
+issubset(::NamingScheme, ::EmptyNestedNamingScheme) = false
+issubset(::EmptyNestedNamingScheme, ::NamingScheme) = true
 issubset(S::NamingScheme, T::NestedNamingScheme) = any(t -> S ⊆ t, T)
 issubset(S::NestedNamingScheme, T::NamingScheme) = all(s -> s ⊆ T, S)
 @generated function issubset(::S, ::T) where {S <: NestedNamingScheme, T <: NestedNamingScheme}
@@ -125,17 +129,9 @@ end
 isdisjoint(::Named, ::Numbered) = true
 isdisjoint(::Numbered, ::Named) = true
 isdisjoint(::Numbered{Name1}, ::Numbered{Name2}) where {Name1, Name2} = Name1 != Name2
-isdisjoint(::NamingScheme, ::Nothing) = true
-isdisjoint(::Nothing, ::NamingScheme) = true
-isdisjoint(::Nothing, ::NoNamingScheme) = true
-isdisjoint(::Nothing, ::Nothing) = true
 
-isdisjoint(::NamingScheme, ::NoNamingScheme) = true
-isdisjoint(::NoNamingScheme, ::NamingScheme) = true
-isdisjoint(::NoNamingScheme, ::Nothing) = true
-
-isdisjoint(::Nothing, ::NestedNamingScheme) = true
-isdisjoint(::NestedNamingScheme, ::Nothing) = true
+isdisjoint(::NamingScheme, ::EmptyNestedNamingScheme) = true
+isdisjoint(::EmptyNestedNamingScheme, ::NamingScheme) = true
 
 @generated function isdisjoint(::S, ::T) where {S <: NamingScheme, T <: NestedNamingScheme}
     return all(t -> isdisjoint(S(), t), T())
@@ -172,10 +168,10 @@ end
 
 diff(x::Union{NamingScheme, NestedNamingScheme}, y::Union{NamingScheme, NestedNamingScheme}) = remove_variables(x, y)
 
-namingscheme(::Type) = nothing
-nestednamingscheme(T::Type) = isnothing(namingscheme(T)) ? NoNamingScheme() : (namingscheme(T),)
-boundnames(::Type) = nothing
-fullboundnames(T::Type) = isnothing(boundnames(T)) ? NoNamingScheme() : (boundnames(T),)
+namingscheme(::Type) = EmptyNamingScheme()
+nestednamingscheme(T::Type) = composeschemes(namingscheme(T))
+boundnames(::Type) = EmptyNamingScheme()
+fullboundnames(T::Type) = composeschemes(boundnames(T))
 
 iscanonical(T::NamingScheme) = (T,) == canonicalscheme(T)
 iscanonical(T::NestedNamingScheme) = T == canonicalscheme(T)

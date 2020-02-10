@@ -8,6 +8,12 @@ using PolynomialRings.NamingSchemes: NamingSchemeError
     @testset "Type properties" begin
         @test namingscheme(@namingscheme(x)) == @namingscheme(x)
         @test namingscheme(@namingscheme(x[])) == @namingscheme(x[])
+
+        @test isempty(@namingscheme(()))
+        @test !isempty(@namingscheme(x))
+        @test !isempty(@namingscheme(x[]))
+        @test isempty(@nestednamingscheme())
+        @test !isempty(@nestednamingscheme(x,y))
     end
 
     @testset "Variables" begin
@@ -25,6 +31,7 @@ using PolynomialRings.NamingSchemes: NamingSchemeError
 
     @testset "Composition" begin
         @test @namingscheme(x) * @namingscheme(y) == @nestednamingscheme(x,y)
+        @test @namingscheme(x) * @namingscheme(()) == @nestednamingscheme(x)
         @test @namingscheme(c[]) * @namingscheme(y) == @nestednamingscheme(c[],y)
         @test_throws NamingSchemeError @namingscheme(x) * @namingscheme(x)
         @test_throws NamingSchemeError @namingscheme(x[]) * @namingscheme(x[])

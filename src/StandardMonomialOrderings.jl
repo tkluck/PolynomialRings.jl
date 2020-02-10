@@ -14,7 +14,7 @@ import Base.Order: Ordering
 import ..AbstractMonomials: AbstractMonomial, exponentsnz, revexponentsnz
 import ..MonomialOrderings: AtomicMonomialOrder, MonomialOrder, degreecompatible
 import ..MonomialOrderings: monomialorderkey, monomialorderkeytype, monomialordereltype, monomialorderkeypair
-import ..NamingSchemes: namingscheme, Named, NamingScheme
+import ..NamingSchemes: namingscheme, Named, NamingScheme, EmptyNamingScheme
 import ..Polynomials: Polynomial
 import ..Terms: Term
 import PolynomialRings: deg, leading_monomial
@@ -148,7 +148,7 @@ end
 #
 # -----------------------------------------------------------------------------
 
-struct KeyOrder{Order} <: AtomicMonomialOrder{Nothing}
+struct KeyOrder{Order} <: AtomicMonomialOrder{EmptyNamingScheme}
     order :: Order
 end
 
