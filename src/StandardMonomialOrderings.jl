@@ -14,7 +14,7 @@ import Base.Order: Ordering
 import ..AbstractMonomials: AbstractMonomial, exponentsnz, revexponentsnz
 import ..MonomialOrderings: AtomicMonomialOrder, MonomialOrder, degreecompatible
 import ..MonomialOrderings: monomialorderkey, monomialorderkeytype, monomialordereltype, monomialorderkeypair
-import ..NamingSchemes: namingscheme, Named, NamingScheme, EmptyNamingScheme
+import ..NamingSchemes: namingscheme, Named, NamingScheme, EmptyNamingScheme, variablesymbols
 import ..Polynomials: Polynomial
 import ..Terms: Term
 import PolynomialRings: deg, leading_monomial
@@ -201,13 +201,12 @@ function LexCombinationOrder(order::AtomicMonomialOrder)
     return LexCombinationOrder((order,), namingscheme(order))
 end
 
+joinnames() = EmptyNamingScheme()
+joinnames(x::Named, y::Named...) = Named{tuple(variablesymbols(x)..., variablesymbols(joinnames(y...))...)}()
+
 function LexCombinationOrder(orders::MonomialOrder...) where Orders
     orders = flattentuple(map(atoms, orders)...)
-    if isempty(orders)
-        names = EmptyNamingScheme()
-    else
-        names = promote_type(filter(!isempty, map(namingscheme, orders))...)
-    end
+    names = joinnames(map(namingscheme, orders)...)
     LexCombinationOrder(orders, names)
 end
 
