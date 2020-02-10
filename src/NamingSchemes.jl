@@ -12,7 +12,7 @@ import Base: @pure
 import Base: issubset, isempty, isvalid, *, diff, indexin, promote_rule, promote_type
 import Base: show
 
-import ..Util: isdisjoint
+import ..Util: isdisjoint, showsingleton
 import PolynomialRings: boundnames, fullboundnames, iscanonical, canonicaltype
 import PolynomialRings: variablesymbols, namingscheme, nestednamingscheme, num_variables
 
@@ -283,11 +283,7 @@ end
 #
 # -----------------------------------------------------------------------------
 
-function show(io::IO, T::Type{<:NamingScheme})
-    print(io, "typeof(")
-    show(io, T.instance)
-    print(io, ")")
-end
+show(io::IO, T::Type{<:NamingScheme}) = showsingleton(io, T)
 
 showvars(x) = showvars(namingscheme(x))
 showvars(scheme::Named{Names}) where Names              = join(Names, ",")

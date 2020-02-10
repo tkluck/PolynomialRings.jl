@@ -18,6 +18,7 @@ import ..MonomialOrderings: monomialorderkey, monomialorderkeytype, monomialorde
 import ..NamingSchemes: namingscheme, Named, NamingScheme, EmptyNamingScheme, variablesymbols, num_variables
 import ..Polynomials: Polynomial
 import ..Terms: Term
+import ..Util: showsingleton
 import PolynomialRings: deg, leading_monomial
 
 
@@ -300,11 +301,7 @@ end
 #
 # -----------------------------------------------------------------------------
 
-function show(io::IO, T::Type{<:MonomialOrder})
-    print(io, "typeof(")
-    show(io, T.instance)
-    print(io, ")")
-end
+show(io::IO, T::Type{<:MonomialOrder}) = showsingleton(io, T)
 
 function show(io::IO, m::MonomialOrdering)
     if rulesymbol(m) == :lex
