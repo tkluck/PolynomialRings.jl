@@ -105,4 +105,15 @@ import PolynomialRings: @ring!
         @test lt(O9, 1 => 1 => y, 1 => 1 => x)
         @test lt(O9, 1 => 1 => y, 2 => 2 => x)
     end
+
+    @testset "Display" begin
+        @test repr(@degrevlex(x > y)) == "@degrevlex(x > y)"
+        @test repr(@deglex(x > y)) == "@deglex(x > y)"
+        @test repr(@lex(x > y)) == "@lex(x > y)"
+        @test repr(@lex(x > @keyorder() > y)) == "@lex(x > @keyorder() > y)"
+        @test repr(KeyOrder()) == "KeyOrder()"
+        @test repr(KeyOrder(Base.Order.Forward)) == "KeyOrder(Base.Order.Forward)"
+
+        @test repr(typeof(@degrevlex(x))) == "typeof(@degrevlex(x))"
+    end
 end

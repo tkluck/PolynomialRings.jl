@@ -9,12 +9,13 @@ with the `AbstractMonomials` module.
 module StandardMonomialOrderings
 
 import Base: promote_rule
+import Base: show
 import Base.Order: Ordering
 
 import ..AbstractMonomials: AbstractMonomial, exponentsnz, revexponentsnz
 import ..MonomialOrderings: AtomicMonomialOrder, MonomialOrder, degreecompatible
 import ..MonomialOrderings: monomialorderkey, monomialorderkeytype, monomialordereltype, monomialorderkeypair
-import ..NamingSchemes: namingscheme, Named, NamingScheme, EmptyNamingScheme, variablesymbols
+import ..NamingSchemes: namingscheme, Named, NamingScheme, EmptyNamingScheme, variablesymbols, num_variables
 import ..Polynomials: Polynomial
 import ..Terms: Term
 import PolynomialRings: deg, leading_monomial
@@ -293,5 +294,51 @@ macro lex(expr)
     return :( LexCombinationOrder($(syms...)) )
 end
 
+# -----------------------------------------------------------------------------
+#
+# Display
+#
+# -----------------------------------------------------------------------------
+
+function show(io::IO, T::Type{<:MonomialOrdering})
+    print(io, "typeof(")
+    show(io, T.instance)
+    print(io, ")")
+end
+
+function show(io::IO, m::MonomialOrdering)
+    if rulesymbol(m) == :lex
+        # TODO
+    else
+        print(io, "@$(rulesymbol(m))(")
+        join(io, variablesymbols(m), " > ")
+        print(io, ")")
+    end
+end
+
+function show(io::IO, m::KeyOrder)
+    if m.order == Base.Order.Reverse
+        print(io, "KeyOrder()")
+    elseif m.order == Base.Order.Forward
+        print(io, "KeyOrder(Base.Order.Forward)")
+    else
+        print(io, "KeyOrder(", m.order, ")")
+    end
+end
+
+function show(io::IO, m::LexCombinationOrder)
+    print(io, "@lex(")
+    items = Base.Generator(m.orders) do o
+        if o isa MonomialOrdering{:degrevlex} && num_variables(namingscheme(o)) == 1
+            variablesymbols(o)[1]
+        elseif o == KeyOrder()
+            "@keyorder()"
+        else
+            repr(o)
+        end
+    end
+    join(io, items, " > ")
+    print(io, ")")
+end
 
 end # module
