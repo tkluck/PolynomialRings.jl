@@ -3,6 +3,7 @@ using Test
 import Base.Order: lt
 
 import PolynomialRings.MonomialOrderings: MonomialOrder, degreecompatible
+import PolynomialRings.Monomials: @monomial
 import PolynomialRings.NamingSchemes: namingscheme, @namingscheme, EmptyNamingScheme
 import PolynomialRings.StandardMonomialOrderings: @degrevlex, @deglex, @lex
 import PolynomialRings.StandardMonomialOrderings: KeyOrder, LexCombinationOrder
@@ -89,5 +90,19 @@ import PolynomialRings: @ring!
         @test !lt(O6, 3 => x^2, 4 => x)
         @test lt(O6, 4 => x, 3 => x)
 
+        O7 = @lex(@keyorder() > x > @keyorder() > y)
+        @test lt(O7, 2 => 2 => x, 1 => 2 => x)
+        @test lt(O7, 2 => 1 => y, 2 => 2 => x)
+        @test lt(O7, 2 => 1 => y, 2 => 1 => x)
+        @test lt(O7, 2 => 2 => y, 2 => 1 => y)
+        @test lt(O7, 2 => 2 => y, 2 => 2 => y^2)
+
+        O8 = @lex(@keyorder() > @degrevlex(x > y))
+        @test lt(O8, 1 => 2 => y, 1 => 2 => x)
+        @test lt(O8, 1 => 1 => y, 1 => 2 => x)
+
+        O9 = @degrevlex(x > y)
+        @test lt(O9, 1 => 1 => y, 1 => 1 => x)
+        @test lt(O9, 1 => 1 => y, 2 => 2 => x)
     end
 end

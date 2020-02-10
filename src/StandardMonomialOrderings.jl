@@ -67,10 +67,10 @@ end
 degreecompatible(::MonomialOrdering{:degrevlex}) = true
 
 function Base.Order.lt(order::MonomialOrdering{:degrevlex}, a, b)
-    iszero(b) && return false
-    iszero(a) && return true
     a = monomialorderkey(order, a)
     b = monomialorderkey(order, b)
+    isnothing(b) && return false
+    isnothing(a) && return true
     scheme = namingscheme(order)
     if deg(a, scheme) == deg(b, scheme)
         for (_, (d, e)) in revexponentsnz(scheme, a, b)
@@ -87,10 +87,10 @@ end
 degreecompatible(::MonomialOrdering{:deglex}) = true
 
 function Base.Order.lt(order::MonomialOrdering{:deglex}, a, b)
-    iszero(b) && return false
-    iszero(a) && return true
     a = monomialorderkey(order, a)
     b = monomialorderkey(order, b)
+    isnothing(b) && return false
+    isnothing(a) && return true
     scheme = namingscheme(order)
     if deg(a, scheme) == deg(b, scheme)
         for (_, (d, e)) in exponentsnz(scheme, a, b)
@@ -106,10 +106,10 @@ end
 
 # TODO(?): deprecate in favour of LexCombinationOrder
 function Base.Order.lt(order::MonomialOrdering{:lex}, a, b)
-    iszero(b) && return false
-    iszero(a) && return true
     a = monomialorderkey(order, a)
     b = monomialorderkey(order, b)
+    isnothing(b) && return false
+    isnothing(a) && return true
     scheme = namingscheme(order)
     for (_, (d, e)) in exponentsnz(scheme, a, b)
         if d != e
@@ -156,6 +156,8 @@ KeyOrder() = KeyOrder{typeof(Base.Order.Reverse)}(Base.Order.Reverse)
 
 monomialorderkeytype(::Pair{T, S}) where {T, S} = T
 monomialordereltype(::Pair{T, S})  where {T, S} = S
+
+monomialorderkey(order, a::Pair) = monomialorderkey(order, a.second)
 monomialorderkeypair(order, a::Pair) = a
 
 maxnonzero(::typeof(Base.Order.Forward), a) = findlast(!iszero, a)
