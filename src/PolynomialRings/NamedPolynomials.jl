@@ -8,7 +8,8 @@ import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
 import ..Monomials.TupleMonomials: TupleMonomial
 import ..Monomials.VectorMonomials: VectorMonomial
-import ..NamingSchemes: Named, Numbered, NamingScheme, numberedvariablename, remove_variables, isdisjoint, boundnames, canonicalscheme
+import ..NamingSchemes: Named, Numbered, NamingScheme, EmptyNamingScheme
+import ..NamingSchemes: numberedvariablename, remove_variables, isdisjoint, boundnames, canonicalscheme
 import ..Polynomials:  NamedMonomial, NumberedMonomial, NamedTerm, NumberedTerm, TermOver, monomialorder
 import ..Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolynomial, PolynomialBy, PolynomialIn, nzterms, SparsePolynomialOver, DensePolynomialOver
 import ..StandardMonomialOrderings: MonomialOrdering, rulesymbol
@@ -74,7 +75,7 @@ _promote_rule(T1::Type,               T2::Type) = (res = promote_type(T1, T2); r
     elseif nestednamingscheme(T1) ⊆ nestednamingscheme(T2)
         # FIXME(tkluck): this loses information on the exptype associated to
         # the namingscheme of T1.
-        return _promote_rule(basering(T1), T2)
+        return polynomialtype(_promote_rule(basering(T1), T2))
     elseif isdisjoint(namingscheme(T1), nestednamingscheme(T2))
         if (C = _promote_rule(basering(T1), T2)) !== Bottom
             return polynomialtype(monomialtype(T1), C, sparse=issparse(T1))
@@ -110,12 +111,10 @@ joinsparse(x::Type{<:Polynomial}, y) = issparse(x)
 joinsparse(x, y::Type{<:Polynomial}) = issparse(y)
 joinsparse(x::Type{<:Polynomial}, y::Type{<:Polynomial}) = issparse(x) && issparse(y)
 
-≺(a::Nothing, b) = true
-≺(a, b::Nothing) = false
-≺(a::Numbered, b::Named) = true
+≺(a::Numbered, b::Named) = !isempty(b)
 ≺(a::Numbered, b::Numbered) = numberedvariablename(a) < numberedvariablename(b)
-≺(a::Named, b::Named) = false
-≺(a::Named, b::Numbered) = false
+≺(a::Named, b::Named) = isempty(a) && !isempty(b)
+≺(a::Named, b::Numbered) = isempty(a)
 
 promote_canonical_type(T1::Type, T2::Type) = promote_type(T1, T2)
 

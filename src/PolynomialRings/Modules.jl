@@ -68,7 +68,7 @@ end
 # TODO: Signature should keep a record of what KeyOrder the I type is ordered by
 monomialorderkey(order, s::Signature) = monomialorderkey(order, s.m)
 monomialorderkey(order::typeof(KeyOrder()), s::Signature) = s.i
-monomialorderkeypair(order::typeof(KeyOrder()), s::Signature) = (s.i, s.m)
+monomialorderkeypair(order, s::Signature) = (s.i, s.m)
 
 termtype(p::AbstractArray{<:Polynomial}) = Signature{termtype(eltype(p)), keytype(p)}
 termtype(P::Type{<:AbstractArray{<:Polynomial}}) = Signature{termtype(eltype(P)), keytype(P)}

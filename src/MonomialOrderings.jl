@@ -12,7 +12,7 @@ import Base: promote_rule
 
 import ..NamingSchemes: NamingScheme, Named, Numbered
 import PolynomialRings: leading_monomial, leading_coefficient, leading_term, tail, deg
-import PolynomialRings: namingscheme, to_dense_monomials
+import PolynomialRings: monomialorder, namingscheme, to_dense_monomials
 
 """
     abstract type MonomialOrder{Names} <: Base.Order.Ordering end
@@ -31,6 +31,8 @@ abstract type AtomicMonomialOrder{Names} <: MonomialOrder{Names} end
 namingscheme(::O)       where O <: MonomialOrder{Names} where Names = Names()
 namingscheme(::Type{O}) where O <: MonomialOrder{Names} where Names = Names()
 
+monomialorder(o::MonomialOrder) = o
+
 NamedMonomialOrder{Names}        = MonomialOrder{Named{Names}}
 NumberedMonomialOrder{Name, Max} = MonomialOrder{Numbered{Name, Max}}
 
@@ -41,7 +43,7 @@ NumberedMonomialOrder{Name, Max} = MonomialOrder{Numbered{Name, Max}}
 # -----------------------------------------------------------------------------
 degreecompatible(::MonomialOrder) = false
 
-monomialorderkey(order, a) = a # TODO: rename! because typeof(monomialorderkey()) != monomialorderkeytype
+monomialorderkey(order, a) = iszero(a) ? nothing : a # TODO: rename! because typeof(monomialorderkey()) != monomialorderkeytype
 monomialorderkeytype(T) = keytype(T)
 monomialordereltype(T) = eltype(T)
 function monomialorderkeypair end

@@ -95,6 +95,8 @@ allvariablesymbols(::Type{P}) where P <: Polynomial = union(allvariablesymbols(b
 issparse(f::Polynomial) = issparse(typeof(f))
 isstrictlysparse(f::Polynomial) = isstrictlysparse(typeof(f))
 
+max_variable_index(scheme, f::Polynomial) = maximum(max_variable_index(t) for t in nzterms(f, monomialorder(f)))
+
 # -----------------------------------------------------------------------------
 #
 # Iterating over summands
@@ -146,7 +148,7 @@ end
 leading_monomial(p::Polynomial; order::MonomialOrder=monomialorder(p)) = _monomialbyindex(p, _leading_term_ix(p, order))
 leading_coefficient(p::Polynomial; order::MonomialOrder=monomialorder(p)) = coefficients(p)[_leading_term_ix(p, order)]
 
-monomialorderkey(order, a::Polynomial) = leading_monomial(a, order=order)
+monomialorderkey(order, a::Polynomial) = iszero(a) ? nothing : leading_monomial(a, order=order)
 
 tail(p::Polynomial, order::MonomialOrder) = p - leading_term(p; order=order)
 tail(p::Polynomial; order::MonomialOrder=monomialorder(p)) = tail(p, order)

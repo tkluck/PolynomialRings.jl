@@ -3,22 +3,21 @@ module Arrays
 import Base: *, transpose, diff, div
 import LinearAlgebra: Transpose
 import LinearAlgebra: det
-import SparseArrays: issparse, spzeros, SparseVector, SparseMatrixCSC, AbstractSparseArray
+import SparseArrays: SparseVector, SparseMatrixCSC, AbstractSparseArray
 import SparseArrays: nonzeros
 
-import IterTools: groupby
-
 import ..AbstractMonomials: AbstractMonomial
-import ..Expansions: _expansion_expr, expansiontypes
-import ..Expansions: constant_coefficient, linear_coefficients, expansion_terms
-import ..Expansions: expansion, expandcoefficients, coefficient, deg
+import ..Expansions: order_from_expr
+import ..Expansions: expandcoefficients, deg
 import ..Expansions: substitutedtype
-import ..NamingSchemes: remove_variables
+import ..NamingSchemes: remove_variables, Variable
 import ..Operators: common_denominator, integral_fraction
 import ..Polynomials: Polynomial, PolynomialOver, map_coefficients
+import ..StandardMonomialOrderings: KeyOrder, LexCombinationOrder
 import ..Terms: Term
+import ..Util: nzpairs
 import PolynomialRings: base_restrict
-import PolynomialRings: to_dense_monomials, max_variable_index
+import PolynomialRings: to_dense_monomials, max_variable_index, monomialorder
 
 max_variable_index(a::AbstractArray{<:Polynomial}) = isempty(a) ? 0 : maximum(max_variable_index(a_i) for a_i in a)
 
@@ -31,57 +30,6 @@ remove_variables(::Type{Array{P, N}}, scheme) where {P, N} = Array{remove_variab
 remove_variables(::Type{SparseVector{P, I}}, scheme) where {P, I} = SparseVector{remove_variables(P, scheme), I}
 remove_variables(::Type{SparseMatrixCSC{P, I}}, scheme) where {P, I} = SparseMatrixCSC{remove_variables(P, scheme), I}
 
-# -----------------------------------------------------------------------------
-#
-# Helpers for wrapping 'expansion' like things
-#
-# -----------------------------------------------------------------------------
-function _joint_iteration(f, iters, groupby, value)
-    it = iterate.(iters)
-    active = it .!= nothing
-    while any(active)
-        activeix = findall(active)
-        activeit = it[activeix]
-        items = getindex.(activeit, 1)
-
-        cur_key = minimum(groupby, items)
-        cur_ix = findall(isequal(cur_key)∘groupby, items)
-        cur_indices = activeix[cur_ix]
-        cur_values = value.(items[cur_ix])
-
-        f(cur_key, cur_indices, cur_values)
-
-        for ix in cur_indices
-            x = iterate(iters[ix], it[ix][2])
-            # for some reason, type inference doesn't see that `it` may contain `nothing`,
-            # so we cannot assign it. This works around that.
-            if x === nothing
-                active[ix] = false
-            else
-                it[ix] = x
-            end
-        end
-        activeix = findall(active)
-    end
-end
-
-function expansion(a::AbstractArray{P}, args...) where P <: Polynomial
-    MonomialType, CoeffType = expansiontypes(P, args...)
-    zero_element = issparse(a) ? spzeros(CoeffType, size(a)...) : zeros(CoeffType, size(a))
-    res = Tuple{MonomialType, typeof(zero_element)}[]
-    nonzero_indices = LinearIndices(a)[findall(!iszero,a)]
-    _joint_iteration(map(a_i->collect(expansion(a_i, args...)), collect(a[nonzero_indices])), i->i[1], i->i[2]) do monomial, indices, coefficients
-        el = copy(zero_element)
-        el[nonzero_indices[indices]] = coefficients
-        push!(res, (monomial,el))
-    end
-    return res
-end
-
-function expandcoefficients(a::AbstractArray{P}, args...) where P <: Polynomial
-    return [c for (p,c) in expansion(a, args...)]
-end
-
 function (p::AbstractArray{P})(; kwargs...) where P <: Polynomial
     ElType = substitutedtype(eltype(p); kwargs...)
     res = similar(p, ElType)
@@ -91,47 +39,10 @@ function (p::AbstractArray{P})(; kwargs...) where P <: Polynomial
     res
 end
 
-function coefficient(a::AbstractArray{P}, args...) where P <: Polynomial
-    return map(a_i->coefficient(a_i, args...), a)
-end
-
-function constant_coefficient(a::AbstractArray{P}, args...) where P <: Polynomial
-    MonomialType, CoeffType = expansiontypes(P, args...)
-    res = issparse(a) ? spzeros(CoeffType, size(a)...) : zeros(CoeffType, size(a))
-
-    ix = findfirst(!iszero, a)
-    while ix != nothing
-        res[ix] = constant_coefficient(a[ix], args...)
-        ix = findnext(!iszero, a, nextind(a, ix))
-    end
-
-    return res
-end
-
-function linear_coefficients(a::AbstractArray{P}, args...) where P <: Polynomial
-    MonomialType, CoeffType = expansiontypes(P, args...)
-    zero_element = issparse(a) ? spzeros(CoeffType, size(a)...) : zeros(CoeffType, size(a))
-
-    nonzero_indices = LinearIndices(a)[findall(!iszero,a)]
-    res = typeof(zero_element)[]
-    _joint_iteration(map(a_i->linear_coefficients(a_i, args...), collect(a[nonzero_indices])), i->1, identity) do _,indices,coefficients
-        el = copy(zero_element)
-        el[nonzero_indices[indices]] = coefficients
-        push!(res, el)
-    end
-    return res
-end
-
-function expansion_terms(a::AbstractArray{P}, symbols...) where P <: Polynomial
-    return [
-        P.(m * c)
-        for (m, c) in expansion(a, symbols...)
-    ]
-end
 
 function deg(a::AbstractArray{P}, args...) where P <: Polynomial
     iszero(a) && return -1
-    return maximum(a_i->deg(a_i, args...), a[findall(!iszero,a)])
+    return maximum(((i, ai),) -> deg(a_i, args...), nzpairs(a))
 end
 
 """
@@ -161,8 +72,9 @@ julia> collect(flat_coefficients([x^3 + y^2, y^5], :x, :y))
 # See also
 `@expandcoefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
 """
-function flat_coefficients(a::AbstractArray{P}, args...) where P <: Polynomial
-    return vcat([expandcoefficients(a_i, args...) for a_i in a]...)
+function flat_coefficients(a::AbstractArray{P}, spec...) where P <: Polynomial
+    order = monomialorder(spec...)
+    return expandcoefficients(a, LexCombinationOrder(KeyOrder(), order))
 end
 
 """
@@ -193,7 +105,7 @@ julia> collect(flat_coefficients([x^3 + y^2, y^5], :x, :y))
 `flat_coefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
 """
 macro flat_coefficients(a, symbols...)
-    expansion_expr = _expansion_expr(symbols)
+    expansion_expr = order_from_expr(symbols)
     quote
         flat_coefficients($(esc(a)), $expansion_expr)
     end
@@ -238,6 +150,6 @@ _PT = Union{Polynomial,Term,AbstractMonomial}
 div(a::A, s::Integer) where A <: AbstractArray{P} where P<:PolynomialOver{<:Integer} = map(a_i->map_coefficients(c->div(c,s), a_i), a)
 transpose(a::_PT) = a
 
-diff(a::A, s::Symbol) where A <: AbstractArray{P} where P <: Polynomial = broadcast(a_i->diff(a_i, s), a)
+diff(a::AbstractArray{<:Polynomial}, s::Union{Variable, Symbol}) = broadcast(a_i->diff(a_i, s), a)
 
 end

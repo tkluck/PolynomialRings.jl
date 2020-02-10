@@ -4,6 +4,7 @@ import Base: @pure
 import SparseArrays: SparseVector
 
 import ..AbstractMonomials: AbstractMonomial
+import ..Constants: One
 import ..MonomialOrderings: MonomialOrder
 import ..Monomials.TupleMonomials: TupleMonomial
 import ..Monomials.VectorMonomials: VectorMonomial
@@ -23,7 +24,12 @@ monomialtype(scheme::NamingScheme, exptype=Int16) = monomialtype(monomialorder(s
 
 function monomialtype(order::MonomialOrder, exptype=Int16)
     N = num_variables(namingscheme(order))
-    if N < Inf
+    if exptype == Union{}
+        exptype = Int16
+    end
+    if iszero(N)
+        return One
+    elseif N < Inf
         return TupleMonomial{N, exptype, typeof(order)}
     else
         return VectorMonomial{SparseVector{exptype, Int}, exptype, typeof(order)}

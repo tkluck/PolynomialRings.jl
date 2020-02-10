@@ -85,6 +85,12 @@ iszero(a::Term) = iszero(coefficient(a))
 to_dense_monomials(n, a::Term) = Term( to_dense_monomials(n, monomial(a)), deepcopy(coefficient(a)) )
 max_variable_index(a::Term) = max_variable_index(monomial(a))
 
+function max_variable_index(scheme, a::Term)
+    m = max_variable_index(scheme, coefficient(a))
+    n = max_variable_index(scheme, monomial(a))
+    return max(m, n)
+end
+
 function maybe_div(a::T, b::T) where T<:Term
     q = maybe_div(monomial(a), monomial(b))
     if q === nothing || iszero(coefficient(b))

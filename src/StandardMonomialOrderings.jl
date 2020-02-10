@@ -15,7 +15,8 @@ import Base.Order: Ordering
 import ..AbstractMonomials: AbstractMonomial, exponentsnz, revexponentsnz
 import ..MonomialOrderings: AtomicMonomialOrder, MonomialOrder, degreecompatible
 import ..MonomialOrderings: monomialorderkey, monomialorderkeytype, monomialordereltype, monomialorderkeypair
-import ..NamingSchemes: namingscheme, Named, NamingScheme, EmptyNamingScheme, variablesymbols, num_variables
+import ..NamingSchemes: Named, Numbered, NamingScheme, EmptyNamingScheme
+import ..NamingSchemes: namingscheme, variablesymbols, num_variables
 import ..Polynomials: Polynomial
 import ..Terms: Term
 import ..Util: showsingleton
@@ -204,7 +205,11 @@ function LexCombinationOrder(order::AtomicMonomialOrder)
 end
 
 joinnames() = EmptyNamingScheme()
-joinnames(x::Named, y::Named...) = Named{tuple(variablesymbols(x)..., variablesymbols(joinnames(y...))...)}()
+joinnames(x::Numbered, y::Numbered) = error("Can't join $x and $y")
+joinnames(x::Numbered, y::Named) = (isempty(y) || error("Can't join $x and $y"); x)
+joinnames(x::Named, y::Numbered) = (isempty(x) || error("Can't join $x and $y"); y)
+joinnames(x::Named, y::Named) = (isdisjoint(x, y) || error("Can't join $x and $y"); namingscheme(variablesymbols(x)..., variablesymbols(y)...))
+joinnames(x, y...) = joinnames(x, joinnames(y...))
 
 function LexCombinationOrder(orders::MonomialOrder...) where Orders
     orders = flattentuple(map(atoms, orders)...)

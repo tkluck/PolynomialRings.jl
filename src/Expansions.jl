@@ -2,8 +2,9 @@ module Expansions
 
 import Base: @pure
 import Base: diff
-import SparseArrays: spzeros, SparseVector
+import SparseArrays: spzeros, SparseVector, AbstractSparseArray
 
+import InPlace: @inplace
 import IterTools: groupby
 
 import ..AbstractMonomials: AbstractMonomial, exptype, exponents
@@ -12,11 +13,11 @@ import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialO
 import ..MonomialOrderings: monomialorderkeytype, monomialordereltype
 import ..NamingSchemes: Named, Numbered, NamingScheme, remove_variables
 import ..NamingSchemes: NamedVariable
-import ..Polynomials: Polynomial, monomialtype, monomialorder, SparsePolynomial
+import ..Polynomials: Polynomial, monomialtype, monomialorder, SparsePolynomial, nzterms
 import ..StandardMonomialOrderings: MonomialOrdering, LexCombinationOrder, KeyOrder
 import ..Terms: Term, monomial, coefficient
-import ..Util: @assertvalid
-import PolynomialRings: deg
+import ..Util: @assertvalid, nzpairs
+import PolynomialRings: deg, generators, max_variable_index
 import PolynomialRings: namingscheme, variablesymbols, expansion, expand, polynomialtype
 
 # -----------------------------------------------------------------------------
@@ -25,8 +26,9 @@ import PolynomialRings: namingscheme, variablesymbols, expansion, expand, polyno
 #
 # -----------------------------------------------------------------------------
 
-const EmptyLexCombinationOrder = LexCombinationOrder{<:Tuple{}}
+const EmptyLexCombinationOrder = LexCombinationOrder{Tuple{}}
 const KeyLexCombinationOrder = LexCombinationOrder{<:Tuple{KeyOrder, Vararg}}
+const SingleLexCombinationOrder = LexCombinationOrder{<:Tuple{Any}}
 const OtherLexCombinationOrder = LexCombinationOrder{<:Tuple}
 
 withkeys(o, P, M) = M
@@ -37,28 +39,34 @@ withkeys(o::KeyLexCombinationOrder, P, M) = Pair{
     withkeys(Base.tail(o), monomialordereltype(P), M),
 }
 
+maybeunwrap(o::SingleLexCombinationOrder) = first(o)
+maybeunwrap(o::OtherLexCombinationOrder) = o
+
+atomicorders() = ()
+atomicorders(o::KeyOrder, os...) = atomicorders(os...)
+atomicorders(o, os...) = (o, atomicorders(os...)...)
 atomicorder(o) = o
-atomicorder(o::EmptyLexCombinationOrder) = o
-atomicorder(o::OtherLexCombinationOrder) = LexCombinationOrder(first(o), atomicorder(Base.tail(o)))
-atomicorder(o::KeyLexCombinationOrder) = atomicorder(Base.tail(o))
+atomicorder(o::LexCombinationOrder) = maybeunwrap(LexCombinationOrder(atomicorders(o.orders...)...))
 
 removenesting(o, C) = C
 removenesting(o::EmptyLexCombinationOrder, C) = C
 removenesting(o::OtherLexCombinationOrder, C) = removenesting(Base.tail(o), C)
 removenesting(o::KeyLexCombinationOrder, C) = removenesting(Base.tail(o), monomialordereltype(C))
 
-@pure function expansiontypes(P, spec)
-    C = remove_variables(P, namingscheme(spec))
-    M = monomialtype(atomicorder(spec), exptype(P, namingscheme(spec)))
-    KeyedM = withkeys(spec, P, M)
-    UnnestedC = removenesting(spec, C)
-    return KeyedM, UnnestedC
+function expansiontypes(P, spec...)
+    order = monomialorder(spec...)
+    if order isa KeyOrder
+        return monomialorderkeytype(P), monomialordereltype(P)
+    else
+        C = remove_variables(P, namingscheme(order))
+        M = monomialtype(atomicorder(order), exptype(P, namingscheme(order)))
+        KeyedM = withkeys(order, P, M)
+        UnnestedC = removenesting(order, C)
+        return KeyedM, UnnestedC
+    end
 end
 
-_expansionspec(sym::Symbol...) = _expansionspec(Named{sym}())
-_expansionspec(scheme::NamingScheme) = _expansionspec(MonomialOrdering{:degrevlex, typeof(scheme)}())
-_expansionspec(spec::MonomialOrder) = spec
-_coefftype(::Type{P}, spec...) where P <: Polynomial = expansiontypes(P, _expansionspec(spec...))[2]
+_coefftype(P, spec...) = expansiontypes(P, spec...)[2]
 
 """
     expansion(f, symbol, [symbol...])
@@ -87,41 +95,8 @@ julia> collect(expansion(x^3 + y^2, :x, :y))
 # See also
 `@expansion(...)`, `@coefficient` and `coefficient`
 """
-expand(p, spec...) = (
-    (exponents(m, namingscheme(m)), c)
-    for (m, c) in expansion(p, spec...)
-)
+function expansion end
 
-"""
-    expansion(f, symbol, [symbol...])
-
-Return a collection of (monomial, coefficient) tuples decomposing f
-into its consituent parts.
-
-In the REPL, you likely want to use the friendlier version `@expansion` instead.
-
-# Examples
-```jldoctest
-julia> using PolynomialRings
-
-julia> R = @ring! ℤ[x,y];
-
-julia> collect(expansion(x^3 + y^2, :y))
-2-element Array{Tuple{TupleMonomial{1,Int16,PolynomialRings.MonomialOrderings.MonomialOrder{:degrevlex,PolynomialRings.NamingSchemes.Named{(:y,)}}},ℤ[x]},1}:
- (1, x^3)
- (y^2, 1)
-
-julia> collect(expansion(x^3 + y^2, :x, :y))
-2-element Array{Tuple{TupleMonomial{2,Int16,PolynomialRings.MonomialOrderings.MonomialOrder{:degrevlex,PolynomialRings.NamingSchemes.Named{(:x, :y)}}},BigInt},1}:
- (y^2, 1)
- (x^3, 1)
-```
-# See also
-`@expansion(...)`, `@coefficient` and `coefficient`
-"""
-expansion(p::Polynomial, spec...) = expansion(p, _expansionspec(spec...))
-expansion(p::Term, spec...) = expansion(p, _expansionspec(spec...))
-expansion(p::AbstractMonomial, spec...) = expansion(p, _expansionspec(spec...))
 expansion(p::Number, spec...) = ((one(monomialtype(spec...)), p),)
 
 function _splitmonomial(M1, M2, m)
@@ -138,37 +113,97 @@ function _splitmonomial(M1::Type{One}, M2, m)
     return (One(), convert(M2, m))
 end
 
-_ofpolynomialtype(m::AbstractMonomial, c) = _ofpolynomialtype(Term(m, c))
+zerocoeff(m::Pair,    C::Type{<:AbstractArray}, a) = zerocoeff(m.second, C, a[m.first])
+zerocoeff(m,          C,                        a) = zero(C)
+zerocoeff(m,          C::Type{<:AbstractArray}, a) = [zerocoeff(m, eltype(C), ai) for ai in a]
+function zerocoeff(m, C::Type{<:AbstractSparseArray}, a)
+    res = spzeros(eltype(C), size(a)...)
+    for (i, ai) in nzpairs(a)
+        res[i] = zerocoeff(m, eltype(C), ai)
+    end
+    return res
+end
+
+keytype(::Type{Pair{S,T}}) where {S, T} = S
+valtype(::Type{Pair{S,T}}) where {S, T} = T
+
+splitkeyorders(::Type{M}, item::Pair{M}) where M = item.first, nothing, item.second
+
+function splitkeyorders(M::Type, item::Pair)
+    m1, m2, val = splitkeyorders(M, item.second)
+    return m1, item.first => m2, val
+end
+
+function splitkeyorders(M::Type{<:Pair}, item::Pair)
+    m1, m2, val = splitkeyorders(valtype(M), item.second)
+    return item.first => m1, m2, val
+end
+
+reconstructone!(a, key::Nothing, val) = @inplace a += val
+reconstructone!(a, key::Pair, val) = (a[key.first] = reconstructone!(a[key.first], key.second, val); a)
+
+function reconstruct!(dest::Vector{Tuple{M, C}}, p, deconstructed, order) where {M, C}
+    isempty(deconstructed) && return dest
+
+    key(item) = splitkeyorders(M, item)[1]
+    sort!(deconstructed, lt=(a, b) -> Base.Order.lt(order, key(a), key(b)))
+
+    curitem = popfirst!(deconstructed)
+    curm1, curm2, curval = splitkeyorders(M, curitem)
+    curc = zerocoeff(curm1, C, p)
+    curc = reconstructone!(curc, curm2, curval)
+
+    while !isempty(deconstructed)
+        curitem = popfirst!(deconstructed)
+        nextm1, curm2, curval = splitkeyorders(M, curitem)
+        if curm1 != nextm1
+            push!(dest, (curm1, curc))
+            curm1 = nextm1
+            curc = zerocoeff(curm1, C, p)
+        end
+        curc = reconstructone!(curc, curm2, curval)
+    end
+    push!(dest, (curm1, curc))
+    return dest
+end
+
 _ofpolynomialtype(m, c) = m * c
+_ofpolynomialtype(m::AbstractMonomial, c) = _ofpolynomialtype(Term(m, c))
 _ofpolynomialtype(t::Term{M,C}) where {M,C} = @assertvalid SparsePolynomial(M[monomial(t)], C[coefficient(t)])
-function expansion(p::Polynomial, spec::MonomialOrder)
-    C = remove_variables(typeof(p), namingscheme(spec))
-    M = monomialtype(spec, exptype(typeof(p), namingscheme(spec)))
-    M′ = remove_variables(monomialtype(p), namingscheme(spec))
-    exploded = Tuple{M, C}[
-        (
-            (m, m′) = _splitmonomial(M, M′, m1);
-            c′ = _ofpolynomialtype(m′, c);
-            (m * m2, c′)
-        )
-        for (m1, c1) in expansion(p, monomialorder(p))
-        for (m2,  c) in expansion(c1, spec)
-    ]
-    sort!(exploded, by = i -> i[1])
-    collected = [
-        (grp[1][1], sum(i -> i[2], grp))
-        for grp in groupby(i -> i[1], exploded)
-    ]
-    return collected
+
+deconstructmonomial(innerorder, m::AbstractMonomial) = begin
+    M1 = monomialtype(innerorder, exptype(typeof(m), namingscheme(innerorder)))
+    M2 = remove_variables(typeof(m), namingscheme(innerorder))
+    return _splitmonomial(M1, M2, m)
+end
+deconstruct(innerorder, t::Term) = begin
+    m1, c1 = deconstructmonomial(innerorder, monomial(t))
+    return ((m1 * m2 => _ofpolynomialtype(c1, c2)) for (m2, c2) in deconstruct(innerorder, coefficient(t)))
+end
+deconstruct(innerorder, p::Polynomial) = (item for t in nzterms(p, order=monomialorder(p)) for item in deconstruct(innerorder, t))
+deconstruct(innerorder, a::Number) = ((one(monomialtype(innerorder)), a),)
+deconstruct(innerorder, a) = (
+    m isa One ? (i => c) : (i => m => c)
+    for (i, ai) in pairs(a) for (m, c) in deconstruct(innerorder, ai)
+)
+
+function expansion(p, spec...)
+    order = monomialorder(spec...)
+    M, C = expansiontypes(typeof(p), order)
+    result = Tuple{M, C}[]
+
+    deconstructed = collect(deconstruct(atomicorder(order), p))
+    reconstruct!(result, p, deconstructed, order)
+
+    return result
 end
 
-function expansion(t::Term, spec::MonomialOrder)
-    return expansion(polynomialtype(typeof(t))(t), spec)
+function expansion(t::Term, order::MonomialOrder)
+    return expansion(polynomialtype(typeof(t))(t), order)
 end
 
-function expansion(a::AbstractMonomial, spec::MonomialOrder)
-    C = remove_variables(typeof(a), namingscheme(spec))
-    M = monomialtype(spec, exptype(typeof(a), namingscheme(spec)))
+function expansion(a::AbstractMonomial, spec...)
+    M, C = expansiontypes(typeof(a), spec...)
     c, m = _splitmonomial(C, M, a)
     return ((m, c),)
 end
@@ -178,6 +213,12 @@ end
 # Functions based on expansions: coefficients(), variable substitution, etc.
 #
 # -----------------------------------------------------------------------------
+
+expand(p, spec...) = (
+    (exponents(m, namingscheme(m)), c)
+    for (m, c) in expansion(p, spec...)
+)
+
 """
     expandcoefficients(f, symbol, [symbol...])
 
@@ -203,7 +244,7 @@ julia> collect(expandcoefficients(x^3 + y^2, :x, :y))
 # See also
 `@expandcoefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
 """
-function expandcoefficients(p::P, spec...) where P <: Polynomial
+function expandcoefficients(p, spec...)
     return [c for (_,c) in expansion(p, spec...)]
 end
 
@@ -233,14 +274,12 @@ julia> collect(expansion_terms(x^3 + y^2 + 1, :x, :y))
 # See also
 `@expandcoefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
 """
-function expansion_terms(p::P, spec...) where P <: Polynomial
+function expansion_terms(p, spec...)
     return [
-        P(m * c)
+        _ofpolynomialtype(m, c)
         for (m,c) in expansion(p, spec...)
     ]
 end
-
-@inline expansiontypes(t::Type, variables::Symbol...) = expansiontypes(t, _expansionspec(variables...))
 
 _substitute(p::Polynomial, names::Named, values...) = _substitute(p, names, promote(values...)...)
 
@@ -363,21 +402,22 @@ julia> coefficient(x^3*y + x, (3,1), :x, :y)
 # See also
 `@coefficient`, `expansion` and `@expansion`
 """
-function coefficient(f::Polynomial, t::Tuple, vars...)
-    spec = _expansionspec(vars...)
-    for (w,p) in expansion(f, spec)
-        if exponents(w, namingscheme(spec)) == t
+function coefficient(f, t::Union{<:Tuple, <:AbstractVector}, spec...)
+    order = monomialorder(spec...)
+    m = exp(monomialtype(order), t)
+    for (w,p) in expansion(f, order)
+        if w == m
             return p
         end
     end
-    return zero(_coefftype(typeof(f), spec))
+    return zerocoeff(m, _coefftype(typeof(f), order), f)
 end
 
-function coefficient(f::Polynomial, t::Polynomial, vars...)
-    ((w,p),) = expansion(t, vars...)
+function coefficient(f::Polynomial, t::Polynomial, spec...)
+    ((w,p),) = expansion(t, spec...)
     p == 1 || throw(ArgumentError("Cannot get a coefficient for $t when symbols are $vars"))
 
-    coefficient(f, w.e, vars...)
+    coefficient(f, w.e, spec...)
 end
 
 """
@@ -403,13 +443,14 @@ julia> constant_coefficient(x^3*y + x + y + 1, :x, :y)
 # See also
 `@constant_coefficient`, `@coefficient`, and `@expansion`
 """
-function constant_coefficient(f::Polynomial, vars...)
-    for (w,p) in expansion(f, vars...)
+function constant_coefficient(f, spec...)
+    order = monomialorder(spec...)
+    for (w,p) in expansion(f, order)
         if isone(w)
             return p
         end
     end
-    return zero(_coefftype(typeof(f), vars...))
+    return zerocoeff(one(monomialtype(order)), _coefftype(typeof(f), order), f)
 end
 
 """
@@ -438,29 +479,27 @@ julia> linear_coefficients(x^3*y + x + y + 1, :x, :y)
 # See also
 `@constant_coefficient`, `@coefficient`, and `@expansion`
 """
-linear_coefficients(f::Polynomial, spec...) = linear_coefficients(f, _expansionspec(spec...))
+linear_coefficients(f, spec...) = linear_coefficients(f, monomialorder(spec...))
 
-function linear_coefficients(f::Polynomial, spec::NamedMonomialOrder)
-    res = zeros(_coefftype(typeof(f), spec), length(variablesymbols(spec)))
-    for (w, p) in expansion(f, spec)
-        if deg(w, namingscheme(spec)) == 1
-            res[findfirst(!iszero,w.e)] = p
-        end
+function linear_coefficients(f, spec::NamedMonomialOrder)
+    return map(generators(monomialtype(spec))) do m
+        coefficient(f, exponents(m, namingscheme(spec)), spec)
     end
-
-    return res
 end
 
-function linear_coefficients(f::Polynomial, spec::NumberedMonomialOrder)
+function linear_coefficients(f, spec::NumberedMonomialOrder)
     res = spzeros(_coefftype(typeof(f), spec), 0)
-    for (w, p) in expansion(f, spec)
-        if deg(w, namingscheme(spec)) == 1
-            ix = findfirst(!iszero,w.e)
-            newlength = max(ix, length(res))
+    N = max_variable_index(spec, f)
+    for (n, m) in enumerate(generators(monomialtype(spec)))
+        n > N && break
+
+        c = coefficient(f, exponents(m, namingscheme(spec)), spec)
+        if !iszero(c)
+            newlength = n
             # there is no resize!() because SparseVector is an
             # immutable struct
             res = SparseVector(newlength, res.nzind, res.nzval)
-            res[ix] = p
+            res[n] = c
         end
     end
 
@@ -488,11 +527,13 @@ julia> deg(x^2, :y)
 0
 ```
 """
-function deg(f::Polynomial, args...)
+function deg(f::Polynomial, spec...)
     iszero(f) && return -1
-    spec = _expansionspec(args...)
-    return maximum(deg(w, namingscheme(spec)) for (w,p) in expansion(f, spec))
+    order = monomialorder(spec...)
+    return maximum(deg(w, namingscheme(order)) for (w,p) in expansion(f, order))
 end
+
+deg(f::Number, spec...) = iszero(f) ? -1 : 0
 
 # -----------------------------------------------------------------------------
 #
@@ -500,9 +541,8 @@ end
 #
 # -----------------------------------------------------------------------------
 
-_expansion_expr(vars::NTuple{N,Symbol}) where N = MonomialOrdering{:degrevlex, Named{vars}}()
-_expansion_expr(vars::Tuple{Expr}) = (v = vars[1]; @assert(v.head == :ref && length(v.args) == 1); MonomialOrdering{:degrevlex, Numbered{v.args[1], Inf}}())
-
+order_from_expr(vars::NTuple{N,Symbol}) where N = monomialorder(vars...)
+order_from_expr(vars::Tuple{Expr}) = (v = vars[1]; @assert(v.head == :ref && length(v.args) == 1); monomialorder(v.args[1], Inf))
 
 function _parse_monomial_expression(expr)
     if expr isa Symbol
@@ -593,9 +633,9 @@ julia> @constant_coefficient(x^3*y + x + y + 1, x, y)
 `constant_coefficient`, `@coefficient`, and `@expansion`
 """
 macro constant_coefficient(f, symbols...)
-    expansion_expr = _expansion_expr(symbols)
+    order = order_from_expr(symbols)
     quote
-        constant_coefficient($(esc(f)), $expansion_expr)
+        constant_coefficient($(esc(f)), $order)
     end
 end
 
@@ -627,9 +667,9 @@ julia> @linear_coefficients(x^3*y + x + y + 1, x, y)
 `@constant_coefficient`, `@coefficient`, and `@expansion`
 """
 macro linear_coefficients(f, symbols...)
-    expansion_expr = _expansion_expr(symbols)
+    order = order_from_expr(symbols)
     quote
-        linear_coefficients($(esc(f)), $expansion_expr)
+        linear_coefficients($(esc(f)), $order)
     end
 end
 
@@ -659,9 +699,9 @@ julia> collect(@expand(x^3 + y^2, x, y))
 `expansion(...)`, `@coefficient` and `coefficient`
 """
 macro expansion(f, symbols...)
-    expansion_expr = _expansion_expr(symbols)
+    order = order_from_expr(symbols)
     quote
-        expansion($(esc(f)), $expansion_expr)
+        expansion($(esc(f)), $order)
     end
 end
 
@@ -691,15 +731,16 @@ julia> collect(@expand(x^3 + y^2, x, y))
 `@expansion`, `expand(...)`, `@coefficient` and `coefficient`
 """
 macro expand(f, symbols...)
-    expansion_expr = _expansion_expr(symbols)
+    order = order_from_expr(symbols)
     quote
-        expand($(esc(f)), $expansion_expr)
+        expand($(esc(f)), $order)
     end
 end
 
 macro expansion_terms(f, symbols...)
+    order = order_from_expr(symbols)
     quote
-        expansion_terms($(esc(f)), $symbols...)
+        expansion_terms($(esc(f)), $order)
     end
 end
 
@@ -733,9 +774,9 @@ julia> collect(@expandcoefficients(x^3 + y^2, x, y))
 `expandcoefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
 """
 macro expandcoefficients(f, symbols...)
-    expansion_expr = _expansion_expr(symbols)
+    order = order_from_expr(symbols)
     quote
-        expandcoefficients($(esc(f)), $expansion_expr)
+        expandcoefficients($(esc(f)), $order)
     end
 end
 
@@ -765,9 +806,9 @@ julia> @deg (x^2 + x*y - 1) y
 `deg`, `@expansion`
 """
 macro deg(f, symbols...)
-    expansion_expr = _expansion_expr(symbols)
+    order = order_from_expr(symbols)
     quote
-        deg($(esc(f)), $expansion_expr)
+        deg($(esc(f)), $order)
     end
 end
 

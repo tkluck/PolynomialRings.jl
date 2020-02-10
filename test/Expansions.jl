@@ -56,15 +56,17 @@ using PolynomialRings: monomialtype
         @test @inferred(expansiontypes(A, @namingscheme(x))) ==
                 (monomialtype(@namingscheme(x)), Vector{@ring(Int[y])})
         @test @inferred(expansiontypes(A, @lex(@keyorder() > x))) ==
-                (Pair{Int, monomialtype(@lex(x))}, @ring(Int[y]))
+                (Pair{Int, monomialtype(@degrevlex(x))}, @ring(Int[y]))
+        @test @inferred(expansiontypes(A, KeyOrder())) ==
+                (Int, @ring(Int[x,y]))
 
         B = Vector{Vector{@ring(Int[x,y])}}
         @test @inferred(expansiontypes(B, @namingscheme(x))) ==
                 (monomialtype(@namingscheme(x)), Vector{Vector{@ring(Int[y])}})
         @test @inferred(expansiontypes(B, @lex(@keyorder() > x))) ==
-                (Pair{Int, monomialtype(@lex(x))}, Vector{@ring(Int[y])})
+                (Pair{Int, monomialtype(@degrevlex(x))}, Vector{@ring(Int[y])})
         @test @inferred(expansiontypes(B, @lex(@keyorder() > x > @keyorder()))) ==
-                (Pair{Int, Pair{Int, monomialtype(@lex(x))}}, @ring(Int[y]))
+                (Pair{Int, Pair{Int, monomialtype(@degrevlex(x))}}, @ring(Int[y]))
     end
 
     R,(x,y,z) = polynomial_ring(:x, :y, :z, basering=Int64)
@@ -207,10 +209,10 @@ using PolynomialRings: monomialtype
 
         @ring! Int[x,y]
         O7 = @lex(@keyorder() > @degrevlex(x > y) > @keyorder())
-        O8 = @lex(@keyorder() > y > @keyorder() > x)
+        O8 = @lex(@keyorder() > x > @keyorder() > y)
 
         @test expansion([[2x^2 + x*y, x], [2x^2 + x, 2x^2*y]], O7) == [
-            (2 => 1 => x, 2),
+            (2 => 1 => x, 1),
             (2 => 1 => x^2, 2),
             (2 => 2 => x^2*y, 2),
             (1 => 2 => x, 1),
@@ -219,12 +221,12 @@ using PolynomialRings: monomialtype
         ]
 
         @test expansion([[2x^2 + x*y, x], [2x^2 + x, 2x^2*y]], O8) == [
-            (2 => 1 => x, 2),
-            (2 => 1 => x^2, 2),
+            (2 => 1 => x, 1),
             (2 => 2 => x^2*y, 2),
+            (2 => 1 => x^2, 2),
             (1 => 2 => x, 1),
-            (1 => 1 => x^2, 2),
             (1 => 1 => x*y, 1),
+            (1 => 1 => x^2, 2),
         ]
 
         O9 = @lex(@keyorder() > @degrevlex(x > y))
