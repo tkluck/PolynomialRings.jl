@@ -121,4 +121,15 @@ using PolynomialRings.NamingSchemes: NamingSchemeError
         @test promote_type(@nestednamingscheme(c[]), @nestednamingscheme(d[],c[])) == @nestednamingscheme(d[],c[])
     end
     =#
+
+    @testset "Display" begin
+        @test repr(@namingscheme(x)) == "@namingscheme(x)"
+        @test repr(@namingscheme(x[])) == "@namingscheme(x[])"
+        @test repr(@namingscheme(x[1:20])) == "@namingscheme(x[1:20])"
+        @test repr(@namingscheme((x,y))) == "@namingscheme((x,y))"
+
+        @test repr(@nestednamingscheme(x,y)) == "@nestednamingscheme(x,y)"
+        @test repr(@nestednamingscheme(x,y[])) == "@nestednamingscheme(x,y[])"
+        @test repr(@nestednamingscheme(x,y[1:20])) == "@nestednamingscheme(x,y[1:20])"
+    end
 end

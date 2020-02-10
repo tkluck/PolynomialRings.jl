@@ -3,7 +3,7 @@ module Display
 import Base: show
 
 import ..AbstractMonomials: AbstractMonomial, exponentsnz
-import ..NamingSchemes: Named, Numbered
+import ..NamingSchemes: Named, Numbered, showvars
 import ..Polynomials: Polynomial, nzrevterms, basering
 import ..Terms: Term, coefficient, monomial
 import PolynomialRings: namingscheme
@@ -79,18 +79,6 @@ function defaultshow(io, t)
     end
 end
 
-function show(io::IO, ::Named{Names}) where Names
-    join(io, Names, ",")
-end
-
-function show(io::IO, ::Numbered{Name, Inf}) where Name
-    print(io, "$(Name)[]")
-end
-
-function show(io::IO, ::Numbered{Name, Max}) where {Name, Max}
-    print(io, "$(Name)[1:$Max]")
-end
-
 # keep in sync with Constructors.jl
 _repr(::Type{BigInt}) = :ℤ
 _repr(::Type{Rational{BigInt}}) = :ℚ
@@ -100,7 +88,7 @@ _repr(x) = x
 
 function show(io::IO, t::Type{P}) where P<:Polynomial
     if isconcretetype(t)
-        print(io, "$(_repr(basering(P)))[$(namingscheme(P))]")
+        print(io, "$(_repr(basering(P)))[$(showvars(P))]")
     else
         defaultshow(io, t)
     end
@@ -108,7 +96,7 @@ end
 
 function show(io::IO, t::Type{Term{M,C}}) where {M,C}
     if isconcretetype(t)
-        print(io, "(Term over $C in $(namingscheme(M)))")
+        print(io, "(Term over $C in $(showvars(M)))")
     else
         defaultshow(io, t)
     end

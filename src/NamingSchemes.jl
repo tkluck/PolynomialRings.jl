@@ -10,6 +10,7 @@ module NamingSchemes
 
 import Base: @pure
 import Base: issubset, isempty, isvalid, *, diff, indexin, promote_rule, promote_type
+import Base: show
 
 import ..Util: isdisjoint
 import PolynomialRings: boundnames, fullboundnames, iscanonical, canonicaltype
@@ -274,6 +275,37 @@ end
 macro nestednamingscheme(expr...)
     schemes = map(parse_namingscheme, expr)
     return composeschemes(schemes...)
+end
+
+# -----------------------------------------------------------------------------
+#
+# Display
+#
+# -----------------------------------------------------------------------------
+
+function show(io::IO, T::Type{<:NamingScheme})
+    print(io, "typeof(")
+    show(io, T.instance)
+    print(io, ")")
+end
+
+showvars(x) = showvars(namingscheme(x))
+showvars(scheme::Named{Names}) where Names              = join(Names, ",")
+showvars(scheme::Numbered{Name, Inf}) where Name        = "$Name[]"
+showvars(scheme::Numbered{Name, Max}) where {Name, Max} = "$Name[1:$Max]"
+
+showvars_parentheses(scheme) = showvars(scheme)
+showvars_parentheses(scheme::Named) = begin
+    vars = showvars(scheme)
+    return num_variables(scheme) > 1 ? "($vars)" : vars
+end
+
+show(io::IO, scheme::NamingScheme) = print(io, "@namingscheme(", showvars_parentheses(scheme), ")")
+
+function show(io::IO, scheme::NestedNamingScheme)
+    print(io, "@nestednamingscheme(")
+    join(io, (showvars_parentheses(s) for s in scheme), ",")
+    print(io, ")")
 end
 
 end # module
