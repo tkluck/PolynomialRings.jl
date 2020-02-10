@@ -201,7 +201,11 @@ end
 
 function LexCombinationOrder(orders::MonomialOrder...) where Orders
     orders = flattentuple(map(atoms, orders)...)
-    names = promote_type(filter(!isnothing, map(namingscheme, orders))...)
+    if isempty(orders)
+        names = EmptyNamingScheme()
+    else
+        names = promote_type(filter(!isempty, map(namingscheme, orders))...)
+    end
     LexCombinationOrder(orders, names)
 end
 

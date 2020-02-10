@@ -3,7 +3,9 @@ using Test
 import Base.Order: lt
 
 import PolynomialRings.MonomialOrderings: MonomialOrder, degreecompatible
-import PolynomialRings.StandardMonomialOrderings: @degrevlex, @deglex, @lex, KeyOrder
+import PolynomialRings.NamingSchemes: namingscheme, @namingscheme, EmptyNamingScheme
+import PolynomialRings.StandardMonomialOrderings: @degrevlex, @deglex, @lex
+import PolynomialRings.StandardMonomialOrderings: KeyOrder, LexCombinationOrder
 import PolynomialRings: @ring!
 
 @testset "MonomialOrderings" begin
@@ -15,6 +17,11 @@ import PolynomialRings: @ring!
         @test @lex(x > y > z) isa MonomialOrder
         @test @lex(x > @degrevlex(y > z) > w) isa MonomialOrder
         @test @lex(@keyorder() > x > y) isa MonomialOrder
+
+        @test namingscheme(@lex(x)) == @namingscheme(x)
+        @test namingscheme(@lex(@keyorder() > x)) == @namingscheme(x)
+        @test namingscheme(LexCombinationOrder()) == EmptyNamingScheme()
+        @test namingscheme(KeyOrder()) == EmptyNamingScheme()
     end
 
     @testset "Comparisons" begin
