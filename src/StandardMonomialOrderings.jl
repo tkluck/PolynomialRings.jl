@@ -8,7 +8,7 @@ with the `AbstractMonomials` module.
 """
 module StandardMonomialOrderings
 
-import Base: promote_rule
+import Base: promote_rule, diff
 import Base: show
 import Base.Order: Ordering
 
@@ -16,11 +16,12 @@ import ..AbstractMonomials: AbstractMonomial, exponentsnz, revexponentsnz
 import ..MonomialOrderings: AtomicMonomialOrder, MonomialOrder, degreecompatible
 import ..MonomialOrderings: monomialorderkey, monomialorderkeytype, monomialordereltype, monomialorderkeypair
 import ..NamingSchemes: Named, Numbered, NamingScheme, InfiniteScheme, EmptyNamingScheme
+import ..NamingSchemes: NestedNamingScheme, EmptyNestedNamingScheme
 import ..NamingSchemes: namingscheme, variablesymbols, num_variables
 import ..Polynomials: Polynomial
 import ..Terms: Term
 import ..Util: showsingleton
-import PolynomialRings: deg, leading_monomial, to_dense_monomials
+import PolynomialRings: deg, leading_monomial, to_dense_monomials, monomialorder
 
 
 """
@@ -197,6 +198,8 @@ struct LexCombinationOrder{Orders <: UniformTuple{AtomicMonomialOrder}, Names} <
 end
 
 atoms(order::AtomicMonomialOrder) = (order,)
+atoms(order::KeyOrder) = (order,)
+atoms(order::AtomicMonomialOrder{EmptyNamingScheme}) = ()
 atoms(order::LexCombinationOrder) = order.orders
 
 flattentuple() = ()
@@ -252,6 +255,34 @@ function Base.Order.lt(order::LexCombinationOrder{<:Tuple}, a, b)
         return Base.Order.lt(os, a, b)
     end
 end
+
+# -----------------------------------------------------------------------------
+#
+# Operations
+#
+# -----------------------------------------------------------------------------
+const EmptyLexCombinationOrder = LexCombinationOrder{Tuple{}}
+const KeyLexCombinationOrder = LexCombinationOrder{<:Tuple{KeyOrder, Vararg}}
+const SingleLexCombinationOrder = LexCombinationOrder{<:Tuple{Any}}
+const OtherLexCombinationOrder = LexCombinationOrder{<:Tuple}
+
+maybeunwrap(o::SingleLexCombinationOrder) = first(o)
+maybeunwrap(o::OtherLexCombinationOrder) = o
+
+function diff(order::MonomialOrdering, scheme::NamingScheme)
+    s = diff(namingscheme(order), scheme)
+    return monomialorder(s, rulesymbol(order))
+end
+
+diff(order::KeyOrder, scheme::NamingScheme) = order
+
+function diff(order::LexCombinationOrder, scheme::NamingScheme)
+    orders = map(o -> diff(o, scheme), order.orders)
+    return maybeunwrap(LexCombinationOrder(orders...))
+end
+
+diff(order::MonomialOrder, scheme::EmptyNestedNamingScheme) = order
+diff(order::MonomialOrder, scheme::NestedNamingScheme) = diff(diff(order, first(scheme)), Base.tail(scheme))
 
 # -----------------------------------------------------------------------------
 #

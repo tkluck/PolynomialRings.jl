@@ -106,6 +106,18 @@ import PolynomialRings: @ring!
         @test lt(O9, 1 => 1 => y, 2 => 2 => x)
     end
 
+    @testset "Differences" begin
+        @test diff(@degrevlex(x > y > z), @namingscheme(x)) == @degrevlex(y > z)
+        @test diff(@degrevlex(x > y > z), @namingscheme(y)) == @degrevlex(x > z)
+
+        @test diff(KeyOrder(), @namingscheme(x)) == KeyOrder()
+
+        @test diff(@lex(x > y > z), @namingscheme(y)) == @lex(x > z)
+        @test diff(@lex(x > y > z), @namingscheme((y,z))) == @degrevlex(x)
+        @test diff(@lex(@keyorder() > x > y), @namingscheme(x)) == @lex(@keyorder() > y)
+        @test diff(@lex(@keyorder() > x > y), @namingscheme((x,y))) == KeyOrder()
+    end
+
     @testset "Display" begin
         @test repr(@degrevlex(x > y)) == "@degrevlex(x > y)"
         @test repr(@deglex(x > y)) == "@deglex(x > y)"

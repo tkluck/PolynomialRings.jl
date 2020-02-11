@@ -32,14 +32,8 @@ convert(::Type{P}, p::P) where P <: DensePolynomialOver{C,O} where {C,O<:Numbere
 # fix method ambiguity
 promote_rule(::Type{P}, ::Type{C}) where P<:PolynomialOver{C} where C <: Polynomial = P
 
-function remove_variables(O::MonomialOrder, vars)
-    O′ = remove_variables(namingscheme(O), vars)
-    O′ == nothing && return nothing
-    return MonomialOrdering{rulesymbol(O), typeof(O′)}()
-end
-
 function remove_variables(::Type{M}, vars) where M <: AbstractMonomial
-    O = remove_variables(monomialorder(M), vars)
+    O = diff(monomialorder(M), vars)
     O == nothing && return One
     return monomialtype(O, exptype(M))
  end

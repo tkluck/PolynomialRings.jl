@@ -15,6 +15,7 @@ import ..NamingSchemes: Named, Numbered, NamingScheme, remove_variables
 import ..NamingSchemes: NamedVariable
 import ..Polynomials: Polynomial, monomialtype, monomialorder, SparsePolynomial, nzterms
 import ..StandardMonomialOrderings: MonomialOrdering, LexCombinationOrder, KeyOrder
+import ..StandardMonomialOrderings: maybeunwrap
 import ..Terms: Term, monomial, coefficient
 import ..Util: @assertvalid, nzpairs
 import PolynomialRings: deg, generators, max_variable_index
@@ -38,9 +39,6 @@ withkeys(o::KeyLexCombinationOrder, P, M) = Pair{
     monomialorderkeytype(P),
     withkeys(Base.tail(o), monomialordereltype(P), M),
 }
-
-maybeunwrap(o::SingleLexCombinationOrder) = first(o)
-maybeunwrap(o::OtherLexCombinationOrder) = o
 
 atomicorders() = ()
 atomicorders(o::KeyOrder, os...) = atomicorders(os...)
