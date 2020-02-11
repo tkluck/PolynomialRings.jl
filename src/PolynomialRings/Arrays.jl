@@ -111,7 +111,7 @@ common_denominator(a::AbstractSparseArray{P}) where P <: Polynomial = mapreduce(
 function integral_fraction(a::AbstractArray{P}) where P <: Polynomial
     D = common_denominator(a)
 
-    return base_restrict.(D*a), D
+    return base_restrict.(D .* a), D
 end
 
 function det(m::M) where M <: AbstractMatrix{P} where P <: Polynomial

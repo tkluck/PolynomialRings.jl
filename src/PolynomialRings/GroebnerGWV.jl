@@ -96,7 +96,7 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}, ::Val{with_tr
 
     # experimentally, it seems much better to sort in
     # decreasing monomial order
-    polynomials = sort(polynomials, order=order, rev=true)
+    sort!(polynomials, order=order, rev=true)
 
     P = modulebasering(M)
     R = base_restrict(P)
