@@ -166,6 +166,7 @@ function reconstruct!(dest::Vector{Tuple{M, C}}, p, deconstructed, order) where 
 end
 
 _ofpolynomialtype(m, c) = m * c
+_ofpolynomialtype(m::AbstractMonomial, c::AbstractArray) = m .* c
 _ofpolynomialtype(m::AbstractMonomial, c) = _ofpolynomialtype(Term(m, c))
 _ofpolynomialtype(t::Term{M,C}) where {M,C} = @assertvalid SparsePolynomial(M[monomial(t)], C[coefficient(t)])
 
