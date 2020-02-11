@@ -13,6 +13,8 @@ include("Monomials/IndexedMonomials.jl")
 import .TupleMonomials: TupleMonomial
 import .VectorMonomials: VectorMonomial
 
+include("Monomials/MonomialIterators.jl")
+
 # -----------------------------------------------------------------------------
 #
 # Conversion from Vector to tuple (sparse to dense)

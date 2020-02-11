@@ -10,6 +10,7 @@ import InPlace: @inplace, inclusiveinplace!
 
 import ..AbstractMonomials: AbstractMonomial
 import ..Constants: One
+import ..Expansions: atomicorder
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
 import ..MonomialOrderings: monomialorderkey, monomialorderkeypair
 import ..Operators: RedType, Lead, Full, Tail
@@ -219,19 +220,19 @@ mul!(A, B, C, α::Polynomial, β::Polynomial) = mul!(A, B, C, convert(basering(�
 nzterms(x::AbstractArray{<:Polynomial}; order) = (
     Signature(ix, t)
     for (ix, x_i) in Iterators.reverse(nzpairs(x))
-    for t in nzterms(x_i, order=order)
+    for t in nzterms(x_i, order=atomicorder(order))
 )
 
 nzrevterms(x::AbstractArray{<:Polynomial}; order) = (
     Signature(ix, t)
     for (ix, x_i) in nzpairs(x)
-    for t in nzrevterms(x_i, order=order)
+    for t in nzrevterms(x_i, order=atomicorder(order))
 )
 
 function tail(x::AbstractArray{<:Polynomial}; order)
     res = deepcopy(x)
     ix = leading_row(x)
-    res[ix] = tail(res[ix]; order=order)
+    res[ix] = tail(res[ix]; order=atomicorder(order))
     return res
 end
 

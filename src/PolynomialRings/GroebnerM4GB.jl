@@ -9,18 +9,19 @@ import InPlace: @inplace
 
 import ..Backends.Gröbner: M4GB, GWV
 import ..Constants: One, Zero
-import ..IndexedMonomials: ByIndex, IndexedMonomial
+#import ..IndexedMonomials: ByIndex, IndexedMonomial
 import ..Modules: AbstractModuleElement, modulebasering, Signature, leading_row
-import ..MonomialIterators: monomialiter
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
-import ..Monomials: AbstractMonomial, lcm_degree, num_variables
-import ..NamingSchemes: namingscheme
+import ..Monomials: AbstractMonomial
+import ..Monomials.MonomialIterators: monomialiter
+import ..NamingSchemes: namingscheme, num_variables
 import ..Operators: integral_fraction
 import ..Polynomials: Polynomial, nzterms, nztailterms, nzrevterms, leading_monomial
 import ..Terms: monomial, coefficient, Term
 import ..Util: @showprogress, interval, last_, chain, nzpairs
 import PolynomialRings: gröbner_basis, monomialtype, base_extend
 import PolynomialRings: maybe_div, divides, termtype, lcm_multipliers, mutuallyprime
+import PolynomialRings: lcm_degree
 
 const lr = leading_row
 
@@ -227,11 +228,11 @@ function ensure_reducers_materialized!(M, L, factor, f, order)
         if !isempty(Mᵣ)
             cur, _ = last(Mᵣ)
             materialize_until ⪯ cur && continue
-            if materialize_until isa IndexedMonomial
-                # use Fibonacci growth for online resizing of the
-                # materialized leading monomials.
-                materialize_until = typeof(materialize_until)(ByIndex(), materialize_until.ix + cur.ix)
-            end
+            #if materialize_until isa IndexedMonomial
+            #    # use Fibonacci growth for online resizing of the
+            #    # materialized leading monomials.
+            #    materialize_until = typeof(materialize_until)(ByIndex(), materialize_until.ix + cur.ix)
+            #end
         end
 
         for m in _linearly_dependent_monomials(materialize_until)

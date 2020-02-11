@@ -9,9 +9,10 @@ import Base: lcm
 import ProgressMeter: @showprogress
 
 import ..IndexedMonomials: IndexedMonomial, ByIndex
-import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder, rulesymbol
-import ..Monomials: TupleMonomial, AbstractMonomial, num_variables, nzindices, maybe_div
-import ..NamingSchemes: NamingScheme
+import ...MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
+import ...StandardMonomialOrderings: MonomialOrdering, rulesymbol
+import ...Monomials: TupleMonomial, AbstractMonomial
+import ...NamingSchemes: NamingScheme, num_variables
 import PolynomialRings: monomialtype, exptype, basering, monomialorder, tail, divides
 
 const _hilbertfunction = Vector{Vector{Int}}()
@@ -72,8 +73,8 @@ Base.length(it::MonomialIter{M, P, Length}) where M <: AbstractMonomial where {L
 
 monomialiter(P, len=Inf) = MonomialIter{monomialtype(P), P, len}()
 
-const IterBy{Rule} = MonomialIter{<:AbstractMonomial{<:MonomialOrder{Rule}}}
-const IndexedIterBy{Rule} = MonomialIter{<:IndexedMonomial{<:MonomialOrder{Rule}}}
+const IterBy{Rule} = MonomialIter{<:AbstractMonomial{<:MonomialOrdering{Rule}}}
+const IndexedIterBy{Rule} = MonomialIter{<:IndexedMonomial{<:MonomialOrdering{Rule}}}
 
 function Base.iterate(it::IndexedIterBy, state...)
     M = monomialtype(it)

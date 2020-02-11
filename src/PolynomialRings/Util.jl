@@ -76,7 +76,7 @@ end
 #
 # -----------------------------------------------------------------------------
 delete!(pq::PriorityQueue{K}, k::K) where K = dequeue!(pq, k)
-similar(pq::PriorityQueue{K, V, O}) where {K, V, O} = PriorityQueue{K, V}(O())
+similar(pq::PriorityQueue{K, V, O}) where {K, V, O} = PriorityQueue{K, V}(O.instance)
 
 # -----------------------------------------------------------------------------
 #
