@@ -3,13 +3,13 @@ module VectorMonomials
 import Base: exp, rand
 
 import Random: AbstractRNG, SamplerType, randsubseq
-import SparseArrays: SparseVector, sparsevec, sparse
+import SparseArrays: SparseVector, sparsevec, sparse, spzeros
 import SparseArrays: nonzeroinds
 
 import ...AbstractMonomials: AbstractMonomial, MonomialIn, exponents
 import ...MonomialOrderings: MonomialOrder
 import ...NamingSchemes: NamingScheme, Numbered, InfiniteScheme
-import PolynomialRings: exptype, max_variable_index, deg
+import PolynomialRings: exptype, max_variable_index, deg, generators
 
 # -----------------------------------------------------------------------------
 #
@@ -47,14 +47,11 @@ exptype(::Type{VectorMonomial{V,I,Order}}) where {V,I,Order} = I
 # an empty vector by default.
 (::Type{V})() where V <: SparseVector{A,B} where {A,B} = sparsevec(B[],A[])
 
-generators(::Type{VectorMonomial{V,I,Order}}) where {V,I,Order} = Channel(ctype=VectorMonomial{V,I,Order}) do ch
+generators(::Type{VectorMonomial{V,I,Order}}) where {V,I,Order} = (
+    # bla
+    (x = spzeros(I, j); x[j] = one(I); VectorMonomial{V,I,Order}(x, one(I)))
     for j in 1:typemax(Int)
-        x = spzeros(I, j)
-        x[j] = one(I)
-        push!(ch, VectorMonomial{V,I,Order}(x))
-    end
-    throw(AssertionError("typemax exhausted"))
-end
+)
 
 function max_variable_index(scheme::InfiniteScheme{Name},
                             m::VectorMonomial{V, I, <: MonomialOrder{Scheme}}) where
