@@ -221,11 +221,15 @@ canonicalscheme(a::NestedNamingScheme) = canonicalscheme(a...)
 #
 # -----------------------------------------------------------------------------
 max_variable_index(scheme::InfiniteScheme, x::Number) = 0
+max_variable_index(scheme::InfiniteScheme, x::Union{Tuple, <:AbstractArray}) = begin
+    isempty(x) ? 0 : maximum(max_variable_index(scheme, xi) for xi in x)
+end
+
 to_dense_monomials(scheme::InfiniteScheme, x::Number, max_variable_index) = deepcopy(x)
 
 to_dense_monomials(scheme::InfiniteScheme, x) = to_dense_monomials(scheme, x, max_variable_index(scheme, x))
 to_dense_monomials(scheme::InfiniteScheme, x, max_variable_index) = error("to_dense_monomials not implemented for $(typeof(x))")
-to_dense_monomials(scheme::InfiniteScheme, x::Union{Tuple, AbstractArray}, max_variable_index) = begin
+to_dense_monomials(scheme::InfiniteScheme, x::Union{Tuple, <:AbstractArray}, max_variable_index) = begin
     map(y -> to_dense_monomials(scheme, y, max_variable_index), x)
 end
 
