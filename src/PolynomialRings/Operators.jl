@@ -224,7 +224,7 @@ common_denominator(a) = denominator(a)
 common_denominator(a::Complex) = common_denominator(real(a), imag(a))
 common_denominator(a, b) = lcm(denominator(a), denominator(b))
 common_denominator(a, b...) = lcm(denominator(a), denominator.(b)...)
-common_denominator(f::Polynomial) = iszero(f) ? 1 : mapreduce(common_denominator, lcm, coefficients(f))
+common_denominator(f::Polynomial) = iszero(f) ? common_denominator(one(basering(f))) : mapreduce(common_denominator, lcm, coefficients(f))
 
 function integral_fraction(f::Polynomial)
     N = common_denominator(f)
