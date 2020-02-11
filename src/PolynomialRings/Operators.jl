@@ -221,6 +221,7 @@ div(f::Polynomial, g::Integer) = map_coefficients(c -> c÷g, f)
 content(f::Polynomial) = gcd(f, 0)
 
 common_denominator(a) = denominator(a)
+common_denominator(a::Complex) = common_denominator(real(a), imag(a))
 common_denominator(a, b) = lcm(denominator(a), denominator(b))
 common_denominator(a, b...) = lcm(denominator(a), denominator.(b)...)
 common_denominator(f::Polynomial) = iszero(f) ? 1 : mapreduce(common_denominator, lcm, coefficients(f))

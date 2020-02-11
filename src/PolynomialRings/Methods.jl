@@ -34,6 +34,7 @@ fraction_field(::Type{Complex{N}}) where N <: Number = Complex{fraction_field(N)
 
 integers(I::Type{<:Integer}) = I
 integers(R::Type{<:Rational{I}}) where I = I
+integers(R::Type{<:Complex{T}}) where T = Complex{integers(T)}
 
 # for Galois fields. This needs a more specific definition than <: Number
 # but for now I'll leave it like this.
