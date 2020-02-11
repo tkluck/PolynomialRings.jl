@@ -40,9 +40,9 @@ function nzindices(m::IndexedMonomial)
     nzindices(convert(N, m))
 end
 
-function exponent(m::IndexedMonomial, ix)
+function exponent(m::IndexedMonomial, var)
     N = densetype(typeof(m))
-    exponent(convert(N, m), ix)
+    exponent(convert(N, m), var)
 end
 
 Base.lt(::Order, a::M, b::M) where M <: IndexedMonomial{Order} where Order <: MonomialOrdering{:degrevlex} = a.ix < b.ix

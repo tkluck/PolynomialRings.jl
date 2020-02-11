@@ -33,8 +33,6 @@ exptype(::Type{TupleMonomial{N,I,Order}}) where I <: Integer where {N,Order} = I
 exp(::Type{M}, exps::NTuple, deg=sum(exps)) where M <: TupleMonomial = M(exps, deg)
 exp(::Type{M}, exps, deg=sum(exps)) where M <: TupleMonomial = M(ntuple(i -> get(exps, i, 0), num_variables(M)), deg)
 
-@inline exponent(m::TupleMonomial, i::Integer) = m.e[i]
-
 function max_variable_index(scheme::InfiniteScheme{Name},
                             m::TupleMonomial{N, I, <: MonomialOrder{Scheme}}) where
                             {N, I, Name, Scheme <: InfiniteScheme{Name}}
