@@ -140,5 +140,12 @@ using PolynomialRings: to_dense_monomials
         @test repr(@nestednamingscheme(x,y)) == "@nestednamingscheme(x,y)"
         @test repr(@nestednamingscheme(x,y[])) == "@nestednamingscheme(x,y[])"
         @test repr(@nestednamingscheme(x,y[1:20])) == "@nestednamingscheme(x,y[1:20])"
+
+        @test repr(typeof(@namingscheme(x))) == "typeof(@namingscheme(x))"
+        @test repr(typeof(@nestednamingscheme(x))) == "typeof(@nestednamingscheme(x))"
+
+        # these are technically <: NestedNamingScheme; don't modify the display value
+        @test repr(tuple()) == "()"
+        @test repr(Tuple{}) == "Tuple{}"
     end
 end

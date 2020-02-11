@@ -308,6 +308,13 @@ end
 # -----------------------------------------------------------------------------
 
 show(io::IO, T::Type{<:NamingScheme}) = showsingleton(io, T)
+show(io::IO, T::Type{<:NestedNamingScheme}) = begin
+    if T === Tuple{}
+        print(io, "Tuple{}")
+    else
+        showsingleton(io, T)
+    end
+end
 
 showvars(x) = showvars(namingscheme(x))
 showvars(scheme::Named{Names}) where Names              = join(Names, ",")
@@ -323,9 +330,13 @@ end
 show(io::IO, scheme::NamingScheme) = print(io, "@namingscheme(", showvars_parentheses(scheme), ")")
 
 function show(io::IO, scheme::NestedNamingScheme)
-    print(io, "@nestednamingscheme(")
-    join(io, (showvars_parentheses(s) for s in scheme), ",")
-    print(io, ")")
+    if scheme === () # the empty tuple is also a NestedNamingScheme. Don't modify its appearance
+        print(io, "()")
+    else
+        print(io, "@nestednamingscheme(")
+        join(io, (showvars_parentheses(s) for s in scheme), ",")
+        print(io, ")")
+    end
 end
 
 end # module
