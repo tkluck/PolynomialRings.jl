@@ -74,8 +74,10 @@ function defaultshow(io, t)
         invoke(show, Tuple{IO, DataType}, io, t)
     elseif t isa UnionAll
         invoke(show, Tuple{IO, UnionAll}, io, t)
+    elseif t isa Union
+        invoke(show, Tuple{IO, Union}, io, t)
     else
-        print(io, "<undisplayable>")
+        print(io, "<undisplayable $(typeof(t))>")
     end
 end
 
