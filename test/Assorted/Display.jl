@@ -14,10 +14,10 @@ using PolynomialRings
     V = @ring! ℤ[r[]]
 
     @testset "Types" begin
-        @test repr(R) == "ℚ[x,y]"
-        @test repr(S) == "ℚ[q[]][x,y]"
-        @test repr(T) == "ℤ[a,b,c]"
-        @test repr(U) == "Int64[ε]"
+        @test repr(R) == "@ring(ℚ[x,y])"
+        @test repr(S) == "@ring(ℚ[q[]][x,y])"
+        @test repr(T) == "@ring(ℤ[a,b,c])"
+        @test repr(U) == "@ring(Int64[ε])"
 
         @test repr(termtype(R)) == "(Term over Rational{BigInt} in x,y)"
 

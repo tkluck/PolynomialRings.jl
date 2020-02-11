@@ -80,15 +80,22 @@ function defaultshow(io, t)
 end
 
 # keep in sync with Constructors.jl
+_repr(x) = x
 _repr(::Type{BigInt}) = :ℤ
 _repr(::Type{Rational{BigInt}}) = :ℚ
 _repr(::Type{BigFloat}) = :ℝ
 _repr(::Type{Complex{BigFloat}}) = :ℂ
-_repr(x) = x
+_repr(P::Type{<:Polynomial}) = begin
+    if isconcretetype(P)
+        "$(_repr(basering(P)))[$(showvars(P))]"
+    else
+        defaultshow(io, P)
+    end
+end
 
 function show(io::IO, t::Type{P}) where P<:Polynomial
     if isconcretetype(t)
-        print(io, "$(_repr(basering(P)))[$(showvars(P))]")
+        print(io, "@ring(", _repr(t), ")")
     else
         defaultshow(io, t)
     end
