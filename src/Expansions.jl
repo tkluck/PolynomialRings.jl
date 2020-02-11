@@ -143,7 +143,17 @@ reconstructone!(a, key::Pair, val) = (a[key.first] = reconstructone!(a[key.first
 function reconstruct!(dest::Vector{Tuple{M, C}}, p, deconstructed, order) where {M, C}
     isempty(deconstructed) && return dest
 
-    key(item) = splitkeyorders(M, item)[1]
+    key(item) = begin
+        m1, m2, val = splitkeyorders(M, item)
+        # FIXME: this smells. Can I re-organize things
+        # so this is not needed?
+        if order isa KeyOrder
+            m1 => nothing
+        else
+            m1
+        end
+    end
+
     sort!(deconstructed, lt=(a, b) -> Base.Order.lt(order, key(a), key(b)))
 
     curitem = popfirst!(deconstructed)
