@@ -81,7 +81,7 @@ An implementation of the GWV algorithm as popularized by
 > Shuhong Gao, Frank Volny, and Mingsheng Wang. "A new algorithm for computing
 > Groebner bases." IACR Cryptology ePrint Archive 2010 (2010): 641.
 """
-function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transformation=false) where M <: AbstractModuleElement
+function gwv(order::MonomialOrder, polynomials::AbstractVector{M}, ::Val{with_transformation}) where M <: AbstractModuleElement where with_transformation
     @withmonomialorder order
 
     if with_transformation
@@ -105,6 +105,7 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
     LM = monomialtype(S)
     Ix = keytype(S)
     MM = Tuple{Signature, S}
+    SigOrder = LexCombinationOrder(KeyOrder(), order)
 
     signature(m) = m[1]
     # --------------------------------------------------------------------------
@@ -113,7 +114,7 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}; with_transfor
     G = DefaultDict{Union{Ix, Nothing}, Vector{Tuple{Signature, Union{LM, Nothing}, S}} }(Vector{Tuple{Signature, Union{LM, Nothing}, S}})
     G_by_sig = DefaultDict{Any, Vector{Tuple{Signature, Union{LM, Nothing}, S}} }(Vector{Tuple{Signature, Union{LM, Nothing}, S}})
     H = DefaultDict{Int, Set{monomialtype(R)}}(Set{monomialtype(R)})
-    JP = SortedDict{Signature, MM}(LexCombinationOrder(KeyOrder(), order))
+    JP = SortedDict{Signature, MM}(SigOrder)
 
     n = length(polynomials)
     @showprogress "Gröbner: preparing inputs" for (i,p) in enumerate(polynomials)
@@ -249,7 +250,7 @@ function gröbner_basis(::GWV, o::MonomialOrder, G::AbstractVector{<:AbstractMod
     # array a few times (restrict to integers, possibly add the transformation)
     # so lets short-circuit that case.
     isempty(G) && return copy(G)
-    return gwv(o, G, with_transformation=false, kwds...)
+    return gwv(o, G, Val(false); kwds...)
 end
 
 function gröbner_transformation(::GWV, o::MonomialOrder, G::AbstractVector{<:AbstractModuleElement}; kwds...)
@@ -260,7 +261,7 @@ function gröbner_transformation(::GWV, o::MonomialOrder, G::AbstractVector{<:Ab
     if isempty(G)
         return copy(G), sparse(Matrix{P}(undef, 0, 0))
     end
-    return gwv(o, G, with_transformation=true, kwds...)
+    return gwv(o, G, Val(true); kwds...)
 end
 
 end
