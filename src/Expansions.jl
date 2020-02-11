@@ -190,8 +190,8 @@ deconstruct(innerorder, t::Term) = begin
     return ((m1 * m2 => _ofpolynomialtype(c1, c2)) for (m2, c2) in deconstruct(innerorder, coefficient(t)))
 end
 deconstruct(innerorder, p::Polynomial) = (item for t in nzterms(p, order=monomialorder(p)) for item in deconstruct(innerorder, t))
-deconstruct(innerorder, a::Number) = ((one(monomialtype(innerorder)), a),)
-deconstruct(innerorder, a) = (
+deconstruct(innerorder, a) = ((one(monomialtype(innerorder)), a),)
+deconstruct(innerorder, a::Union{<:Tuple, <:AbstractArray, <:AbstractDict}) = (
     m isa One ? (i => c) : (i => m => c)
     for (i, ai) in pairs(a) for (m, c) in deconstruct(innerorder, ai)
 )

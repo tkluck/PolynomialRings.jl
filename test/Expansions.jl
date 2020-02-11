@@ -151,6 +151,8 @@ using PolynomialRings: monomialtype
         @test eltype(@linear_coefficients(y + y^2, x, y)) == @ring(Int64[z])
         @test eltype(@linear_coefficients(y + y^2, x)) == @ring(Int64[y,z])
         @test eltype(@linear_coefficients(y + y^2, y)) == @ring(Int64[x,z])
+
+        # TODO: test non-Union{Polynomial, Number} coeficients, e.g. QuotientRing
     end
 
     @testset "KeyOrder" begin
