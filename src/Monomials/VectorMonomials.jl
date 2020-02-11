@@ -6,9 +6,10 @@ import Random: AbstractRNG, SamplerType, randsubseq
 import SparseArrays: SparseVector, sparsevec, sparse, spzeros
 import SparseArrays: nonzeroinds
 
-import ...AbstractMonomials: AbstractMonomial, MonomialIn, exponents
+import ...AbstractMonomials: AbstractMonomial, MonomialIn, exponents, exponentsnz
 import ...MonomialOrderings: MonomialOrder
 import ...NamingSchemes: NamingScheme, Numbered, InfiniteScheme
+import ...Util: nzpairs
 import PolynomialRings: exptype, max_variable_index, deg, generators
 
 # -----------------------------------------------------------------------------
@@ -91,6 +92,10 @@ function rand(rng::AbstractRNG, ::SamplerType{M}) where M <: VectorMonomial{<:Sp
     nzind = randsubseq(1:numvars, 1/sqrt(numvars))
     exps = rand(1:maxexp, length(nzind))
     return exp(M, SparseVector(numvars, nzind, exps))
+end
+
+function exponentsnz(scheme::Scheme, m::typeintersect(VectorMonomial, MonomialIn{Scheme})) where Scheme <: NamingScheme
+    return ((i, (e,)) for (i, e) in nzpairs(m.e))
 end
 
 
