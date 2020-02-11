@@ -36,6 +36,8 @@ include("PolynomialRings/Solve.jl")
 # define this here to resolve a dependency cycle
 basering(::Type{M}) where M <: AbstractMonomials.AbstractMonomial = Constants.One
 
+import .NamingSchemes: @namingscheme, @nestednamingscheme
+import .StandardMonomialOrderings: @lex, @deglex, @degrevlex
 import .Monomials: TupleMonomial, VectorMonomial
 import .Terms: Term
 import .Polynomials: Polynomial, generators, map_coefficients
@@ -48,6 +50,8 @@ import .Solve: matrix_solve_affine
 import .NamedPolynomials: minring, ofminring
 import .Util: @assertvalid
 
+export @namingscheme, @nestednamingscheme
+export @lex, @deglex, @degrevlex
 export TupleMonomial, Term, Polynomial, generators, ⊗, polynomial_ring, variablesymbols
 export tosparse, todense
 export expansion, expand, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, expansion_terms, @expansion_terms
