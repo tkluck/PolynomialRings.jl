@@ -48,7 +48,7 @@ function remove_variables(::Type{P}, vars) where P <: Polynomial
     M = remove_variables(monomialtype(P), vars)
     C = remove_variables(basering(P), vars)
     M == One && return C
-    return polynomialtype(M, C, sparse=issparse(P))
+    return polynomialtype(M, C, issparse(P))
 end
 remove_variables(T::Type, vars) = T
 

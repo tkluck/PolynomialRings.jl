@@ -59,7 +59,7 @@ end
     return polynomialtype(monomialtype(order, exptype), basering, sparse=sparse)
 end
 
-@pure function polynomialtype(M::Type{<:AbstractMonomial}, basering=Int; sparse=true)
+@pure function polynomialtype(M::Type{<:AbstractMonomial}, basering=Int, sparse=true)
     return sparse ? SparsePolynomial{M, basering} : DensePolynomial{M, basering}
 end
 
