@@ -14,7 +14,7 @@ import ..NamingSchemes: numberedvariablename, variablesymbols, num_variables
 import ..Util: isdisjoint
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, monomialtype
 import PolynomialRings: leading_monomial
-import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namingscheme, monomialorder, deg
+import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namingscheme, monomialorder, deg, divides
 
 #import ..Constants: One
 # FIXME: reference cycle
