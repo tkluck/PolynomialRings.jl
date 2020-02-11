@@ -15,7 +15,7 @@ import ..Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolyn
 import ..StandardMonomialOrderings: MonomialOrdering, rulesymbol
 import ..Terms: Term, basering, monomial, coefficient
 import PolynomialRings: expansion
-import PolynomialRings: termtype, namingscheme, variablesymbols, exptype, monomialtype, allvariablesymbols, iscanonical, canonicaltype, nestednamingscheme, fullboundnames, max_variable_index, polynomialtype
+import PolynomialRings: termtype, namingscheme, variablesymbols, exptype, monomialtype, allvariablesymbols, iscanonical, canonicaltype, nestednamingscheme, fullboundnames, polynomialtype
 
 # short-circuit the non-conversions
 convert(::Type{P}, p::P) where P <: SparsePolynomialOver{C,O} where {C,O<:NamedMonomialOrder} = p

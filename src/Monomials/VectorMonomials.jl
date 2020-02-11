@@ -7,7 +7,8 @@ import SparseArrays: SparseVector, sparsevec, sparse
 import SparseArrays: nonzeroinds
 
 import ...AbstractMonomials: AbstractMonomial, MonomialIn, exponents
-import ...NamingSchemes: NamingScheme, Numbered
+import ...MonomialOrderings: MonomialOrder
+import ...NamingSchemes: NamingScheme, Numbered, InfiniteScheme
 import PolynomialRings: exptype, max_variable_index, deg
 
 # -----------------------------------------------------------------------------
@@ -55,9 +56,13 @@ generators(::Type{VectorMonomial{V,I,Order}}) where {V,I,Order} = Channel(ctype=
     throw(AssertionError("typemax exhausted"))
 end
 
-function max_variable_index(scheme::Scheme, m::typeintersect(VectorMonomial, MonomialIn{Scheme})) where Scheme <: Numbered{Name, Inf} where Name
+function max_variable_index(scheme::InfiniteScheme{Name},
+                            m::VectorMonomial{V, I, <: MonomialOrder{Scheme}}) where
+                            {V, I, Name, Scheme <: InfiniteScheme{Name}}
     return something(findlast(!iszero, m.e), 0)
 end
+
+max_variable_index(scheme::InfiniteScheme{Name}, m::VectorMonomial) where Name = 0
 
 function exponents(m::VectorMonomial{<:SparseVector}, scheme::Numbered{Name, Inf}; max_variable_index=max_variable_index(scheme, m)) where Name
     return SparseVector(max_variable_index, m.e.nzind, m.e.nzval)

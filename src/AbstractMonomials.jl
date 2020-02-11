@@ -9,8 +9,10 @@ import SparseArrays: sparsevec, sparse
 import SparseArrays: nonzeroinds
 
 import ..MonomialOrderings: MonomialOrder
-import ..NamingSchemes: Variable, Named, Numbered, NamingScheme, isdisjoint, variablesymbols
-import PolynomialRings: generators, to_dense_monomials, max_variable_index, monomialtype, num_variables, divides, mutuallyprime
+import ..NamingSchemes: Variable, Named, Numbered, InfiniteScheme, NamingScheme
+import ..NamingSchemes: numberedvariablename, variablesymbols, num_variables
+import ..Util: isdisjoint
+import PolynomialRings: generators, to_dense_monomials, max_variable_index, monomialtype
 import PolynomialRings: leading_monomial
 import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namingscheme, monomialorder, deg
 
@@ -222,8 +224,6 @@ function exponents(scheme::NamingScheme, ms::AbstractMonomial...)
     map(exps, ms)
 end
 
-const InfiniteScheme{Name} = Numbered{Name, Inf}
-
 function exponents(scheme::InfiniteScheme, ms::AbstractMonomial...;
                    max_variable_index = maximum(max_variable_index(scheme, m) for m in ms))
     exps(m) = exponents(m, scheme, max_variable_index=max_variable_index)
@@ -260,9 +260,17 @@ revexponentsnz(scheme::NamingScheme, ms::AbstractMonomial...) = Iterators.revers
 #
 # -----------------------------------------------------------------------------
 function convert(::Type{M}, m::AbstractMonomial) where M <: AbstractMonomial
-    N = diff(namingscheme(m), namingscheme(M))
-    isnothing(N) || all(iszero, exponents(m, N)) || throw(InexactError(:convert, M, m))
-    exp(M, exponents(m, namingscheme(M)))
+    if namingscheme(m) isa Numbered && namingscheme(M) isa Numbered &&
+            numberedvariablename(typeof(m)) == numberedvariablename(M)
+        sym = numberedvariablename(M)
+        n = max_variable_index(namingscheme(sym, Inf), m)
+        n ≤ num_variables(M) || throw(InexactError(:convert, M, m))
+        return exp(M, @view exponents(m, namingscheme(m))[1:min(end, n)])
+    else
+        N = diff(namingscheme(m), namingscheme(M))
+        isempty(N) || all(iszero, exponents(m, N)) || throw(InexactError(:convert, M, m))
+        return exp(M, exponents(m, namingscheme(M)))
+    end
 end
 
 convert(::Type{M}, m::One) where M <: AbstractMonomial = exp(M, exponents(m, namingscheme(M)))
@@ -274,5 +282,22 @@ function convert(::Type{M}, m::Symbol) where M <: NamedMonomial
 end
 
 generators(::Type{M}) where M <: NamedMonomial = (convert(M, s) for s in variablesymbols(M))
+
+# -----------------------------------------------------------------------------
+#
+# Conversion from c[] to c[1:N]
+#
+# -----------------------------------------------------------------------------
+
+function to_dense_monomials(scheme::InfiniteScheme, M::Type{<:AbstractMonomial}, max_variable_index)
+    isconcretetype(M) || error("Cannot compute to_dense_monomials for non-concrete $M")
+    order = to_dense_monomials(scheme, monomialorder(M), max_variable_index)
+    return monomialtype(order, exptype(M))
+end
+
+function to_dense_monomials(scheme::InfiniteScheme, m::AbstractMonomial, max_variable_index)
+    M = to_dense_monomials(scheme, typeof(m), max_variable_index)
+    return convert(M, m)
+end
 
 end # module

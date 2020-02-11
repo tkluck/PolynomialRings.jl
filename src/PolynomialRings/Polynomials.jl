@@ -12,10 +12,10 @@ import ..AbstractMonomials: AbstractMonomial
 import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
 import ..MonomialOrderings: monomialorderkey
 #import ..Monomials.IndexedMonomials: IndexedMonomial
-import ..NamingSchemes: Named, Numbered, NamingScheme, nestednamingscheme, isdisjoint, isvalid
+import ..NamingSchemes: Named, Numbered, NamingScheme, InfiniteScheme, nestednamingscheme, isdisjoint, isvalid
 import ..Terms: Term, monomial, coefficient
 import ..Util: @assertvalid, _debug_isvalid
-import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering, monomialtype
+import PolynomialRings: generators, max_variable_index, basering, monomialtype
 import PolynomialRings: leading_coefficient, leading_monomial
 import PolynomialRings: leading_term, termtype, monomialorder, nzterms, exptype, namingscheme, expansion
 import PolynomialRings: polynomialtype
@@ -95,7 +95,7 @@ allvariablesymbols(::Type{P}) where P <: Polynomial = union(allvariablesymbols(b
 issparse(f::Polynomial) = issparse(typeof(f))
 isstrictlysparse(f::Polynomial) = isstrictlysparse(typeof(f))
 
-max_variable_index(scheme, f::Polynomial) = maximum(max_variable_index(t) for t in nzterms(f, monomialorder(f)))
+max_variable_index(scheme::InfiniteScheme, f::Polynomial) = iszero(f) ? 0 : maximum(max_variable_index(scheme, t) for t in nzterms(f, monomialorder(f)))
 
 # -----------------------------------------------------------------------------
 #

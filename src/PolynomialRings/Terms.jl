@@ -5,7 +5,7 @@ import Base: hash
 
 import ..AbstractMonomials: AbstractMonomial
 import ..MonomialOrderings: MonomialOrder, monomialorderkey
-import ..NamingSchemes: NamingScheme, Variable
+import ..NamingSchemes: NamingScheme, InfiniteScheme, Variable
 import ..Util: lazymap
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering
 import PolynomialRings: maybe_div, divides, lcm_multipliers, monomialtype, exptype, lcm_degree, namingscheme, monomialorder
@@ -82,13 +82,16 @@ generators(::Type{Term{M,C}}) where {M, C} = lazymap(g -> Term{M,C}(g, one(C)), 
 
 iszero(a::Term) = iszero(coefficient(a))
 
-to_dense_monomials(n, a::Term) = Term( to_dense_monomials(n, monomial(a)), deepcopy(coefficient(a)) )
-max_variable_index(a::Term) = max_variable_index(monomial(a))
-
-function max_variable_index(scheme, a::Term)
+function max_variable_index(scheme::InfiniteScheme, a::Term)
     m = max_variable_index(scheme, coefficient(a))
     n = max_variable_index(scheme, monomial(a))
     return max(m, n)
+end
+
+function to_dense_monomials(scheme::InfiniteScheme, a::Term, max_variable_index)
+    m = to_dense_monomials(scheme, monomial(a), max_variable_index)
+    c = to_dense_monomials(scheme, coefficient(a), max_variable_index)
+    return Term(m, c)
 end
 
 function maybe_div(a::T, b::T) where T<:Term

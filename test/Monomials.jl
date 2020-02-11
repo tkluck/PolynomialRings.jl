@@ -3,8 +3,8 @@ using Test
 import PolynomialRings.NamingSchemes: @namingscheme, @variable
 import PolynomialRings.StandardMonomialOrderings: @lex
 import PolynomialRings.AbstractMonomials: exponents, exponentsnz
-import PolynomialRings.Monomials: @monomial
-import PolynomialRings: monomialtype
+import PolynomialRings.Monomials: @monomial, TupleMonomial, VectorMonomial
+import PolynomialRings: monomialtype, to_dense_monomials
 import PolynomialRings: maybe_div, lcm, gcd, divides, lcm_multipliers, deg
 
 @testset "Monomials" begin
@@ -96,6 +96,19 @@ import PolynomialRings: maybe_div, lcm, gcd, divides, lcm_multipliers, deg
 
         @test convert(M3, @monomial(c[1]*c[2])) == convert(M4, @monomial(c[1]*c[2]))
         @test convert(M3, @monomial(c[1])) * convert(M4, @monomial(c[1])) isa monomialtype(@namingscheme(c[]))
+    end
+
+    @testset "To dense monomials" begin
+        @test max_variable_index(@namingscheme(c[]), @monomial(x)) == 0
+        @test to_dense_monomials(@namingscheme(c[]), typeof(@monomial(x)), 3) <: TupleMonomial
+        @test to_dense_monomials(@namingscheme(c[]), @monomial(x)) === @monomial(x)
+
+        @test @monomial(c[3]) isa VectorMonomial
+        @test max_variable_index(@namingscheme(c[]), @monomial(c[3])) == 3
+        @test to_dense_monomials(@namingscheme(c[]), typeof(@monomial(c[3])), 5) <: TupleMonomial
+        # FIXME: promotions
+        #@test to_dense_monomials(@namingscheme(c[]), @monomial(c[3])) == @monomial(c[3])
+        @test namingscheme(to_dense_monomials(@namingscheme(c[]), @monomial(c[3]))) == @namingscheme(c[1:3])
     end
 
     @testset "Overflow behaviour" begin

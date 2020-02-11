@@ -489,7 +489,7 @@ end
 
 function linear_coefficients(f, spec::NumberedMonomialOrder)
     res = spzeros(_coefftype(typeof(f), spec), 0)
-    N = max_variable_index(spec, f)
+    N = max_variable_index(namingscheme(spec), f)
     for (n, m) in enumerate(generators(monomialtype(spec)))
         n > N && break
 

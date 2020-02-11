@@ -5,8 +5,9 @@ import Base: exp, rand
 import Random: AbstractRNG, SamplerType
 
 import ...AbstractMonomials: AbstractMonomial, MonomialIn, num_variables, maybe_div
-import ...NamingSchemes: NamingScheme
-import PolynomialRings: exptype, deg
+import ...MonomialOrderings: MonomialOrder
+import ...NamingSchemes: NamingScheme, InfiniteScheme
+import PolynomialRings: exptype, deg, max_variable_index
 
 # -----------------------------------------------------------------------------
 #
@@ -33,6 +34,15 @@ exp(::Type{M}, exps::NTuple, deg=sum(exps)) where M <: TupleMonomial = M(exps, d
 exp(::Type{M}, exps, deg=sum(exps)) where M <: TupleMonomial = M(ntuple(i -> get(exps, i, 0), num_variables(M)), deg)
 
 @inline exponent(m::TupleMonomial, i::Integer) = m.e[i]
+
+function max_variable_index(scheme::InfiniteScheme{Name},
+                            m::TupleMonomial{N, I, <: MonomialOrder{Scheme}}) where
+                            {N, I, Name, Scheme <: InfiniteScheme{Name}}
+    return N
+end
+
+
+max_variable_index(scheme::InfiniteScheme{Name}, m::TupleMonomial)  where Name = 0
 
 # -----------------------------------------------------------------------------
 #

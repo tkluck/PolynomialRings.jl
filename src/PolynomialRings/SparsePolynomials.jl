@@ -1,7 +1,7 @@
 import DataStructures: enqueue!, dequeue!
 
 import ..Util: BoundedHeap, @assertvalid
-import PolynomialRings: checkconstant
+import PolynomialRings: checkconstant, to_dense_monomials
 
 """
     SparsePolynomial{M, C} where M <: AbstractMonomial where C
@@ -389,10 +389,8 @@ function convert(P::Type{<:SparsePolynomialOver{C,O}}, p::SparsePolynomialOver{D
     return @assertvalid _filterzeros!(P(p.monomials, convert.(C, p.coeffs)))
 end
 
-function to_dense_monomials(n, p::SparsePolynomial)
-    coeffs = map(deepcopy, coefficients(p))
-    monoms = to_dense_monomials.(n, monomials(p))
+function to_dense_monomials(scheme::InfiniteScheme, p::SparsePolynomial, max_variable_index)
+    coeffs = map(c -> to_dense_monomials(scheme, c, max_variable_index), coefficients(p))
+    monoms = map(m -> to_dense_monomials(scheme, m, max_variable_index), monomials(p))
     return SparsePolynomial(monoms, coeffs)
 end
-
-max_variable_index(p::SparsePolynomial) = iszero(p) ? 0 : maximum(max_variable_index(m) for m in monomials(p))

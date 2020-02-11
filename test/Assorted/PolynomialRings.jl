@@ -3,6 +3,9 @@ import LinearAlgebra: I
 import SparseArrays: sparse, spzeros
 using PolynomialRings
 
+# TODO: export by default?
+import PolynomialRings.NamingSchemes: @namingscheme
+
 struct Foo end
 import Base: one, zero
 one(::Type{Foo})  = Foo()
@@ -140,8 +143,8 @@ zero(::Foo)       = 0
 
         @ring! ℤ[d[]]
         dd1,dd2,dd3 = d[]
-        @test to_dense_monomials([dd1, dd2, dd3]) == generators(@ring ℤ[d[1:3]])
-        @test eltype(to_dense_monomials([dd1, dd2, dd3])) == @ring ℤ[d[1:3]]
+        @test to_dense_monomials(@namingscheme(d[]), [dd1, dd2, dd3]) == generators(@ring ℤ[d[1:3]])
+        @test eltype(to_dense_monomials(@namingscheme(d[]), [dd1, dd2, dd3])) == @ring ℤ[d[1:3]]
 
         # the middle one returns a tuple, that's why we need to collect()
         # it before comparison

@@ -12,14 +12,14 @@ import Base: promote_rule
 
 import ..NamingSchemes: NamingScheme, Named, Numbered
 import PolynomialRings: leading_monomial, leading_coefficient, leading_term, tail, deg
-import PolynomialRings: monomialorder, namingscheme, to_dense_monomials
+import PolynomialRings: monomialorder, namingscheme
 
 """
     abstract type MonomialOrder{Names} <: Base.Order.Ordering end
 
 Represents a total order between monomials.
 """
-abstract type MonomialOrder{Names} <: Ordering end
+abstract type MonomialOrder{Names <: NamingScheme} <: Ordering end
 
 """
     abstract type AtomicMonomialOrder{Names} <: MonomialOrder{Names} end
@@ -28,8 +28,8 @@ Represents a monomial order that can be chained to form lexicographical orders.
 """
 abstract type AtomicMonomialOrder{Names} <: MonomialOrder{Names} end
 
-namingscheme(::O)       where O <: MonomialOrder{Names} where Names = Names()
-namingscheme(::Type{O}) where O <: MonomialOrder{Names} where Names = Names()
+namingscheme(::O)       where O <: MonomialOrder{Names} where Names = Names.instance
+namingscheme(::Type{O}) where O <: MonomialOrder{Names} where Names = Names.instance
 
 monomialorder(o::MonomialOrder) = o
 
@@ -47,8 +47,6 @@ monomialorderkey(order, a) = iszero(a) ? nothing : a # TODO: rename! because typ
 monomialorderkeytype(T) = keytype(T)
 monomialordereltype(T) = eltype(T)
 function monomialorderkeypair end
-
-to_dense_monomials(n::Integer, o::MonomialOrder) = MonomialOrder{rulesymbol(o), typeof(to_dense_monomials(n, namingscheme(o)))}()
 
 # -----------------------------------------------------------------------------
 #

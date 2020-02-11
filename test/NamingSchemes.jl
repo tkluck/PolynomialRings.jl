@@ -3,6 +3,7 @@ using Test
 using PolynomialRings.NamingSchemes: @variable, @namingscheme, @nestednamingscheme
 using PolynomialRings.NamingSchemes: iscanonical, canonicalscheme, namingscheme
 using PolynomialRings.NamingSchemes: NamingSchemeError
+using PolynomialRings: to_dense_monomials
 
 @testset "NamingSchemes" begin
     @testset "Type properties" begin
@@ -63,8 +64,8 @@ using PolynomialRings.NamingSchemes: NamingSchemeError
     @testset "Differences" begin
         @test diff(@namingscheme((x,y)), @namingscheme(y)) == @namingscheme(x)
         @test diff(@namingscheme((x,y)), @namingscheme(y[])) == @namingscheme((x,y))
-        @test diff(@namingscheme((x,y)), @namingscheme((x,y))) == nothing
-        @test diff(@namingscheme(x[]), @namingscheme(x[])) == nothing
+        @test diff(@namingscheme((x,y)), @namingscheme((x,y))) == @namingscheme(())
+        @test diff(@namingscheme(x[]), @namingscheme(x[])) == @namingscheme(())
     end
 
     @testset "Canonical (nested) naming schemes" begin
@@ -95,6 +96,14 @@ using PolynomialRings.NamingSchemes: NamingSchemeError
         @test @inferred(canonicalscheme(@nestednamingscheme(c[1:20],x,y))) == @nestednamingscheme(c[1:20],(x,y))
         @test !iscanonical(@nestednamingscheme(c[1:20],y,x))
         @test @inferred(canonicalscheme(@nestednamingscheme(c[1:20],y,x))) == @nestednamingscheme(c[1:20],(x,y))
+    end
+
+    @testset "Operations" begin
+        @test to_dense_monomials(@namingscheme(c[]), @namingscheme(x), 20) == @namingscheme(x)
+        @test to_dense_monomials(@namingscheme(c[]), @namingscheme(x[]), 20) == @namingscheme(x[])
+        @test to_dense_monomials(@namingscheme(c[]), @namingscheme(c[]), 20) == @namingscheme(c[1:20])
+
+        @test to_dense_monomials(@namingscheme(c[]), @nestednamingscheme(x, c[]), 20) == @nestednamingscheme(x, c[1:20])
     end
 
     #=

@@ -17,14 +17,7 @@ import ..StandardMonomialOrderings: KeyOrder, LexCombinationOrder
 import ..Terms: Term
 import ..Util: nzpairs
 import PolynomialRings: base_restrict
-import PolynomialRings: to_dense_monomials, max_variable_index, monomialorder
-
-max_variable_index(a::AbstractArray{<:Polynomial}) = isempty(a) ? 0 : maximum(max_variable_index(a_i) for a_i in a)
-
-function to_dense_monomials(a::AbstractArray{P}) where P <: Polynomial
-    n = max_variable_index(a)
-    to_dense_monomials.(n, a)
-end
+import PolynomialRings: monomialorder
 
 remove_variables(::Type{Array{P, N}}, scheme) where {P, N} = Array{remove_variables(P, scheme), N}
 remove_variables(::Type{SparseVector{P, I}}, scheme) where {P, I} = SparseVector{remove_variables(P, scheme), I}

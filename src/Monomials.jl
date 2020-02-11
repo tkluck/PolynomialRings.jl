@@ -4,7 +4,6 @@ import SparseArrays: SparseVector, sparsevec
 
 import ..AbstractMonomials: AbstractMonomial
 import ..MonomialOrderings: MonomialOrder
-import ..NamingSchemes: NamingScheme, Named, Numbered, namingscheme, num_variables
 import PolynomialRings: monomialtype
 
 include("Monomials/TupleMonomials.jl")
@@ -20,19 +19,7 @@ import .VectorMonomials: VectorMonomial
 #
 # -----------------------------------------------------------------------------
 
-#= TODO
-max_variable_index(m::TupleMonomial{N}) where N = N
-max_variable_index(m::VectorMonomial{V,I,Order}) where {V,I,Order} = length(m.e)
-
-to_dense_monomials(n::Integer, scheme::Numbered{Name}) where Name = (@assert n <= num_variables(scheme); Numbered{Name, n}())
-function to_dense_monomials(n::Integer, m::AbstractMonomial)
-    Order = to_dense_monomials(n, monomialorder(m))
-    M = TupleMonomial{n, exptype(m), typeof(Order)}
-    return convert(M, m)
-end
-
 promote_rule(::Type{<:TupleMonomial{N,I,Order}}, ::Type{<:VectorMonomial{V,J,Order}}) where {N,V,I,J,Order} = TupleMonomial{N,promote_type(I,J),Order}
-=#
 
 # -----------------------------------------------------------------------------
 #

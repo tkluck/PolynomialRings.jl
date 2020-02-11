@@ -15,12 +15,12 @@ import Base.Order: Ordering
 import ..AbstractMonomials: AbstractMonomial, exponentsnz, revexponentsnz
 import ..MonomialOrderings: AtomicMonomialOrder, MonomialOrder, degreecompatible
 import ..MonomialOrderings: monomialorderkey, monomialorderkeytype, monomialordereltype, monomialorderkeypair
-import ..NamingSchemes: Named, Numbered, NamingScheme, EmptyNamingScheme
+import ..NamingSchemes: Named, Numbered, NamingScheme, InfiniteScheme, EmptyNamingScheme
 import ..NamingSchemes: namingscheme, variablesymbols, num_variables
 import ..Polynomials: Polynomial
 import ..Terms: Term
 import ..Util: showsingleton
-import PolynomialRings: deg, leading_monomial
+import PolynomialRings: deg, leading_monomial, to_dense_monomials
 
 
 """
@@ -52,6 +52,11 @@ rulesymbol(::Type{O}) where O <: MonomialOrdering{Rule, Names} where {Rule, Name
 # Promotions for different variable name sets
 #
 # -----------------------------------------------------------------------------
+function to_dense_monomials(scheme::InfiniteScheme, o::MonomialOrdering, max_variable_index)
+    newscheme = to_dense_monomials(scheme, namingscheme(o), max_variable_index)
+    return MonomialOrdering{rulesymbol(o), typeof(newscheme)}()
+end
+
 function promote_rule(::Type{M1}, ::Type{M2}) where {M1 <: MonomialOrdering, M2 <: MonomialOrdering}
     scheme = promote_type(typeof(namingscheme(M1)), typeof(namingscheme(M2)))
     if scheme <: NamingScheme

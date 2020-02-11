@@ -13,8 +13,8 @@ import Base: issubset, isempty, isvalid, *, diff, indexin, promote_rule, promote
 import Base: show
 
 import ..Util: isdisjoint, showsingleton
-import PolynomialRings: boundnames, fullboundnames, iscanonical, canonicaltype
-import PolynomialRings: variablesymbols, namingscheme, nestednamingscheme, num_variables
+import PolynomialRings: boundnames, fullboundnames, iscanonical, canonicaltype, max_variable_index
+import PolynomialRings: variablesymbols, namingscheme, nestednamingscheme, num_variables, to_dense_monomials
 
 abstract type NamingScheme end
 
@@ -83,6 +83,8 @@ variablesymbols(::Numbered{Name}) where Name = tuple()
 numberedvariablename(::Numbered{Name}) where Name = Name
 num_variables(::Numbered{Name, Max}) where {Name, Max} = Max
 
+const InfiniteScheme{Name} = Numbered{Name, Inf}
+
 function namingscheme(names::Symbol...)
     res = Named{names}()
     isvalid(res) || error("Not a valid naming scheme: $names")
@@ -144,13 +146,13 @@ end
 
 @generated function remove_variables(::N, ::Vars) where N <: Named where Vars <: Named
     remaining = setdiff(variablesymbols(N()), variablesymbols(Vars()))
-    isempty(remaining) && return nothing
+    isempty(remaining) && return EmptyNamingScheme()
     return Named{tuple(remaining...)}()
 end
 
 remove_variables(N::Named, ::Numbered) = N
 remove_variables(N::Numbered, ::Named) = N
-remove_variables(N1::Numbered{Name}, N2::Numbered{Name}) where Name = (@assert num_variables(N2) >= num_variables(N1); return nothing)
+remove_variables(N1::Numbered{Name}, N2::Numbered{Name}) where Name = (@assert num_variables(N2) >= num_variables(N1); return EmptyNamingScheme())
 remove_variables(N::Numbered, ::Numbered) = N
 
 function remove_variables(N::Named, vars::NestedNamingScheme)
@@ -212,6 +214,28 @@ end
 end
 
 canonicalscheme(a::NestedNamingScheme) = canonicalscheme(a...)
+
+# -----------------------------------------------------------------------------
+#
+# Conversion from c[] to c[1:N]
+#
+# -----------------------------------------------------------------------------
+max_variable_index(scheme::InfiniteScheme, x::Number) = 0
+to_dense_monomials(scheme::InfiniteScheme, x::Number, max_variable_index) = deepcopy(x)
+
+to_dense_monomials(scheme::InfiniteScheme, x) = to_dense_monomials(scheme, x, max_variable_index(scheme, x))
+to_dense_monomials(scheme::InfiniteScheme, x, max_variable_index) = error("to_dense_monomials not implemented for $(typeof(x))")
+to_dense_monomials(scheme::InfiniteScheme, x::Union{Tuple, AbstractArray}, max_variable_index) = begin
+    map(y -> to_dense_monomials(scheme, y, max_variable_index), x)
+end
+
+to_dense_monomials(scheme::InfiniteScheme, x::Named, max_variable_index) = x
+to_dense_monomials(scheme::InfiniteScheme{Name}, x::Numbered, max_variable_index) where Name = x
+to_dense_monomials(scheme::InfiniteScheme{Name}, x::Numbered{Name}, max_variable_index) where Name = begin
+    return namingscheme(Name, max_variable_index)
+end
+
+to_dense_monomials(scheme::InfiniteScheme, s::NestedNamingScheme, max_variable_index) = map(si -> to_dense_monomials(scheme, si, max_variable_index), s)
 
 # -----------------------------------------------------------------------------
 #
