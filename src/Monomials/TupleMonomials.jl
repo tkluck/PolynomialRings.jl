@@ -1,13 +1,13 @@
 module TupleMonomials
 
-import Base: exp, rand
+import Base: exp, rand, ==
 
 import Random: AbstractRNG, SamplerType
 
 import ...AbstractMonomials: AbstractMonomial, MonomialIn, num_variables, maybe_div
 import ...MonomialOrderings: MonomialOrder
 import ...NamingSchemes: NamingScheme, InfiniteScheme
-import PolynomialRings: exptype, deg, max_variable_index
+import PolynomialRings: exptype, deg, max_variable_index, generators
 
 # -----------------------------------------------------------------------------
 #
@@ -33,12 +33,16 @@ exptype(::Type{TupleMonomial{N,I,Order}}) where I <: Integer where {N,Order} = I
 exp(::Type{M}, exps::NTuple, deg=sum(exps)) where M <: TupleMonomial = M(exps, deg)
 exp(::Type{M}, exps, deg=sum(exps)) where M <: TupleMonomial = M(ntuple(i -> get(exps, i, 0), num_variables(M)), deg)
 
+generators(M::Type{TupleMonomial{N,I,Order}}) where {N,I,Order} = (
+    exp(M, ntuple(j -> j == i ? 1 : 0, N), 1)
+    for i in 1 : N
+)
+
 function max_variable_index(scheme::InfiniteScheme{Name},
                             m::TupleMonomial{N, I, <: MonomialOrder{Scheme}}) where
                             {N, I, Name, Scheme <: InfiniteScheme{Name}}
     return N
 end
-
 
 max_variable_index(scheme::InfiniteScheme{Name}, m::TupleMonomial)  where Name = 0
 

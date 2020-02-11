@@ -13,7 +13,7 @@ import ..MonomialOrderings: MonomialOrder
 import ..NamingSchemes: Variable, Named, Numbered, InfiniteScheme, NamingScheme
 import ..NamingSchemes: numberedvariablename, variablesymbols
 import ..Util: isdisjoint
-import PolynomialRings: generators, to_dense_monomials, max_variable_index, num_variables, monomialtype
+import PolynomialRings: to_dense_monomials, max_variable_index, num_variables, monomialtype
 import PolynomialRings: leading_monomial
 import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namingscheme, monomialorder, deg, divides
 
@@ -280,8 +280,6 @@ function convert(::Type{M}, m::Symbol) where M <: NamedMonomial
     ix = indexin(m, namingscheme(M))
     exp(M, sparsevec([ix], [1]))
 end
-
-generators(::Type{M}) where M <: NamedMonomial = (convert(M, s) for s in variablesymbols(M))
 
 # -----------------------------------------------------------------------------
 #
