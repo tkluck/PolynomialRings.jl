@@ -5,14 +5,15 @@ import Base: hash
 import Base: iterate
 import Base: last, findlast, length
 import Base: promote_rule, convert
-import SparseArrays: sparsevec, sparse
+
+import SparseArrays: sparsevec, sparse, spzeros
 import SparseArrays: nonzeroinds
 
 import ..MonomialOrderings: MonomialOrder
 import ..NamingSchemes: Variable, Named, Numbered, InfiniteScheme, NamingScheme
-import ..NamingSchemes: numberedvariablename, variablesymbols, num_variables
+import ..NamingSchemes: numberedvariablename, variablesymbols
 import ..Util: isdisjoint
-import PolynomialRings: generators, to_dense_monomials, max_variable_index, monomialtype
+import PolynomialRings: generators, to_dense_monomials, max_variable_index, num_variables, monomialtype
 import PolynomialRings: leading_monomial
 import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namingscheme, monomialorder, deg, divides
 
@@ -43,9 +44,9 @@ other functions, as well.
 """
 abstract type AbstractMonomial{Order} end
 
-const MonomialIn{Names} = AbstractMonomial{<:MonomialOrder{Names}}
-const NamedMonomial = MonomialIn{<:Named}
-const NumberedMonomial = MonomialIn{<:Numbered}
+const MonomialIn{Scheme} = AbstractMonomial{<:MonomialOrder{Scheme}}
+const NamedMonomial{Names} = MonomialIn{<:Named{Names}}
+const NumberedMonomial{Name} = MonomialIn{<:Numbered{Name}}
 
 # -----------------------------------------------------------------------------
 #
@@ -200,7 +201,7 @@ end
 exponents(m::MonomialIn{Scheme}, scheme::Scheme) where Scheme <: NamingScheme = m.e
 deg(m::MonomialIn{Scheme}, scheme::Scheme) where Scheme <: NamingScheme = m.deg
 
-@generated function exponents(m::MonomialIn{Named{SourceNames}}, scheme::Named{TargetNames}) where {SourceNames, TargetNames}
+@generated function exponents(m::NamedMonomial{SourceNames}, scheme::Named{TargetNames}) where {SourceNames, TargetNames}
     # create an expression that calls the tuple constructor. No arguments -- so far
     exps = :( tuple() )
     for d in TargetNames
@@ -218,6 +219,18 @@ deg(m::MonomialIn{Scheme}, scheme::Scheme) where Scheme <: NamingScheme = m.deg
     return exps
 end
 
+function exponents(m::NumberedMonomial{Name}, scheme::Numbered{Name, N}) where {Name, N}
+    namingscheme(m) == scheme && return m.e
+
+    infscheme = Numbered{Name, Inf}()
+    max_variable_index(infscheme, m) <= N || error("Retrieving too few exponents")
+    return exponents(m, infscheme, max_variable_index=N)
+end
+
+exponents(m::NumberedMonomial, scheme::Named) = ntuple(_ -> zero(Int16), num_variables(scheme))
+exponents(m::NamedMonomial, scheme::Numbered) = spzeros(Int16, 0)
+exponents(m::One, scheme::Named)              = ntuple(_ -> zero(Int16), num_variables(scheme))
+exponents(m::One, scheme::Numbered)           = spzeros(Int16, 0)
 
 function exponents(scheme::NamingScheme, ms::AbstractMonomial...)
     exps(m) = exponents(m, scheme)
@@ -230,27 +243,14 @@ function exponents(scheme::InfiniteScheme, ms::AbstractMonomial...;
     map(exps, ms)
 end
 
-function exponents(m::MonomialIn{<:Numbered{Name}}, scheme::Numbered{Name, N}) where {Name, N}
-    namingscheme(m) == scheme && return m.e
-
-    infscheme = Numbered{Name, Inf}()
-    max_variable_index(infscheme, m) <= N || error("Retrieving too few exponents")
-    return exponents(m, infscheme, max_variable_index=N)
-end
-
-@generated function exponents(m::One, scheme::Named{TargetNames}) where TargetNames
-    ntuple(_ -> zero(Int16), length(TargetNames))
-end
-
-function exponents(m::One, scheme::Numbered)
-    Int16[]
-end
 
 deg(m::AbstractMonomial, scheme::NamingScheme) = sum(exponents(m, scheme))
 
-function exponentsnz(scheme::NamingScheme, ms::AbstractMonomial...)
-    return enumerate(zip(exponents(scheme, ms...)...))
-end
+exponentsnz(scheme::NamingScheme, ms::AbstractMonomial...) = (
+    (i, exps)
+    for (i, exps) in enumerate(zip(exponents(scheme, ms...)...))
+    if any(!iszero, exps)
+)
 
 revexponentsnz(scheme::NamingScheme, ms::AbstractMonomial...) = Iterators.reverse(exponentsnz(scheme, ms...))
 
