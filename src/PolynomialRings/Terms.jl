@@ -111,8 +111,6 @@ function lcm_multipliers(a::T, b::T)::Tuple{T,T} where T<:Term
     return T(m_a, c_a), T(m_b, c_b)
 end
 
-(t::Term)(args...) = coefficient(t) * monomial(t)(args...)
-
 diff(a, x::Variable) = zero(a)
 
 function diff(t::T, x::Variable) where T <: Term
