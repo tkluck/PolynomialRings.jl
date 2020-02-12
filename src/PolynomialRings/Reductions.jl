@@ -3,7 +3,7 @@ module Reductions
 import Base: div, rem, divrem
 import SparseArrays: spzeros
 
-import ..Expansions: deg
+import ..Expansions: deg, atomicorder
 import ..Modules: AbstractModuleElement, modulebasering
 import ..MonomialOrderings: MonomialOrder
 import ..Operators: RedType, Lead, Full, Tail
@@ -459,7 +459,7 @@ function mingenerators(I::AbstractVector{<:AbstractModuleElement})
     superfluous_cols = Int[]
     for row in axes(syz, 1)
         for col in axes(syz, 2)
-            if deg(syz[row, col], monomialorder(eltype(I))) == 0
+            if deg(syz[row, col], atomicorder(monomialorder(eltype(I)))) == 0
                 c = syz[row, col].coeffs[1]
                 for r in [1:row-1; row+1:size(syz, 1)]
                     syz[r, :] -= (syz[r, col] // c ) * syz[row, :]
