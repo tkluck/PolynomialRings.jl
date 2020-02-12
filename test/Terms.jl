@@ -1,13 +1,19 @@
 using Test
 
 using PolynomialRings.Monomials: @monomial
+using PolynomialRings.NamingSchemes: @namingscheme
 using PolynomialRings.Polynomials: TermOver, Polynomial
 using PolynomialRings.Terms: Term
+using PolynomialRings: termtype
 
 @testset "Terms" begin
     @testset "Construction" begin
-        @test Term(@monomial(x*y), 3) == 3 * @monomial(x*y)
-        @test Term(@monomial(x[1]), 3) == 3 * @monomial(x[1])
+        @test Term(@monomial(x*y), 3) ==
+                    3 * @monomial(x*y) ==
+                    3exp(termtype(@namingscheme((x,y))), (1, 1))
+        @test Term(@monomial(x[1]), 3) ==
+                    3 * @monomial(x[1]) ==
+                    3exp(termtype(@namingscheme(x[])), [1])
         @test_throws MethodError Term(1, 1)
 
         (m, c) = Term(@monomial(x*y), 3)

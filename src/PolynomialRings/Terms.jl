@@ -1,7 +1,7 @@
 module Terms
 
 import Base: *, ^, +, -, one, ==, iszero, zero, diff
-import Base: hash
+import Base: hash, exp
 
 import ..AbstractMonomials: AbstractMonomial
 import ..MonomialOrderings: MonomialOrder, monomialorderkey
@@ -129,5 +129,7 @@ lcm_degree(a::T, b::T) where T<:Term = lcm_degree(monomial(a), monomial(b))
 Base.Order.lt(o::MonomialOrder, a::T,b::T) where T <: Term = Base.Order.lt(o, monomial(a), monomial(b))
 
 Base.deepcopy(t::Term) = Term(deepcopy(monomial(t)), deepcopy(coefficient(t)))
+
+exp(T::Type{<:Term}, exps) = T(exp(monomialtype(T), exps), one(basering(T)))
 
 end
