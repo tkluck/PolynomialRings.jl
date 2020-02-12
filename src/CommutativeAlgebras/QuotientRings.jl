@@ -16,7 +16,7 @@ import ..Polynomials: termtype, monomialtype, monomialorder
 import ..Terms: Term, monomial, coefficient
 import ..Util: @assertvalid
 import PolynomialRings: allvariablesymbols
-import PolynomialRings: construct_monomial, variablesymbols
+import PolynomialRings: variablesymbols
 
 # -----------------------------------------------------------------------------
 #
@@ -195,7 +195,7 @@ function representation_matrix(::Type{Q}, x::Symbol) where Q<:QuotientRing
     xs = variablesymbols(P)
 
     basis_exponents = monomial_basis(Q)
-    basis = map(e->Q(construct_monomial(P,e)), basis_exponents)
+    basis = map(e->Q(exp(P, e)), basis_exponents)
 
     left_action = Q(P(x)) .* basis
     columns = map(v->coefficient.(v.f,basis_exponents,xs...), left_action)

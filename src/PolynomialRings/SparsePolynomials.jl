@@ -1,3 +1,5 @@
+import Base: exp
+
 import DataStructures: enqueue!, dequeue!
 
 import ..Util: BoundedHeap, @assertvalid

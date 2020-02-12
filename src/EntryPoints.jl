@@ -14,7 +14,7 @@ import ..QuotientRings: QuotientRing
 import ..StandardMonomialOrderings: MonomialOrdering
 import ..Terms: Term, basering
 import ..Util: lazymap, isdisjoint
-import PolynomialRings: construct_monomial, exptype, fullboundnames, monomialtype, polynomialtype
+import PolynomialRings: exptype, fullboundnames, monomialtype, polynomialtype
 import PolynomialRings: generators, base_extend, variablesymbols, allvariablesymbols, ⊗
 
 # -----------------------------------------------------------------------------
@@ -420,7 +420,7 @@ function getindex(g::NumberedVariableGenerator{Outer,Inner}, i::Integer) where {
     i <= N || throw(BoundsError(namingscheme(Inner), i))
     e = spzeros(E, N < Inf ? N : i)
     e[i] = one(E)
-    return Outer(construct_monomial(Inner, e))
+    return Outer(exp(Inner, e))
 end
 
 getindex(g::NumberedVariableGenerator{Outer,Inner}, j::Integer...) where {Outer,Inner} = getindex.(Ref(g), j)

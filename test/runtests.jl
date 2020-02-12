@@ -7,6 +7,7 @@ using Test
     include("Terms.jl")
     include("Expansions.jl")
     include("TypeUpgrades.jl")
+    include("misc.jl")
 
     @testset "Assorted tests" begin
         include("Assorted/runtests.jl")

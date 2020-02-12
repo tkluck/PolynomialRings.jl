@@ -2,7 +2,7 @@ module Polynomials
 
 import Base: OneTo
 import Base: first, last, copy, hash, convert
-import Base: zero, one, +, -, *, ==, div, iszero, ^, gcd
+import Base: zero, one, +, -, *, ==, div, iszero, ^, gcd, exp
 import SparseArrays: SparseVector, HigherOrderFns, issparse
 
 import InPlace: @inplace, inplace!, inclusiveinplace!
@@ -62,8 +62,16 @@ function polynomialtype(M::Type{<:AbstractMonomial}, C::Type; sparse=true)
 end
 
 function polynomialtype(P::Type{<:Polynomial}; sparse=true)
-     polynomialtype(monomialtype(P), basering(P), sparse=sparse)
- end
+    polynomialtype(monomialtype(P), basering(P), sparse=sparse)
+end
+
+
+# -----------------------------------------------------------------------------
+#
+# Monomial constructor from exponents
+#
+# -----------------------------------------------------------------------------
+exp(P::Type{<:Polynomial}, exps) = convert(P, exp(termtype(P), exps))
 
 # -----------------------------------------------------------------------------
 #

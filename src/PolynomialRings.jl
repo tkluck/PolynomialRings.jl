@@ -65,22 +65,6 @@ export interreduce, interreduce!
 export matrix_solve_affine
 export minring, ofminring
 
-# TODO: maybe we can remove this one soon?
-import SparseArrays: nonzeroinds, SparseVector
-
-_nzindices(t::Tuple) = 1:length(t)
-_nzindices(t::AbstractVector) = eachindex(t)
-_nzindices(t::SparseVector) = nonzeroinds(t)
-function construct_monomial(::Type{P}, e::T) where P<:Polynomial where T<:Union{Tuple,AbstractVector}
-    @assert all(e.>=0)
-    M = monomialtype(P)
-    C = basering(P)
-    m = exp(M, e)
-    @assertvalid P([m], [one(C)])
-end
-export construct_monomial
-# --------------------------
-
 import .AbstractMonomials: AbstractMonomial
 const _P = Union{Polynomial,Term,AbstractMonomial}
 generators(x::_P)    = generators(typeof(x))
