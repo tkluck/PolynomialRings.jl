@@ -7,7 +7,7 @@ import PolynomialRings.Monomials: @monomial
 import PolynomialRings.NamingSchemes: namingscheme, @namingscheme, EmptyNamingScheme
 import PolynomialRings.StandardMonomialOrderings: @degrevlex, @deglex, @lex
 import PolynomialRings.StandardMonomialOrderings: KeyOrder, LexCombinationOrder
-import PolynomialRings: @ring!
+import PolynomialRings: @ring!, monomialorder
 
 @testset "MonomialOrderings" begin
     @testset "Constructors" begin
@@ -64,6 +64,12 @@ import PolynomialRings: @ring!
         @test lt(O4, y^5, x*y)
         @test !lt(O4, z^5, y*z)
         @test !degreecompatible(O4)
+
+        @ring! Int[c[]]
+
+        O5 = @degrevlex(c[])
+        @test lt(O5, c[2], c[1])
+        @test lt(O5, c[1], c[2]^2)
     end
 
     @testset "KeyOrder" begin
@@ -120,11 +126,15 @@ import PolynomialRings: @ring!
 
     @testset "Display" begin
         @test repr(@degrevlex(x > y)) == "@degrevlex(x > y)"
+        @test repr(@degrevlex(c[])) == "@degrevlex(c[])"
+        @test repr(@degrevlex(c[1:20])) == "@degrevlex(c[1:20])"
         @test repr(@deglex(x > y)) == "@deglex(x > y)"
         @test repr(@lex(x > y)) == "@lex(x > y)"
         @test repr(@lex(x > @keyorder() > y)) == "@lex(x > @keyorder() > y)"
         @test repr(KeyOrder()) == "KeyOrder()"
         @test repr(KeyOrder(Base.Order.Forward)) == "KeyOrder(Base.Order.Forward)"
+
+        @test repr(monomialorder(:x, :y, rule=:lex)) == "MonomialOrdering{:lex, typeof(@namingscheme((x,y)))}()"
 
         @test repr(typeof(@degrevlex(x))) == "typeof(@degrevlex(x))"
         @test repr(typeof(@lex(x > @keyorder()))) == "typeof(@lex(x > @keyorder()))"

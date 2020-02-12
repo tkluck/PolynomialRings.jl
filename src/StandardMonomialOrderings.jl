@@ -17,7 +17,7 @@ import ..MonomialOrderings: AtomicMonomialOrder, MonomialOrder, degreecompatible
 import ..MonomialOrderings: monomialorderkey, monomialorderkeytype, monomialordereltype, monomialorderkeypair
 import ..NamingSchemes: Named, Numbered, NamingScheme, InfiniteScheme, EmptyNamingScheme
 import ..NamingSchemes: NestedNamingScheme, EmptyNestedNamingScheme
-import ..NamingSchemes: namingscheme, variablesymbols, num_variables
+import ..NamingSchemes: namingscheme, variablesymbols, num_variables, showvars
 import ..Polynomials: Polynomial
 import ..Terms: Term
 import ..Util: showsingleton, isdisjoint
@@ -290,30 +290,37 @@ diff(order::MonomialOrder, scheme::NestedNamingScheme) = diff(diff(order, first(
 #
 # -----------------------------------------------------------------------------
 
-function syms_from_comparison(expr, macroname)
+function scheme_from_expr(expr, macroname)
     if expr isa Symbol
-        return tuple(expr)
+        return Named{tuple(expr)}()
     elseif expr.head == :call && expr.args[1] == :>
         syms = expr.args[2:3]
-        return tuple(syms...)
+        return Named{tuple(syms...)}()
     elseif expr.head == :comparison
         syms = expr.args[1:2:end]
         comparisons = expr.args[2:2:end]
         all(isequal(:>), comparisons) || error("Use $macroname as follows: $macroname(x > y > z)")
-        return tuple(syms...)
+        return Named{tuple(syms...)}()
+    elseif expr.head == :ref && length(expr.args) == 1
+        return Numbered{expr.args[1], Inf}()
+    elseif expr.head == :ref && length(expr.args) == 2 &&
+                expr.args[2] isa Expr && expr.args[2].head == :call &&
+                expr.args[2].args[1] == :(:) && expr.args[2].args[2] == 1 &&
+                expr.args[2].args[3] isa Integer
+        return Numbered{expr.args[1], expr.args[2].args[3]}()
     else
-        error("Use $macroname as follows: $macroname(x > y > z)")
+        error("Use $macroname as follows: $macroname(x > y > z) or $macroname(c[])")
     end
 end
 
 macro degrevlex(expr)
-    syms = syms_from_comparison(expr, "@degrevlex")
-    return MonomialOrdering{:degrevlex, Named{syms}}()
+    scheme = scheme_from_expr(expr, "@degrevlex")
+    return MonomialOrdering{:degrevlex, typeof(scheme)}()
 end
 
 macro deglex(expr)
-    syms = syms_from_comparison(expr, "@deglex")
-    return MonomialOrdering{:deglex, Named{syms}}()
+    scheme = scheme_from_expr(expr, "@deglex")
+    return MonomialOrdering{:deglex, typeof(scheme)}()
 end
 
 function _wrap_lonely_syms(sym::Symbol)
@@ -329,8 +336,24 @@ end
 
 _wrap_lonely_syms(expr) = expr
 
+function items_from_comparison(expr, macroname)
+    if expr isa Symbol
+        return tuple(expr)
+    elseif expr.head == :call && expr.args[1] == :>
+        syms = expr.args[2:3]
+        return tuple(syms...)
+    elseif expr.head == :comparison
+        syms = expr.args[1:2:end]
+        comparisons = expr.args[2:2:end]
+        all(isequal(:>), comparisons) || error("Use $macroname as follows: $macroname(x > y > z)")
+        return tuple(syms...)
+    else
+        error("Use $macroname as follows: $macroname(x > y > z)")
+    end
+end
+
 macro lex(expr)
-    syms = syms_from_comparison(expr, "@lex")
+    syms = items_from_comparison(expr, "@lex")
     syms = map(_wrap_lonely_syms, syms)
 
     return :( LexCombinationOrder($(syms...)) )
@@ -346,11 +369,15 @@ show(io::IO, T::Type{<:MonomialOrder}) = showsingleton(io, T)
 
 function show(io::IO, m::MonomialOrdering)
     if rulesymbol(m) == :lex
-        # TODO
-    else
+        print(io, "MonomialOrdering{:lex, $(typeof(namingscheme(m)))}()")
+    elseif namingscheme(m) isa Named
         print(io, "@$(rulesymbol(m))(")
         join(io, variablesymbols(m), " > ")
         print(io, ")")
+    elseif namingscheme(m) isa Numbered
+        print(io, "@$(rulesymbol(m))(", showvars(namingscheme(m)), ")")
+    else
+        error("unreachable")
     end
 end
 
