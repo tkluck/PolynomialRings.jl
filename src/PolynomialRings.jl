@@ -38,7 +38,7 @@ basering(::Type{M}) where M <: AbstractMonomials.AbstractMonomial = Constants.On
 
 import .NamingSchemes: @namingscheme, @nestednamingscheme
 import .StandardMonomialOrderings: @lex, @deglex, @degrevlex
-import .Monomials: TupleMonomial, VectorMonomial
+import .Monomials: TupleMonomial, VectorMonomial, @monomial
 import .Terms: Term
 import .Polynomials: Polynomial, generators, map_coefficients
 import .Polynomials: tosparse, todense
@@ -52,6 +52,7 @@ import .Util: @assertvalid
 
 export @namingscheme, @nestednamingscheme
 export @lex, @deglex, @degrevlex
+export @monomial
 export TupleMonomial, Term, Polynomial, generators, ⊗, polynomial_ring, variablesymbols
 export tosparse, todense
 export expansion, expand, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, expansion_terms, @expansion_terms
