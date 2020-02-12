@@ -256,20 +256,6 @@ function checkconstant(f::SparsePolynomial)
     end
 end
 
-# -----------------------------------------------------------------------------
-#
-# differentiation
-#
-# -----------------------------------------------------------------------------
-function diff(f::SparsePolynomial, i::Integer)
-    iszero(f) && return zero(f)
-    new_terms = filter(!iszero, map(t->diff(t,i), nzterms(f)))
-    sort!(new_terms, order=monomialorder(f))
-    monomials = [monomial(t) for t in new_terms]
-    coeffs = [coefficient(t) for t in new_terms]
-    return @assertvalid typeof(f)(monomials, coeffs)
-end
-
 """
     p = map_coefficients(f, q)
 
