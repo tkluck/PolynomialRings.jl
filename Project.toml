@@ -1,7 +1,7 @@
 name = "PolynomialRings"
 uuid = "c8ed2632-8d42-5af4-9089-7afd55769a28"
 authors = ["Timo Kluck <tkluck@infty.nl>"]
-version = "0.5.0"
+version = "0.5.1"
 
 [deps]
 Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
