@@ -116,7 +116,15 @@ end
 Base.iterate(ex::Expansion, state...) = iterate(zip(monomials(ex.p), coefficients(ex.p)), state...)
 Base.eltype(ex::Expansion) = Tuple{monomialtype(ex.p), basering(ex.p)}
 Base.length(ex::Expansion) = length(coefficients(ex.p))
-expansion(p::PolynomialBy{Order}, order::Order) where Order<:MonomialOrder = Expansion(p)
+
+function expansion(p::PolynomialBy{Order}, order::Order=monomialorder(p); rev=false, tail=false) where Order<:MonomialOrder
+    start = 1
+    ending = nztermscount(p)
+    tail && (ending -= 1)
+    rev && ((start, ending) = (ending, start))
+    step = rev ? -1 : 1
+    return ((_monomialbyindex(p, ix), coefficients(p)[ix]) for ix in start:step:ending)
+end
 
 struct NZTerms{P <: Polynomial}
     p :: P

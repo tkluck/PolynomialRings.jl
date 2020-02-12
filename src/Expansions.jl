@@ -196,23 +196,28 @@ deconstruct(innerorder, a::Union{<:Tuple, <:AbstractArray, <:AbstractDict}) = (
     for (i, ai) in pairs(a) for (m, c) in deconstruct(innerorder, ai)
 )
 
-function expansion(p, spec...)
-    order = monomialorder(spec...)
+expansion(p, spec...; kwds...) = expansion(p, monomialorder(spec...); kwds...)
+
+function expansion(p, order::MonomialOrder; rev=false, tail=false)
     M, C = expansiontypes(typeof(p), order)
     result = Tuple{M, C}[]
 
     deconstructed = collect(deconstruct(atomicorder(order), p))
     reconstruct!(result, p, deconstructed, order)
+    # The tail is everything but the leading monomial, which is in the end.
+    # So confusingly, if `tail` is true we need to remove the _last_ element.
+    tail && pop!(result)
+    rev && reverse!(result)
 
     return result
 end
 
-function expansion(t::Term, order::MonomialOrder)
-    return expansion(polynomialtype(typeof(t))(t), order)
+function expansion(t::Term, order::MonomialOrder; kwds...)
+    return expansion(polynomialtype(typeof(t))(t), order; kwds...)
 end
 
-function expansion(a::AbstractMonomial, spec...)
-    M, C = expansiontypes(typeof(a), spec...)
+function expansion(a::AbstractMonomial, order::MonomialOrder; kwds...)
+    M, C = expansiontypes(typeof(a), order; kwds...)
     c, m = _splitmonomial(C, M, a)
     return ((m, c),)
 end
