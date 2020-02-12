@@ -15,7 +15,6 @@ import Random: AbstractRNG, SamplerType
 import InPlace: @inplace, inclusiveinplace!, inplace!
 
 import ..Constants: Constant, One, MinusOne, Zero
-#import ..EntryPoints: polynomial_ring
 import ..Ideals: ring
 import ..Monomials: AbstractMonomial
 import ..NamedValues: type_with_named_values, knownvalue, knownnames, knownvalues
@@ -25,7 +24,7 @@ import ..QuotientRings: QuotientRing, monomial_basis
 import ..QuotientRings: _ideal
 import ..Terms: coefficient
 import PolynomialRings: allvariablesymbols, fraction_field, basering
-import PolynomialRings: integers, generators
+import PolynomialRings: integers, generators, polynomialtype, generators
 
 # -----------------------------------------------------------------------------
 #
@@ -458,7 +457,8 @@ end
 
 function show(io::IO, x::NumberField)
     # TODO: use an expression in the quotient ring, instead.
-    _, (α,) = polynomial_ring(:α, basering = basefield(x))
+    P = polynomialtype(namingscheme(:α), basefield(x))
+    α, = generators(P)
     xx = sum(x.nums[n] // x.denom * α^(n-1) for n in 1:degree(typeof(x)))
     show(io, xx)
 end
