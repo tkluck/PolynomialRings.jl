@@ -20,7 +20,7 @@ import ..NamingSchemes: NestedNamingScheme, EmptyNestedNamingScheme
 import ..NamingSchemes: namingscheme, variablesymbols, num_variables
 import ..Polynomials: Polynomial
 import ..Terms: Term
-import ..Util: showsingleton
+import ..Util: showsingleton, isdisjoint
 import PolynomialRings: deg, leading_monomial, to_dense_monomials, monomialorder
 
 

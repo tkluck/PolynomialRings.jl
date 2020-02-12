@@ -12,9 +12,9 @@ import ..AbstractMonomials: AbstractMonomial
 import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
 import ..MonomialOrderings: monomialorderkey
 #import ..Monomials.IndexedMonomials: IndexedMonomial
-import ..NamingSchemes: Named, Numbered, NamingScheme, InfiniteScheme, nestednamingscheme, isdisjoint, isvalid
+import ..NamingSchemes: Named, Numbered, NamingScheme, InfiniteScheme, nestednamingscheme, isvalid
 import ..Terms: Term, monomial, coefficient
-import ..Util: @assertvalid, _debug_isvalid
+import ..Util: @assertvalid, _debug_isvalid, isdisjoint
 import PolynomialRings: generators, max_variable_index, basering, monomialtype
 import PolynomialRings: leading_coefficient, leading_monomial
 import PolynomialRings: leading_term, termtype, monomialorder, nzterms, exptype, namingscheme, expansion
