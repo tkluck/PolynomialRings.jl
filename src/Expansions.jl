@@ -112,6 +112,34 @@ function _splitmonomial(M1::Type{One}, M2, m)
     return (One(), convert(M2, m))
 end
 
+keytype(::Type{Sig{S,T}}) where {S, T} = S
+valtype(::Type{Sig{S,T}}) where {S, T} = T
+
+leaf(s) = s
+leaf(s::Sig) = leaf(s.second)
+mapleaf(f, s) = f(s)
+mapleaf(f, s::Sig) = Sig(s.first => mapleaf(f, s.second))
+
+createitem(T::Type,                item, a) = convert(T, item)
+createitem(T::Type{<:Term},          item, a) = Term(monomial(leaf(item)), createitem(basering(T), mapleaf(coefficient, item), a))
+
+createitem(T::Type{<:Sig},           item::Sig, a) = Sig(item.first => createitem(valtype(T), item.second, a[item.first]))
+createitem(T::Type{<:AbstractArray}, item::Sig, a) = begin
+    res = T <: AbstractSparseArray ?
+          spzeros(eltype(T), size(a)...) :
+          zeros(eltype(T), size(a)...)
+    res[item.first] = createitem(eltype(T), item.second, a[item.first])
+    res
+end
+
+additem!(dest, src) = dest += src
+additem!(dest::Term, src::Term) = begin
+    @assert monomial(dest) == monomial(src)
+    return Term(monomial(dest), coefficient(dest) + coefficient(src))
+end
+additem!(dest,      src::Sig) = (dest[src.first] = additem!(dest[src.first], src.second); dest)
+additem!(dest::Sig, src::Sig) = Sig(dest.first => additem!(dest.second, src.second))
+
 zerocoeff(m::Pair,    C::Type{<:AbstractArray}, a) = zerocoeff(m.second, C, a[m.first])
 zerocoeff(m,          C,                        a) = zero(C)
 zerocoeff(m,          C::Type{<:AbstractArray}, a) = [zerocoeff(m, eltype(C), ai) for ai in a]
@@ -123,57 +151,29 @@ function zerocoeff(m, C::Type{<:AbstractSparseArray}, a)
     return res
 end
 
-keytype(::Type{Sig{S,T}}) where {S, T} = S
-valtype(::Type{Sig{S,T}}) where {S, T} = T
-
-splitkeyorders(::Type{<:Term{M}}, item::Term{M}) where M = item
-splitkeyorders(::Type{S}, item::S) where S <: Sig = item, One()
-splitkeyorders(M, item::Sig) = begin
-    m, c = splitkeyorders(M, item.second)
-    return m, Sig(item.first => c)
-end
-splitkeyorders(::Type{M}, item::Sig{M}) where M = begin
-    return item.first, item.second
-end
-splitkeyorders(M::Type{<:Sig}, item::Sig) = begin
-    m, c = splitkeyorders(valtype(M), item.second)
-    return Sig(item.first => m), c
-end
-
-# TODO: implement + replace by a += ::Sig directly; also in use in M4GB
-reconstructone!(a, val) = @inplace a += val
-reconstructone!(a, val::Sig) = (a[val.first] = reconstructone!(a[val.first], val.second); a)
-
 function reconstruct!(dest, p, deconstructed, order)
     T = expansiontype(typeof(p), order)
     C = basering(T)
     isempty(deconstructed) && return dest
 
-    key(item) = splitkeyorders(T, item)[1]
-    sort!(deconstructed, lt=(a, b) -> Base.Order.lt(order, key(a), key(b)))
-    #@info "deconstructed" deconstructed keys=map(i -> splitkeyorders(T, i), deconstructed)
+    sort!(deconstructed, order=order)
+    #@info "deconstructed" T deconstructed keys=map(i -> splitkeyorders(T, i), deconstructed) created=map(i -> createitem(T, i, p), deconstructed)
 
-    if order isa KeyOrder
-        return copy!(dest, deconstructed)
-    end
-
-    curitem = popfirst!(deconstructed)
-    curm, curc = splitkeyorders(T, curitem)
-    coeff = zerocoeff(curm, C, p)
-    coeff = reconstructone!(coeff, curc)
-
+    cur = popfirst!(deconstructed)
+    curitem = createitem(T, cur, p)::T
+    #@info "first step" cur curitem
     while !isempty(deconstructed)
-        curitem = popfirst!(deconstructed)
-        nextm, curc = splitkeyorders(T, curitem)
-        if curm != nextm
-            #@info "push" curm coeff typeof(curm) typeof(coeff)
-            push!(dest, _oftermtype(curm, coeff))
-            curm = nextm
-            coeff = zerocoeff(curm, C, p)
+        nxt = popfirst!(deconstructed)
+        nxtitem = createitem(T, nxt, p)::T
+        if Base.Order.lt(order, cur, nxt)
+            push!(dest, curitem)
+            cur, curitem = nxt, nxtitem
+        else
+            #@info "update" curitem nxtitem
+            curitem = additem!(curitem, nxtitem)::T
         end
-        coeff = reconstructone!(coeff, curc)
     end
-    push!(dest, _oftermtype(curm, coeff))
+    push!(dest, curitem)
     return dest
 end
 
@@ -194,7 +194,7 @@ end
 deconstruct(M, t::Term) = begin
     m1, c1 = deconstructmonomial(M, monomial(t))
     # TODO: how to handle coefficients of array type?
-    return (_oftermtype(m1 * monomial(c), c1 * coefficient(c)) for c in deconstruct(M, coefficient(t)))
+    return (_oftermtype(m1 * monomial(c), _ofpolynomialtype(c1, coefficient(c))) for c in deconstruct(M, coefficient(t)))
 end
 deconstruct(M, p::Polynomial) = (
     item for t in expansion(p)
