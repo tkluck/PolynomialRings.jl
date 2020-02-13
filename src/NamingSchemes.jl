@@ -253,11 +253,14 @@ to_dense_monomials(scheme::InfiniteScheme, s::NestedNamingScheme, max_variable_i
 end
 
 @generated function promote_rule(::Type{N1}, ::Type{N2}) where {N1 <: Numbered{Name}, N2 <: Numbered{Name}} where Name
-    max = max(num_variables(N1), num_variables(N2))
-    return Numbered{Name, max}
+    N = max(num_variables(N1.instance), num_variables(N2.instance))
+    return Numbered{Name, N}
 end
 
-promote_type(args::NamingScheme...) = promote_type(typeof.(args)...)()
+function promote_type(args::NamingScheme...)
+    T = promote_type(typeof.(args)...)
+    return isconcretetype(T) ? T.instance : Any
+end
 
 # -----------------------------------------------------------------------------
 #

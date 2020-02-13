@@ -106,13 +106,15 @@ using PolynomialRings: to_dense_monomials
         @test to_dense_monomials(@namingscheme(c[]), @nestednamingscheme(x, c[]), 20) == @nestednamingscheme(x, c[1:20])
     end
 
-    #=
     @testset "Promotions" begin
         @test promote_type(@namingscheme(x), @namingscheme(x)) == @namingscheme(x)
         @test promote_type(@namingscheme(x), @namingscheme(y)) == @namingscheme((x,y))
+        @test promote_type(@namingscheme(c[]), @namingscheme(c[])) == @namingscheme(c[])
+        @test promote_type(@namingscheme(c[]), @namingscheme(c[1:20])) == @namingscheme(c[])
+        @test promote_type(@namingscheme(c[1:20]), @namingscheme(c[1:20])) == @namingscheme(c[1:20])
         @test promote_type(@namingscheme(x), @namingscheme(x[])) == Any
         @test promote_type(@namingscheme(x), @namingscheme(c[])) == Any
-
+    #=
         @test promote_type(@nestednamingscheme(x), @nestednamingscheme(x)) == @nestednamingscheme(x)
         @test promote_type(@nestednamingscheme(x), @nestednamingscheme(y)) == @nestednamingscheme((x,y))
         @test promote_type(@nestednamingscheme(x), @nestednamingscheme(x[])) == Any
@@ -128,8 +130,8 @@ using PolynomialRings: to_dense_monomials
 
         @test promote_type(@nestednamingscheme(c[],x), @nestednamingscheme(x,c[])) == @nestednamingscheme(c[],x)
         @test promote_type(@nestednamingscheme(c[]), @nestednamingscheme(d[],c[])) == @nestednamingscheme(d[],c[])
-    end
     =#
+    end
 
     @testset "Display" begin
         @test repr(@namingscheme(x)) == "@namingscheme(x)"
