@@ -158,7 +158,7 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}, ::Val{with_tr
 
         if (lmv = maybe_lm(v, order)) |> isnothing
             newh = T
-            push!(H[newh.i], newh.m)
+            push!(H[newh.first], newh.second)
             filter!(JP) do key_value
                 sig, jp = key_value
                 T2, v2 = jp
@@ -177,7 +177,7 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}, ::Val{with_tr
                         rhs = lmj*T
                         if lhs != rhs
                             newh = max(order, lhs, rhs)
-                            push!(H[newh.i], newh.m)
+                            push!(H[newh.first], newh.second)
                         end
                     end
                 end
@@ -201,8 +201,8 @@ function gwv(order::MonomialOrder, polynomials::AbstractVector{M}, ::Val{with_tr
                             Jsig = lhs
                             Jpair = (t1*T, t1*v)
                         end
-                        if !any_divisor(Jsig.m, namingscheme(order)) do d
-                            d in H[Jsig.i]
+                        if !any_divisor(Jsig.second, namingscheme(order)) do d
+                            d in H[Jsig.first]
                         end
                             # (storing only one J-pair for each distinct signature
                             # T , the one with v-part minimal)

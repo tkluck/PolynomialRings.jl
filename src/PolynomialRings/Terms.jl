@@ -4,6 +4,7 @@ import Base: *, ^, +, -, one, ==, iszero, zero, diff
 import Base: hash, exp
 
 import ..AbstractMonomials: AbstractMonomial
+import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, monomialorderkey
 import ..NamingSchemes: NamingScheme, InfiniteScheme, Variable
 import ..Util: lazymap
@@ -73,7 +74,11 @@ zero(t::T) where T <: Term = zero(typeof(t))
 monomial(a::Term) = a.m
 coefficient(a::Term) = a.c
 
-monomialorderkey(order, a::Term) = (monomialorder(a) == order || error("Not implemented!"); monomial(a))
+monomial(a) = One()
+coefficient(a) = a
+
+# FIXME: this neglects the coefficient!
+monomialorderkey(order, a::Term) = monomial(a)
 
 hash(a::Term, h::UInt) = hash(a.m, hash(a.c, h))
 
@@ -123,10 +128,13 @@ end
 
 lcm_degree(a::T, b::T) where T<:Term = lcm_degree(monomial(a), monomial(b))
 
-Base.Order.lt(o::MonomialOrder, a::T,b::T) where T <: Term = Base.Order.lt(o, monomial(a), monomial(b))
-
 Base.deepcopy(t::Term) = Term(deepcopy(monomial(t)), deepcopy(coefficient(t)))
 
 exp(T::Type{<:Term}, exps) = T(exp(monomialtype(T), exps), one(basering(T)))
+
+
+Base.convert(T::Type{<:Term}, t::Term) = T(convert(monomialtype(T), monomial(t)), convert(basering(T), coefficient(t)))
+
+==(a::Term, b::Term) = monomial(a) == monomial(b) && coefficient(a) == coefficient(b)
 
 end

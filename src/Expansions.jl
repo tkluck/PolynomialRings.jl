@@ -14,11 +14,12 @@ import ..MonomialOrderings: monomialorderkeytype, monomialordereltype
 import ..NamingSchemes: Named, Numbered, NamingScheme, remove_variables
 import ..NamingSchemes: NamedVariable
 import ..Polynomials: Polynomial, monomialtype, monomialorder, SparsePolynomial, nzterms
+import ..Signatures: Sig
 import ..StandardMonomialOrderings: MonomialOrdering, LexCombinationOrder, KeyOrder
 import ..StandardMonomialOrderings: maybeunwrap
 import ..Terms: Term, monomial, coefficient
 import ..Util: @assertvalid, nzpairs
-import PolynomialRings: deg, generators, max_variable_index
+import PolynomialRings: deg, generators, max_variable_index, basering
 import PolynomialRings: namingscheme, variablesymbols, expansion, expand, polynomialtype
 
 # -----------------------------------------------------------------------------
@@ -35,7 +36,7 @@ const OtherLexCombinationOrder = LexCombinationOrder{<:Tuple}
 withkeys(o, P, M) = M
 withkeys(o::EmptyLexCombinationOrder, P, M) = M
 withkeys(o::OtherLexCombinationOrder, P, M) = withkeys(Base.tail(o), P, M)
-withkeys(o::KeyLexCombinationOrder, P, M) = Pair{
+withkeys(o::KeyLexCombinationOrder, P, M) = Sig{
     monomialorderkeytype(P),
     withkeys(Base.tail(o), monomialordereltype(P), M),
 }
@@ -51,20 +52,20 @@ removenesting(o::EmptyLexCombinationOrder, C) = C
 removenesting(o::OtherLexCombinationOrder, C) = removenesting(Base.tail(o), C)
 removenesting(o::KeyLexCombinationOrder, C) = removenesting(Base.tail(o), monomialordereltype(C))
 
-function expansiontypes(P, spec...)
+function expansiontype(P, spec...)
     order = monomialorder(spec...)
     if order isa KeyOrder
-        return monomialorderkeytype(P), monomialordereltype(P)
+        return Sig{monomialorderkeytype(P), monomialordereltype(P)}
     else
         C = remove_variables(P, namingscheme(order))
         M = monomialtype(atomicorder(order), exptype(P, namingscheme(order)))
-        KeyedM = withkeys(order, P, M)
         UnnestedC = removenesting(order, C)
-        return KeyedM, UnnestedC
+        KeyedM = withkeys(order, P, Term{M, UnnestedC})
+        return KeyedM
     end
 end
 
-_coefftype(P, spec...) = expansiontypes(P, spec...)[2]
+_coefftype(P, spec...) = basering(expansiontype(P, spec...))
 
 """
     expansion(f, symbol, [symbol...])
@@ -95,7 +96,7 @@ julia> collect(expansion(x^3 + y^2, :x, :y))
 """
 function expansion end
 
-expansion(p::Number, spec...) = ((one(monomialtype(spec...)), p),)
+expansion(p::Number, spec...) = (Term(one(monomialtype(spec...)), p),)
 
 function _splitmonomial(M1, M2, m)
     m1 = exp(M1, exponents(m, namingscheme(M1)))
@@ -122,87 +123,105 @@ function zerocoeff(m, C::Type{<:AbstractSparseArray}, a)
     return res
 end
 
-keytype(::Type{Pair{S,T}}) where {S, T} = S
-valtype(::Type{Pair{S,T}}) where {S, T} = T
+keytype(::Type{Sig{S,T}}) where {S, T} = S
+valtype(::Type{Sig{S,T}}) where {S, T} = T
 
-splitkeyorders(::Type{M}, item::Pair{M}) where M = item.first, nothing, item.second
-
-function splitkeyorders(M::Type, item::Pair)
-    m1, m2, val = splitkeyorders(M, item.second)
-    return m1, item.first => m2, val
+splitkeyorders(::Type{<:Term{M}}, item::Term{M}) where M = item
+splitkeyorders(::Type{S}, item::S) where S <: Sig = item, One()
+splitkeyorders(M, item::Sig) = begin
+    m, c = splitkeyorders(M, item.second)
+    return m, Sig(item.first => c)
+end
+splitkeyorders(::Type{M}, item::Sig{M}) where M = begin
+    return item.first, item.second
+end
+splitkeyorders(M::Type{<:Sig}, item::Sig) = begin
+    m, c = splitkeyorders(valtype(M), item.second)
+    return Sig(item.first => m), c
 end
 
-function splitkeyorders(M::Type{<:Pair}, item::Pair)
-    m1, m2, val = splitkeyorders(valtype(M), item.second)
-    return item.first => m1, m2, val
-end
+# TODO: implement + replace by a += ::Sig directly; also in use in M4GB
+reconstructone!(a, val) = @inplace a += val
+reconstructone!(a, val::Sig) = (a[val.first] = reconstructone!(a[val.first], val.second); a)
 
-reconstructone!(a, key::Nothing, val) = @inplace a += val
-reconstructone!(a, key::Pair, val) = (a[key.first] = reconstructone!(a[key.first], key.second, val); a)
-
-function reconstruct!(dest::Vector{Tuple{M, C}}, p, deconstructed, order) where {M, C}
+function reconstruct!(dest, p, deconstructed, order)
+    T = expansiontype(typeof(p), order)
+    C = basering(T)
     isempty(deconstructed) && return dest
 
-    key(item) = begin
-        m1, m2, val = splitkeyorders(M, item)
-        # FIXME: this smells. Can I re-organize things
-        # so this is not needed?
-        if order isa KeyOrder
-            m1 => nothing
-        else
-            m1
-        end
+    key(item) = splitkeyorders(T, item)[1]
+    sort!(deconstructed, lt=(a, b) -> Base.Order.lt(order, key(a), key(b)))
+    #@info "deconstructed" deconstructed keys=map(i -> splitkeyorders(T, i), deconstructed)
+
+    if order isa KeyOrder
+        return copy!(dest, deconstructed)
     end
 
-    sort!(deconstructed, lt=(a, b) -> Base.Order.lt(order, key(a), key(b)))
-
     curitem = popfirst!(deconstructed)
-    curm1, curm2, curval = splitkeyorders(M, curitem)
-    curc = zerocoeff(curm1, C, p)
-    curc = reconstructone!(curc, curm2, curval)
+    curm, curc = splitkeyorders(T, curitem)
+    coeff = zerocoeff(curm, C, p)
+    coeff = reconstructone!(coeff, curc)
 
     while !isempty(deconstructed)
         curitem = popfirst!(deconstructed)
-        nextm1, curm2, curval = splitkeyorders(M, curitem)
-        if curm1 != nextm1
-            push!(dest, (curm1, curc))
-            curm1 = nextm1
-            curc = zerocoeff(curm1, C, p)
+        nextm, curc = splitkeyorders(T, curitem)
+        if curm != nextm
+            #@info "push" curm coeff typeof(curm) typeof(coeff)
+            push!(dest, _oftermtype(curm, coeff))
+            curm = nextm
+            coeff = zerocoeff(curm, C, p)
         end
-        curc = reconstructone!(curc, curm2, curval)
+        coeff = reconstructone!(coeff, curc)
     end
-    push!(dest, (curm1, curc))
+    push!(dest, _oftermtype(curm, coeff))
     return dest
 end
 
+_oftermtype(t::Term{M, C}, c::C) where {M, C} = Term(monomial(t), coefficient(t) * c)
+_oftermtype(m::AbstractMonomial, c) = _oftermtype(Term(m, _ofpolynomialtype(c)))
+_oftermtype(m::Sig, c) = Sig(m.first => _oftermtype(m.second, c))
+_oftermtype(t::Term) = t
+_ofpolynomialtype(c) = c
 _ofpolynomialtype(m, c) = m * c
 _ofpolynomialtype(m::AbstractMonomial, c::AbstractArray) = m .* c
 _ofpolynomialtype(m::AbstractMonomial, c) = _ofpolynomialtype(Term(m, c))
 _ofpolynomialtype(t::Term{M,C}) where {M,C} = @assertvalid SparsePolynomial(M[monomial(t)], C[coefficient(t)])
 
-deconstructmonomial(innerorder, m::AbstractMonomial) = begin
-    M1 = monomialtype(innerorder, exptype(typeof(m), namingscheme(innerorder)))
-    M2 = remove_variables(typeof(m), namingscheme(innerorder))
+deconstructmonomial(M1, m::AbstractMonomial) = begin
+    M2 = remove_variables(typeof(m), namingscheme(M1))
     return _splitmonomial(M1, M2, m)
 end
-deconstruct(innerorder, t::Term) = begin
-    m1, c1 = deconstructmonomial(innerorder, monomial(t))
-    return ((m1 * m2 => _ofpolynomialtype(c1, c2)) for (m2, c2) in deconstruct(innerorder, coefficient(t)))
+deconstruct(M, t::Term) = begin
+    m1, c1 = deconstructmonomial(M, monomial(t))
+    # TODO: how to handle coefficients of array type?
+    return (_oftermtype(m1 * monomial(c), c1 * coefficient(c)) for c in deconstruct(M, coefficient(t)))
 end
-deconstruct(innerorder, p::Polynomial) = (item for t in nzterms(p, order=monomialorder(p)) for item in deconstruct(innerorder, t))
-deconstruct(innerorder, a) = ((one(monomialtype(innerorder)), a),)
-deconstruct(innerorder, a::Union{<:Tuple, <:AbstractArray, <:AbstractDict}) = (
-    m isa One ? (i => c) : (i => m => c)
-    for (i, ai) in pairs(a) for (m, c) in deconstruct(innerorder, ai)
+deconstruct(M, p::Polynomial) = (
+    item for t in expansion(p)
+    for item in deconstruct(M, t)
+)
+deconstruct(M::Type{One}, a) = (a,)
+deconstruct(M::Type{One}, t::Term) = (t,)
+deconstruct(M::Type{One}, p::Polynomial) = (p,)
+deconstruct(M, a) = (Term(one(M), a),)
+deconstruct(M, a::Union{<:Tuple, <:AbstractArray, <:AbstractDict}) = (
+    Sig(i => t)
+    for (i, ai) in pairs(a) for t in deconstruct(M, ai)
+)
+deconstruct(M::Type{One}, a::Union{<:Tuple, <:AbstractArray, <:AbstractDict}) = (
+    Sig(i => t)
+    for (i, ai) in pairs(a) for t in deconstruct(M, ai)
 )
 
 expansion(p, spec...; kwds...) = expansion(p, monomialorder(spec...); kwds...)
 
 function expansion(p, order::MonomialOrder; rev=false, tail=false)
-    M, C = expansiontypes(typeof(p), order)
-    result = Tuple{M, C}[]
+    T = expansiontype(typeof(p), order)
+    result = T[]
+    innerorder = atomicorder(order)
+    M1 = monomialtype(innerorder, exptype(typeof(p), namingscheme(innerorder)))
 
-    deconstructed = collect(deconstruct(atomicorder(order), p))
+    deconstructed = collect(deconstruct(M1, p))
     reconstruct!(result, p, deconstructed, order)
     # The tail is everything but the leading monomial, which is in the end.
     # So confusingly, if `tail` is true we need to remove the _last_ element.
@@ -216,10 +235,8 @@ function expansion(t::Term, order::MonomialOrder; kwds...)
     return expansion(polynomialtype(typeof(t))(t), order; kwds...)
 end
 
-function expansion(a::AbstractMonomial, order::MonomialOrder; kwds...)
-    M, C = expansiontypes(typeof(a), order; kwds...)
-    c, m = _splitmonomial(C, M, a)
-    return ((m, c),)
+function expansion(m::AbstractMonomial, order::MonomialOrder; kwds...)
+    return expansion(polynomialtype(typeof(m))(m), order; kwds...)
 end
 
 # -----------------------------------------------------------------------------
@@ -259,7 +276,7 @@ julia> collect(expandcoefficients(x^3 + y^2, :x, :y))
 `@expandcoefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
 """
 function expandcoefficients(p, spec...)
-    return [c for (_,c) in expansion(p, spec...)]
+    return [coefficient(t) for t in expansion(p, spec...)]
 end
 
 """
@@ -291,7 +308,7 @@ julia> collect(expansion_terms(x^3 + y^2 + 1, :x, :y))
 function expansion_terms(p, spec...)
     return [
         _ofpolynomialtype(m, c)
-        for (m,c) in expansion(p, spec...)
+        for (m, c) in expansion(p, spec...)
     ]
 end
 

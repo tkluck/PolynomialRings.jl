@@ -89,7 +89,7 @@ is_sig_redundant(G, i::Integer; order) = is_sig_redundant(G[i], G[[1:i-1; i+1:en
 function is_sig_redundant(f, G; order)
     @withmonomialorder order
     (σ, f) = f
-    σ.i != 1 && return false
+    σ.first != 1 && return false
     length(G) == 0 && return false
     iszero(f) && return false
     lm_f = leading_monomial(f)
@@ -209,7 +209,7 @@ function gröbner_basis_sig_incremental(alg::Backend, polynomials::AbstractVecto
             elseif !is_sig_redundant((σ, r), G, order=order)
                 for (i,(τ,g)) in enumerate(G)
                     iszero(g) && continue
-                    τ.i == 1 || continue
+                    τ.first == 1 || continue
                     is_sig_redundant(G, i, order=order) && continue
                     m_r, m_g = lcm_multipliers(leading_monomial(r), leading_monomial(g))
                     if m_r * σ != m_g * τ

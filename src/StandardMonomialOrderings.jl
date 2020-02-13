@@ -19,6 +19,7 @@ import ..NamingSchemes: Named, Numbered, NamingScheme, InfiniteScheme, EmptyNami
 import ..NamingSchemes: NestedNamingScheme, EmptyNestedNamingScheme
 import ..NamingSchemes: namingscheme, variablesymbols, num_variables, showvars
 import ..Polynomials: Polynomial
+import ..Signatures: Sig
 import ..Terms: Term
 import ..Util: showsingleton, isdisjoint
 import PolynomialRings: deg, leading_monomial, to_dense_monomials, monomialorder
@@ -170,9 +171,13 @@ KeyOrder() = KeyOrder{typeof(Base.Order.Reverse)}(Base.Order.Reverse)
 
 monomialorderkeytype(::Pair{T, S}) where {T, S} = T
 monomialordereltype(::Pair{T, S})  where {T, S} = S
+monomialorderkeytype(::Sig{T, S}) where {T, S} = T
+monomialordereltype(::Sig{T, S})  where {T, S} = S
 
 monomialorderkey(order, a::Pair) = monomialorderkey(order, a.second)
 monomialorderkeypair(order, a::Pair) = a
+monomialorderkey(order, a::Sig) = monomialorderkey(order, a.second)
+monomialorderkeypair(order, a::Sig) = a
 
 maxnonzero(::typeof(Base.Order.Forward), a) = findlast(!iszero, a)
 maxnonzero(::typeof(Base.Order.Reverse), a) = findfirst(!iszero, a)

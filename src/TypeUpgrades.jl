@@ -4,12 +4,12 @@ import Base: @pure
 import SparseArrays: SparseVector
 
 import ..AbstractMonomials: AbstractMonomial
-import ..Constants: One
+import ..Constants: One, Zero, MinusOne, Constant
 import ..MonomialOrderings: MonomialOrder
 import ..Monomials.TupleMonomials: TupleMonomial
 import ..Monomials.VectorMonomials: VectorMonomial
 import ..NamingSchemes: NamingScheme
-import ..Polynomials: SparsePolynomial
+import ..Polynomials: SparsePolynomial, Polynomial
 import ..StandardMonomialOrderings: MonomialOrdering
 import ..Terms: Term
 import PolynomialRings: namingscheme, monomialorder, monomialtype, termtype, polynomialtype, basering
@@ -66,5 +66,39 @@ end
 @pure function polynomialtype(T::Type{<:Term}; sparse=true)
     return polynomialtype(monomialtype(T), basering(T); sparse=sparse)
 end
+
+for N = [Number, AbstractMonomial, Term, Polynomial]
+    @eval begin
+        Base.promote_rule(::Type{T}, ::Type{C}) where {T<:$N, C <: Constant} = T
+
+        Base.convert(::Type{T}, ::One)      where T<:$N = one(T)
+        Base.convert(::Type{T}, ::Zero)     where T<:$N = zero(T)
+        Base.convert(::Type{T}, ::MinusOne) where T<:$N = -one(T)
+
+        Base.convert(::Type{Union{T, One}}, ::One)           where T<:$N = One()
+        Base.convert(::Type{Union{T, Zero}}, ::Zero)         where T<:$N = Zero()
+        Base.convert(::Type{Union{T, MinusOne}}, ::MinusOne) where T<:$N = MinusOne()
+
+        # fix method ambiguities
+        Base.:*(x::$N, ::One) = deepcopy(x)
+        Base.:*(::One, x::$N) = deepcopy(x)
+        Base.:*(x::$N, ::MinusOne) = -x
+        Base.:*(::MinusOne, x::$N) = -x
+
+        Base.:+(x::$N, ::Zero) = deepcopy(x)
+        Base.:-(x::$N, ::Zero) = deepcopy(x)
+        Base.:*(x::$N, ::Zero) = zero(x)
+        Base.:+(::Zero, x::$N) = deepcopy(x)
+        Base.:-(::Zero, x::$N) = -x
+        Base.:*(::Zero, x::$N) = zero(x)
+    end
+end
+
+for C in [One, Zero, MinusOne]
+    @eval begin
+        Base.convert(::Type{$C}, ::$C) = $C()
+    end
+end
+
 
 end # module

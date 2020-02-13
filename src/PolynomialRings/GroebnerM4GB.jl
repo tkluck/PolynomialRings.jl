@@ -10,13 +10,15 @@ import InPlace: @inplace
 import ..Backends.Gröbner: M4GB, GWV
 import ..Constants: One, Zero
 #import ..IndexedMonomials: ByIndex, IndexedMonomial
-import ..Modules: AbstractModuleElement, modulebasering, Signature, leading_row
+import ..Expansions: expansion
+import ..Modules: AbstractModuleElement, modulebasering, leading_row
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
 import ..Monomials: AbstractMonomial
 import ..Monomials.MonomialIterators: monomialiter
 import ..NamingSchemes: namingscheme, num_variables
 import ..Operators: integral_fraction
 import ..Polynomials: Polynomial, nzterms, nztailterms, nzrevterms, leading_monomial
+import ..Signatures: Sig
 import ..Terms: monomial, coefficient, Term
 import ..Util: @showprogress, interval, last_, chain, nzpairs
 import PolynomialRings: gröbner_basis, monomialtype, base_extend
@@ -24,6 +26,8 @@ import PolynomialRings: maybe_div, divides, termtype, lcm_multipliers, mutuallyp
 import PolynomialRings: lcm_degree
 
 const lr = leading_row
+
+lr(sig::Sig) = sig.first
 
 mutable struct LType{R, LM}
     multiples  :: Vector{LM}
@@ -154,7 +158,7 @@ function mulfullreduce!(L, M, t, f, order)
     @withmonomialorder order
 
     h = zero(f)
-    for s in nzterms(f, order=order)
+    for s in expansion(f, order)
         r = t * s
         g = getreductor!(M, L, monomial(r), order)
         if g != nothing
@@ -179,8 +183,8 @@ Something(::Type{Union{Nothing, T}}) where T = T
 function materialize_multiples!(M, fₗₘ; order)
     @withmonomialorder order
 
-    MonomialType = fₗₘ isa Signature ?
-                   typeof(fₗₘ.m) :
+    MonomialType = fₗₘ isa Sig ?
+                   typeof(fₗₘ.second) :
                    typeof(fₗₘ)
 
     Mᵣ = M[lr(fₗₘ)]
@@ -203,17 +207,17 @@ function materialize_multiples!(M, fₗₘ; order)
 end
 
 _linearly_dependent_monomials(m::AbstractMonomial) = monomialiter(typeof(m))
-_linearly_dependent_monomials(s::Signature) = (
-    Signature(s.i, m)
-    for m in monomialiter(typeof(s.m))
+_linearly_dependent_monomials(s::Sig) = (
+    Sig(s.first, m)
+    for m in monomialiter(typeof(s.second))
 )
 
 _enumerate_lms_of_rows(order, f::Polynomial) = (leading_monomial(f, order=order),)
 _enumerate_lms_of_rows(order, f::AbstractArray{<:Polynomial}) = (
-    Signature(i, leading_monomial(f_i, order=order))
+    Sig(i, leading_monomial(f_i, order=order))
     for (i, f_i) in nzpairs(f)
 )
-_enumerate_lms_of_rows(order, f::Signature) = (f,)
+_enumerate_lms_of_rows(order, f::Sig) = (f,)
 _enumerate_lms_of_rows(order, f::AbstractMonomial) = (f,)
 
 function ensure_reducers_materialized!(M, L, factor, f, order)
@@ -256,7 +260,7 @@ end
 function getreductor!(M, L, gₗₘ, order)
     @withmonomialorder order
 
-    if gₗₘ isa Signature
+    if gₗₘ isa Sig
         # For modules, calling this once every loop is not good
         # enough.
         ensure_reducers_materialized!(M, L, One(), gₗₘ, order)

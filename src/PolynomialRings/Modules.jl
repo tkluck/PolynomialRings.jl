@@ -17,6 +17,7 @@ import ..Operators: RedType, Lead, Full, Tail
 import ..Operators: one_step_div!, one_step_xdiv!, content, integral_fraction
 import ..Polynomials: Polynomial, monomialorder, basering, tail
 import ..Polynomials: nzterms, nzrevterms, nztailterms
+import ..Signatures: Sig
 import ..StandardMonomialOrderings: LexCombinationOrder, KeyOrder
 import ..Terms: Term
 import ..Terms: coefficient, monomial
@@ -54,51 +55,12 @@ base_extend(x::AbstractArray{P})            where P<:Polynomial         = map(ba
 content(x::AbstractArray{P}) where P<:Polynomial = gcd(map(content, x))
 content(x::AbstractSparseArray{P}) where P<:Polynomial = gcd(map(content, nonzeros(x)))
 
-# -----------------------------------------------------------------------------
-#
-# The signature of a module element is just its leading monomial. We represent
-# it by an index and the leading monomial at that index.
-# an array.
-#
-# -----------------------------------------------------------------------------
-struct Signature{M,I}
-    i::I
-    m::M
-end
-
-# TODO: Signature should keep a record of what KeyOrder the I type is ordered by
-monomialorderkey(order, s::Signature) = monomialorderkey(order, s.m)
-monomialorderkey(order::typeof(KeyOrder()), s::Signature) = s.i
-monomialorderkeypair(order, s::Signature) = (s.i, s.m)
-
-termtype(p::AbstractArray{<:Polynomial}) = Signature{termtype(eltype(p)), keytype(p)}
-termtype(P::Type{<:AbstractArray{<:Polynomial}}) = Signature{termtype(eltype(P)), keytype(P)}
-monomialtype(p::AbstractArray{<:Polynomial}) = Signature{monomialtype(eltype(p)), keytype(p)}
-monomialtype(p::Type{<:AbstractArray{<:Polynomial}}) = Signature{monomialtype(eltype(p)), keytype(p)}
+termtype(p::AbstractArray{<:Polynomial}) = Sig{keytype(p), termtype(eltype(p))}
+termtype(P::Type{<:AbstractArray{<:Polynomial}}) = Sig{keytype(P), termtype(eltype(P))}
+monomialtype(p::AbstractArray{<:Polynomial}) = Sig{keytype(p), monomialtype(eltype(p))}
+monomialtype(p::Type{<:AbstractArray{<:Polynomial}}) = Sig{keytype(p), monomialtype(eltype(p))}
 monomialorder(p::Type{<:AbstractArray{<:Polynomial}}) = LexCombinationOrder(KeyOrder(), monomialorder(eltype(p)))
 monomialorder(p::AbstractArray{<:Polynomial}) = monomialorder(typeof(p))
-
-leading_row(s::Signature) = s.i
-
-*(s::Signature,m::Union{AbstractMonomial,Term,Number})  = Signature(s.i, s.m * m)
-*(m::Union{AbstractMonomial,Term,Number}, s::Signature) = Signature(s.i, s.m * m)
-maybe_div(s::Signature, t::Signature)            = s.i == t.i ? maybe_div(s.m, t.m) : nothing
-divides(s::Signature, t::Signature)              = s.i == t.i && divides(s.m, t.m)
-mutuallyprime(s::Signature, t::Signature)        = s.i == t.i ? mutuallyprime(s.m, t.m) : nothing
-lcm_degree(s::Signature, t::Signature)           = s.i == t.i ? lcm_degree(s.m, t.m) : nothing
-lcm_multipliers(s::Signature, t::Signature)      = s.i == t.i ? lcm_multipliers(s.m, t.m) : nothing
-lcm(s::Signature, t::Signature)                  = s.i == t.i ? Signature(s.i, lcm(s.m, t.m)) : nothing
-deg(s::Signature, scheme)                        = deg(s.m, scheme)
-==(s::S, t::S) where S <: Signature = s.i == t.i && s.m == t.m
-iszero(s::Signature) = iszero(s.m)
-
-*(::One, s::Signature) = deepcopy(s)
-*(s::Signature, ::One) = deepcopy(s)
-
-coefficient(s::Signature{<:Term}) = coefficient(s.m)
-monomial(s::Signature{<:Term}) = Signature(s.i, monomial(s.m))
-
-hash(s::Signature, h::UInt) = hash(s.i, hash(s.m, h))
 
 leading_row(x::AbstractArray{<:Polynomial}) = findfirst(!iszero, x)
 
@@ -109,12 +71,12 @@ end
 
 function leading_term(x::AbstractArray{P}; order::MonomialOrder=monomialorder(x)) where P<:Polynomial
     ix = leading_row(x)
-    return Signature(ix, leading_term(x[ix], order=order))
+    return Sig(ix, leading_term(x[ix], order=order))
 end
 
 function leading_monomial(x::AbstractArray{P}; order::MonomialOrder=monomialorder(x)) where P<:Polynomial
     ix = leading_row(x)
-    return Signature(ix, leading_monomial(x[ix], order=order))
+    return Sig(ix, leading_monomial(x[ix], order=order))
 end
 
 function monomialorderkey(order, a::AbstractArray{<:Polynomial})
@@ -127,18 +89,6 @@ end
 
 leading_coefficient(x::AbstractArray{P}; order::MonomialOrder=monomialorder(x)) where P<:Polynomial = leading_coefficient(x[leading_row(x)], order=order)
 
-Base.get(a::AbstractArray{<:Polynomial}, s::Signature{<:AbstractMonomial}, default) = get(a[s.i], s.m, default)
-
-Base.getindex(a::AbstractArray{<:Polynomial}, s::Signature{<:AbstractMonomial}) = get(a, s, zero(basering(eltype(a))))
-
-function Base.get(a::SparseVector{<:Polynomial}, s::Signature{<:AbstractMonomial}, default)
-    ixrange = searchsorted(a.nzind, s.i)
-    if isempty(ixrange)
-        return default
-    else
-        return get(a.nzval[ixrange[1]], s.m, default)
-    end
-end
 
 function one_step_div!(a::A, b::A; order::MonomialOrder, redtype::RedType) where A<:AbstractArray{<:Polynomial}
     @withmonomialorder order
@@ -217,38 +167,11 @@ leading_row(x::Term) = 1
 # Work around sparse-dense multiplication in Base only working for eltype() <: Number
 mul!(A, B, C, α::Polynomial, β::Polynomial) = mul!(A, B, C, convert(basering(α),α), convert(basering(β), β))
 
-nzterms(x::AbstractArray{<:Polynomial}; order) = (
-    Signature(ix, t)
-    for (ix, x_i) in Iterators.reverse(nzpairs(x))
-    for t in nzterms(x_i, order=atomicorder(order))
-)
-
-nzrevterms(x::AbstractArray{<:Polynomial}; order) = (
-    Signature(ix, t)
-    for (ix, x_i) in nzpairs(x)
-    for t in nzrevterms(x_i, order=atomicorder(order))
-)
-
 function tail(x::AbstractArray{<:Polynomial}; order)
     res = deepcopy(x)
     ix = leading_row(x)
     res[ix] = tail(res[ix]; order=atomicorder(order))
     return res
-end
-
-function +(x::AbstractArray{<:Polynomial}, s::Signature)
-    res = deepcopy(x)
-    @inplace res[s.i] += s.m
-end
-
-function -(x::AbstractArray{<:Polynomial}, s::Signature)
-    res = deepcopy(x)
-    @inplace res[s.i] -= s.m
-end
-
-function inclusiveinplace!(op::Union{typeof(+), typeof(-)}, x::AbstractArray{<:Polynomial}, s::Signature)
-    x[s.i] = inclusiveinplace!(op, x[s.i], s.m)
-    x
 end
 
 """

@@ -123,7 +123,7 @@ function expansion(p::PolynomialBy{Order}, order::Order=monomialorder(p); rev=fa
     tail && (ending -= 1)
     rev && ((start, ending) = (ending, start))
     step = rev ? -1 : 1
-    return ((_monomialbyindex(p, ix), coefficients(p)[ix]) for ix in start:step:ending)
+    return (Term(_monomialbyindex(p, ix), coefficients(p)[ix]) for ix in start:step:ending)
 end
 
 struct NZTerms{P <: Polynomial}

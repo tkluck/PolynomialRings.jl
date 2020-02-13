@@ -1,5 +1,6 @@
 module PolynomialRings
 
+include("PolynomialRings/Constants.jl")
 include("PolynomialRings/Methods.jl")
 include("PolynomialRings/Util.jl")
 include("PolynomialRings/Backends.jl")
@@ -12,11 +13,13 @@ include("AbstractMonomials.jl")
 include("PolynomialRings/NamedValues.jl")
 include("PolynomialRings/Terms.jl")
 include("PolynomialRings/Polynomials.jl")
-include("PolynomialRings/Constants.jl")
+
+include("Signatures.jl")
 
 include("StandardMonomialOrderings.jl")
 include("Monomials.jl")
 include("Expansions.jl")
+
 
 include("PolynomialRings/Broadcast.jl")
 include("PolynomialRings/Operators.jl")
