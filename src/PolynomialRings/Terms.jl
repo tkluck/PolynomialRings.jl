@@ -43,8 +43,7 @@ end
 # De-construct through (m, c) = Term(...)
 #
 # -----------------------------------------------------------------------------
-Base.indexed_iterate(t::Term, i) = (monomial(t), nothing)
-Base.indexed_iterate(t::Term, i, state) = (i == 2 || throw(BoundsError()); (coefficient(t), nothing))
+Base.indexed_iterate(t::Term, i, state=1) = (getfield(t, i), i + 1)
 
 # -----------------------------------------------------------------------------
 #
