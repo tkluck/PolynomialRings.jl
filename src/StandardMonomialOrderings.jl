@@ -67,6 +67,11 @@ function promote_rule(::Type{M1}, ::Type{M2}) where {M1 <: MonomialOrdering, M2 
     end
 end
 
+function promote_type(orders::MonomialOrdering...)
+    O = promote_type(typeof.(orders)...)
+    return isconcretetype(O) ? O.instance : Any
+end
+
 # -----------------------------------------------------------------------------
 #
 # deg(rev)lex orders

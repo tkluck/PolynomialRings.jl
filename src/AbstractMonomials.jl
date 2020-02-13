@@ -282,6 +282,16 @@ function convert(::Type{M}, m::Symbol) where M <: NamedMonomial
     exp(M, sparsevec([ix], [1]))
 end
 
+function promote_rule(::Type{M1}, ::Type{M2}) where M1 <: AbstractMonomial where M2 <: AbstractMonomial
+    order = promote_type(monomialorder(M1), monomialorder(M2))
+    if order isa MonomialOrder
+        I = promote_type(exptype(M1), exptype(M2))
+        return monomialtype(order, I)
+    else
+        return Union{}
+    end
+end
+
 # -----------------------------------------------------------------------------
 #
 # Conversion from c[] to c[1:N]

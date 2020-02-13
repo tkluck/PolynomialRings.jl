@@ -141,17 +141,6 @@ function promote_canonical_type(T1::Type{<:Polynomial}, T2::Type)
     end
 end
 
-function promote_rule(::Type{M1}, ::Type{M2}) where M1 <: AbstractMonomial where M2 <: AbstractMonomial
-    O = promote_rule(typeof(monomialorder(M1)), typeof(monomialorder(M2)))
-    if O <: MonomialOrder
-        N = length(variablesymbols(O))
-        I = promote_type(exptype(M1), exptype(M2))
-        return TupleMonomial{N, I, O}
-    else
-        return Union{}
-    end
-end
-
 using PolynomialRings
 
 function convert(::Type{P1}, a::P2) where P1 <: Polynomial where P2 #<: Polynomial
