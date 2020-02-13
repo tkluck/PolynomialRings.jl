@@ -19,7 +19,7 @@ using PolynomialRings
         @test repr(T) == "@ring(ℤ[a,b,c])"
         @test repr(U) == "@ring(Int64[ε])"
 
-        @test repr(termtype(R)) == "(Term over Rational{BigInt} in x,y)"
+        @test repr(termtype(R)) == "(Term over Rational{BigInt} in @degrevlex(x > y))"
 
         # test that these do not throw an error
         @test repr(methods(^)) isa String

@@ -6,7 +6,7 @@ import ..AbstractMonomials: AbstractMonomial, exponentsnz
 import ..NamingSchemes: Named, Numbered, showvars
 import ..Polynomials: Polynomial, nzrevterms, basering
 import ..Terms: Term, coefficient, monomial
-import PolynomialRings: namingscheme
+import PolynomialRings: namingscheme, monomialorder
 
 # -----------------------------------------------------------------------------
 #
@@ -108,7 +108,7 @@ end
 
 function show(io::IO, t::Type{Term{M,C}}) where {M,C}
     if isconcretetype(t)
-        print(io, "(Term over $C in $(showvars(M)))")
+        print(io, "(Term over $C in $(monomialorder(t)))")
     else
         defaultshow(io, t)
     end
