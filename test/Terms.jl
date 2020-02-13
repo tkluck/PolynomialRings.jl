@@ -28,4 +28,9 @@ using PolynomialRings: termtype
     @testset "Arithmetic" begin
         # @test Term(@monomial(x), 3) * Term(@monomial(y), 4) == Term(@monomial(x*y), 12)
     end
+
+    @testset "Display" begin
+        @test repr(3@monomial(x)) == "3*x"
+        @test repr(Term(@monomial(x), [1 0; 0 3])) == "[1 0; 0 3]*x"
+    end
 end

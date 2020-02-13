@@ -34,14 +34,17 @@ function show(io::IO, m::AbstractMonomial)
     join(io, factors, "*")
 end
 
+# call isone on matrices/arrays
+isone_safe(x) = try isone(x); catch; false; end
+
 function show(io::IO, t::Term)
     coeff = coefficient(t)
     monom = monomial(t)
     sign = ""
     factors = String[]
-    if monom != one(monom) && coeff == -one(coeff) && coeff != one(coeff) # 1 == -1 in ℤ/2ℤ
+    if !isone(monom) && isone_safe(-coeff) && !isone_safe(coeff) # 1 == -1 in ℤ/2ℤ
         sign = "-"
-    elseif monom == one(monom) || coeff != one(coeff)
+    elseif isone(monom) || !isone_safe(coeff)
         coeff_repr = "$(coefficient(t))"
         if (occursin(" + ", coeff_repr) || occursin(" - ", coeff_repr)) && monomial(t) != one(monomial(t))
             push!(factors, "($coeff_repr)")
@@ -49,7 +52,7 @@ function show(io::IO, t::Term)
             push!(factors, coeff_repr)
         end
     end
-    if monom != one(monom)
+    if !isone(monom)
         push!(factors, "$monom")
     end
     print(io, sign)
