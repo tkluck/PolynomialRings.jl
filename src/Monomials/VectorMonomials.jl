@@ -61,7 +61,9 @@ end
 
 max_variable_index(scheme::InfiniteScheme{Name}, m::VectorMonomial) where Name = 0
 
-function exponents(m::VectorMonomial{<:SparseVector}, scheme::Numbered{Name, Inf}; max_variable_index=max_variable_index(scheme, m)) where Name
+function exponents(m::VectorMonomial{<:SparseVector, I, <:MonomialOrder{<:Numbered{Name}}},
+                   scheme::Numbered{Name, Inf};
+                   max_variable_index=max_variable_index(scheme, m)) where {I, Name}
     return SparseVector(max_variable_index, m.e.nzind, m.e.nzval)
 end
 

@@ -98,9 +98,8 @@ import PolynomialRings: maybe_div, lcm, gcd, divides, lcm_multipliers, deg
         @test convert(M3, @monomial(c[21])) isa M3
         @test_throws InexactError convert(M4, @monomial(c[21]))
 
-        # FIXME: promotion
-        #@test convert(M3, @monomial(c[1]*c[2])) == convert(M4, @monomial(c[1]*c[2]))
-        #@test convert(M3, @monomial(c[1])) * convert(M4, @monomial(c[1])) isa monomialtype(@namingscheme(c[]))
+        @test convert(M3, @monomial(c[1]*c[2])) == convert(M4, @monomial(c[1]*c[2]))
+        @test convert(M3, @monomial(c[1])) * convert(M4, @monomial(c[1])) isa monomialtype(@namingscheme(c[]))
     end
 
     @testset "To dense monomials" begin

@@ -4,9 +4,10 @@ import Base: exp, rand, ==
 
 import Random: AbstractRNG, SamplerType
 
-import ...AbstractMonomials: AbstractMonomial, MonomialIn, num_variables, maybe_div
+import ...AbstractMonomials: AbstractMonomial, MonomialIn
+import ...AbstractMonomials: num_variables, maybe_div, exponents
 import ...MonomialOrderings: MonomialOrder
-import ...NamingSchemes: NamingScheme, InfiniteScheme
+import ...NamingSchemes: NamingScheme, InfiniteScheme, Numbered
 import PolynomialRings: exptype, deg, max_variable_index, generators
 
 # -----------------------------------------------------------------------------
@@ -45,6 +46,16 @@ function max_variable_index(scheme::InfiniteScheme{Name},
 end
 
 max_variable_index(scheme::InfiniteScheme{Name}, m::TupleMonomial)  where Name = 0
+
+function exponents(m::TupleMonomial{N, I, <: MonomialOrder{<:Numbered{Name}}},
+                   scheme::InfiniteScheme{Name};
+                   max_variable_index=max_variable_index(scheme, m)) where {N, I, Name}
+    if max_variable_index < N
+        return m.e[1:max_variable_index]
+    else
+        return e
+    end
+end
 
 # -----------------------------------------------------------------------------
 #

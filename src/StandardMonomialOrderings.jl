@@ -8,7 +8,7 @@ with the `AbstractMonomials` module.
 """
 module StandardMonomialOrderings
 
-import Base: promote_rule, diff
+import Base: promote_rule, promote_type, diff
 import Base: show
 import Base.Order: Ordering
 
