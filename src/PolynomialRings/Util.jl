@@ -189,6 +189,59 @@ nzpairs(iter::SparseVector) = (
 
 nzpairs(iter::SparseMatrixCSC) = (i => iter[i] for i in findall(!iszero, iter))
 
+eachstoredindex(::NTuple{N}...) where N = Base.OneTo(N)
+eachstoredindex(a::SparseVector, b::SparseVector) = EachStoredIndex(a, b)
+eachstoredindex(xs...) = Base.OneTo(min(map(lastindex, xs)...))
+
+struct EachStoredIndex{A <: SparseVector, B <: SparseVector}
+    a :: A
+    b :: B
+end
+
+iterate(x::EachStoredIndex, state=(1, 1)) = begin
+    a, b = x.a, x.b
+    ixa, ixb = state
+    if ixa > lastindex(a.nzind) && ixb > lastindex(b.nzind)
+        return nothing
+    elseif ixb > lastindex(b.nzind)
+        return a.nzind[ixa], (ixa + 1, ixb)
+    elseif ixa > lastindex(a.nzind)
+        return b.nzind[ixb], (ixa, ixb + 1)
+    elseif a.nzind[ixa] < b.nzind[ixb]
+        return a.nzind[ixa], (ixa + 1, ixb)
+    elseif a.nzind[ixa] > b.nzind[ixb]
+        return b.nzind[ixb], (ixa, ixb + 1)
+    else
+        return a.nzind[ixa], (ixa + 1, ixb + 1)
+    end
+end
+
+struct RevEachStoredIndex{A <: SparseVector, B <: SparseVector}
+    a :: A
+    b :: B
+end
+
+iterate(x::RevEachStoredIndex, state=(lastindex(x.a.nzind), lastindex(x.b.nzind))) = begin
+    a, b = x.a, x.b
+    ixa, ixb = state
+    if ixa < 1 && ixb < 1
+        return nothing
+    elseif ixb < 1
+        return a.nzind[ixa], (ixa - 1, ixb)
+    elseif ixa < 1
+        return b.nzind[ixb], (ixa, ixb - 1)
+    elseif a.nzind[ixa] > b.nzind[ixb]
+        return a.nzind[ixa], (ixa - 1, ixb)
+    elseif a.nzind[ixa] < b.nzind[ixb]
+        return b.nzind[ixb], (ixa, ixb - 1)
+    else
+        return a.nzind[ixa], (ixa - 1, ixb - 1)
+    end
+end
+
+Iterators.reverse(x::EachStoredIndex) = RevEachStoredIndex(x.a, x.b)
+Iterators.reverse(x::RevEachStoredIndex) = EachStoredIndex(x.a, x.b)
+
 # -----------------------------------------------------------------------------
 #
 # A transducer that merges two iterables like a zipper

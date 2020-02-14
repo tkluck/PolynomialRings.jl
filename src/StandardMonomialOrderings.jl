@@ -21,7 +21,7 @@ import ..NamingSchemes: namingscheme, variablesymbols, num_variables, showvars
 import ..Polynomials: Polynomial
 import ..Signatures: Sig
 import ..Terms: Term
-import ..Util: showsingleton, isdisjoint
+import ..Util: showsingleton, isdisjoint, eachstoredindex
 import PolynomialRings: deg, leading_monomial, to_dense_monomials, monomialorder
 
 
@@ -89,7 +89,7 @@ function Base.Order.lt(order::MonomialOrdering{:degrevlex}, a, b)
     scheme = namingscheme(order)
     if deg(a, scheme) == deg(b, scheme)
         ea, eb = exponents(scheme, a, b)
-        for i in reverse(eachindex(ea))
+        for i in Iterators.reverse(eachstoredindex(ea, eb))
             @inbounds d, e = ea[i], eb[i]
             if d != e
                 return d > e
@@ -111,7 +111,7 @@ function Base.Order.lt(order::MonomialOrdering{:deglex}, a, b)
     scheme = namingscheme(order)
     if deg(a, scheme) == deg(b, scheme)
         ea, eb = exponents(scheme, a, b)
-        for i in eachindex(ea)
+        for i in eachstoredindex(ea, eb)
             @inbounds d, e = ea[i], eb[i]
             if d != e
                 return d < e
@@ -131,7 +131,7 @@ function Base.Order.lt(order::MonomialOrdering{:lex}, a, b)
     isnothing(a) && return true
     scheme = namingscheme(order)
     ea, eb = exponents(scheme, a, b)
-    for i in eachindex(ea)
+    for i in eachstoredindex(ea, eb)
         @inbounds d, e = ea[i], eb[i]
         if d != e
             return d < e

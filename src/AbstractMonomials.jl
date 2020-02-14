@@ -12,7 +12,7 @@ import SparseArrays: nonzeroinds
 import ..MonomialOrderings: MonomialOrder
 import ..NamingSchemes: Variable, Named, Numbered, InfiniteScheme, NamingScheme
 import ..NamingSchemes: numberedvariablename, variablesymbols
-import ..Util: isdisjoint
+import ..Util: isdisjoint, eachstoredindex
 import PolynomialRings: to_dense_monomials, max_variable_index, num_variables, monomialtype
 import PolynomialRings: leading_monomial
 import PolynomialRings: maybe_div, lcm_multipliers, exptype, lcm_degree, namingscheme
@@ -74,7 +74,7 @@ function ==(a::AbstractMonomial, b::AbstractMonomial)
     N = promote_type(namingscheme(a), namingscheme(b))
     N isa NamingScheme || return false
     ea, eb = exponents(N, a, b)
-    return @inbounds all(ea[i] == eb[i] for i in eachindex(ea))
+    return @inbounds all(ea[i] == eb[i] for i in eachstoredindex(ea, eb))
 end
 
 monomialorder(::Type{M}) where M <: AbstractMonomial{Order} where Order = Order.instance
@@ -116,7 +116,7 @@ end
 function divides(a::AbstractMonomial, b::AbstractMonomial)
     N = promote_type(namingscheme(a), namingscheme(b))
     ea, eb = exponents(N, a, b)
-    return @inbounds all(ea[i] ≤ eb[i] for i in eachindex(ea))
+    return @inbounds all(ea[i] ≤ eb[i] for i in eachstoredindex(ea, eb))
 end
 
 function maybe_div(a::AbstractMonomial, b::AbstractMonomial)
@@ -164,7 +164,7 @@ function lcm_degree(a::AbstractMonomial, b::AbstractMonomial)
     # avoid summing empty iterator
     isone(a) && isone(b) && return zero(exptype(M))
     ea, eb = exponents(namingscheme(M), a, b)
-    return @inbounds sum(max(ea[i], eb[i]) for i in eachindex(ea))
+    return @inbounds sum(max(ea[i], eb[i]) for i in eachstoredindex(ea, eb))
 end
 
 function mutuallyprime(a::AbstractMonomial, b::AbstractMonomial)
