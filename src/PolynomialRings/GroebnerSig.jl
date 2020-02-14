@@ -7,7 +7,6 @@ import SparseArrays: SparseVector
 
 import DataStructures: DefaultDict
 import DataStructures: PriorityQueue, enqueue!, dequeue!
-import IterTools: chain
 
 import ..AbstractMonomials: deg, any_divisor
 import ..Backends.Gröbner: Backend, F5C, Arri

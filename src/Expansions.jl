@@ -5,7 +5,6 @@ import Base: diff
 import SparseArrays: spzeros, SparseVector, AbstractSparseArray
 
 import InPlace: @inplace
-import IterTools: groupby
 
 import ..AbstractMonomials: AbstractMonomial, exptype, exponents
 import ..Constants: One
