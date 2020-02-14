@@ -8,7 +8,7 @@ import SparseArrays: nonzeroinds
 
 import ...AbstractMonomials: AbstractMonomial, MonomialIn, exponents, exponentsnz
 import ...MonomialOrderings: MonomialOrder
-import ...NamingSchemes: NamingScheme, Numbered, InfiniteScheme
+import ...NamingSchemes: NamingScheme, Numbered, InfiniteScheme, num_variables
 import ...Util: nzpairs
 import PolynomialRings: exptype, max_variable_index, deg, generators
 
@@ -62,9 +62,25 @@ end
 max_variable_index(scheme::InfiniteScheme{Name}, m::VectorMonomial) where Name = 0
 
 function exponents(m::VectorMonomial{<:SparseVector, I, <:MonomialOrder{<:Numbered{Name}}},
-                   scheme::Numbered{Name, Inf};
+                   scheme::InfiniteScheme{Name};
                    max_variable_index=max_variable_index(scheme, m)) where {I, Name}
     return SparseVector(max_variable_index, m.e.nzind, m.e.nzval)
+end
+
+function exponents(m::VectorMonomial{<:SparseVector, I},
+                   scheme::InfiniteScheme;
+                   max_variable_index=max_variable_index(scheme, m)) where {I, Name}
+    return spzeros(I, max_variable_index)
+end
+
+function exponents(m::VectorMonomial{<:SparseVector, I, <:MonomialOrder{<:Numbered{Name}}},
+                   scheme::Numbered{Name}) where {I, Name}
+    return [get(m.e, i, zero(I)) for i in 1:num_variables(scheme)]
+end
+
+function exponents(m::VectorMonomial{<:SparseVector, I},
+                   scheme::Numbered) where I
+    return zeros(I, num_variables(scheme))
 end
 
 # -----------------------------------------------------------------------------
