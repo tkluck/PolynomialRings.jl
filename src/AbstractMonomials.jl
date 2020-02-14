@@ -73,7 +73,8 @@ gcd(a::AbstractMonomial, b::AbstractMonomial) = exponentwise(min, a, b)
 function ==(a::AbstractMonomial, b::AbstractMonomial)
     N = promote_type(namingscheme(a), namingscheme(b))
     N isa NamingScheme || return false
-    return all(((_, (a,b)),) -> a == b, exponentsnz(N, a, b))
+    ea, eb = exponents(N, a, b)
+    return @inbounds all(ea[i] == eb[i] for i in eachindex(ea))
 end
 
 monomialorder(::Type{M}) where M <: AbstractMonomial{Order} where Order = Order.instance
@@ -104,7 +105,7 @@ equal.
 TODO: add test cases for that!
 """
 function hash(a::AbstractMonomial, h::UInt)
-    for (i, (e,)) in exponentsnz(namingscheme(a), a)
+    for (i, e) in enumerate(exponents(a, namingscheme(a)))
         if !iszero(e)
             h = hash((i, e), h)
         end
@@ -114,7 +115,8 @@ end
 
 function divides(a::AbstractMonomial, b::AbstractMonomial)
     N = promote_type(namingscheme(a), namingscheme(b))
-    return all(d ≤ e for (_, (d, e)) in exponentsnz(N, a, b))
+    ea, eb = exponents(N, a, b)
+    return @inbounds all(ea[i] ≤ eb[i] for i in eachindex(ea))
 end
 
 function maybe_div(a::AbstractMonomial, b::AbstractMonomial)
@@ -161,7 +163,8 @@ function lcm_degree(a::AbstractMonomial, b::AbstractMonomial)
     M = promote_type(typeof(a), typeof(b))
     # avoid summing empty iterator
     isone(a) && isone(b) && return zero(exptype(M))
-    return sum(max(d, e) for (_, (d, e)) in exponentsnz(namingscheme(M), a, b))
+    ea, eb = exponents(namingscheme(M), a, b)
+    return @inbounds sum(max(ea[i], eb[i]) for i in eachindex(ea))
 end
 
 function mutuallyprime(a::AbstractMonomial, b::AbstractMonomial)

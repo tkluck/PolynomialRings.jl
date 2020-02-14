@@ -12,7 +12,7 @@ import Base: promote_rule, promote_type, diff
 import Base: show
 import Base.Order: Ordering
 
-import ..AbstractMonomials: AbstractMonomial, exponentsnz, revexponentsnz
+import ..AbstractMonomials: AbstractMonomial, exponents
 import ..MonomialOrderings: AtomicMonomialOrder, MonomialOrder, degreecompatible
 import ..MonomialOrderings: monomialorderkey, monomialorderkeytype, monomialordereltype, monomialorderkeypair
 import ..NamingSchemes: Named, Numbered, NamingScheme, InfiniteScheme, EmptyNamingScheme
@@ -88,7 +88,9 @@ function Base.Order.lt(order::MonomialOrdering{:degrevlex}, a, b)
     isnothing(a) && return true
     scheme = namingscheme(order)
     if deg(a, scheme) == deg(b, scheme)
-        for (_, (d, e)) in revexponentsnz(scheme, a, b)
+        ea, eb = exponents(scheme, a, b)
+        for i in reverse(eachindex(ea))
+            @inbounds d, e = ea[i], eb[i]
             if d != e
                 return d > e
             end
@@ -108,7 +110,9 @@ function Base.Order.lt(order::MonomialOrdering{:deglex}, a, b)
     isnothing(a) && return true
     scheme = namingscheme(order)
     if deg(a, scheme) == deg(b, scheme)
-        for (_, (d, e)) in exponentsnz(scheme, a, b)
+        ea, eb = exponents(scheme, a, b)
+        for i in eachindex(ea)
+            @inbounds d, e = ea[i], eb[i]
             if d != e
                 return d < e
             end
@@ -126,7 +130,9 @@ function Base.Order.lt(order::MonomialOrdering{:lex}, a, b)
     isnothing(b) && return false
     isnothing(a) && return true
     scheme = namingscheme(order)
-    for (_, (d, e)) in exponentsnz(scheme, a, b)
+    ea, eb = exponents(scheme, a, b)
+    for i in eachindex(ea)
+        @inbounds d, e = ea[i], eb[i]
         if d != e
             return d < e
         end
