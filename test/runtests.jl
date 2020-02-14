@@ -1,6 +1,7 @@
 using Test
 
 @testset "PolynomialRings.jl" begin
+    include("Constants.jl")
     include("NamingSchemes.jl")
     include("MonomialOrderings.jl")
     include("Monomials.jl")

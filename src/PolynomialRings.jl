@@ -1,6 +1,6 @@
 module PolynomialRings
 
-include("PolynomialRings/Constants.jl")
+include("Constants.jl")
 include("PolynomialRings/Methods.jl")
 include("PolynomialRings/Util.jl")
 include("PolynomialRings/Backends.jl")

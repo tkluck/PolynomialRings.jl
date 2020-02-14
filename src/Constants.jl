@@ -39,16 +39,23 @@ struct MinusOne <: Constant end
 
 *(::One, ::One) = One()
 *(::Zero, ::Zero) = Zero()
+*(::MinusOne, ::MinusOne) = One()
 *(::Zero, ::One) = Zero()
+*(::Zero, ::MinusOne) = Zero()
 *(::One, ::Zero) = Zero()
+*(::MinusOne, ::Zero) = Zero()
 
 +(::Zero, ::Zero) = Zero()
 +(::Zero, ::One) = One()
 +(::One, ::Zero) = One()
++(::One, ::MinusOne) = Zero()
++(::MinusOne, ::One) = Zero()
 
 -(::Zero, ::Zero) = Zero()
 -(::Zero, ::One) = MinusOne()
 -(::One, ::Zero) = One()
+-(::One, ::One) = Zero()
+-(::MinusOne, ::MinusOne) = Zero()
 
 zero(::Type{C}) where C <: Constant = Zero()
 one(::Type{C})  where C <: Constant = One()
