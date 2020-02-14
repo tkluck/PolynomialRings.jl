@@ -122,18 +122,6 @@ end
 interval(x::OrderedSet, lower; lo) = interval(x.dict, lower; lo=lo).is[1]
 last_(x::OrderedSet) = last_(x.dict)
 
-# -----------------------------------------------------------------------------
-#
-# One-element iterator
-#
-# -----------------------------------------------------------------------------
-struct SingleItemIter{X}
-    item::X
-end
-length(::SingleItemIter) = 1
-iterate(i::SingleItemIter) = (i.item, nothing)
-iterate(i::SingleItemIter, ::Nothing) = nothing
-
 include("LinAlgUtil.jl")
 
 # -----------------------------------------------------------------------------
