@@ -82,6 +82,9 @@ function lcm_multipliers(a::Integer, b::Integer)
     N÷a, N÷b
 end
 
+checkconstant(x::Number) = x
+checkconstant(x::AbstractArray) = checkconstant.(x)
+
 # -----------------------------------------------------------------------------
 #
 # Gröbner basis operations

@@ -248,9 +248,9 @@ end
 #
 # -----------------------------------------------------------------------------
 function checkconstant(f::SparsePolynomial)
-    iszero(f) && return zero(basering(f))
+    iszero(f) && return checkconstant(zero(basering(f)))
     if length(f.monomials) == 1 && isone(f.monomials[1])
-        return f.coeffs[1]
+        return checkconstant(f.coeffs[1])
     else
         error("checkconstant: not a constant polynomial")
     end
