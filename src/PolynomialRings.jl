@@ -46,7 +46,7 @@ import .Monomials: TupleMonomial, VectorMonomial, @monomial
 import .Terms: Term
 import .Polynomials: Polynomial, generators, map_coefficients
 import .Polynomials: tosparse, todense
-import .Expansions: @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, expandcoefficients, @expandcoefficients, linear_coefficients, @linear_coefficients, @deg, expansion_terms, @expansion_terms
+import .Expansions: @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, expandcoefficients, @expandcoefficients, linear_coefficients, @linear_coefficients, @deg, expansion_terms, @expansion_terms, substitute
 import .Arrays: flat_coefficients, @flat_coefficients
 import .Operators: content, common_denominator, integral_fraction
 import .Reductions: interreduce, interreduce!
@@ -62,7 +62,7 @@ export tosparse, todense
 export expansion, expand, @expansion, @expand, coefficient, @coefficient, constant_coefficient, @constant_coefficient, expansion_terms, @expansion_terms
 export expandcoefficients, @expandcoefficients, linear_coefficients, @linear_coefficients
 export deg, @deg
-export flat_coefficients, @flat_coefficients
+export flat_coefficients, @flat_coefficients, substitute
 export leaddiv, leadrem, leaddivrem, div!, rem!, xdiv!, xrem!, xdiv, xrem, xdivrem
 export groebner_basis, groebner_transformation, gröbner_basis, gröbner_transformation, lift, syzygies
 export content, common_denominator, integral_fraction, map_coefficients

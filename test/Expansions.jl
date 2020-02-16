@@ -20,7 +20,7 @@ using PolynomialRings: @flat_coefficients, flat_coefficients
 using PolynomialRings: @constant_coefficient, constant_coefficient
 using PolynomialRings: @expansion_terms, expansion_terms
 using PolynomialRings: common_denominator, integral_fraction
-using PolynomialRings: monomialtype, termtype
+using PolynomialRings: monomialtype, termtype, substitute
 
 @testset "Expansions" begin
 
@@ -156,6 +156,17 @@ using PolynomialRings: monomialtype, termtype
         @test eltype(@linear_coefficients(y + y^2, y)) == @ring(Int64[x,z])
 
         # TODO: test non-Union{Polynomial, Number} coeficients, e.g. QuotientRing
+    end
+
+    @testset "Substitution" begin
+        @ring! Int[x,y,z]
+
+        @test @inferred((x^2 + y)(x = 3)) == @inferred(substitute(x^2 + y, x => 3)) == 9 + y
+        @test (x^2 + y)(x = 3) isa @ring(Int[y,z])
+        @test @inferred((x^2 + y)(x = 3, y = 1)) == @inferred(substitute(x^2 + y, x => 3, y => 1)) == 10
+        @test (x^2 + y)(x = 3, y = 1) isa @ring(Int[z])
+
+        @test (x + y)(x = y, y = x) == x + y # non-recursive!
     end
 
     @testset "KeyOrder" begin

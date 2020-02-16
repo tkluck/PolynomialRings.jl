@@ -350,6 +350,9 @@ end
 
 # helper for inspecting the types of substitution values
 _kwtupletype(::Type{Base.Iterators.Pairs{K, V, I, A}}) where {K, V, I, A} = A
+_anyfn() = false
+_anyfn(val::Function, vals...) = true
+_anyfn(val, vals...) = _anyfn(vals...)
 
 function substitutedtype(P::Type; kwargs...)
     kwtupletype = _kwtupletype(typeof(kwargs))
@@ -374,16 +377,21 @@ function (p::Polynomial)(; kwargs...)
     vars = fieldnames(kwtupletype)
     valtypes = fieldtypes(kwtupletype)
 
-    if isempty(kwargs)
+    if kwtupletype == NamedTuple{(),Tuple{}}
         return copy(p)
-    elseif !any(v <: Function for v in valtypes)
+    elseif !_anyfn(values(kwargs)...)
         return _substitute(p, Named{tuple(vars...)}(), values(kwargs)...)
-    elseif length(kwargs) == 1 && valtypes[1] <: Function
+    elseif length(kwargs) == 1
         return _substitute(p, Numbered{vars[1], Inf}(), kwargs[1])
     else
         throw(ArgumentError("Don't know how to substitute $kwargs"))
     end
 
+end
+
+function substitute(p, substitutions::Pair...)
+    order = expansionorder(map(first, substitutions)...)
+    return _substitute(p, namingscheme(order), map(last, substitutions)...)
 end
 
 
