@@ -90,7 +90,10 @@ end
 # Display
 #
 # -----------------------------------------------------------------------------
-show(io::IO, I::Ideal) = show(io, tuple(I.generators...))
-
-
+function show(io::IO, I::Ideal)
+    print(io, "Ideal(")
+    join(io, I.generators, ", ")
+    print(io, ")")
 end
+
+end # module
