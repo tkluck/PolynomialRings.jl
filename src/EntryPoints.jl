@@ -1,10 +1,8 @@
 module EntryPoints
 
 import Base: convert
-import Base: getindex
-import SparseArrays: spzeros
 
-import ..Generators: Generator
+import ..Generators: Generator, NumberedVariableGenerator
 import ..Ideals: Ideal
 import ..Monomials: TupleMonomial, VectorMonomial
 import ..NamedPolynomials: NamedPolynomial, NumberedPolynomial
@@ -64,9 +62,9 @@ julia> [c()*x^2 + c()*x + c() , c()*x^2 + c()*x + c()]
 ```
 """
 function formal_coefficients(::Type{P}, name::Symbol) where P <: Polynomial
-    R = @eval @ring Int[$name[]]
-    RR = base_extend(P, R)
-    return NumberedVariableGenerator{RR,R}()
+    R, _ = numbered_polynomial_ring(name, Inf, basering=Int)
+    PP = base_extend(P, R)
+    return NumberedVariableGenerator(PP, monomialtype(R))
 end
 
 function formal_coefficient(::Type{P}) where P <: Polynomial
@@ -118,7 +116,7 @@ end
 
 function _inject_var(::Type{Outer}, ::Type{Inner}, name) where Outer where Inner<:NumberedPolynomial
     if name == numberedvariablename(Inner)
-        return NumberedVariableGenerator{Outer,Inner}()
+        return NumberedVariableGenerator(Outer, monomialtype(Inner))
     else
         return _inject_var(Outer, basering(Inner), name)
     end
@@ -396,43 +394,6 @@ macro polyvar(expr...)
     definition = :( Int64[] )
     append!(definition.args, expr)
     esc(:( @ring! $definition ))
-end
-
-# -----------------------------------------------------------------------------
-#
-# An object representing numbered variables
-#
-# -----------------------------------------------------------------------------
-mutable struct NumberedVariableGenerator{Outer,Inner}
-    next::Int
-    NumberedVariableGenerator{Outer,Inner}() where {Outer,Inner} = new(1)
-end
-
-function (g::NumberedVariableGenerator)()
-    ix = g.next
-    g.next += 1
-    return g[ix]
-end
-
-Base.eltype(::NumberedVariableGenerator{Outer, Inner}) where {Outer, Inner} = Outer
-
-function getindex(g::NumberedVariableGenerator{Outer,Inner}, i::Integer) where {Outer,Inner}
-    E = exptype(Inner)
-    N = num_variables(namingscheme(Inner))
-    i <= N || throw(BoundsError(namingscheme(Inner), i))
-    e = spzeros(E, N < Inf ? N : i)
-    e[i] = one(E)
-    return Outer(exp(Inner, e))
-end
-
-getindex(g::NumberedVariableGenerator{Outer,Inner}, j::Integer...) where {Outer,Inner} = getindex.(Ref(g), j)
-
-getindex(g::NumberedVariableGenerator{Outer,Inner}, ix) where {Outer,Inner} = getindex.(Ref(g), ix)
-
-getindex(g::NumberedVariableGenerator) = Channel() do ch
-    for i in 1:typemax(Int)
-        push!(ch, g[i])
-    end
 end
 
 # -----------------------------------------------------------------------------
