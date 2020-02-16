@@ -72,16 +72,8 @@ end
 #
 # -----------------------------------------------------------------------------
 
-function defaultshow(io, t)
-    if t isa DataType
-        invoke(show, Tuple{IO, DataType}, io, t)
-    elseif t isa UnionAll
-        invoke(show, Tuple{IO, UnionAll}, io, t)
-    elseif t isa Union
-        invoke(show, Tuple{IO, Union}, io, t)
-    else
-        print(io, "<undisplayable $(typeof(t))>")
-    end
+function defaultshow(io, T)
+    invoke(show, Tuple{IO, Type}, io, T)
 end
 
 # keep in sync with Constructors.jl

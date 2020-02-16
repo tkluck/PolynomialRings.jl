@@ -352,14 +352,8 @@ function showsingleton(io, T::Type)
         print(io, "typeof(")
         show(io, T.instance)
         print(io, ")")
-    elseif T isa DataType
-        invoke(show, Tuple{IO, DataType}, io, T)
-    elseif T isa UnionAll
-        invoke(show, Tuple{IO, UnionAll}, io, T)
-    elseif T isa Union
-        invoke(show, Tuple{IO, Union}, io, T)
     else
-        print(io, "<undisplayable $(typeof(T))>")
+        invoke(show, Tuple{IO, Type}, io, T)
     end
 end
 
