@@ -11,7 +11,7 @@ import ..Monomials.VectorMonomials: VectorMonomial
 import ..NamingSchemes: Named, Numbered, NamingScheme, EmptyNamingScheme
 import ..NamingSchemes: numberedvariablename, remove_variables, boundnames, canonicalscheme
 import ..Polynomials:  NamedMonomial, NumberedMonomial, NamedTerm, NumberedTerm, TermOver, monomialorder
-import ..Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolynomial, PolynomialBy, PolynomialIn, nzterms, SparsePolynomialOver, DensePolynomialOver
+import ..Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolynomial, PolynomialBy, PolynomialIn, SparsePolynomialOver, DensePolynomialOver
 import ..StandardMonomialOrderings: MonomialOrdering, rulesymbol
 import ..Terms: Term, basering, monomial, coefficient
 import ..Util: isdisjoint
@@ -264,10 +264,16 @@ function minring(f::NamedPolynomial)
 end
 
 function minring(f::NumberedPolynomial)
-    base = minring(f.coeffs...)
+    iszero(f) && return Int
 
-    m = prod(monomial(t) for t in nzterms(f))
-    isone(m) ? base : polynomialtype(namingscheme(f), base, sparse=issparse(f))
+    base = reduce(promote_type, (minring(c) for (m, c) in expansion(f)))
+    m = prod(m for (m, c) in expansion(f))
+
+    if isone(m)
+        return base
+    else
+        return polynomialtype(namingscheme(f), base, sparse=issparse(f))
+    end
 end
 
 """

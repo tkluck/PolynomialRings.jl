@@ -12,7 +12,7 @@ import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialO
 import ..MonomialOrderings: monomialorderkeytype, monomialordereltype
 import ..NamingSchemes: Named, Numbered, NamingScheme, remove_variables
 import ..NamingSchemes: NamedVariable
-import ..Polynomials: Polynomial, monomialtype, monomialorder, SparsePolynomial, nzterms
+import ..Polynomials: Polynomial, monomialtype, monomialorder, SparsePolynomial
 import ..Signatures: Sig
 import ..StandardMonomialOrderings: MonomialOrdering, LexCombinationOrder, KeyOrder
 import ..StandardMonomialOrderings: maybeunwrap

@@ -16,7 +16,6 @@ import ..MonomialOrderings: monomialorderkey, monomialorderkeypair
 import ..Operators: RedType, Lead, Full, Tail
 import ..Operators: one_step_div!, one_step_xdiv!, content, integral_fraction
 import ..Polynomials: Polynomial, PolynomialBy, monomialorder, basering, tail
-import ..Polynomials: nzterms, nzrevterms, nztailterms
 import ..Signatures: Sig
 import ..StandardMonomialOrderings: LexCombinationOrder, KeyOrder
 import ..Terms: Term

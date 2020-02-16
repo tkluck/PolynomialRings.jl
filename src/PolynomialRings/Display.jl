@@ -3,8 +3,9 @@ module Display
 import Base: show
 
 import ..AbstractMonomials: AbstractMonomial, exponentsnz
+import ..Expansions: expansion
 import ..NamingSchemes: Named, Numbered, showvars
-import ..Polynomials: Polynomial, nzrevterms, basering
+import ..Polynomials: Polynomial, basering
 import ..Terms: Term, coefficient, monomial
 import PolynomialRings: namingscheme, monomialorder
 
@@ -63,7 +64,7 @@ function show(io::IO, p::Polynomial)
     if iszero(p)
         print(io, "0")
     end
-    print(io, join((repr(t) for t in nzrevterms(p)), " + "))
+    print(io, join((repr(t) for t in expansion(p, rev=true)), " + "))
 end
 
 # -----------------------------------------------------------------------------

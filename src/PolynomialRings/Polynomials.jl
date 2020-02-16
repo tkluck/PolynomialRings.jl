@@ -17,7 +17,7 @@ import ..Terms: Term, monomial, coefficient
 import ..Util: @assertvalid, _debug_isvalid, isdisjoint
 import PolynomialRings: generators, max_variable_index, basering, monomialtype
 import PolynomialRings: leading_coefficient, leading_monomial
-import PolynomialRings: leading_term, termtype, monomialorder, nzterms, exptype, namingscheme, expansion
+import PolynomialRings: leading_term, termtype, monomialorder, exptype, namingscheme, expansion
 import PolynomialRings: polynomialtype
 import PolynomialRings: tail
 import PolynomialRings: variablesymbols, allvariablesymbols, fullboundnames
@@ -103,7 +103,7 @@ allvariablesymbols(::Type{P}) where P <: Polynomial = union(allvariablesymbols(b
 issparse(f::Polynomial) = issparse(typeof(f))
 isstrictlysparse(f::Polynomial) = isstrictlysparse(typeof(f))
 
-max_variable_index(scheme::InfiniteScheme, f::Polynomial) = iszero(f) ? 0 : maximum(max_variable_index(scheme, t) for t in nzterms(f, monomialorder(f)))
+max_variable_index(scheme::InfiniteScheme, f::Polynomial) = iszero(f) ? 0 : maximum(max_variable_index(scheme, t) for t in expansion(f, monomialorder(f)))
 
 # -----------------------------------------------------------------------------
 #
@@ -126,36 +126,7 @@ function expansion(p::PolynomialBy{Order}, order::Order=monomialorder(p); rev=fa
     return (Term(_monomialbyindex(p, ix), coefficients(p)[ix]) for ix in start:step:ending)
 end
 
-struct NZTerms{P <: Polynomial}
-    p :: P
-end
-Base.eltype(it::NZTerms) = termtype(it.p)
-Base.length(it::NZTerms) = nztermscount(it.p)
-function Base.iterate(it::NZTerms, state=1)
-    while true
-        state <= length(coefficients(it.p)) || return nothing
-        c = coefficients(it.p)[state]
-        m = _monomialbyindex(it.p, state)
-        (isstrictlysparse(it.p) || !iszero(c)) && return (Term(m, c), state + 1)
-        state += 1
-    end
-    return nothing
-end
-nzterms(p::PolynomialBy{Order}, order::Order) where Order <: MonomialOrder = NZTerms(p)
-nzterms(p::Polynomial; order::MonomialOrder=monomialorder(p)) = nzterms(p, order)
-
 nztermscount(p::Polynomial) = isstrictlysparse(p) ? length(coefficients(p)) : count(!iszero, coefficients(p))
-
-nztailterms(p::PolynomialBy{Order}; order::Order=monomialorder(p)) where Order <: MonomialOrder = (
-    Term(_monomialbyindex(p, ix), coefficients(p)[ix])
-    for ix in reverse(1:_leading_term_ix(p, order) - 1) if
-    isstrictlysparse(p) || !iszero(coefficients(p)[ix])
-)
-nzrevterms(p::PolynomialBy{Order}; order::Order=monomialorder(p)) where Order <: MonomialOrder = (
-    Term(_monomialbyindex(p, ix), coefficients(p)[ix])
-    for ix in reverse(1:_leading_term_ix(p, order)) if
-    isstrictlysparse(p) || !iszero(coefficients(p)[ix])
-)
 
 function leading_term(p::Polynomial; order::MonomialOrder=monomialorder(p))
     ix = _leading_term_ix(p, order)

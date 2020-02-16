@@ -110,8 +110,9 @@ import InPlace: @inplace, inplace!
 import Transducers: eduction, Map, Filter, Eduction, Transducer, transduce
 
 import ..AbstractMonomials: AbstractMonomial
+import ..Expansions: expansion
 import ..MonomialOrderings: MonomialOrder
-import ..Polynomials: Polynomial, DensePolynomial, PolynomialBy, SparsePolynomialBy, DensePolynomialBy, nzterms, nztermscount, TermBy, MonomialBy
+import ..Polynomials: Polynomial, DensePolynomial, PolynomialBy, SparsePolynomialBy, DensePolynomialBy, nztermscount, TermBy, MonomialBy
 import ..Terms: Term, monomial, coefficient, basering
 import ..Util: MergingTransducer, @assertvalid
 import PolynomialRings: monomialorder
@@ -253,9 +254,9 @@ const TermsIterable{Order} = Union{Owned{<:PolynomialBy{Order}}, SparseTermsBy{O
 ownership(x::SparseTermsBy) = x.owned
 ownership(x::DenseTermsBy) = x.owned
 
-nzterms(x::Owned{<:Polynomial}) = nzterms(x.value)
+nzterms(x::Owned{<:Polynomial}) = expansion(x.value)
 nzterms(x::SparseTermsBy) = x.iter
-nzterms(x::DenseTermsBy) = nzterms(x.P(x.coeffs))
+nzterms(x::DenseTermsBy) = expansion(x.P(x.coeffs))
 
 termsbound(x::SparseTermsBy) = x.bound
 termsbound(x::DenseTermsBy) = count(!iszero, x.coeffs)

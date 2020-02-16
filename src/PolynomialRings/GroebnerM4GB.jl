@@ -17,7 +17,7 @@ import ..Monomials: AbstractMonomial
 import ..Monomials.MonomialIterators: monomialiter
 import ..NamingSchemes: namingscheme, num_variables
 import ..Operators: integral_fraction
-import ..Polynomials: Polynomial, nzterms, nztailterms, nzrevterms, leading_monomial
+import ..Polynomials: Polynomial, leading_monomial
 import ..Signatures: Sig
 import ..Terms: monomial, coefficient, Term
 import ..Util: @showprogress, interval, last_, chain, nzpairs

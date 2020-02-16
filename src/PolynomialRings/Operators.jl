@@ -6,11 +6,12 @@ import InPlace: @inplace, inplace!, inclusiveinplace!
 
 import ..AbstractMonomials: AbstractMonomial
 import ..Constants: Zero
+import ..Expansions: expansion
 import ..MonomialOrderings: MonomialOrder, @withmonomialorder
 import ..NamingSchemes: Variable
-import ..Polynomials: Polynomial, termtype, nztermscount, monomialorder, monomialtype, monomials, coefficients, map_coefficients, _monomialbyindex
+import ..Polynomials: Polynomial, termtype, monomialorder, monomialtype, monomials, coefficients, map_coefficients, _monomialbyindex
 import ..Polynomials: PolynomialBy, TermBy, MonomialBy, isstrictlysparse, TermOver
-import ..Polynomials: leading_term, nzrevterms, nztailterms, nzterms
+import ..Polynomials: leading_term
 import ..Terms: Term, monomial, coefficient
 import ..Util: @assertvalid
 import PolynomialRings: basering, exptype, base_extend, base_restrict
@@ -48,7 +49,7 @@ function *(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order
     @assert monomialorder(P) == Order()
 
     res = zero(P)
-    for t_a in nzterms(a), t_b in nzterms(b)
+    for t_a in expansion(a), t_b in expansion(b)
         @inplace res += t_a * t_b
     end
     return @assertvalid res
@@ -76,8 +77,8 @@ struct Full <: RedType end
 struct Tail <: RedType end
 
 terms_to_reduce(::Lead, f; order) = (leading_term(f, order=order),)
-terms_to_reduce(::Full, f; order) = nzrevterms(f, order=order)
-terms_to_reduce(::Tail, f; order) = nztailterms(f, order=order)
+terms_to_reduce(::Full, f; order) = expansion(f, order, rev=true)
+terms_to_reduce(::Tail, f; order) = expansion(f, order, rev=true, tail=true)
 
 function one_step_div!(f::Polynomial, g::Polynomial; order::MonomialOrder, redtype::RedType)
     @withmonomialorder order
@@ -204,7 +205,7 @@ end
 # -----------------------------------------------------------------------------
 function diff(f::Polynomial, x::Variable)
     res = zero(f)
-    for t in nzterms(f)
+    for t in expansion(f)
         @inplace res += diff(t, x)
     end
     return res
