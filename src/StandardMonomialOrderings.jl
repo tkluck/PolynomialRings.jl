@@ -140,29 +140,6 @@ function Base.Order.lt(order::MonomialOrdering{:lex}, a, b)
     return false
 end
 
-# This method is mostly for supporting leading monomials of elements of a free
-# f.g. module which is a tuple (index, monomial). That's in use in Gröbner,
-# and maybe this implementation detail should move there.
-function Base.Order.lt(m::MonomialOrder, a::T, b::T) where T <: Tuple
-    error("Can we remove this?")
-    for i = 1:fieldcount(T)
-        if fieldtype(T,i) <: AbstractMonomial
-            if Base.Order.lt(m, a[i], b[i])
-                return true
-            elseif Base.Order.lt(m, b[i], a[i])
-                return false
-            end
-        else
-            if isless(a[i], b[i])
-                return true
-            elseif isless(b[i], a[i])
-                return false
-            end
-        end
-    end
-    return false
-end
-
 # -----------------------------------------------------------------------------
 #
 # KeyOrder and LexCombinationOrder

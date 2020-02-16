@@ -100,27 +100,6 @@ function _filterzeros!(p::SparsePolynomial)
     p
 end
 
-function _collectsummands!(p::SparsePolynomial)
-    if length(p.coeffs) > 1
-        I = sortperm(p.monomials, order=monomialorder(p))
-        p.monomials[:] = p.monomials[I]
-        p.coeffs[:] = p.coeffs[I]
-        tgtix = 1
-        for srcix in 2:length(p.coeffs)
-            if p.monomials[tgtix] == p.monomials[srcix]
-                @inplace p.coeffs[tgtix] += p.coeffs[srcix]
-            else
-                tgtix += 1
-                p.monomials[tgtix] = p.monomials[srcix]
-                p.coeffs[tgtix] = p.coeffs[srcix]
-            end
-        end
-        resize!(p.monomials, tgtix)
-        resize!(p.coeffs, tgtix)
-    end
-    _filterzeros!(p)
-end
-
 # -----------------------------------------------------------------------------
 #
 # multiplication
