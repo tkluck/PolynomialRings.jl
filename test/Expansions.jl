@@ -167,12 +167,15 @@ using PolynomialRings: monomialtype, termtype, substitute
         @test (x^2 + y)(x = 3, y = 1) isa @ring(Int[z])
 
         @test (x + y)(x = y, y = x) == x + y # non-recursive!
+        @test (x + y)() == substitute(x + y) == x + y
 
         @ring! Int[c[]]
 
         @test @inferred((c[1]^2 + c[2]^2)(c=i -> i+1)) ==
                 @inferred(substitute(c[1]^2 + c[2]^2, c[] => i -> i+1)) == 13
         @test (c[1]^2 + c[2]^2)(c=i -> i+1) isa Int
+
+        @test (c[1] + c[2])() == substitute(c[1] + c[2]) == c[1] + c[2]
     end
 
     @testset "KeyOrder" begin

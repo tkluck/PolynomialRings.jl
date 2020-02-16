@@ -10,7 +10,7 @@ import ..AbstractMonomials: AbstractMonomial, exptype, exponents
 import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
 import ..MonomialOrderings: monomialorderkeytype, monomialordereltype
-import ..NamingSchemes: Named, Numbered, NamingScheme, remove_variables
+import ..NamingSchemes: Named, Numbered, NamingScheme, EmptyNamingScheme, remove_variables
 import ..NamingSchemes: NamedVariable
 import ..Polynomials: Polynomial, monomialtype, monomialorder, SparsePolynomial
 import ..Signatures: Sig
@@ -314,6 +314,7 @@ function expansion_terms(p, spec...)
 end
 
 _substitute(p::Polynomial, names::Named, values...) = _substitute(p, names, promote(values...)...)
+_substitute(p::Polynomial, names::EmptyNamingScheme) = deepcopy(p)
 
 function _substitute(p::Polynomial, names::Named, values::SubstitutionType...) where SubstitutionType
     ReturnType = promote_type(SubstitutionType, _coefftype(typeof(p), names))
