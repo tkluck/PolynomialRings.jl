@@ -117,7 +117,7 @@ end
 
 diff(a, x::Variable) = zero(a)
 
-function diff(t::T, x::Variable) where T <: Term
+function diff(t::Term, x::Variable)
     if isnothing(indexin(x, namingscheme(t)))
         return Term(monomial(t), diff(coefficient(t), x))
     else

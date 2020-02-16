@@ -4,6 +4,7 @@ import Base: convert
 import Base: getindex
 import SparseArrays: spzeros
 
+import ..Generators: Generator
 import ..Ideals: Ideal
 import ..Monomials: TupleMonomial, VectorMonomial
 import ..NamedPolynomials: NamedPolynomial, NumberedPolynomial
@@ -108,7 +109,8 @@ end
 
 function _inject_var(::Type{Outer}, ::Type{Inner}, name) where Outer where Inner<:NamedPolynomial
     if name in variablesymbols(Inner)
-        return Outer(convert(Inner, name))
+        val = Outer(convert(Inner, name))
+        return Generator(name, val)
     else
         return _inject_var(Outer, basering(Inner), name)
     end
@@ -470,7 +472,7 @@ function polynomial_ring(symbols::Symbol...; basering::Type=Rational{BigInt}, ex
     allunique(symbols) || throw(ArgumentError("Duplicated symbols when extending $basering by $(Named{symbols}())"))
     scheme = Named{symbols}()
     P = polynomial_ring(scheme, basering=basering, exptype=exptype, monomialorder=monomialorder, sparse=sparse)
-    return P, generators(P)
+    return P, Generator.(symbols, tuple(generators(P)...))
 end
 
 function numbered_polynomial_ring(symbol::Symbol; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex, sparse=sparse)

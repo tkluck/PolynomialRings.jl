@@ -10,7 +10,7 @@ import ..Operators: RedType, Lead, Full, Tail
 import ..Operators: one_step_div!, one_step_xdiv!, content
 import ..Polynomials: Polynomial, monomialorder, leading_monomial
 import ..Polynomials: PolynomialBy
-import ..Util: @showprogress
+import ..Util: @showprogress, unalias
 import PolynomialRings: basering
 import PolynomialRings: div!, rem!, xdiv!, xrem!, xdiv, xrem, xdivrem
 import PolynomialRings: gröbner_basis, syzygies
@@ -84,7 +84,7 @@ julia> g
 1 + 0im
 ```
 """
-function rem!(f::M, G::AbstractVector{M}; order::MonomialOrder=monomialorder(f), redtype::RedType=Full()) where M <: AbstractModuleElement
+function rem!(f::M, G::AbstractVector; order::MonomialOrder=monomialorder(f), redtype::RedType=Full()) where M <: AbstractModuleElement
     if typeof(redtype) <: Full
         any_reductions = rem!(f, G, order=order, redtype=Lead())
     elseif typeof(redtype) <: Lead || typeof(redtype) <: Tail
@@ -152,7 +152,7 @@ julia> g
 1 + 0im
 ```
 """
-function xrem!(f::M, G::AbstractVector{M}; order::MonomialOrder=monomialorder(f), redtype::RedType=Full()) where M <: AbstractModuleElement
+function xrem!(f::M, G::AbstractVector; order::MonomialOrder=monomialorder(f), redtype::RedType=Full()) where M <: AbstractModuleElement
     if typeof(redtype) <: Full
         any_reductions = xrem!(f, G, order=order, redtype=Lead())
     elseif typeof(redtype) <: Lead || typeof(redtype) <: Tail
@@ -246,7 +246,7 @@ julia> g
 1 + 0im
 ```
 """
-function div!(f::M, G::AbstractVector{M}; order::MonomialOrder=monomialorder(f), redtype::RedType=Full()) where M <: AbstractModuleElement
+function div!(f::M, G::AbstractVector; order::MonomialOrder=monomialorder(f), redtype::RedType=Full()) where M <: AbstractModuleElement
     if typeof(redtype) <: Full
         factors = div!(f, G, order=order, redtype=Lead())
     elseif typeof(redtype) <: Lead || typeof(redtype) <: Tail
@@ -309,7 +309,7 @@ julia> g
 1 + 0im
 ```
 """
-function xdiv!(f::M, G::AbstractVector{M}; order::MonomialOrder=monomialorder(f), redtype::RedType=Full()) where M <: AbstractModuleElement
+function xdiv!(f::M, G::AbstractVector; order::MonomialOrder=monomialorder(f), redtype::RedType=Full()) where M <: AbstractModuleElement
     if typeof(redtype) <: Full
         m, factors = xdiv!(f, G, order=order, redtype=Lead())
     elseif typeof(redtype) <: Lead || typeof(redtype) <: Tail
@@ -339,25 +339,29 @@ function xdiv!(f::M, G::AbstractVector{M}; order::MonomialOrder=monomialorder(f)
     return m, factors
 end
 
-function div(f::M, G::AbstractVector{M}; kwds...) where M <: AbstractModuleElement
-    f′ = deepcopy(f)
+function div(f::M, G::AbstractVector; kwds...) where M <: AbstractModuleElement
+    M′ = promote_type(M, eltype(G))
+    f′ = unalias(M′, f)
     return div!(f′, G; kwds...)
 end
 
-function rem(f::M, G::AbstractVector{M}; kwds...) where M <: AbstractModuleElement
-    f′ = deepcopy(f)
+function rem(f::M, G::AbstractVector; kwds...) where M <: AbstractModuleElement
+    M′ = promote_type(M, eltype(G))
+    f′ = unalias(M′, f)
     any_reductions = rem!(f′, G; kwds...)
     return any_reductions ? f′ : f
 end
 
-function divrem(f::M, G::AbstractVector{M}; kwds...) where M <: AbstractModuleElement
-    f′ = deepcopy(f)
+function divrem(f::M, G::AbstractVector; kwds...) where M <: AbstractModuleElement
+    M′ = promote_type(M, eltype(G))
+    f′ = unalias(M′, f)
     factors = div!(f′, G; kwds...)
     return factors, iszero(factors) ? f : f′
 end
 
-function xdiv(f::M, G::AbstractVector{M}; kwds...) where M <: AbstractModuleElement
-    f′ = deepcopy(f)
+function xdiv(f::M, G::AbstractVector; kwds...) where M <: AbstractModuleElement
+    M′ = promote_type(M, eltype(G))
+    f′ = unalias(M′, f)
     return xdiv!(f′, G; kwds...)
 end
 
@@ -385,14 +389,16 @@ julia> xrem(x^2 + y^2 + 1, [x, y])
 1 + 0im
 ```
 """
-function xrem(f::M, G::AbstractVector{M}; kwds...) where M <: AbstractModuleElement
-    f′ = deepcopy(f)
+function xrem(f::M, G::AbstractVector; kwds...) where M <: AbstractModuleElement
+    M′ = promote_type(M, eltype(G))
+    f′ = unalias(M′, f)
     any_reductions = xrem!(f′, G; kwds...)
     return any_reductions ? f′ : f
 end
 
-function xdivrem(f::M, G::AbstractVector{M}; kwds...) where M <: AbstractModuleElement
-    f′ = deepcopy(f)
+function xdivrem(f::M, G::AbstractVector; kwds...) where M <: AbstractModuleElement
+    M′ = promote_type(M, eltype(G))
+    f′ = unalias(M′, f)
     m, factors = xdiv!(f′, G; kwds...)
     return m, factors, iszero(factors) ? f : f′
 end

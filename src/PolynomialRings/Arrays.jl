@@ -9,7 +9,7 @@ import SparseArrays: nonzeros
 import ..AbstractMonomials: AbstractMonomial
 import ..Expansions: order_from_expr
 import ..Expansions: expandcoefficients, deg
-import ..Expansions: substitutedtype
+import ..Expansions: expansionorder, substitutedtype
 import ..NamingSchemes: remove_variables, Variable
 import ..Operators: common_denominator, integral_fraction
 import ..Polynomials: Polynomial, PolynomialOver, map_coefficients
@@ -66,7 +66,7 @@ julia> collect(flat_coefficients([x^3 + y^2, y^5], :x, :y))
 `@expandcoefficients`, `@expansion`, `expansion`, `@coefficient` and `coefficient`
 """
 function flat_coefficients(a::AbstractArray{P}, spec...) where P <: Polynomial
-    order = monomialorder(spec...)
+    order = expansionorder(spec...)
     return expandcoefficients(a, LexCombinationOrder(KeyOrder(), order))
 end
 

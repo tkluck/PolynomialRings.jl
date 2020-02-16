@@ -7,7 +7,7 @@ import ..StandardMonomialOrderings: rulesymbol
 This type represents a polynomial as a vector of coefficients, ordered by
 increasing monomial order. (see `PolynomialRings.MonomialOrderings`).
 """
-struct DensePolynomial{M <: AbstractMonomial, C}
+struct DensePolynomial{M <: AbstractMonomial, C} <: Polynomial{M, C}
     coeffs :: Vector{C}
     DensePolynomial{M, C}(coeffs::Vector{C}) where {M <: AbstractMonomial, C} = new(coeffs)
 end

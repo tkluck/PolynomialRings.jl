@@ -7,6 +7,7 @@ using Test
     include("Monomials.jl")
     include("Terms.jl")
     include("Expansions.jl")
+    include("Generators.jl")
     include("TypeUpgrades.jl")
     include("misc.jl")
 

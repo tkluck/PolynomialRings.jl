@@ -52,7 +52,7 @@ removenesting(o::OtherLexCombinationOrder, C) = removenesting(Base.tail(o), C)
 removenesting(o::KeyLexCombinationOrder, C) = removenesting(Base.tail(o), monomialordereltype(C))
 
 function expansiontype(P, spec...)
-    order = monomialorder(spec...)
+    order = expansionorder(spec...)
     if order isa KeyOrder
         return Sig{monomialorderkeytype(P), monomialordereltype(P)}
     else
@@ -94,6 +94,8 @@ julia> collect(expansion(x^3 + y^2, :x, :y))
 `@expansion(...)`, `@coefficient` and `coefficient`
 """
 function expansion end
+
+expansionorder(spec...) = monomialorder(spec...)
 
 expansion(p::Number, spec...) = (Term(one(monomialtype(spec...)), p),)
 
@@ -182,7 +184,7 @@ _oftermtype(m::Sig, c) = Sig(m.first => _oftermtype(m.second, c))
 _oftermtype(t::Term) = t
 _ofpolynomialtype(c) = c
 _ofpolynomialtype(m, c) = m * c
-_ofpolynomialtype(m::AbstractMonomial, c::AbstractArray) = m .* c
+_ofpolynomialtype(m::AbstractMonomial, c::AbstractArray) = _ofpolynomialtype.(m, c)
 _ofpolynomialtype(m::AbstractMonomial, c) = _ofpolynomialtype(Term(m, c))
 _ofpolynomialtype(t::Term{M,C}) where {M,C} = @assertvalid SparsePolynomial(M[monomial(t)], C[coefficient(t)])
 
@@ -212,7 +214,7 @@ deconstruct(M::Type{One}, a::Union{<:Tuple, <:AbstractArray, <:AbstractDict}) = 
     for (i, ai) in pairs(a) for t in deconstruct(M, ai)
 )
 
-expansion(p, spec...; kwds...) = expansion(p, monomialorder(spec...); kwds...)
+expansion(p, spec...; kwds...) = expansion(p, expansionorder(spec...); kwds...)
 
 function expansion(p, order::MonomialOrder; rev=false, tail=false)
     T = expansiontype(typeof(p), order)
@@ -433,7 +435,7 @@ julia> coefficient(x^3*y + x, (3,1), :x, :y)
 `@coefficient`, `expansion` and `@expansion`
 """
 function coefficient(f, t::Union{<:Tuple, <:AbstractVector}, spec...)
-    order = monomialorder(spec...)
+    order = expansionorder(spec...)
     m = exp(monomialtype(order), t)
     for (w,p) in expansion(f, order)
         if w == m
@@ -474,7 +476,7 @@ julia> constant_coefficient(x^3*y + x + y + 1, :x, :y)
 `@constant_coefficient`, `@coefficient`, and `@expansion`
 """
 function constant_coefficient(f, spec...)
-    order = monomialorder(spec...)
+    order = expansionorder(spec...)
     for (w,p) in expansion(f, order)
         if isone(w)
             return p
@@ -509,7 +511,7 @@ julia> linear_coefficients(x^3*y + x + y + 1, :x, :y)
 # See also
 `@constant_coefficient`, `@coefficient`, and `@expansion`
 """
-linear_coefficients(f, spec...) = linear_coefficients(f, monomialorder(spec...))
+linear_coefficients(f, spec...) = linear_coefficients(f, expansionorder(spec...))
 
 function linear_coefficients(f, spec::NamedMonomialOrder)
     return map(generators(monomialtype(spec))) do m
@@ -559,7 +561,7 @@ julia> deg(x^2, :y)
 """
 function deg(f::Polynomial, spec...)
     iszero(f) && return -1
-    order = monomialorder(spec...)
+    order = expansionorder(spec...)
     return maximum(deg(w, namingscheme(order)) for (w,p) in expansion(f, order))
 end
 

@@ -79,15 +79,16 @@ terms_to_reduce(::Lead, f; order) = (leading_term(f, order=order),)
 terms_to_reduce(::Full, f; order) = nzrevterms(f, order=order)
 terms_to_reduce(::Tail, f; order) = nztailterms(f, order=order)
 
-function one_step_div!(f::PolynomialBy{Order}, g::PolynomialBy{Order}; order::Order, redtype::RedType) where Order <: MonomialOrder
+function one_step_div!(f::Polynomial, g::Polynomial; order::MonomialOrder, redtype::RedType)
     @withmonomialorder order
+    g = oftype(f, g) # TODO: fix broacasting so the operations below work without this line.
     if iszero(f)
         return nothing
     end
     if iszero(g)
         throw(DivideError())
     end
-    lt_g = leading_term(g)
+    lt_g = lt(g)
     for t in terms_to_reduce(redtype, f, order=order)
         factor = maybe_div(t, lt_g)
         if factor !== nothing
@@ -98,18 +99,19 @@ function one_step_div!(f::PolynomialBy{Order}, g::PolynomialBy{Order}; order::Or
     return nothing
 end
 
-function one_step_xdiv!(f::PolynomialBy{Order}, g::PolynomialBy{Order}; order::Order, redtype::RedType) where Order <: MonomialOrder
+function one_step_xdiv!(f::Polynomial, g::Polynomial; order::MonomialOrder, redtype::RedType)
     @withmonomialorder order
+    g = oftype(f, g) # TODO: fix broacasting so the operations below work without this line.
     if iszero(f)
         return nothing
     end
     if iszero(g)
         throw(DivideError())
     end
-    lt_g = leading_monomial(g)
-    m2 = leading_coefficient(g)
+    lm_g = lm(g)
+    m2 = lc(g)
     for t in terms_to_reduce(redtype, f, order=order)
-        factor = maybe_div(monomial(t), lt_g)
+        factor = maybe_div(monomial(t), lm_g)
         if factor !== nothing
             m1 = coefficient(t)
             k1, k2 = lcm_multipliers(m1, m2)

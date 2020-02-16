@@ -19,6 +19,7 @@ include("Signatures.jl")
 include("StandardMonomialOrderings.jl")
 include("Monomials.jl")
 include("Expansions.jl")
+include("Generators.jl")
 
 
 include("PolynomialRings/Broadcast.jl")
@@ -39,7 +40,7 @@ include("PolynomialRings/Solve.jl")
 # define this here to resolve a dependency cycle
 basering(::Type{M}) where M <: AbstractMonomials.AbstractMonomial = Constants.One
 
-import .NamingSchemes: @namingscheme, @nestednamingscheme
+import .NamingSchemes: @namingscheme, @nestednamingscheme, @variable
 import .StandardMonomialOrderings: @lex, @deglex, @degrevlex
 import .Monomials: TupleMonomial, VectorMonomial, @monomial
 import .Terms: Term
@@ -53,7 +54,7 @@ import .Solve: matrix_solve_affine
 import .NamedPolynomials: minring, ofminring
 import .Util: @assertvalid
 
-export @namingscheme, @nestednamingscheme
+export @namingscheme, @nestednamingscheme, @variable
 export @lex, @deglex, @degrevlex
 export @monomial
 export TupleMonomial, Term, Polynomial, generators, ⊗, polynomial_ring, variablesymbols

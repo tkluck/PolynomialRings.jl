@@ -12,7 +12,7 @@ import ..Operators: RedType
 import ..Polynomials: Polynomial, termtype, monomialtype, basering, map_coefficients
 import ..Polynomials: PolynomialOver, NamedPolynomial, polynomialtype
 import ..Terms: Term, monomial, coefficient
-import ..Util: @assertvalid
+import ..Util: @assertvalid, unalias
 import PolynomialRings: fraction_field, integers, base_extend, base_restrict, namingscheme
 import PolynomialRings: xdiv, xrem, xdivrem
 import PolynomialRings: ⊗, base_extend, base_restrict
@@ -34,19 +34,11 @@ convert(::Type{P}, x::P) where P <: Polynomial = x
 
 # -----------------------------------------------------------------------------
 #
-# Convert and un-alias when necessary
-#
-# -----------------------------------------------------------------------------
-unalias(::Type{T}, a::T) where T = deepcopy(a)
-unalias(::Type{T}, a::S) where {T,S} = convert(T, a)
-
-# -----------------------------------------------------------------------------
-#
 # Promoting coefficients to polynomials
 #
 # -----------------------------------------------------------------------------
 
-promote_rule(::Type{P}, ::Type{C}) where P<:PolynomialOver{C} where C = P
+@generated promote_rule(::Type{P}, ::Type{C}) where P<:PolynomialOver{C} where C = polynomialtype(P)
 
 function convert(::Type{P}, a::C) where P<:PolynomialOver{C} where C
     if iszero(a)
@@ -302,9 +294,6 @@ function promote_vector(a::S,b::AbstractVector{T}) where {S,T<:Polynomial}
     end
 end
 
-div(a::AbstractModuleElement, b::AbstractVector{<:AbstractModuleElement})    = div(promote_vector(a, b)...)
-rem(a::AbstractModuleElement, b::AbstractVector{<:AbstractModuleElement})    = rem(promote_vector(a, b)...)
-divrem(a::AbstractModuleElement, b::AbstractVector{<:AbstractModuleElement}) = divrem(promote_vector(a, b)...)
 div(a::Number, b::AbstractVector{<:Polynomial})    = div(promote_vector(a, b)...)
 rem(a::Number, b::AbstractVector{<:Polynomial})    = rem(promote_vector(a, b)...)
 divrem(a::Number, b::AbstractVector{<:Polynomial}) = divrem(promote_vector(a, b)...)

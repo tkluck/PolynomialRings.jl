@@ -307,7 +307,7 @@ R,(x,y,z) = polynomial_ring(:x, :y, :z, basering=Int64)
         A = @ring ℤ[a]
         B = @ring! A[b]
         @test B == @ring ℤ[a][b]
-        @test typeof(b) == B
+        @test one(b) isa B
         @test_throws UndefVarError typeof(a)
 
         @ring! ℤ[a][x,y]

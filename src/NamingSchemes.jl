@@ -62,6 +62,13 @@ abstract type Variable end
 struct NamedVariable{Name}        <: Variable end
 struct NumberedVariable{Name, Ix} <: Variable end
 
+name(::NamedVariable{Name}) where Name = Name
+name(::NumberedVariable{Name}) where Name = Name
+index(::NumberedVariable{Name, Ix}) where {Name, Ix} = Ix
+
+variable(name::Symbol) = NamedVariable{name}()
+variable(name::Symbol, ix::Integer) = NumberedVariable{name, ix}()
+
 # -----------------------------------------------------------------------------
 #
 # Finite enumeration of variable names
@@ -72,6 +79,8 @@ variablesymbols(::Named{Names}) where Names = Names
 num_variables(named::Named) = length(variablesymbols(named))
 
 const EmptyNamingScheme = Named{()}
+
+namingscheme() = EmptyNamingScheme()
 
 # -----------------------------------------------------------------------------
 #
@@ -97,6 +106,9 @@ function namingscheme(name::Symbol, n::Number)
     isvalid(res) || error("Not a valid naming scheme: $name, $n")
     return res
 end
+
+namingscheme(vars::NamedVariable...) = namingscheme(map(name, vars)...)
+namingscheme(var::NumberedVariable) = namingscheme(name(var), Inf)
 
 isempty(::Named) = false
 isempty(::EmptyNamingScheme) = true
@@ -314,6 +326,7 @@ end
 #
 # -----------------------------------------------------------------------------
 
+show(io::IO, T::Type{<:Variable}) = showsingleton(io, T)
 show(io::IO, T::Type{<:NamingScheme}) = showsingleton(io, T)
 show(io::IO, T::Type{<:NestedNamingScheme}) = begin
     if T === Tuple{}
@@ -322,6 +335,8 @@ show(io::IO, T::Type{<:NestedNamingScheme}) = begin
         showsingleton(io, T)
     end
 end
+
+show(io::IO, var::NamedVariable) = print(io, "@variable(", name(var), ")")
 
 showvars(x) = showvars(namingscheme(x))
 showvars(scheme::Named{Names}) where Names              = join(Names, ",")

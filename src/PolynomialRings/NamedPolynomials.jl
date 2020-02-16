@@ -3,7 +3,7 @@ module NamedPolynomials
 import Base: promote_rule, convert, Bottom
 import SparseArrays: SparseVector, issparse
 
-import ..AbstractMonomials: AbstractMonomial, exptype, num_variables
+import ..AbstractMonomials: AbstractMonomial, exptype, num_variables, exponents
 import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
 import ..Monomials.TupleMonomials: TupleMonomial
@@ -31,7 +31,7 @@ convert(::Type{P}, p::P) where P <: DensePolynomialOver{C,O} where {C,O<:Numbere
 # -----------------------------------------------------------------------------
 
 # fix method ambiguity
-promote_rule(::Type{P}, ::Type{C}) where P<:PolynomialOver{C} where C <: Polynomial = P
+promote_rule(::Type{P}, ::Type{C}) where P<:PolynomialOver{C} where C <: Polynomial = polynomialtype(P)
 
 function remove_variables(::Type{M}, vars) where M <: AbstractMonomial
     O = diff(monomialorder(M), vars)
@@ -249,12 +249,18 @@ minring(x::Complex) = real(x) ≈ x ? minring(real(x)) : typeof(x)
 minring(x) = typeof(x)
 
 function minring(f::NamedPolynomial)
-    base = minring(f.coeffs...)
+    iszero(f) && return Int
 
-    m = prod(monomial(t) for t in nzterms(f))
-    nz = findall(!iszero, m.e)
-    syms = variablesymbols(namingscheme(f))
-    isempty(nz) ? base : polynomialtype(Named{syms[nz]}(), base, sparse=issparse(f))
+    base = reduce(promote_type, (minring(c) for (m, c) in expansion(f)))
+    m = prod(m for (m, c) in expansion(f))
+
+    if (nz = findall(!iszero, exponents(m, namingscheme(f)))) |> isempty
+        return base
+    else
+        syms = variablesymbols(namingscheme(f))
+        scheme = namingscheme(syms[nz]...)
+        return polynomialtype(scheme, base, sparse=issparse(f))
+    end
 end
 
 function minring(f::NumberedPolynomial)

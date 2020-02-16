@@ -13,7 +13,7 @@ matching non-zero coefficients. All methods guarantee and assume that the vector
 is sorted by increasing monomial order (see
 `PolynomialRings.MonomialOrderings`).
 """
-struct SparsePolynomial{M <: AbstractMonomial, C}
+struct SparsePolynomial{M <: AbstractMonomial, C} <: Polynomial{M, C}
     monomials :: Vector{M}
     coeffs    :: Vector{C}
 end
@@ -374,7 +374,7 @@ function inclusiveinplace!(::typeof(*), a::P, b::C) where
 end
 
 function convert(P::Type{<:SparsePolynomialOver{C,O}}, p::SparsePolynomialOver{D,O}) where {C,D,O <: MonomialOrder}
-    return @assertvalid _filterzeros!(P(p.monomials, convert.(C, p.coeffs)))
+    return @assertvalid _filterzeros!(P(copy(p.monomials), collect(C, p.coeffs)))
 end
 
 function to_dense_monomials(scheme::InfiniteScheme, p::SparsePolynomial, max_variable_index)

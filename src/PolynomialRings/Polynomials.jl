@@ -28,6 +28,8 @@ import PolynomialRings: variablesymbols, allvariablesymbols, fullboundnames
 #
 # -----------------------------------------------------------------------------
 
+abstract type Polynomial{M <: AbstractMonomial, C} end
+
 const NamedMonomial           = AbstractMonomial{<:NamedMonomialOrder}
 const NumberedMonomial        = AbstractMonomial{<:NumberedMonomialOrder}
 const MonomialBy{Order}       = AbstractMonomial{Order}
@@ -40,8 +42,6 @@ include("SparsePolynomials.jl")
 abstract type DensePolynomial{M, C} end
 abstract type DensePolynomialBy{M, C} end
 abstract type DensePolynomialOver{M, C} end
-
-const Polynomial{M, C} = Union{SparsePolynomial{M, C}, DensePolynomial{M, C}}
 
 function polynomialtype(M::Type{<:AbstractMonomial}, C::Type; sparse=true)
     if !isdisjoint(namingscheme(M), nestednamingscheme(C)) || !isdisjoint(namingscheme(M), fullboundnames(C))
@@ -168,6 +168,27 @@ monomialorderkey(order, a::Polynomial) = iszero(a) ? nothing : leading_monomial(
 
 tail(p::Polynomial, order::MonomialOrder) = p - leading_term(p; order=order)
 tail(p::Polynomial; order::MonomialOrder=monomialorder(p)) = tail(p, order)
+
+# -----------------------------------------------------------------------------
+#
+# Some default implementations in terms of expansion
+#
+# -----------------------------------------------------------------------------
+iszero(p::Polynomial) = iszero(nztermscount(p))
+
+function map_coefficients(f, a::Polynomial)
+    iszero(a) && return zero(a)
+    res = zero(a)
+    for (m, c) in expansion(a)
+        @inplace res += Term(m, f(c))
+    end
+    return res
+end
+
+==(a::P, b::P) where P <: Polynomial = iszero(a - b)
++(p::Polynomial) = map_coefficients(+, p)
+-(p::Polynomial) = map_coefficients(-, p)
+
 # -----------------------------------------------------------------------------
 #
 # Methods for collection-of-terms
