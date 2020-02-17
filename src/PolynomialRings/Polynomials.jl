@@ -142,6 +142,7 @@ tail(p::Polynomial, order::MonomialOrder) = p - leading_term(p; order=order)
 tail(p::Polynomial; order::MonomialOrder=monomialorder(p)) = tail(p, order)
 
 function deg(p::PolynomialIn{Scheme}, scheme::Scheme) where Scheme <: NamingScheme
+    iszero(p) && return -1
     if degreecompatible(monomialorder(p))
         return deg(leading_monomial(p), scheme)
     else

@@ -311,4 +311,26 @@ using PolynomialRings: monomialtype, termtype, substitute
 
     end
 
+    @testset "Degree" begin
+        R = @ring! Int[x,y,z]
+
+        @test deg(zero(R), namingscheme(R)) == -1
+        @test deg(x^2 + y^3, namingscheme(R)) == 3
+
+        @test deg(x^3 + y^2, @namingscheme((x,y,z))) == 3
+        @test deg(x^3 + y^2, @namingscheme((x,y))) == 3
+        @test deg(x^3 + y^2, @namingscheme(x)) == 3
+        @test deg(x^3 + y^2, @namingscheme(y)) == 2
+        @test deg(x^3 + y^2, @namingscheme(u)) == 0
+
+        @test deg(zero(R), @namingscheme((x,y,z))) == -1
+        @test deg(zero(R), @namingscheme((x,y))) == -1
+        @test deg(zero(R), @namingscheme(x)) == -1
+        @test deg(zero(R), @namingscheme(y)) == -1
+        @test deg(zero(R), @namingscheme(u)) == -1
+
+        @test deg(0, @namingscheme((x,y,z))) == -1
+        @test deg(0.0, @namingscheme((x,y))) == -1
+    end
+
 end

@@ -98,7 +98,7 @@ function to_dense_monomials(scheme::InfiniteScheme, a::Term, max_variable_index)
     return Term(m, c)
 end
 
-deg(t::Term, scheme::NamingScheme) = deg(monomial(t), scheme) + deg(coefficient(t), scheme)
+deg(t::Term, scheme::NamingScheme) = iszero(t) ? -1 : deg(monomial(t), scheme) + deg(coefficient(t), scheme)
 
 function maybe_div(a::T, b::T) where T<:Term
     q = maybe_div(monomial(a), monomial(b))
