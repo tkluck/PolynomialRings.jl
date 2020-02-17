@@ -6,7 +6,7 @@ import Base: hash, exp
 import ..AbstractMonomials: AbstractMonomial
 import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, monomialorderkey
-import ..NamingSchemes: NamingScheme, InfiniteScheme, Variable
+import ..NamingSchemes: NamingScheme, InfiniteScheme, Variable, variable
 import ..Util: lazymap
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering
 import PolynomialRings: maybe_div, divides, lcm_multipliers, monomialtype, exptype, lcm_degree, namingscheme, monomialorder
@@ -115,10 +115,8 @@ function lcm_multipliers(a::T, b::T)::Tuple{T,T} where T<:Term
     return T(m_a, c_a), T(m_b, c_b)
 end
 
-diff(a, x::Variable) = zero(a)
-
-function diff(t::Term, x::Variable)
-    if isnothing(indexin(x, namingscheme(t)))
+function diff(t::Term, x)
+    if isnothing(indexin(variable(x), namingscheme(t)))
         return Term(monomial(t), diff(coefficient(t), x))
     else
         n, m = diff(monomial(t), x)

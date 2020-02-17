@@ -203,7 +203,7 @@ end
 # exponentiation
 #
 # -----------------------------------------------------------------------------
-function diff(f::Polynomial, x::Variable)
+function diff(f::Polynomial, x)
     res = zero(f)
     for t in expansion(f)
         @inplace res += diff(t, x)

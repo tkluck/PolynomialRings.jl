@@ -143,6 +143,6 @@ _PT = Union{Polynomial,Term,AbstractMonomial}
 div(a::A, s::Integer) where A <: AbstractArray{P} where P<:PolynomialOver{<:Integer} = map(a_i->map_coefficients(c->div(c,s), a_i), a)
 transpose(a::_PT) = a
 
-diff(a::AbstractArray{<:Polynomial}, s::Union{Variable, Symbol}) = broadcast(a_i->diff(a_i, s), a)
+diff(a::AbstractArray{<:Polynomial}, s) = broadcast(a_i->diff(a_i, s), a)
 
 end

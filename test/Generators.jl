@@ -22,6 +22,8 @@ import PolynomialRings: polynomial_ring, monomialorder
         @test expansionorder(x) == @degrevlex(x)
         @test expansionorder(x, y) == @degrevlex(x > y)
         @test expansionorder(y, x) == @degrevlex(y > x)
+
+        @test 6x^2 * diff(x, x) ==3x * diff(x^2, x) == 2diff(x^3, x) == 6x^2
     end
 
     @testset "Numbered generators" begin

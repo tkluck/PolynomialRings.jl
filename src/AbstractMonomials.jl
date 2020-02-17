@@ -11,7 +11,7 @@ import SparseArrays: nonzeroinds
 
 import ..MonomialOrderings: MonomialOrder
 import ..NamingSchemes: Variable, Named, Numbered, InfiniteScheme, NamingScheme
-import ..NamingSchemes: numberedvariablename, variablesymbols
+import ..NamingSchemes: numberedvariablename, variablesymbols, variable
 import ..Util: isdisjoint, eachstoredindex
 import PolynomialRings: to_dense_monomials, max_variable_index, num_variables, monomialtype
 import PolynomialRings: leading_monomial
@@ -147,15 +147,14 @@ function exponent(a::AbstractMonomial, x::Variable)
     return zero(exptype(a))
 end
 
-function diff(a::M, x::Variable) where M <: AbstractMonomial
-    n = exponent(a, x)
-    if iszero(n)
-        return (n, one(M))
-    else
-        i = indexin(x, namingscheme(a))
+function diff(a::M, x) where M <: AbstractMonomial
+    if (n = exponent(a, variable(x))) |> !iszero
+        i = indexin(variable(x), namingscheme(a)) :: Int
         exps = exponents(a, namingscheme(a))
         newexps = map(((j, e),) -> j == i ? e - one(e) : e, enumerate(exps))
         return (n, exp(M, newexps))
+    else
+        return (zero(exptype(a)), one(M))
     end
 end
 

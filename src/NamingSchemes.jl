@@ -68,6 +68,7 @@ index(::NumberedVariable{Name, Ix}) where {Name, Ix} = Ix
 
 variable(name::Symbol) = NamedVariable{name}()
 variable(name::Symbol, ix::Integer) = NumberedVariable{name, ix}()
+variable(var::Variable) = var
 
 # -----------------------------------------------------------------------------
 #

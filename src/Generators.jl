@@ -25,6 +25,7 @@ polynomialtype(::Type{Generator{Var, P, M, C}}) where {Var, P, M, C} = P
 polynomialtype(g::Generator) = polynomialtype(typeof(g))
 variable(::Type{Generator{Var, P, M, C}}) where {Var, P, M, C} = Var.instance
 variable(g::Generator) = variable(typeof(g))
+name(g::Generator) = name(variable(g))
 
 Generator(var::Variable, p) = Generator{typeof(var), typeof(p), monomialtype(p), basering(p)}(var, p)
 Generator(var::Symbol, p) = Generator(variable(var), p)
@@ -53,6 +54,9 @@ function show(io::IO, G::Type{<:Generator})
         invoke(show, Tuple{IO, Type}, io, G)
     end
 end
+
+diff(a::Number, x::Variable) = zero(a)
+diff(a::Number, x::Generator) = zero(a)
 
 # -----------------------------------------------------------------------------
 #
