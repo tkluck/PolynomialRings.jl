@@ -12,12 +12,12 @@ import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialO
 import ..MonomialOrderings: monomialorderkeytype, monomialordereltype
 import ..NamingSchemes: Named, Numbered, NamingScheme, EmptyNamingScheme, remove_variables
 import ..NamingSchemes: NamedVariable, variable
-import ..Polynomials: Polynomial, monomialtype, monomialorder, SparsePolynomial
+import ..Polynomials: Polynomial, PolynomialIn, monomialtype, monomialorder, SparsePolynomial
 import ..Signatures: Sig
 import ..StandardMonomialOrderings: MonomialOrdering, LexCombinationOrder, KeyOrder
 import ..StandardMonomialOrderings: maybeunwrap
 import ..Terms: Term, monomial, coefficient
-import ..Util: @assertvalid, nzpairs
+import ..Util: @assertvalid, nzpairs, similarzeros
 import PolynomialRings: deg, generators, max_variable_index, basering
 import PolynomialRings: namingscheme, variablesymbols, expansion, expand, polynomialtype
 
@@ -854,4 +854,22 @@ macro deg(f, symbols...)
     end
 end
 
+# -----------------------------------------------------------------------------
+#
+# Optimized versions for when storage format is the same as the requested one
+#
+# -----------------------------------------------------------------------------
+function constant_coefficient(f::PolynomialIn{Scheme}, scheme::Scheme) where Scheme <: NamingScheme
+    return f[one(monomialtype(f))]
 end
+
+function constant_coefficient(a::AbstractArray{<:Polynomial}, spec...)
+    C = _coefftype(eltype(a), spec...)
+    res = similarzeros(a, C)
+    for (i, ai) in nzpairs(a)
+        res[i] = constant_coefficient(ai, spec...)
+    end
+    return res
+end
+
+end # module

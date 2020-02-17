@@ -6,7 +6,7 @@ import Base: iterate
 import Base: length, isempty
 import Base: length, iterate
 import Base: pairs
-import SparseArrays: SparseVector, SparseMatrixCSC
+import SparseArrays: SparseVector, SparseMatrixCSC, AbstractSparseArray, spzeros
 
 import DataStructures: PriorityQueue, SortedSet, OrderedSet, OrderedDict
 import DataStructures: percolate_down!, percolate_up!, enqueue!, dequeue!, peek
@@ -241,6 +241,9 @@ end
 
 Iterators.reverse(x::EachStoredIndex) = RevEachStoredIndex(x.a, x.b)
 Iterators.reverse(x::RevEachStoredIndex) = EachStoredIndex(x.a, x.b)
+
+similarzeros(a::AbstractArray, elementtype=eltype(a)) = zeros(elementtype, size(a)...)
+similarzeros(a::AbstractSparseArray, elementtype=eltype(a)) = spzeros(elementtype, size(a)...)
 
 # -----------------------------------------------------------------------------
 #
