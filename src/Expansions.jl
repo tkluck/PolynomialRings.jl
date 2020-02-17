@@ -11,7 +11,7 @@ import ..Constants: One
 import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
 import ..MonomialOrderings: monomialorderkeytype, monomialordereltype
 import ..NamingSchemes: Named, Numbered, NamingScheme, EmptyNamingScheme, remove_variables
-import ..NamingSchemes: NamedVariable
+import ..NamingSchemes: NamedVariable, variable
 import ..Polynomials: Polynomial, monomialtype, monomialorder, SparsePolynomial
 import ..Signatures: Sig
 import ..StandardMonomialOrderings: MonomialOrdering, LexCombinationOrder, KeyOrder
@@ -96,6 +96,7 @@ julia> collect(expansion(x^3 + y^2, :x, :y))
 function expansion end
 
 expansionorder(spec...) = monomialorder(spec...)
+expansionorder(spec::Polynomial...) = expansionorder(map(variable, spec)...)
 
 expansion(p::Number, spec...) = (Term(one(monomialtype(spec...)), p),)
 

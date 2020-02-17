@@ -8,19 +8,23 @@ import ..Constants: One, Zero, MinusOne, Constant
 import ..MonomialOrderings: MonomialOrder
 import ..Monomials.TupleMonomials: TupleMonomial
 import ..Monomials.VectorMonomials: VectorMonomial
-import ..NamingSchemes: NamingScheme
+import ..NamingSchemes: NamingScheme, NamedVariable
 import ..Polynomials: SparsePolynomial, Polynomial
 import ..StandardMonomialOrderings: MonomialOrdering
 import ..Terms: Term
 import PolynomialRings: namingscheme, monomialorder, monomialtype, termtype, polynomialtype, basering
 import PolynomialRings: num_variables
 
+monomialorder(; rule=:degrevlex) = monomialorder(namingscheme(), rule)
 monomialorder(names::Symbol...; rule=:degrevlex) = monomialorder(namingscheme(names...), rule)
 monomialorder(name::Symbol, n::Number, rule=:degrevlex) = monomialorder(namingscheme(name, n), rule)
+
+monomialorder(var::NamedVariable...; rule=:degrevlex) = monomialorder(namingscheme(var...), rule)
 
 monomialorder(scheme::NamingScheme, rule=:degrevlex) = MonomialOrdering{rule, typeof(scheme)}()
 
 monomialtype(scheme::NamingScheme, exptype=Int16) = monomialtype(monomialorder(scheme), exptype)
+monomialtype(var::NamedVariable, exptype=Int16) = monomialtype(monomialorder(var), exptype)
 
 function monomialtype(order::MonomialOrder, exptype=Int16)
     N = num_variables(namingscheme(order))

@@ -122,6 +122,9 @@ function isvalid(scheme::NestedNamingScheme)
     all(isvalid, scheme) || return false
 end
 
+variable(scheme::Named, i::Integer) = variable(variablesymbols(scheme)[i])
+variable(scheme::Numbered, i::Integer) = variable(name(scheme), i)
+
 @pure indexin(x::Symbol, n::Named{Names}) where Names = findfirst(isequal(x), Names)
 indexin(x::Symbol, n::Numbered) = nothing
 @pure indexin(x::NamedVariable{Name}, n::Named{Names}) where {Name, Names} = findfirst(isequal(Name), Names)

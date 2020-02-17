@@ -302,4 +302,13 @@ using PolynomialRings: monomialtype, termtype, substitute
         @test I*x == [x 0; 0 x] == x*I
     end
 
+    @testset "Generators + polynomials as expansion specs" begin
+        @ring! Int[x,y,z]
+        X, Y, Z = 1x, 1y, 1z # materialize Generator into Polynomial
+
+        @test collect(expansion(x^2 + y^2, :x)) == collect(expansion(x^2 + y^2, x)) == collect(expansion(x^2 + y^2, X))
+        @test diff(x^2 + y^2, :x) == diff(x^2 + y^2, x) == diff(x^2 + y^2, X)
+
+    end
+
 end

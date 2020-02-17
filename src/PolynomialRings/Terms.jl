@@ -135,4 +135,11 @@ Base.convert(T::Type{<:Term}, t::Term) = T(convert(monomialtype(T), monomial(t))
 
 ==(a::Term, b::Term) = monomial(a) == monomial(b) && coefficient(a) == coefficient(b)
 
+function variable(t::Term)
+    if isone(coefficient(t))
+        return variable(monomial(t))
+    end
+    error("Term $t is not a variable")
 end
+
+end # module

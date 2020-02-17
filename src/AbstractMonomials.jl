@@ -158,6 +158,15 @@ function diff(a::M, x) where M <: AbstractMonomial
     end
 end
 
+function variable(m::AbstractMonomial)
+    if isone(deg(m, namingscheme(m)))
+        exps = exponents(m, namingscheme(m))
+        i = findfirst(!iszero, exps)
+        return variable(namingscheme(m), i)
+    end
+    error("Monomial $m is not a variable")
+end
+
 function lcm_degree(a::AbstractMonomial, b::AbstractMonomial)
     M = promote_type(typeof(a), typeof(b))
     # avoid summing empty iterator

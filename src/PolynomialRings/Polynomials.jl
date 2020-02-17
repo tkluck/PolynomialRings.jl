@@ -12,7 +12,8 @@ import ..AbstractMonomials: AbstractMonomial
 import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
 import ..MonomialOrderings: monomialorderkey
 #import ..Monomials.IndexedMonomials: IndexedMonomial
-import ..NamingSchemes: Named, Numbered, NamingScheme, InfiniteScheme, nestednamingscheme, isvalid
+import ..NamingSchemes: Named, Numbered, NamingScheme, InfiniteScheme
+import ..NamingSchemes: nestednamingscheme, isvalid, variable
 import ..Terms: Term, monomial, coefficient
 import ..Util: @assertvalid, _debug_isvalid, isdisjoint
 import PolynomialRings: generators, max_variable_index, basering, monomialtype
@@ -159,6 +160,26 @@ end
 ==(a::P, b::P) where P <: Polynomial = iszero(a - b)
 +(p::Polynomial) = map_coefficients(+, p)
 -(p::Polynomial) = map_coefficients(-, p)
+
+# -----------------------------------------------------------------------------
+#
+# Be able to use `x` in expansion / differentiation
+# (not type stable; better to use Generator if possible)
+#
+# -----------------------------------------------------------------------------
+function variable(p::Polynomial)
+    terms = collect(expansion(p))
+    if length(terms) == 1
+        return variable(terms[1])
+        m, c = terms[1]
+        if isone(c)
+            return variable(m)
+        end
+    end
+    error("Polynomial $p is not a variable")
+end
+
+name(p::NamedPolynomial) = name(variable(p))
 
 # -----------------------------------------------------------------------------
 #
