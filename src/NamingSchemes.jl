@@ -338,6 +338,7 @@ show(io::IO, T::Type{<:NestedNamingScheme}) = begin
 end
 
 show(io::IO, var::NamedVariable) = print(io, "@variable(", name(var), ")")
+show(io::IO, var::NumberedVariable) = print(io, "@variable($(name(var))[$(index(var))])")
 
 showvars(x) = showvars(namingscheme(x))
 showvars(scheme::Named{Names}) where Names              = join(Names, ",")

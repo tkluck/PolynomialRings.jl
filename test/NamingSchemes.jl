@@ -134,6 +134,9 @@ using PolynomialRings: to_dense_monomials
     end
 
     @testset "Display" begin
+        @test repr(@variable(x)) == "@variable(x)"
+        @test repr(@variable(c[3])) == "@variable(c[3])"
+
         @test repr(@namingscheme(x)) == "@namingscheme(x)"
         @test repr(@namingscheme(x[])) == "@namingscheme(x[])"
         @test repr(@namingscheme(x[1:20])) == "@namingscheme(x[1:20])"
