@@ -87,8 +87,18 @@ integers(T::Type{<:NumberField}) = T
 # Addition and substraction
 #
 # -----------------------------------------------------------------------------
-zero(T::Type{<:NumberField}) =
-    T(ntuple(i -> zero(numeratortype(T)), degree(T)), one(denominatortype(T)))
+
+# zero(T) is in many inner loops, and there's some overhead from ntuple for large degree(T).
+# It's worth materializing like this.
+@generated function zero(::Type{T}) where T <: NumberField
+    N = numeratortype(T)
+    D = denominatortype(T)
+    num = :( zero($N) )
+    denom = :( one($D) )
+    nums = :( tuple($([num for _ in 1:degree(T)]...)) )
+    return :( T($nums, $denom) )
+end
+
 one( T::Type{<:NumberField}) =
     T(ntuple(i -> i == 1 ? one(numeratortype(T)) : zero(numeratortype(T)), degree(T)), one(denominatortype(T)))
 gen( T::Type{<:NumberField}) =
