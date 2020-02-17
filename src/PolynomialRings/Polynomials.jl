@@ -10,7 +10,7 @@ import Transducers: Transducer, Eduction
 
 import ..AbstractMonomials: AbstractMonomial
 import ..MonomialOrderings: MonomialOrder, NamedMonomialOrder, NumberedMonomialOrder
-import ..MonomialOrderings: monomialorderkey
+import ..MonomialOrderings: monomialorderkey, degreecompatible
 #import ..Monomials.IndexedMonomials: IndexedMonomial
 import ..NamingSchemes: Named, Numbered, NamingScheme, InfiniteScheme
 import ..NamingSchemes: nestednamingscheme, isvalid, variable
@@ -20,7 +20,7 @@ import PolynomialRings: generators, max_variable_index, basering, monomialtype
 import PolynomialRings: leading_coefficient, leading_monomial
 import PolynomialRings: leading_term, termtype, monomialorder, exptype, namingscheme, expansion
 import PolynomialRings: polynomialtype
-import PolynomialRings: tail
+import PolynomialRings: tail, deg
 import PolynomialRings: variablesymbols, allvariablesymbols, fullboundnames
 
 # -----------------------------------------------------------------------------
@@ -86,7 +86,7 @@ const NumberedTerm{C}         = TermOver{C,<:NumberedMonomialOrder}
 const NamedPolynomial{C}      = PolynomialOver{C,<:NamedMonomialOrder}
 const NumberedPolynomial{C}   = PolynomialOver{C,<:NumberedMonomialOrder}
 const PolynomialBy{Order,C}   = PolynomialOver{C,Order}
-const PolynomialIn{M}         = Polynomial{M}
+const PolynomialIn{Scheme,C}  = PolynomialOver{C, <:MonomialOrder{Scheme}}
 
 # -----------------------------------------------------------------------------
 #
@@ -141,6 +141,14 @@ monomialorderkey(order, a::Polynomial) = iszero(a) ? nothing : leading_monomial(
 tail(p::Polynomial, order::MonomialOrder) = p - leading_term(p; order=order)
 tail(p::Polynomial; order::MonomialOrder=monomialorder(p)) = tail(p, order)
 
+function deg(p::PolynomialIn{Scheme}, scheme::Scheme) where Scheme <: NamingScheme
+    if degreecompatible(monomialorder(p))
+        return deg(leading_monomial(p), scheme)
+    else
+        return maximum(deg(m, scheme) for (m, _) in expansion(p))
+    end
+end
+
 # -----------------------------------------------------------------------------
 #
 # Some default implementations in terms of expansion
@@ -194,7 +202,7 @@ Base.copy!(x::Polynomial, ed::Eduction) = copy!(Transducer(ed), x, ed.coll)
 generators(::Type{P}) where P <: Polynomial = map(P, generators(termtype(P)))
 
 """
-    coeff = get(p::PolynomialIn{M}, m::M, default) where M <: AbstractMonomial
+    coeff = get(p::Polynomial{M}, m::M, default) where M <: AbstractMonomial
 
 The coefficient of `p` at `m`, or `default` if this coefficient is zero.
 
@@ -204,7 +212,7 @@ For example, when `basering(p) == BigInt`, the result `zero(BigInt)` needs
 an allocation, and that's wasteful if the caller only wants to do `iszero(...)`.
 In this situation, `isnothing(get(p, m, nothing))` is much faster.
 """
-function Base.get(p::PolynomialIn{M}, m::M, default) where M <: AbstractMonomial
+function Base.get(p::Polynomial{M}, m::M, default) where M <: AbstractMonomial
     if (range = searchsorted(monomials(p), m)) |> !isempty
         ix = first(range)
         if ix <= length(coefficients(p))
@@ -215,7 +223,7 @@ function Base.get(p::PolynomialIn{M}, m::M, default) where M <: AbstractMonomial
     return default
 end
 
-Base.getindex(p::PolynomialIn{M}, m::M) where M <: AbstractMonomial = get(p, m, zero(basering(p)))
+Base.getindex(p::Polynomial{M}, m::M) where M <: AbstractMonomial = get(p, m, zero(basering(p)))
 
 # match the behaviour for Number
 # some code treats numbers as collection-like

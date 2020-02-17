@@ -9,7 +9,7 @@ import ..MonomialOrderings: MonomialOrder, monomialorderkey
 import ..NamingSchemes: NamingScheme, InfiniteScheme, Variable, variable
 import ..Util: lazymap
 import PolynomialRings: generators, to_dense_monomials, max_variable_index, basering
-import PolynomialRings: maybe_div, divides, lcm_multipliers, monomialtype, exptype, lcm_degree, namingscheme, monomialorder
+import PolynomialRings: maybe_div, divides, lcm_multipliers, monomialtype, exptype, lcm_degree, namingscheme, monomialorder, deg
 
 """
     Term{M, C} where M <: AbstractMonomial where C
@@ -97,6 +97,8 @@ function to_dense_monomials(scheme::InfiniteScheme, a::Term, max_variable_index)
     c = to_dense_monomials(scheme, coefficient(a), max_variable_index)
     return Term(m, c)
 end
+
+deg(t::Term, scheme::NamingScheme) = deg(monomial(t), scheme) + deg(coefficient(t), scheme)
 
 function maybe_div(a::T, b::T) where T<:Term
     q = maybe_div(monomial(a), monomial(b))

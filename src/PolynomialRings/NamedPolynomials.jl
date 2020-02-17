@@ -11,7 +11,7 @@ import ..Monomials.VectorMonomials: VectorMonomial
 import ..NamingSchemes: Named, Numbered, NamingScheme, EmptyNamingScheme
 import ..NamingSchemes: numberedvariablename, remove_variables, boundnames, canonicalscheme
 import ..Polynomials:  NamedMonomial, NumberedMonomial, NamedTerm, NumberedTerm, TermOver, monomialorder
-import ..Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolynomial, PolynomialBy, PolynomialIn, SparsePolynomialOver, DensePolynomialOver
+import ..Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolynomial, PolynomialBy, SparsePolynomialOver, DensePolynomialOver
 import ..StandardMonomialOrderings: MonomialOrdering, rulesymbol
 import ..Terms: Term, basering, monomial, coefficient
 import ..Util: isdisjoint

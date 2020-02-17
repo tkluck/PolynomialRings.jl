@@ -569,12 +569,12 @@ julia> deg(x^2, :y)
 0
 ```
 """
-function deg(f::Polynomial, spec...)
+function deg(f::Polynomial, scheme::NamingScheme)
     iszero(f) && return -1
-    order = expansionorder(spec...)
-    return maximum(deg(w, namingscheme(order)) for (w,p) in expansion(f, order))
+    return maximum(deg(t, scheme) for t in expansion(f))
 end
 
+deg(f::Polynomial, spec...) = deg(f, namingscheme(expansionorder(spec...)))
 deg(f::Number, spec...) = iszero(f) ? -1 : 0
 
 # -----------------------------------------------------------------------------

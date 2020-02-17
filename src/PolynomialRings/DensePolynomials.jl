@@ -14,7 +14,6 @@ end
 
 const DensePolynomialOver{C,Order} = DensePolynomial{<:AbstractMonomial{Order}, C}
 const DensePolynomialBy{Order,C}   = DensePolynomialOver{C,Order}
-const DensePolynomialIn{M}         = DensePolynomial{M}
 
 isstrictlysparse(P::Type{<:DensePolynomial}) = false
 issparse(P::Type{<:DensePolynomial}) = false
@@ -100,7 +99,7 @@ end
 #    return nothing
 #end
 
-function Base.get(p::DensePolynomialIn{M}, m::M, default) where M <: AbstractMonomial
+function Base.get(p::DensePolynomial{M}, m::M, default) where M <: AbstractMonomial
     rulesymbol(monomialorder(M)) == :degrevlex || error("Not implemented")
     ix = m isa TupleMonomial ? degrevlex_index(m.e) : m.ix
     if ix <= length(coefficients(p))
