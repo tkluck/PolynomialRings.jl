@@ -7,7 +7,7 @@ julia&gt; x^3 + y
 x^3 + y</code></pre><p><strong>See also</strong></p><p><code>polynomial_ring</code></p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/tkluck/PolynomialRings.jl.git">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PolynomialRings.EntryPoints.@ring" href="#PolynomialRings.EntryPoints.@ring"><code>PolynomialRings.EntryPoints.@ring</code></a> — <span class="docstring-category">Macro</span></header><section><div><pre><code class="language-julia">@ring ℚ[x,y]</code></pre><p>Define and return the specified polynomial ring.</p><p>Currently, the supported rings are: ℚ (<code>Rational{BigInt}</code>), ℤ (<code>BigInt</code>), ℝ (<code>BigFloat</code>) and ℂ (<code>Complex{BigFloat}</code>).</p><p>Note: <code>@ring!</code> returns the ring and injects the variables into the surrounding scope. The macro <code>@ring</code> only returns the ring.</p><p>If you need different coefficient rings, or need to specify a non-default monomial order or exponent integer type, use <code>polynomial_ring</code> instead.</p><p><strong>Examples</strong></p><pre><code class="language-julia-repl">julia&gt; using PolynomialRings
 
 julia&gt; @ring ℚ[x,y]
-ℚ[x,y]</code></pre><p><strong>See also</strong></p><p><code>polynomial_ring</code> <code>@ring!</code></p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/tkluck/PolynomialRings.jl.git">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PolynomialRings.EntryPoints.@polyvar" href="#PolynomialRings.EntryPoints.@polyvar"><code>PolynomialRings.EntryPoints.@polyvar</code></a> — <span class="docstring-category">Macro</span></header><section><div><pre><code class="language-julia">@polyvar var [var...]</code></pre><p>Define a polynomial ring in the given variables, and inject them into the surrounding scope.</p><p>This is equivalent to <code>@ring! Int[var...]</code>.</p><p>If you need different coefficient rings, or need to specify a non-default monomial order or exponent integer type, use <code>@ring!</code> or <code>polynomial_ring</code> instead.</p><p><strong>Examples</strong></p><pre><code class="language-julia-repl">julia&gt; using PolynomialRings
+@ring(ℚ[x,y])</code></pre><p><strong>See also</strong></p><p><code>polynomial_ring</code> <code>@ring!</code></p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/tkluck/PolynomialRings.jl.git">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PolynomialRings.EntryPoints.@polyvar" href="#PolynomialRings.EntryPoints.@polyvar"><code>PolynomialRings.EntryPoints.@polyvar</code></a> — <span class="docstring-category">Macro</span></header><section><div><pre><code class="language-julia">@polyvar var [var...]</code></pre><p>Define a polynomial ring in the given variables, and inject them into the surrounding scope.</p><p>This is equivalent to <code>@ring! Int[var...]</code>.</p><p>If you need different coefficient rings, or need to specify a non-default monomial order or exponent integer type, use <code>@ring!</code> or <code>polynomial_ring</code> instead.</p><p><strong>Examples</strong></p><pre><code class="language-julia-repl">julia&gt; using PolynomialRings
 
 julia&gt; @polyvar x y;
 
@@ -37,14 +37,15 @@ julia&gt; R = @ring! ℤ[x];
 julia&gt; c = formal_coefficients(R, :c);
 
 
+
 julia&gt; c[1:3]
-3-element Array{ℤ[c[]][x],1}:
+3-element Array{@ring(ℤ[c[]][x]),1}:
  c[1]
  c[2]
  c[3]
 
 julia&gt; [c()*x^2 + c()*x + c() , c()*x^2 + c()*x + c()]
-2-element Array{ℤ[c[]][x],1}:
+2-element Array{@ring(ℤ[c[]][x]),1}:
  c[1]*x^2 + c[2]*x + c[3]
  c[4]*x^2 + c[5]*x + c[6]</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/tkluck/PolynomialRings.jl.git">source</a></section></article><h2 id="Arithmetic-1"><a class="docs-heading-anchor" href="#Arithmetic-1">Arithmetic</a><a class="docs-heading-anchor-permalink" href="#Arithmetic-1" title="Permalink"></a></h2><article class="docstring"><header><a class="docstring-binding" id="Base.rem" href="#Base.rem"><code>Base.rem</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia">f_red = rem(f, G)</code></pre><p>Return the multivariate reduction of a polynomial <code>f</code> by a vector of polynomials <code>G</code>. By definition, this means that no leading term of a polynomial in <code>G</code> divides any monomial in <code>f</code>, and <code>f_red + factors * G == f</code> for some factors.</p><p>If you need to obtain the vector of factors, use <code>divrem</code> instead.</p><p><strong>Examples</strong></p><p>In one variable, this is just the normal Euclidean algorithm:</p><pre><code class="language-julia-repl">julia&gt; using PolynomialRings
 
@@ -59,10 +60,10 @@ julia&gt; rem(x^2 + y^2 + 1, [x, y])
 julia&gt; R,(x,y) = polynomial_ring(:x, :y, basering=Complex{Int});
 
 julia&gt; divrem(x^2 + 1, [x-im])
-(Complex{Int64}[x,y][x + 0 + 1im], 0)
+(@ring(Complex{Int64}[x,y])[x + 0 + 1im], 0)
 
 julia&gt; divrem(x^2 + y^2 + 1, [x, y])
-(Complex{Int64}[x,y][x y], 1 + 0im)
+(@ring(Complex{Int64}[x,y])[x y], 1 + 0im)
 </code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/tkluck/PolynomialRings.jl.git">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Base.diff" href="#Base.diff"><code>Base.diff</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia">diff(polynomial, variable)</code></pre><p>Return the derivative of <code>polynomial</code> w.r.t. <code>variable</code>.</p><p><strong>Examples</strong></p><pre><code class="language-julia-repl">julia&gt; using PolynomialRings
 
 julia&gt; R = @ring! ℤ[x,y];
@@ -79,7 +80,7 @@ julia&gt; f = x^2 + 1 + 0im
 x^2 + 1 + 0im
 
 julia&gt; collect(div!(f, [x-im]))
-1×1 Array{Complex{Int64}[x,y],2}:
+1×1 Array{@ring(Complex{Int64}[x,y]),2}:
  x + 0 + 1im
 
 julia&gt; f
@@ -89,7 +90,7 @@ julia&gt; g = x^2 + y^2 + 1
 x^2 + y^2 + 1 + 0im
 
 julia&gt; collect(div!(g, [x, y]))
-1×2 Array{Complex{Int64}[x,y],2}:
+1×2 Array{@ring(Complex{Int64}[x,y]),2}:
  x  y
 
 julia&gt; g
@@ -129,7 +130,7 @@ julia&gt; f = x^2 + y^2 + 1
 x^2 + y^2 + 1 + 0im
 
 julia&gt; xdiv!(f, [x-im])
-(1 + 0im, Complex{Int64}[x,y][x + 0 + 1im])
+(1 + 0im, @ring(Complex{Int64}[x,y])[x + 0 + 1im])
 
 julia&gt; f
 y^2
@@ -138,7 +139,7 @@ julia&gt; g = x^2 + y^2 + 1
 x^2 + y^2 + 1 + 0im
 
 julia&gt; xdiv!(g, [x, y])
-(1 + 0im, Complex{Int64}[x,y][x y])
+(1 + 0im, @ring(Complex{Int64}[x,y])[x y])
 
 julia&gt; g
 1 + 0im</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/tkluck/PolynomialRings.jl.git">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PolynomialRings.xrem!" href="#PolynomialRings.xrem!"><code>PolynomialRings.xrem!</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia">any_reductions = xrem!(f, G)</code></pre><p>Compute the multivariate reduction of a polynomial <code>f</code> by a vector of polynomials <code>G</code>, in-place. By definition, this means that after applying <code>rem!</code> no, leading term of a polynomial in <code>G</code> divides any monomial in <code>f</code>, and <code>f + factors * G</code> is equal to <code>m</code> times the original value of <code>f</code> for some scalar <code>m</code> and for some row vector <code>factors</code>.</p><p>The return value <code>any_reductions</code> is <code>true</code> if and only if <code>factors</code> is nonzero. Note that <code>factors</code> itself is not actually computed and not returned. If you need to obtain it, use <code>xdiv!</code>. The same holds for <code>m</code>.</p><p>The difference between <code>xdiv!</code> and <code>div</code> is that the former allows clearing denominators, e.g. reduce <code>2x^2</code> by <code>3x</code> even when the base ring is ℤ.</p><p><strong>Examples</strong></p><p>In one variable, this is just the normal Euclidean algorithm:</p><pre><code class="language-julia-repl">julia&gt; using PolynomialRings
@@ -166,7 +167,7 @@ julia&gt; g
 julia&gt; R = @ring! ℤ[x,y];
 
 julia&gt; collect(@expand(x^3 + y^2, y))
-2-element Array{Tuple{Tuple{Int16},ℤ[x]},1}:
+2-element Array{Tuple{Tuple{Int16},@ring(ℤ[x])},1}:
  ((0,), x^3)
  ((2,), 1)
 
@@ -178,19 +179,19 @@ julia&gt; collect(@expand(x^3 + y^2, x, y))
 julia&gt; R = @ring! ℤ[x,y];
 
 julia&gt; collect(expansion(x^3 + y^2, :y))
-2-element Array{Tuple{TupleMonomial{1,Int16,PolynomialRings.MonomialOrderings.MonomialOrder{:degrevlex,PolynomialRings.NamingSchemes.Named{(:y,)}}},ℤ[x]},1}:
- (1, x^3)
- (y^2, 1)
+2-element Array{(Term over @ring(ℤ[x]) in @degrevlex(y)),1}:
+ x^3
+ y^2
 
 julia&gt; collect(expansion(x^3 + y^2, :x, :y))
-2-element Array{Tuple{TupleMonomial{2,Int16,PolynomialRings.MonomialOrderings.MonomialOrder{:degrevlex,PolynomialRings.NamingSchemes.Named{(:x, :y)}}},BigInt},1}:
- (y^2, 1)
- (x^3, 1)</code></pre><p><strong>See also</strong></p><p><code>@expansion(...)</code>, <code>@coefficient</code> and <code>coefficient</code></p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/tkluck/PolynomialRings.jl.git">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PolynomialRings.Expansions.@expand" href="#PolynomialRings.Expansions.@expand"><code>PolynomialRings.Expansions.@expand</code></a> — <span class="docstring-category">Macro</span></header><section><div><pre><code class="language-julia">@expand(f, var, [var...])</code></pre><p>Return a collection of (exponent tuple, coefficient) tuples decomposing f into its consituent parts.</p><p><strong>Examples</strong></p><pre><code class="language-julia-repl">julia&gt; using PolynomialRings
+2-element Array{(Term over BigInt in @degrevlex(x &gt; y)),1}:
+ y^2
+ x^3</code></pre><p><strong>See also</strong></p><p><code>@expansion(...)</code>, <code>@coefficient</code> and <code>coefficient</code></p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/tkluck/PolynomialRings.jl.git">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PolynomialRings.Expansions.@expand" href="#PolynomialRings.Expansions.@expand"><code>PolynomialRings.Expansions.@expand</code></a> — <span class="docstring-category">Macro</span></header><section><div><pre><code class="language-julia">@expand(f, var, [var...])</code></pre><p>Return a collection of (exponent tuple, coefficient) tuples decomposing f into its consituent parts.</p><p><strong>Examples</strong></p><pre><code class="language-julia-repl">julia&gt; using PolynomialRings
 
 julia&gt; R = @ring! ℤ[x,y];
 
 julia&gt; collect(@expand(x^3 + y^2, y))
-2-element Array{Tuple{Tuple{Int16},ℤ[x]},1}:
+2-element Array{Tuple{Tuple{Int16},@ring(ℤ[x])},1}:
  ((0,), x^3)
  ((2,), 1)
 
@@ -230,7 +231,7 @@ julia&gt; coefficient(x^3*y + x, (3,1), :x, :y)
 julia&gt; R = @ring! ℤ[x,y];
 
 julia&gt; collect(@expandcoefficients(x^3 + y^2, y))
-2-element Array{ℤ[x],1}:
+2-element Array{@ring(ℤ[x]),1}:
  x^3
  1
 
@@ -242,7 +243,7 @@ julia&gt; collect(@expandcoefficients(x^3 + y^2, x, y))
 julia&gt; R = @ring! ℤ[x,y];
 
 julia&gt; collect(expandcoefficients(x^3 + y^2, :y))
-2-element Array{ℤ[x],1}:
+2-element Array{@ring(ℤ[x]),1}:
  x^3
  1
 
@@ -274,7 +275,7 @@ linear_coefficients(f, vars...)</code></pre><p>Return the linear coefficients of
 julia&gt; R = @ring! ℤ[x,y];
 
 julia&gt; @linear_coefficients(x^3*y + x + y + 1, x)
-1-element Array{ℤ[y],1}:
+1-element Array{@ring(ℤ[y]),1}:
  1
 
 julia&gt; @linear_coefficients(x^3*y + x + y + 1, x, y)
@@ -285,7 +286,7 @@ julia&gt; @linear_coefficients(x^3*y + x + y + 1, x, y)
 julia&gt; R = @ring! ℤ[x,y];
 
 julia&gt; linear_coefficients(x^3*y + x + y + 1, :x)
-1-element Array{ℤ[y],1}:
+1-element Array{@ring(ℤ[y]),1}:
  1
 
 julia&gt; linear_coefficients(x^3*y + x + y + 1, :x, :y)
@@ -312,9 +313,9 @@ julia&gt; constant_coefficient(x^3*y + x + y + 1, :x, :y)
 julia&gt; R = @ring! ℤ[x,y];
 
 julia&gt; collect(flat_coefficients([x^3 + y^2; y^5], :y))
-3-element Array{ℤ[x],1}:
- x^3
+3-element Array{@ring(ℤ[x]),1}:
  1
+ x^3
  1
 
 julia&gt; collect(flat_coefficients([x^3 + y^2, y^5], :x, :y))
@@ -326,9 +327,9 @@ julia&gt; collect(flat_coefficients([x^3 + y^2, y^5], :x, :y))
 julia&gt; R = @ring! ℤ[x,y];
 
 julia&gt; collect(flat_coefficients([x^3 + y^2; y^5], :y))
-3-element Array{ℤ[x],1}:
- x^3
+3-element Array{@ring(ℤ[x]),1}:
  1
+ x^3
  1
 
 julia&gt; collect(flat_coefficients([x^3 + y^2, y^5], :x, :y))
@@ -348,4 +349,4 @@ julia&gt; K = syzygies(G) * tr; # the kernel of the map R^3 -&gt; I induced by t
 julia&gt; iszero(K * I)
 true</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/tkluck/PolynomialRings.jl.git">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PolynomialRings.lift" href="#PolynomialRings.lift"><code>PolynomialRings.lift</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia">factors = lift(polynomials, y)</code></pre><p>Return a row vector of <code>factors</code> such that <code>factors * polynomials</code> is equal to <code>y</code>, or <code>nothing</code> if <code>y</code> is not in the ideal generated by <code>polynomials</code>.</p><p>This is computed using <code>gröbner_transformation</code>; see there for more information.</p><p>Note: if you need to compute many lifts for the same set of <code>polynomials</code>, it is beneficial to use <code>gröbner_transformation</code> yourself as it avoids re-doing the most computationally intensive part.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/tkluck/PolynomialRings.jl.git">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PolynomialRings.Solve.matrix_solve_affine" href="#PolynomialRings.Solve.matrix_solve_affine"><code>PolynomialRings.Solve.matrix_solve_affine</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia">x = matrix_solve_affine(f, y, dims, Type=eltype(y))</code></pre><p>Return the solution <code>x</code> to the equation</p><pre><code class="language-none">``f(x) = y``</code></pre><p>where <span>$x$</span> is assumed to be a matrix of size <code>dims</code>, and <code>f</code> is assumed to be a linear map over <code>Type</code>.</p><p>Note: I haven&#39;t really considered the proper semantics when type(x) is not necessarily equal to type(y), and the behaviour of this function may (will) change when I do.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/tkluck/PolynomialRings.jl.git">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PolynomialRings.GröbnerGWV.gwv" href="#PolynomialRings.GröbnerGWV.gwv"><code>PolynomialRings.GröbnerGWV.gwv</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia">gröbner_basis = gwv(monomialorder, polynomials)</code></pre><p>An implementation of the GWV algorithm as popularized by</p><blockquote><p>Shuhong Gao, Frank Volny, and Mingsheng Wang. &quot;A new algorithm for computing Groebner bases.&quot; IACR Cryptology ePrint Archive 2010 (2010): 641.</p></blockquote></div><a class="docs-sourcelink" target="_blank" href="https://github.com/tkluck/PolynomialRings.jl.git">source</a></section></article><h3 id="Internal-types-and-functions-1"><a class="docs-heading-anchor" href="#Internal-types-and-functions-1">Internal types and functions</a><a class="docs-heading-anchor-permalink" href="#Internal-types-and-functions-1" title="Permalink"></a></h3><article class="docstring"><header><a class="docstring-binding" id="PolynomialRings.AbstractMonomials.AbstractMonomial" href="#PolynomialRings.AbstractMonomials.AbstractMonomial"><code>PolynomialRings.AbstractMonomials.AbstractMonomial</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia">AbstractMonomial{Order}</code></pre><p>The abstract base type for multi-variate monomials.</p><p>Specifying a monomial is equivalent to specifying the exponents for all variables. The concrete type decides whether this happens as a tuple or as a (sparse or dense) array.</p><p>The type also encodes the monomial order, and as part of that, the names of the variables.</p><p>Each concrete implementation <code>M</code> should implement for elements <code>m</code>:</p><pre><code class="language-none">exp(M, exponents, deg=sum(exponents))
 exponents(scheme::NamingScheme, m::M)
-exptype(M)</code></pre><p>In addition, one may choose to add specific optimizations by overloading other functions, as well.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/tkluck/PolynomialRings.jl.git">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PolynomialRings.Monomials.TupleMonomials.TupleMonomial" href="#PolynomialRings.Monomials.TupleMonomials.TupleMonomial"><code>PolynomialRings.Monomials.TupleMonomials.TupleMonomial</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia">TupleMonomial{N, I, Order} &lt;: AbstractMonomial where I &lt;: Integer where Order</code></pre><p>An implementation of AbstractMonomial that stores exponents as a tuple of integers. This is a dense representation.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/tkluck/PolynomialRings.jl.git">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PolynomialRings.Monomials.VectorMonomials.VectorMonomial" href="#PolynomialRings.Monomials.VectorMonomials.VectorMonomial"><code>PolynomialRings.Monomials.VectorMonomials.VectorMonomial</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia">VectorMonomial{V,I,Order} &lt;: AbstractMonomial where V &lt;: AbstractVector{I} where I &lt;: Integer where Order</code></pre><p>An implementation of AbstractMonomial that stores exponents as a vector of integers. This can be a sparse or dense representation, depending on the type specialization.</p><p>This representation is intended for the case when the number of variables is unbounded. In particular, the indexing operation <code>m[i]</code> returns <code>0</code> when <code>i</code> is out-of-bounds, instead of throwing an exception.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/tkluck/PolynomialRings.jl.git">source</a></section></article><div class="admonition is-warning"><header class="admonition-header">Missing docstring.</header><div class="admonition-body"><p>Missing docstring for <code>PolynomialRings.Monomials.enumeratenz</code>. Check Documenter&#39;s build log for details.</p></div></div><article class="docstring"><header><a class="docstring-binding" id="PolynomialRings.Terms.Term" href="#PolynomialRings.Terms.Term"><code>PolynomialRings.Terms.Term</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia">Term{M, C} where M &lt;: AbstractMonomial where C</code></pre><p>This type represents a single term of a multivariate polynomial: that is, it represents the combination of a coefficient and a monomial.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/tkluck/PolynomialRings.jl.git">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PolynomialRings.Polynomials.Polynomial" href="#PolynomialRings.Polynomials.Polynomial"><code>PolynomialRings.Polynomials.Polynomial</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia">f(var1=...,var2=...)</code></pre><p>Substitute variables with Numbers</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/tkluck/PolynomialRings.jl.git">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../other-packages/">« Other packages</a><a class="docs-footer-nextpage" href="../reference/">Reference Index »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Wednesday 19 February 2020 13:20">Wednesday 19 February 2020</span>. Using Julia version 1.3.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+exptype(M)</code></pre><p>In addition, one may choose to add specific optimizations by overloading other functions, as well.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/tkluck/PolynomialRings.jl.git">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PolynomialRings.Monomials.TupleMonomials.TupleMonomial" href="#PolynomialRings.Monomials.TupleMonomials.TupleMonomial"><code>PolynomialRings.Monomials.TupleMonomials.TupleMonomial</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia">TupleMonomial{N, I, Order} &lt;: AbstractMonomial where I &lt;: Integer where Order</code></pre><p>An implementation of AbstractMonomial that stores exponents as a tuple of integers. This is a dense representation.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/tkluck/PolynomialRings.jl.git">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PolynomialRings.Monomials.VectorMonomials.VectorMonomial" href="#PolynomialRings.Monomials.VectorMonomials.VectorMonomial"><code>PolynomialRings.Monomials.VectorMonomials.VectorMonomial</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia">VectorMonomial{V,I,Order} &lt;: AbstractMonomial where V &lt;: AbstractVector{I} where I &lt;: Integer where Order</code></pre><p>An implementation of AbstractMonomial that stores exponents as a vector of integers. This can be a sparse or dense representation, depending on the type specialization.</p><p>This representation is intended for the case when the number of variables is unbounded. In particular, the indexing operation <code>m[i]</code> returns <code>0</code> when <code>i</code> is out-of-bounds, instead of throwing an exception.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/tkluck/PolynomialRings.jl.git">source</a></section></article><div class="admonition is-warning"><header class="admonition-header">Missing docstring.</header><div class="admonition-body"><p>Missing docstring for <code>PolynomialRings.Monomials.enumeratenz</code>. Check Documenter&#39;s build log for details.</p></div></div><article class="docstring"><header><a class="docstring-binding" id="PolynomialRings.Terms.Term" href="#PolynomialRings.Terms.Term"><code>PolynomialRings.Terms.Term</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia">Term{M, C} where M &lt;: AbstractMonomial where C</code></pre><p>This type represents a single term of a multivariate polynomial: that is, it represents the combination of a coefficient and a monomial.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/tkluck/PolynomialRings.jl.git">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PolynomialRings.Polynomials.Polynomial" href="#PolynomialRings.Polynomials.Polynomial"><code>PolynomialRings.Polynomials.Polynomial</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia">f(var1=...,var2=...)</code></pre><p>Substitute variables with Numbers</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/tkluck/PolynomialRings.jl.git">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../other-packages/">« Other packages</a><a class="docs-footer-nextpage" href="../reference/">Reference Index »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Wednesday 19 February 2020 19:45">Wednesday 19 February 2020</span>. Using Julia version 1.3.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
