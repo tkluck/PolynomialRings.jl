@@ -210,35 +210,24 @@ end
 #
 # -----------------------------------------------------------------------------
 function convert(::Type{C}, a::P) where P <: PolynomialOver{C} where C
-    if length(a.coeffs) == 0
-        return zero(C)
-    elseif length(a.coeffs) == 1 && isone(a.monomials[1])
-        return unalias(C, a.coeffs[1])
+    if deg(a, namingscheme(a)) <= 0
+        return unalias(C, constant_coefficient(a, namingscheme(a)))
     else
         throw(InexactError(:convert, C, a))
     end
 end
 
 function convert(C::Type{<:Number}, a::Polynomial)
-    if length(a.coeffs) == 0
-        return zero(C)
-    elseif length(a.coeffs) == 1 && isone(a.monomials[1])
-        return unalias(C, a.coeffs[1])
+    if deg(a, namingscheme(a)) <= 0
+        return unalias(C, constant_coefficient(a, namingscheme(a)))
     else
         throw(InexactError(:convert, C, a))
     end
 end
 
-# fix abbiguity
-function convert(::Type{C}, a::P) where P <: PolynomialOver{C} where C <: Number
-    if length(a.coeffs) == 0
-        return zero(C)
-    elseif length(a.coeffs) == 1 && isone(a.monomials[1])
-        return unalias(C, a.coeffs[1])
-    else
-        throw(InexactError(:convert, C, a))
-    end
-end
+# fix ambiguity
+convert(::Type{C}, a::P) where P <: PolynomialOver{C} where C <: Number = invoke(convert, Tuple{Type{C}, P} where P <: PolynomialOver{C} where C, C, a)
+convert(::Type{C}, a::P) where P <: PolynomialOver{C} where C <: Polynomial = invoke(convert, Tuple{Type{C}, P} where P <: PolynomialOver{C} where C, C, a)
 
 # -----------------------------------------------------------------------------
 #

@@ -12,3 +12,21 @@ using PolynomialRings: monomialtype, termtype, polynomialtype
     @test exp(termtype(@namingscheme(c[])), [1,0,3]) == 1*@monomial(c[1]*c[3]^3)
     @test exp(polynomialtype(@namingscheme(c[])), [1,0,3]) == 1*@monomial(c[1]*c[3]^3)
 end
+
+@testset "Conversion method ambiguity" begin
+    R = @ring! Int[x]
+    @test convert(Int, R(1)) === 1
+    @test convert(Rational{Int}, R(1)) === 1//1
+
+    R = @ring! Int[x][y]
+    @test convert(@ring(Int[x]), x) isa @ring(Int[x])
+    @test convert(@ring(Rational{Int}[x]), x) isa @ring(Rational{Int}[x])
+    @test convert(Int, R(2)) === 2
+    @test convert(Rational{Int}, R(2)) === 2//1
+
+    R = @ring! Int[a[1:8]][y]
+    @test convert(@ring(Int[a[1:8]]), a[7]) isa @ring(Int[a[1:8]])
+    @test convert(@ring(Rational{Int}[a[1:8]]), a[7]) isa @ring(Rational{Int}[a[1:8]])
+    @test convert(Int, R(2)) === 2
+    @test convert(Rational{Int}, R(2)) === 2//1
+end
