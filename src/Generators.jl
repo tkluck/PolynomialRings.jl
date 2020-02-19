@@ -7,7 +7,8 @@ import SparseArrays: spzeros
 import ..Expansions: expansion, expansionorder
 import ..MonomialOrderings: MonomialOrder
 import ..NamingSchemes: Variable, variable, namingscheme, name, num_variables
-import ..Polynomials: Polynomial, isstrictlysparse, issparse, nztermscount, coefficients, _monomialbyindex, _leading_term_ix, exptype
+import ..Polynomials: Polynomial, isstrictlysparse, issparse, nztermscount, exptype
+import ..Polynomials: monomials, coefficients, _monomialbyindex, _leading_term_ix
 import PolynomialRings: polynomialtype, monomialtype, monomialorder, basering
 
 # -----------------------------------------------------------------------------
@@ -39,6 +40,7 @@ isstrictlysparse(::Type{<:Generator{Var, P}}) where {Var, P} = isstrictlysparse(
 issparse(::Type{<:Generator{Var, P}}) where {Var, P} = issparse(P)
 
 coefficients(g::Generator) = coefficients(g.p)
+monomials(g::Generator) = monomials(g.p)
 expansion(g::Generator, order::MonomialOrder=monomialorder(g.p); kwds...) = expansion(g.p, order; kwds...)
 _monomialbyindex(g::Generator, ix) = _monomialbyindex(g.p, ix)
 _leading_term_ix(g::Generator, order) = _leading_term_ix(g.p, order)

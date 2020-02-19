@@ -7,6 +7,7 @@ import Base: promote_rule, convert, Bottom
 import LinearAlgebra: UniformScaling
 
 import ..AbstractMonomials: AbstractMonomial
+import ..Expansions: deg, constant_coefficient
 import ..Modules: AbstractModuleElement
 import ..Operators: RedType
 import ..Polynomials: Polynomial, termtype, monomialtype, basering, map_coefficients

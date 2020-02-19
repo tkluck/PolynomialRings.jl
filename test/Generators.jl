@@ -1,6 +1,6 @@
 using Test
 
-import PolynomialRings.Expansions: expansionorder
+import PolynomialRings.Expansions: expansionorder, constant_coefficient, deg
 import PolynomialRings.Generators: Generator
 import PolynomialRings: @degrevlex, @variable, @ring, @ring!
 import PolynomialRings: polynomial_ring, monomialorder
@@ -24,6 +24,13 @@ import PolynomialRings: polynomial_ring, monomialorder
         @test expansionorder(y, x) == @degrevlex(y > x)
 
         @test 6x^2 * diff(x, x) ==3x * diff(x^2, x) == 2diff(x^3, x) == 6x^2
+
+        @test constant_coefficient(x, x) == 0
+        @test deg(x, x) == 1
+        @test constant_coefficient(x, y) == x
+        @test deg(x, y) == 0
+        @test constant_coefficient(x, x, y) == 0
+        @test deg(x, x, y) == 1
     end
 
     @testset "Numbered generators" begin

@@ -485,14 +485,15 @@ julia> constant_coefficient(x^3*y + x + y + 1, :x, :y)
 # See also
 `@constant_coefficient`, `@coefficient`, and `@expansion`
 """
-function constant_coefficient(f, spec...)
-    order = expansionorder(spec...)
-    for (w,p) in expansion(f, order)
+constant_coefficient(f, spec...) = constant_coefficient(f, namingscheme(expansionorder(spec...)))
+
+function constant_coefficient(f, scheme::NamingScheme)
+    for (w,p) in expansion(f, scheme)
         if isone(w)
             return p
         end
     end
-    return zerocoeff(one(monomialtype(order)), _coefftype(typeof(f), order), f)
+    return zerocoeff(one(monomialtype(scheme)), _coefftype(typeof(f), scheme), f)
 end
 
 """
@@ -863,11 +864,11 @@ function constant_coefficient(f::PolynomialIn{Scheme}, scheme::Scheme) where Sch
     return f[one(monomialtype(f))]
 end
 
-function constant_coefficient(a::AbstractArray{<:Polynomial}, spec...)
-    C = _coefftype(eltype(a), spec...)
+function constant_coefficient(a::AbstractArray{<:Polynomial}, scheme::NamingScheme)
+    C = _coefftype(eltype(a), scheme)
     res = similarzeros(a, C)
     for (i, ai) in nzpairs(a)
-        res[i] = constant_coefficient(ai, spec...)
+        res[i] = constant_coefficient(ai, scheme)
     end
     return res
 end
