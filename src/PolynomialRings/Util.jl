@@ -136,12 +136,14 @@ macro showprogress(desc, exprs...)
     infos = exprs[1:end-1]
     expr = last(exprs)
 
+    min_update_time = :( $Base.isinteractive() ? 1 : Inf )
+
     ourpattern = expr.head == :while && expr.args[1].head == :call &&
         expr.args[1].args[1] == :! && expr.args[1].args[2].head == :call &&
         expr.args[1].args[2].args[1] == :isempty
     if !ourpattern
         return esc(:(
-            $ProgressMeter.@showprogress 1 $desc $expr
+            $ProgressMeter.@showprogress $min_update_time $desc $expr
         ))
     end
     P = expr.args[1].args[2].args[2]
@@ -155,7 +157,7 @@ macro showprogress(desc, exprs...)
     infovals = map(infoval, infos)
 
     quote
-        progress = Progress(length($(esc(P))), 1, $desc)
+        progress = Progress(length($(esc(P))), $min_update_time, $desc)
         loops = 0
         while $(esc(condition))
             $(esc(body))
