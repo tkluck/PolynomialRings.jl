@@ -1,6 +1,6 @@
 using Test
 
-using PolynomialRings: @namingscheme, @monomial
+using PolynomialRings: @namingscheme, @monomial, @ring!, @ring
 using PolynomialRings: monomialtype, termtype, polynomialtype
 
 @testset "exp-style construction" begin
@@ -29,4 +29,12 @@ end
     @test convert(@ring(Rational{Int}[a[1:8]]), a[7]) isa @ring(Rational{Int}[a[1:8]])
     @test convert(Int, R(2)) === 2
     @test convert(Rational{Int}, R(2)) === 2//1
+end
+
+@testset "Arithmetic" begin
+    R = @ring! Int[x]
+    a = x^2 + x
+
+    @test x == +x == -(-x) == *(x)
+    @test a == +a == -(-a) == *(a)
 end

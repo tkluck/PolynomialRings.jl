@@ -35,6 +35,8 @@ one(::P)        where P <: Polynomial = one(P)
 +(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order = a .+ b
 -(a::PolynomialBy{Order}, b::PolynomialBy{Order}) where Order = a .- b
 
+*(a::Polynomial) = deepcopy(a)
+
 
 # -----------------------------------------------------------------------------
 #
