@@ -194,10 +194,10 @@ julia> using PolynomialRings
 julia> R,(x,y) = polynomial_ring(:x, :y, basering=Complex{Int});
 
 julia> divrem(x^2 + 1, [x-im])
-(Complex{Int64}[x,y][x + 0 + 1im], 0)
+(@ring(Complex{Int64}[x,y])[x + 0 + 1im], 0)
 
 julia> divrem(x^2 + y^2 + 1, [x, y])
-(Complex{Int64}[x,y][x y], 1 + 0im)
+(@ring(Complex{Int64}[x,y])[x y], 1 + 0im)
 
 ```
 """
@@ -229,7 +229,7 @@ julia> f = x^2 + 1 + 0im
 x^2 + 1 + 0im
 
 julia> collect(div!(f, [x-im]))
-1×1 Array{Complex{Int64}[x,y],2}:
+1×1 Array{@ring(Complex{Int64}[x,y]),2}:
  x + 0 + 1im
 
 julia> f
@@ -239,7 +239,7 @@ julia> g = x^2 + y^2 + 1
 x^2 + y^2 + 1 + 0im
 
 julia> collect(div!(g, [x, y]))
-1×2 Array{Complex{Int64}[x,y],2}:
+1×2 Array{@ring(Complex{Int64}[x,y]),2}:
  x  y
 
 julia> g
@@ -294,7 +294,7 @@ julia> f = x^2 + y^2 + 1
 x^2 + y^2 + 1 + 0im
 
 julia> xdiv!(f, [x-im])
-(1 + 0im, Complex{Int64}[x,y][x + 0 + 1im])
+(1 + 0im, @ring(Complex{Int64}[x,y])[x + 0 + 1im])
 
 julia> f
 y^2
@@ -303,7 +303,7 @@ julia> g = x^2 + y^2 + 1
 x^2 + y^2 + 1 + 0im
 
 julia> xdiv!(g, [x, y])
-(1 + 0im, Complex{Int64}[x,y][x y])
+(1 + 0im, @ring(Complex{Int64}[x,y])[x y])
 
 julia> g
 1 + 0im

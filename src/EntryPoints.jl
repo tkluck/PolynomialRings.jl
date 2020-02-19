@@ -49,20 +49,21 @@ julia> R = @ring! ℤ[x];
 julia> c = formal_coefficients(R, :c);
 
 
+
 julia> c[1:3]
-3-element Array{ℤ[c[]][x],1}:
+3-element Array{@ring(ℤ[c[]][x]),1}:
  c[1]
  c[2]
  c[3]
 
 julia> [c()*x^2 + c()*x + c() , c()*x^2 + c()*x + c()]
-2-element Array{ℤ[c[]][x],1}:
+2-element Array{@ring(ℤ[c[]][x]),1}:
  c[1]*x^2 + c[2]*x + c[3]
  c[4]*x^2 + c[5]*x + c[6]
 ```
 """
 function formal_coefficients(::Type{P}, name::Symbol) where P <: Polynomial
-    R, _ = numbered_polynomial_ring(name, Inf, basering=Int)
+    R = numbered_polynomial_ring(name, basering=Int)
     PP = base_extend(P, R)
     return NumberedVariableGenerator(PP, monomialtype(R))
 end
@@ -197,7 +198,7 @@ exponent integer type, use `polynomial_ring` instead.
 julia> using PolynomialRings
 
 julia> @ring ℚ[x,y]
-ℚ[x,y]
+@ring(ℚ[x,y])
 ```
 
 # See also
@@ -436,7 +437,7 @@ function polynomial_ring(symbols::Symbol...; basering::Type=Rational{BigInt}, ex
     return P, Generator.(symbols, tuple(generators(P)...))
 end
 
-function numbered_polynomial_ring(symbol::Symbol; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex, sparse=sparse)
+function numbered_polynomial_ring(symbol::Symbol; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex, sparse=true)
     scheme =  Numbered{symbol, Inf}()
     P = polynomial_ring(scheme, basering=basering, exptype=exptype, monomialorder=monomialorder, sparse=sparse)
     return P
