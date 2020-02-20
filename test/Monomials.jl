@@ -122,4 +122,16 @@ import PolynomialRings: maybe_div, lcm, gcd, divides, lcm_multipliers, deg
         M2 = monomialtype(@namingscheme(x[]), Int8)
         @test exp(M2, (64,)) * exp(M2, (64,)) == exp(M2, (typemin(Int8),))
     end
+
+    @testset "Sparse exponents corner case" begin
+        #=
+        the exponents(...) function returns a view the maximum findlast(!iszero, ...)
+        of its arguments. Sometimes, this is shorter than the stored length. Test
+        for correct behaviour in that case
+        =#
+        exps = sparse(Int16[1, 1, 1])
+        exps[3] = 0
+        m = exp(monomialtype(@namingscheme(c[])), exps)
+        @test m == m
+    end
 end

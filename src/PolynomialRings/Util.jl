@@ -192,8 +192,11 @@ nzpairs(iter::SparseVector) = (
 nzpairs(iter::SparseMatrixCSC) = (i => iter[i] for i in findall(!iszero, iter))
 
 eachstoredindex(::NTuple{N}...) where N = Base.OneTo(N)
-eachstoredindex(a::SparseVector, b::SparseVector) = EachStoredIndex(a, b)
 eachstoredindex(xs...) = Base.OneTo(min(map(lastindex, xs)...))
+eachstoredindex(a::SparseVector, b::SparseVector) = begin
+    length(a) == length(b) || error("eachstoredindex: need same-length arguments")
+    EachStoredIndex(a, b)
+end
 
 struct EachStoredIndex{A <: SparseVector, B <: SparseVector}
     a :: A
@@ -206,14 +209,21 @@ iterate(x::EachStoredIndex, state=(1, 1)) = begin
     if ixa > lastindex(a.nzind) && ixb > lastindex(b.nzind)
         return nothing
     elseif ixb > lastindex(b.nzind)
+        a.nzind[ixa] > length(a) && return nothing # we sometimes create views of length
+                                                   # findlast(!iszero, ...), which may be
+                                                   # shorter than the number of stored elements
         return a.nzind[ixa], (ixa + 1, ixb)
     elseif ixa > lastindex(a.nzind)
+        b.nzind[ixb] > length(b) && return nothing # same
         return b.nzind[ixb], (ixa, ixb + 1)
     elseif a.nzind[ixa] < b.nzind[ixb]
+        a.nzind[ixa] > length(a) && return nothing # same
         return a.nzind[ixa], (ixa + 1, ixb)
     elseif a.nzind[ixa] > b.nzind[ixb]
+        b.nzind[ixb] > length(b) && return nothing # same
         return b.nzind[ixb], (ixa, ixb + 1)
     else
+        a.nzind[ixa] > length(a) && return nothing # same
         return a.nzind[ixa], (ixa + 1, ixb + 1)
     end
 end
