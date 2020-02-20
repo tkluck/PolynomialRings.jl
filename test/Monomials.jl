@@ -1,5 +1,7 @@
 using Test
 
+import SparseArrays: sparse
+
 import PolynomialRings.NamingSchemes: @namingscheme, @variable, namingscheme
 import PolynomialRings.StandardMonomialOrderings: @lex
 import PolynomialRings.AbstractMonomials: exponents, exponentsnz
