@@ -10,7 +10,7 @@ using PolynomialRings.NamingSchemes: @namingscheme
 using PolynomialRings.Signatures: Sig
 using PolynomialRings.StandardMonomialOrderings: @degrevlex, @lex, KeyOrder
 using PolynomialRings.Terms: Term
-using PolynomialRings: @ring!, @ring, polynomial_ring
+using PolynomialRings: @ring!, @ring, polynomial_ring, @polynomial
 using PolynomialRings: @expand, expand
 using PolynomialRings: @expansion, expansion
 using PolynomialRings: @coefficient, coefficient
@@ -101,6 +101,10 @@ using PolynomialRings: monomialtype, termtype, substitute
 
         lhs = collect(@expansion(x*y - x, z, x, y))
         @test lhs == [Term(@monomial(x),-1), Term(@monomial(x*y), 1)]
+
+        @test collect(expansion(@monomial(x^2 * y), :x)) == [Term(@monomial(x^2), @polynomial(y))]
+        @test collect(expansion(@monomial(x^2 * y), :x, :y)) == [Term(@monomial(x^2 * y), 1)]
+        @test collect(expansion(@monomial(x^2 * y), :y)) == [Term(@monomial(y), @polynomial(x^2))]
     end
 
     T = @ring! R[c[]]

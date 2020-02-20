@@ -234,11 +234,14 @@ function expansion(p, order::MonomialOrder; rev=false, tail=false)
 end
 
 function expansion(t::Term, order::MonomialOrder; kwds...)
+    # TODO: same thing as for monomials below?
     return expansion(polynomialtype(typeof(t))(t), order; kwds...)
 end
 
 function expansion(m::AbstractMonomial, order::MonomialOrder; kwds...)
-    return expansion(polynomialtype(typeof(m))(m), order; kwds...)
+    M = monomialtype(order)
+    m1, c1 = deconstructmonomial(M, m)
+    return (_oftermtype(m1, c1),)
 end
 
 # -----------------------------------------------------------------------------
