@@ -87,7 +87,7 @@ _repr(P::Type{<:Polynomial}) = begin
     if isconcretetype(P)
         "$(_repr(basering(P)))[$(showvars(P))]"
     else
-        defaultshow(io, P)
+        invoke(repr, Tuple{Type}, P)
     end
 end
 
