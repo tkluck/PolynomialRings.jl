@@ -241,6 +241,7 @@ max_variable_index(scheme::InfiniteScheme, x::Union{Tuple, <:AbstractArray}) = b
     isempty(x) ? 0 : maximum(max_variable_index(scheme, xi) for xi in x)
 end
 
+to_dense_monomials(scheme::InfiniteScheme, T::Type{<:Number}, max_variable_index) = T
 to_dense_monomials(scheme::InfiniteScheme, x::Number, max_variable_index) = deepcopy(x)
 
 to_dense_monomials(scheme::InfiniteScheme, x) = to_dense_monomials(scheme, x, max_variable_index(scheme, x))

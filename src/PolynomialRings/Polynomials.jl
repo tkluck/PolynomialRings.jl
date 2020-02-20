@@ -19,7 +19,7 @@ import ..Util: @assertvalid, _debug_isvalid, isdisjoint
 import PolynomialRings: generators, max_variable_index, basering, monomialtype
 import PolynomialRings: leading_coefficient, leading_monomial
 import PolynomialRings: leading_term, termtype, monomialorder, exptype, namingscheme, expansion
-import PolynomialRings: polynomialtype
+import PolynomialRings: polynomialtype, to_dense_monomials
 import PolynomialRings: tail, deg
 import PolynomialRings: variablesymbols, allvariablesymbols, fullboundnames
 
@@ -284,6 +284,12 @@ end
 function tosparse(f::Polynomial)
     P = polynomialtype(typeof(f), sparse=true)
     P(f)
+end
+
+function to_dense_monomials(scheme::InfiniteScheme, P::Type{<:Polynomial}, max_variable_index)
+    C = to_dense_monomials(scheme, basering(P), max_variable_index)
+    M = to_dense_monomials(scheme, monomialtype(P), max_variable_index)
+    return polynomialtype(M, C, sparse=issparse(P))
 end
 
 # -----------------------------------------------------------------------------

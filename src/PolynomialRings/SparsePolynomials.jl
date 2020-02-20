@@ -357,7 +357,8 @@ function convert(P::Type{<:SparsePolynomialOver{C,O}}, p::SparsePolynomialOver{D
 end
 
 function to_dense_monomials(scheme::InfiniteScheme, p::SparsePolynomial, max_variable_index)
+    P = to_dense_monomials(scheme, typeof(p), max_variable_index)
     coeffs = map(c -> to_dense_monomials(scheme, c, max_variable_index), coefficients(p))
     monoms = map(m -> to_dense_monomials(scheme, m, max_variable_index), monomials(p))
-    return SparsePolynomial(monoms, coeffs)
+    return P(monoms, coeffs)
 end

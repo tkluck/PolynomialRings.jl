@@ -1,7 +1,7 @@
 using Test
 
 using PolynomialRings: @namingscheme, @monomial, @ring!, @ring
-using PolynomialRings: monomialtype, termtype, polynomialtype
+using PolynomialRings: monomialtype, termtype, polynomialtype, namingscheme
 
 @testset "exp-style construction" begin
     @test exp(monomialtype(@namingscheme((x,y))), (1, 2)) == @monomial(x*y^2)
@@ -29,6 +29,13 @@ end
     @test convert(@ring(Rational{Int}[a[1:8]]), a[7]) isa @ring(Rational{Int}[a[1:8]])
     @test convert(Int, R(2)) === 2
     @test convert(Rational{Int}, R(2)) === 2//1
+end
+
+@testset "to_dense_monomials inferrability" begin
+    R = @ring! Int[c[]]
+
+    @test namingscheme(eltype(to_dense_monomials(@namingscheme(c[]), [c[1], c[2]]))) == @namingscheme(c[1:2])
+    @test namingscheme(eltype(to_dense_monomials(@namingscheme(c[]), [0, c[2]]))) == @namingscheme(c[1:2])
 end
 
 @testset "Arithmetic" begin
