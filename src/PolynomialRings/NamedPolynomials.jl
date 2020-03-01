@@ -184,11 +184,8 @@ end
     res = TupleMonomial{N, I, MonomialOrdering{:degrevlex, Named{names}}}
     return :($res)
 end
-function canonicaltype(M::Type{<:NumberedMonomial})
-    I = exptype(M)
-    name = numberedvariablename(M)
-    VectorMonomial{SparseVector{I,Int}, I, MonomialOrdering{:degrevlex, Numbered{name, Inf}}}
-end
+
+canonicaltype(M::Type{<:NumberedMonomial}) = M
 canonicaltype(T::Type{<:Term}) = termtype(canonicaltype(polynomialtype(T)))
 canonicaltype(T::Type) = T
 

@@ -2,6 +2,7 @@ using Test
 
 using PolynomialRings: @namingscheme, @monomial, @ring!, @ring
 using PolynomialRings: monomialtype, termtype, polynomialtype, namingscheme
+using PolynomialRings.NamedPolynomials: canonicaltype
 
 @testset "exp-style construction" begin
     @test exp(monomialtype(@namingscheme((x,y))), (1, 2)) == @monomial(x*y^2)
@@ -36,6 +37,27 @@ end
 
     @test namingscheme(eltype(to_dense_monomials(@namingscheme(c[]), [c[1], c[2]]))) == @namingscheme(c[1:2])
     @test namingscheme(eltype(to_dense_monomials(@namingscheme(c[]), [0, c[2]]))) == @namingscheme(c[1:2])
+end
+
+@testset "canonical types" begin
+    R = @ring! Int[a[1:2]]
+    S = @ring! Int[a[1:5]]
+    T = @ring! Int[a[]]
+    U = @ring! Int[x,y]
+    @test canonicaltype(R) == R
+    @test canonicaltype(S) == S
+    @test canonicaltype(T) == T
+    @test canonicaltype(U) == U
+
+    @test promote_type(R, U) == @ring! Int[a[1:2]][x,y]
+    @test promote_type(S, U) == @ring! Int[a[1:5]][x,y]
+    @test promote_type(T, U) == @ring! Int[a[]][x,y]
+
+    @test promote_type(R, S) == S
+    @test promote_type(R, S, T) == T
+    @test promote_type(S, T) == T
+
+    @test promote_type(R, S, T, U) == @ring! Int[a[]][x,y]
 end
 
 @testset "Arithmetic" begin
