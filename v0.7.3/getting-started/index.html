@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Getting Started · PolynomialRings.jl</title><link rel="canonical" href="http://tkluck.github.io/PolynomialRings.jl/stable/getting-started/index.html"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit">PolynomialRings.jl</span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li class="is-active"><a class="tocitem" href>Getting Started</a><ul class="internal"><li><a class="tocitem" href="#Installation-1"><span>Installation</span></a></li><li><a class="tocitem" href="#Overview-1"><span>Overview</span></a></li><li><a class="tocitem" href="#Frequently-Asked-Questions-1"><span>Frequently Asked Questions</span></a></li></ul></li><li><a class="tocitem" href="../design-goals/">Design Goals</a></li><li><a class="tocitem" href="../other-packages/">Other packages</a></li><li><a class="tocitem" href="../functions/">Types and Functions</a></li><li><a class="tocitem" href="../reference/">Reference Index</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Getting Started</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Getting Started</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/tkluck/PolynomialRings.jl.git" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Getting-Started-With-PolynomialRings.jl-1"><a class="docs-heading-anchor" href="#Getting-Started-With-PolynomialRings.jl-1">Getting Started With <code>PolynomialRings.jl</code></a><a class="docs-heading-anchor-permalink" href="#Getting-Started-With-PolynomialRings.jl-1" title="Permalink"></a></h1><h2 id="Installation-1"><a class="docs-heading-anchor" href="#Installation-1">Installation</a><a class="docs-heading-anchor-permalink" href="#Installation-1" title="Permalink"></a></h2><p>Refer to <a href="https://julialang.org/downloads/">the Julia website</a> for details on installing Julia. As soon as you have, start it and type <code>[</code> to get in package mode. Then, run</p><pre><code class="language-julia-repl">(v1.1) pkg&gt; add PolynomialRings</code></pre><p>to install <code>PolynomialRings</code> and its dependencies. To test whether it worked, type</p><pre><code class="language-julia-repl">julia&gt; using PolynomialRings
+
+julia&gt; @ring! Int[x,y]
+@ring(Int64[x,y])
+
+julia&gt; (x + y) * (x - y)
+x^2 + -y^2</code></pre><p>If you see the same, you are all set!</p><h2 id="Overview-1"><a class="docs-heading-anchor" href="#Overview-1">Overview</a><a class="docs-heading-anchor-permalink" href="#Overview-1" title="Permalink"></a></h2><h3 id="Defining-polynomial-rings-1"><a class="docs-heading-anchor" href="#Defining-polynomial-rings-1">Defining polynomial rings</a><a class="docs-heading-anchor-permalink" href="#Defining-polynomial-rings-1" title="Permalink"></a></h3><p>The easiest way to define your polynomial rings is using the <code>@ring!</code> macro:</p><pre><code class="language-julia-repl">julia&gt; R = @ring! Int[x,y]
+@ring(Int64[x,y])</code></pre><p>This will create a type <code>R</code> for your polynomials, and it will assign the polynomial <code>x</code> to the variable <code>x</code> and similarly for <code>y</code>.</p><p>For a mathematically more pleasing look, try</p><pre><code class="language-julia-repl">julia&gt; R = @ring! ℤ[x,y]
+@ring(ℤ[x,y])</code></pre><p>For entering ℤ, type <code>\bbZ&lt;tab&gt;</code> in the Julia command line. (<a href="http://junolab.org/">Juno</a> and <a href="https://github.com/JuliaEditorSupport/julia-vim"><code>julia-vim</code></a> support this as well.) We support ℤ (arbitrary precision integers), ℚ (fractions of arbitrary precision integers), ℝ (arbitrary precision floating point) and ℂ (<code>a + im*b</code> with both coefficients in ℝ).</p><p>If your variables have numbers instead of distinct names, you can use <code>[]</code> to represent that:</p><pre><code class="language-julia-repl">julia&gt; R = @ring! ℤ[c[]]
+@ring(ℤ[c[]])</code></pre><p>This will make available the object <code>c</code>, which you can use as follows:</p><pre><code class="language-julia-repl">julia&gt; c1,c2,c3 = c[1], c[2], c[3]; c1,c2,c3  # or
+(c[1], c[2], c[3])
+
+julia&gt; c1,c2,c3 = c[1:3]; c1,c2,c3            # or
+(c[1], c[2], c[3])
+
+julia&gt; c1,c2,c3 = c[]; c1,c2,c3               # or
+(c[1], c[2], c[3])
+
+julia&gt; # note that the following keeps state:
+       c1 = c(); c2 = c(); c3 = c(); c1,c2,c3
+(c[1], c[2], c[3])
+
+julia&gt; c4 = c(); c5 = c(); c6 = c(); c4,c5,c6
+(c[4], c[5], c[6])</code></pre><p>Note that you cannot combine named and numbered variables in one ring definition. However, you can let one kind of ring be the base ring for another:</p><pre><code class="language-julia-repl">julia&gt; R = @ring! ℤ[c[]][x,y]
+@ring(ℤ[c[]][x,y])</code></pre><p>A quick way to define a polynomial without first defining the ring is</p><pre><code class="language-julia-repl">julia&gt; # will implicitly create the ring Int[x,y]
+       @polynomial x^2 - y^2
+x^2 + -y^2</code></pre><h3 id="Arithmetic-1"><a class="docs-heading-anchor" href="#Arithmetic-1">Arithmetic</a><a class="docs-heading-anchor-permalink" href="#Arithmetic-1" title="Permalink"></a></h3><p>The usual ring operations <code>+</code>,<code>-</code>,<code>*</code>,<code>^</code> work as you&#39;d expect:</p><pre><code class="language-julia-repl">julia&gt; @ring! ℤ[x,y]
+@ring(ℤ[x,y])
+
+julia&gt; (x + y) * (x - y) == x^2 - y^2
+true</code></pre><p>We also support reduction operations between polynomials; for that, you can use the standard julia functions <code>div</code>, <code>rem</code> and <code>divrem</code>. For example, <code>divrem(f, g)</code>.  You can also reduce with respect to a set of polynomials, e.g. <code>divrem(f, [g1,g2])</code>.</p><p>For example, in the one-variable case, this is just the Euclidean algorithm:</p><pre><code class="language-julia-repl">julia&gt; rem(x^2 - 1, x - 1)
+0</code></pre><p>If you prefer, you can also use the symbols <code>÷</code> for <code>div</code> and <code>%</code> for <code>rem</code>:</p><pre><code class="language-julia-repl">julia&gt; (x^2 - 1)÷(x - 1)
+x + 1</code></pre><h3 id="Variables-in-your-ring-vs.-variables-in-your-script-1"><a class="docs-heading-anchor" href="#Variables-in-your-ring-vs.-variables-in-your-script-1">Variables in your ring vs. variables in your script</a><a class="docs-heading-anchor-permalink" href="#Variables-in-your-ring-vs.-variables-in-your-script-1" title="Permalink"></a></h3><p>It is common to use names such as <code>f</code>,<code>g</code>,<code>h</code> for polynomials and names such as <span>$x,y,z$</span> for the variables in your ring. For example, you might define</p><pre><code class="language-julia-repl">julia&gt; R = @ring! ℤ[x,y,z]
+@ring(ℤ[x,y,z])
+
+julia&gt; f = x^2 - x*y
+x^2 + -x*y</code></pre><p>In this situation, <code>f</code> is a variable in your script, of type <code>R</code>.</p><p>You might also define</p><pre><code class="language-julia-repl">julia&gt; g(x,y) = x^2 - x*y
+g (generic function with 1 method)</code></pre><p>but this means something different.  In this case, <code>x</code> and <code>y</code> are arguments to the function, and in its body, they take whatever value you pass to <code>g</code>. For example:</p><pre><code class="language-julia-repl">julia&gt; g(x,y)
+x^2 + -x*y
+
+julia&gt; g(y,x)
+-x*y + y^2
+
+julia&gt; g(y,y)
+0</code></pre><p>Maybe by now you wonder about <code>x</code> and <code>y</code>: are they Julia variables or just names? The answer is easiest to understand if we look at the <code>@ring</code> macro. Note that this one does not have the <code>!</code> in the end:</p><pre><code class="language-julia-repl">julia&gt; using PolynomialRings
+
+julia&gt; S = @ring ℤ[x,y]
+@ring(ℤ[x,y])
+
+julia&gt; x
+ERROR: UndefVarError: x not defined</code></pre><p>As you can see, we did define a type <code>S</code> that contains polynomials with names <span>$x$</span> and <span>$y$</span> for the variables. However, in our script, the variable <code>x</code> doesn&#39;t exist. The way to get the variable with name <span>$x$</span> is to start with the <em>symbol</em> <code>:x</code>, and convert it to <code>S</code>. Here&#39;s how:</p><pre><code class="language-julia-repl">julia&gt; S(:x)
+x</code></pre><p>The result is an object of type <code>S</code>, much like how <code>f</code> was an object of type <code>R</code>. It represents a polynomial with just one term: <span>$1x$</span>.</p><p>Wouldn&#39;t it be practical if we would do <code>x = S(:x)</code> and <code>y = S(:y)</code> now? That way, we can use the Julia variable <code>x</code> to refer to the polynomial <span>$x$</span>. Indeed, that&#39;s exactly what <code>@ring!</code> (with <code>!</code>) does!</p><p>In the next chapters, we will often pass variables as arguments. For example, we pass the variable in which we are doing an expansion, or the variable with respect to which we are taking a derivative. In those cases, we pass the variable <em>as a symbol</em> (e.g. <code>:x</code>) to the function. For example, this works:</p><pre><code class="language-julia-repl">julia&gt; diff(x^3, :x)
+3*x^2</code></pre><p>But this doesn&#39;t:</p><pre><code class="language-julia-repl">julia&gt; diff(x^3, x)
+3*x^2</code></pre><p>In some cases, we offer a convenience macro. For example, the <code>@deg</code> macro:</p><pre><code class="language-julia-repl">julia&gt; deg(x^3*y^4, :x)
+3
+
+julia&gt; deg(x^3*y^4, :y)
+4
+
+julia&gt; @deg x^3*y^4 y
+4</code></pre><h3 id="Expansions,-coefficients,-collecting-monomials-1"><a class="docs-heading-anchor" href="#Expansions,-coefficients,-collecting-monomials-1">Expansions, coefficients, collecting monomials</a><a class="docs-heading-anchor-permalink" href="#Expansions,-coefficients,-collecting-monomials-1" title="Permalink"></a></h3><p>The rings <code>ℤ[a,b][c]</code>, <code>ℤ[a,b,c]</code> and <code>ℤ[b][a,c]</code> are canonically isomorphic, and we make it easy to switch perspective between them. For example, the different polynomials compare equal (using <code>==</code>) and can be easily <code>convert</code>ed into each other. Type promotions also happen as you&#39;d expect.</p><pre><code class="language-julia-repl">julia&gt; R = @ring ℤ[a,b][c]
+@ring(ℤ[a,b][c])
+
+julia&gt; T = @ring! ℤ[a,b,c]
+@ring(ℤ[a,b,c])
+
+julia&gt; U = @ring ℤ[b][a,c]
+@ring(ℤ[b][a,c])
+
+julia&gt; R(a*b + b*c + a*c)
+(a + b)*c + a*b
+
+julia&gt; T(a*b + b*c + a*c)
+a*b + a*c + b*c
+
+julia&gt; U(a*b + b*c + a*c)
+a*c + b*a + b*c</code></pre><p>Keep in mind that they don&#39;t have equal <code>hash()</code> values, so don&#39;t rely on this for <code>Set{Any}</code> and <code>Dict{Any}</code>. <code>Set{R}</code> and <code>Dict{R}</code> should work, since type conversion will happen before hashing.</p><p>For seeing the constituent parts of a polynomial, use the <code>@expand</code> macro. You need to specify in which variables you are expanding. After all, <span>$(a+1)bc = abc + bc$</span>, so the result from expanding in <span>$a,b$</span> and <span>$c$</span> is different from an expansion in just <span>$b$</span> and <span>$c$</span>.</p><pre><code class="language-julia-repl">julia&gt; @ring! ℤ[a,b,c]
+@ring(ℤ[a,b,c])
+
+julia&gt; @expand (a*b*c + b*c) a b c
+Base.Generator{Base.Generator{StepRange{Int64,Int64},PolynomialRings.Polynomials.var&quot;#13#14&quot;{@ring(ℤ[a,b,c])}},PolynomialRings.Expansions.var&quot;#21#22&quot;}(PolynomialRings.Expansions.var&quot;#21#22&quot;(), Base.Generator{StepRange{Int64,Int64},PolynomialRings.Polynomials.var&quot;#13#14&quot;{@ring(ℤ[a,b,c])}}(PolynomialRings.Polynomials.var&quot;#13#14&quot;{@ring(ℤ[a,b,c])}(a*b*c + b*c), 1:1:2))
+
+julia&gt; @expand (a*b*c + b*c) b c
+Base.Generator{Array{(Term over @ring(ℤ[a]) in @degrevlex(b &gt; c)),1},PolynomialRings.Expansions.var&quot;#21#22&quot;}(PolynomialRings.Expansions.var&quot;#21#22&quot;(), (Term over @ring(ℤ[a]) in @degrevlex(b &gt; c))[(a + 1)*b*c])</code></pre><p>For just obtaining a single coefficient, use <code>@coefficient</code>.</p><pre><code class="language-julia-repl">julia&gt; @coefficient (a*b*c + b*c) a^0*b^1*c^1
+1
+
+julia&gt; @coefficient (a*b*c + b*c) b^1*c^1
+a + 1</code></pre><p>There is also corresponding functions <code>expansion()</code> and <code>coefficient()</code>. For those, you need to pass the variables as symbols. For example:</p><pre><code class="language-julia-repl">julia&gt; coefficient(a*b*c + b*c, (0, 1, 1), :a, :b, :c)
+1
+
+julia&gt; coefficient(a*b*c + b*c, (1, 1), :b, :c)
+a + 1</code></pre><h3 id="Monomial-orders-1"><a class="docs-heading-anchor" href="#Monomial-orders-1">Monomial orders</a><a class="docs-heading-anchor-permalink" href="#Monomial-orders-1" title="Permalink"></a></h3><p>Functions such as <code>leading_term</code> and <code>divrem</code> have an implicit understanding of what the monomial order is. By default, if you create a ring, it will be ordered by degree, then reversely lexicographically. This is often called &#39;degrevlex&#39;.</p><p>If you want to use a different order, you can specify that by creating the ring using the <code>polynomial_ring</code> function:</p><pre><code class="language-julia-repl">julia&gt; R,(x,y) = polynomial_ring(:x, :y, monomialorder=:lex)
+(@ring(ℚ[x,y]), (x, y))
+
+julia&gt; PolynomialRings.monomialorder(R)
+MonomialOrdering{:lex, typeof(@namingscheme((x,y)))}()</code></pre><p>Built-in are <code>:lex</code>, <code>:deglex</code> and <code>:degrevlex</code>. It is very easy to define your own order, though, and thanks to Julia&#39;s design, this doesn&#39;t incur any performance penalty. Read the documentation for <a href="../functions/#PolynomialRings.MonomialOrderings.MonomialOrder"><code>PolynomialRings.MonomialOrderings.MonomialOrder</code></a> for details.</p><h3 id="Gröbner-basis-computations-1"><a class="docs-heading-anchor" href="#Gröbner-basis-computations-1">Gröbner basis computations</a><a class="docs-heading-anchor-permalink" href="#Gröbner-basis-computations-1" title="Permalink"></a></h3><p>For computing <a href="https://en.wikipedia.org/wiki/Groebner_basis">a Gröbner basis</a> for a set of polynomials, use the <a href="../functions/#PolynomialRings.gröbner_basis"><code>gröbner_basis</code></a> function. (For easier typing, <code>groebner_basis</code> is an alias.)</p><p>You typically use this to figure out whether a polynomial is contained in the ideal generated by a set of other polynomials. For example, it is not obvious that <span>$y^2$</span> is a member of the ideal <span>$(x^5, x^2 + y, xy + y^2)$</span>. Indeed, if one applies <code>rem</code>, you will not find the expression of <span>$y^2$</span> in terms of these polynomials:</p><pre><code class="language-julia-repl">julia&gt; @ring! ℤ[x,y]
+@ring(ℤ[x,y])
+
+julia&gt; I = [x^5, x^2 + y, x*y + y^2]
+3-element Array{@ring(ℤ[x,y]),1}:
+ x^5
+ x^2 + y
+ x*y + y^2
+
+julia&gt; rem(y^2, I)  # nonzero, even though y^2 ∈ (I)
+y^2</code></pre><p>However, if you compute a Gröbner basis first, you will:</p><pre><code class="language-julia-repl">julia&gt; G = gröbner_basis(I)
+3-element Array{@ring(ℚ[x,y]),1}:
+ x^2 + y
+ x*y + y^2
+ y^2
+
+julia&gt; rem(y^2, G) # now, it reduces to zero.
+0</code></pre><p>If you want to obtain the expression of <span>$y^2$</span> in these elements, you can first use <code>div</code> to obtain the (row) vector of factors expressing <span>$y^2$</span> in G:</p><pre><code class="language-julia-repl">julia&gt; div(y^2, G)
+1×3 LinearAlgebra.Transpose{@ring(ℚ[x,y]),SparseArrays.SparseVector{@ring(ℚ[x,y]),Int64}}:
+ 0  0  1//1</code></pre><p>The <a href="../functions/#PolynomialRings.gröbner_transformation"><code>gröbner_transformation</code></a> function gives a matrix <code>tr</code> expressing <code>G</code> in terms of <code>I</code>:</p><pre><code class="language-julia-repl">julia&gt; G, tr = gröbner_transformation(I); tr
+3×3 SparseArrays.SparseMatrixCSC{@ring(ℚ[x,y]),Int64} with 7 stored entries:
+  [1, 1]  =  -1//1
+  [3, 1]  =  -1//1
+  [1, 2]  =  x^3 + y^2 + -y
+  [2, 2]  =  1//1
+  [3, 2]  =  x^3 + y^2 + -y
+  [1, 3]  =  -x^2 + x + -y + 1//1
+  [3, 3]  =  -x^2 + x + -y
+
+julia&gt; div(y^2, G) * tr * I   # gives back y^2
+y^2</code></pre><p>In other words, by looking at</p><pre><code class="language-julia-repl">julia&gt; div(y^2, G) * tr
+1×3 LinearAlgebra.Transpose{@ring(ℚ[x,y]),SparseArrays.SparseVector{@ring(ℚ[x,y]),Int64}}:
+ 1//1  -x^3 + -y^2 + y  x^2 + -x + y</code></pre><p>we see that <span>$y^2 = 1(x^5) + (y + xy - x^3)(x^2 + y) + -x(xy + y^2)$</span> which proves that <span>$y^2 \in (I)$</span>.</p><p>This is all summarized in the <code>lift</code> function:</p><pre><code class="language-julia-repl">julia&gt; lift(I, y^2)
+1×3 LinearAlgebra.Transpose{@ring(ℚ[x,y]),SparseArrays.SparseVector{@ring(ℚ[x,y]),Int64}}:
+ 1//1  -x^3 + -y^2 + y  x^2 + -x + y</code></pre><h3 id="Using-helper-variables-1"><a class="docs-heading-anchor" href="#Using-helper-variables-1">Using helper variables</a><a class="docs-heading-anchor-permalink" href="#Using-helper-variables-1" title="Permalink"></a></h3><p>(Be sure you understand <a href="#Variables-in-your-ring-vs.-variables-in-your-script-1">Variables in your ring vs. variables in your script</a> before reading this section.)</p><p>We now get to an important implementation detail. Imagine that you want to write a function that computes a derivative in the following way:</p><pre><code class="language-julia-repl">julia&gt; function myderivative(f::RR, varsymbol) where RR &lt;: Polynomial
+           varvalue = RR(varsymbol)
+           @ring! Int[ε]
+           return @coefficient f(; varsymbol =&gt; varvalue + ε) ε^1
+       end
+myderivative (generic function with 1 method)
+
+julia&gt; myderivative(x^3 + x^2, :x)
+3*x^2 + 2*x</code></pre><p>(In fact, <a href="../functions/#Base.diff"><code>diff</code></a> is already built-in and has a more efficient implementation, but this example is for educational purposes.)</p><p>This works, but what about the following?</p><pre><code class="language-julia-repl">julia&gt; @ring! ℚ[ε]
+@ring(ℚ[ε])
+
+julia&gt; myderivative(ε^3 + ε^2, :ε)
+0//1</code></pre><p>This gives a wrong answer because of the naming clash inside <code>myderivative</code>. You may be tempted to work around this as follows:</p><pre><code class="language-julia-repl">julia&gt; function myderivative2(f::RR, varsymbol) where RR &lt;: Polynomial
+           varvalue = RR(varsymbol)
+           ε = gensym()
+           _,(ε_val,) = polynomial_ring(ε)
+           return coefficient(f(;varsymbol =&gt; varvalue + ε_val), (1,), ε)
+       end
+myderivative2 (generic function with 1 method)
+
+julia&gt; myderivative2(ε^3 + ε^2, :ε)
+3//1*ε^2 + 2//1*ε</code></pre><p>which gives the correct answer. Unfortunately, this is <em>very</em> inefficient:</p><pre><code class="language-julia-repl">julia&gt; @time myderivative2(ε^3 + ε^2, :ε);
+  2.436041 seconds (5.06 M allocations: 265.733 MiB, 4.96% gc time)
+
+julia&gt; @time myderivative2(ε^3 + ε^2, :ε);
+  2.477522 seconds (5.06 M allocations: 265.800 MiB, 5.98% gc time)</code></pre><p>The reason is that variable names are part of the type definition, and Julia specializes functions based on the type of its arguments. In this case, that means that for evaluating the <code>@coefficient</code> call, and for the substitution call, all the code needs to be compiled <em>every time you call <code>myderivative</code></em>.</p><p>For this reason, we provide a function <code>formal_coefficient(R)</code> which yields a variable that&#39;s guaranteed not to clash with the ring that you pass as an argument:</p><pre><code class="language-julia-repl">julia&gt; function myderivative3(f::RR, varsymbol) where RR &lt;: Polynomial
+           varvalue = RR(varsymbol)
+           ε_sym, ε_val = formal_coefficient(typeof(f))
+           return coefficient(f(;varsymbol =&gt; varvalue + ε_val), (1,), ε_sym)
+       end
+myderivative3 (generic function with 1 method)
+
+julia&gt; @time myderivative3(ε^3 + ε^2, :ε);   # first time is still slow (compiling)
+  2.382411 seconds (5.23 M allocations: 275.447 MiB, 4.48% gc time)
+
+julia&gt; @time myderivative3(ε^3 + ε^2, :ε);   # but much faster the second time
+  0.000774 seconds (2.21 k allocations: 52.195 KiB)
+
+julia&gt; @time myderivative3(ε^3 + ε^2, :ε);   # and the third
+  0.000502 seconds (2.21 k allocations: 52.195 KiB)</code></pre><h3 id="Free-modules-(arrays-of-polynomials)-1"><a class="docs-heading-anchor" href="#Free-modules-(arrays-of-polynomials)-1">Free modules (arrays of polynomials)</a><a class="docs-heading-anchor-permalink" href="#Free-modules-(arrays-of-polynomials)-1" title="Permalink"></a></h3><p>For practical purposes, a <em>free module</em> (of finite rank) over a ring <span>$R$</span> is just an array of polynomials in <span>$R$</span>. Many algorithms that work for polynomial rings also work for modules. For example, the function <code>gröbner_basis</code> works just as well if we pass a vector of vectors of polynomials instead of a vector of polynomials:</p><pre><code class="language-julia-repl">julia&gt; G = [[x^5-y,x^4],[x^3+y,y^3]];
+
+julia&gt; GG = gröbner_basis(G)
+4-element Array{Array{@ring(ℚ[x,y]),1},1}:
+ [x^3 + y, y^3]
+ [x*y + -y^2, x^3*y^3 + -x^5 + -y^4]
+ [y^3 + y, -x^4*y^3 + -x^3*y^4 + x^6 + x^5*y + x^2*y^3 + x*y^4 + y^5 + -x^4]
+ [0, x^5*y^3 + -x^7 + -x^4*y + -y^4]</code></pre><p>One can then use the functions <code>rem</code> and <code>div</code> to express a given vector as an <span>$R$</span>-linear combination of the others.</p><p>For these purposes, the leading term of a vector is defined to be the tuple <span>$(i,t)$</span> where <span>$i$</span> is the first nonzero index, and <span>$t$</span> is the leading term of that nonzero element.</p><h3 id="Base-rings-and-base-restriction-/-extension-1"><a class="docs-heading-anchor" href="#Base-rings-and-base-restriction-/-extension-1">Base rings and base restriction / extension</a><a class="docs-heading-anchor-permalink" href="#Base-rings-and-base-restriction-/-extension-1" title="Permalink"></a></h3><p>Some operations need a field for a base ring. For example:</p><pre><code class="language-julia-repl">julia&gt; R = @ring! ℤ[x]
+@ring(ℤ[x])
+
+julia&gt; rem(2x^2, 3x + 1)
+ERROR: InexactError: BigInt(2//3)</code></pre><p>gives an error because we have to subtract <span>$x^2 + \frac{2}{3}x$</span>, which is not representable in <span>$R$</span>. We offer a convenience function <code>base_extend</code> to extend to ℚ:</p><pre><code class="language-julia-repl">julia&gt; rem(base_extend(2x^2), base_extend(3x + 1))
+2//9</code></pre><p>If you want, you can also extend to bigger base rings than the quotient field by passing that as an extra parameter. For example:</p><pre><code class="language-julia-repl">julia&gt; f = base_extend(x^2 + 1, Complex{Rational{Int}})
+x^2 + 1//1 + 0//1*im
+
+julia&gt; div(f, [x - im])
+1×1 LinearAlgebra.Transpose{@ring(Complex{Rational{BigInt}}[x]),SparseArrays.SparseVector{@ring(Complex{Rational{BigInt}}[x]),Int64}}:
+ x + 0//1 + 1//1*im</code></pre><p>By the way, if you are looking for an operation like <code>rem</code> that stays in the integers, have a look at <code>xrem</code> and friends. For example:</p><pre><code class="language-julia-repl">julia&gt; xdiv(2x^2, 3x + 1)
+(-9, -6*x + 2)
+
+julia&gt; xrem(2x^2, 3x + 1)
+-2</code></pre><p>This output signifies that <code>-9</code> times the first argument is equal to <code>-6x + 2</code> times the second argument plus <code>-2</code>. The <code>x</code> in the names <code>xdiv</code> and <code>xrem</code> is intended to represent cross-multiplying the leading coefficients.</p><h3 id="Implementation-of-named-and-numbered-variables-1"><a class="docs-heading-anchor" href="#Implementation-of-named-and-numbered-variables-1">Implementation of named and numbered variables</a><a class="docs-heading-anchor-permalink" href="#Implementation-of-named-and-numbered-variables-1" title="Permalink"></a></h3><p>The difference between <code>@ring Int[x1,x2,x3]</code> and <code>@ring Int[x[]]</code> is not just the display name of the variables. In terms of implementation, the first version uses a <code>Tuple</code> to represent the exponents, whereas the second version uses a <code>SparseVector</code>. This means that for moderate number of variables, the former is often more efficient than the latter as tuples can often remain on the stack, saving allocation and garbage collection overhead. This stops being true when your exponents are very sparse, when the overhead of dealing with all the zeros in the tuple is worse than the overhead of garbage collection.</p><p>If you want to transform a set of polynomials from the latter representation to the former, use <code>to_dense_monomials</code>. This is sometimes beneficial right before doing a computationally expensive operation, e.g. a Gröbner basis computation.</p><h2 id="Frequently-Asked-Questions-1"><a class="docs-heading-anchor" href="#Frequently-Asked-Questions-1">Frequently Asked Questions</a><a class="docs-heading-anchor-permalink" href="#Frequently-Asked-Questions-1" title="Permalink"></a></h2><p>Be the first to ask a question! Feel free to <a href="https://github.com/tkluck/PolynomialRings.jl/issues/new">open an issue for it</a>.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../design-goals/">Design Goals »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Sunday 1 March 2020 21:58">Sunday 1 March 2020</span>. Using Julia version 1.3.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
