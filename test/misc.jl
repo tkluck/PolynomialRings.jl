@@ -2,7 +2,7 @@ using Test
 
 using PolynomialRings: @namingscheme, @monomial, @ring!, @ring
 using PolynomialRings: monomialtype, termtype, polynomialtype, namingscheme
-using PolynomialRings.NamedPolynomials: canonicaltype
+using PolynomialRings.NamedPromotions: canonicaltype
 
 @testset "exp-style construction" begin
     @test exp(monomialtype(@namingscheme((x,y))), (1, 2)) == @monomial(x*y^2)

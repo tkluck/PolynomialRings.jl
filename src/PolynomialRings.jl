@@ -21,10 +21,10 @@ include("Monomials.jl")
 include("Expansions.jl")
 include("Generators.jl")
 
+include("NamedPromotions.jl")
 
 include("PolynomialRings/Broadcast.jl")
 include("PolynomialRings/Operators.jl")
-include("PolynomialRings/NamedPolynomials.jl")
 include("PolynomialRings/Arrays.jl")
 include("TypeUpgrades.jl")
 include("PolynomialRings/Display.jl")
@@ -51,7 +51,7 @@ import .Arrays: flat_coefficients, @flat_coefficients
 import .Operators: content, common_denominator, integral_fraction
 import .Reductions: interreduce, interreduce!
 import .Solve: matrix_solve_affine
-import .NamedPolynomials: minring, ofminring
+import .NamedPromotions: minring, ofminring
 import .Util: @assertvalid
 
 export @namingscheme, @nestednamingscheme, @variable

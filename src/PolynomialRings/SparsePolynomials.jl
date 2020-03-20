@@ -154,7 +154,7 @@ function *(a::SparsePolynomialBy{Order}, b::SparsePolynomialBy{Order}) where Ord
     P = promote_type(typeof(a), typeof(b))
     # FIXME(tkluck): promote_type currently only guarantees that
     #     namingscheme(P) == namingscheme(Order)
-    # See NamedPolynomials.jl
+    # See NamedPromotions.jl
     @assert monomialorder(P) == Order()
     C = basering(P)
     T = termtype(P)

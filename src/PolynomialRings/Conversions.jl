@@ -94,7 +94,7 @@ function base_extend(p::P, ::Type{C}) where P<:Polynomial where C
     # Our implementation of promote_rule is not symmetric: it prefers extending
     # the basering of the LHS. For example:
     #     promote_rule(@ring(ℤ[x]), @ring(ℤ[y])) == @ring(ℤ[y][x])
-    # see NamedPolynomials module. That's exactly the behaviour we want
+    # see NamedPromotions module. That's exactly the behaviour we want
     # for base_extend.
     PP = promote_rule(P, C)
     if PP == Bottom

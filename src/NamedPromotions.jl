@@ -1,4 +1,4 @@
-module NamedPolynomials
+module NamedPromotions
 
 import Base: promote_rule, convert, Bottom
 import SparseArrays: SparseVector, issparse
@@ -288,4 +288,4 @@ Shorthand for `convert(minring(f), f)`
 """
 ofminring(f) = convert(minring(f), f)
 
-end
+end # module

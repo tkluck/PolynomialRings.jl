@@ -5,7 +5,7 @@ import Base: convert
 import ..Generators: Generator, NumberedVariableGenerator
 import ..Ideals: Ideal
 import ..Monomials: TupleMonomial, VectorMonomial
-import ..NamedPolynomials: NamedPolynomial, NumberedPolynomial
+import ..NamedPromotions: NamedPolynomial, NumberedPolynomial
 import ..NamingSchemes: NamingScheme, Named, Numbered, numberedvariablename, parse_namingscheme, num_variables, namingscheme, nestednamingscheme
 import ..NumberFields: NumberField
 import ..Polynomials: Polynomial
