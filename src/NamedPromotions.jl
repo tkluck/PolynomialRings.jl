@@ -15,8 +15,21 @@ import ..Polynomials: Polynomial, PolynomialOver, NamedPolynomial, NumberedPolyn
 import ..StandardMonomialOrderings: MonomialOrdering, rulesymbol
 import ..Terms: Term, basering, monomial, coefficient
 import ..Util: isdisjoint
-import PolynomialRings: expansion
-import PolynomialRings: termtype, namingscheme, variablesymbols, exptype, monomialtype, allvariablesymbols, iscanonical, canonicaltype, nestednamingscheme, fullboundnames, polynomialtype
+import PolynomialRings: expansion, base_extend
+import PolynomialRings: termtype, namingscheme, variablesymbols, exptype, monomialtype, allvariablesymbols, iscanonical, canonicaltype, nestednamingscheme, polynomialtype
+
+# -----------------------------------------------------------------------------
+#
+# Base extension
+#
+# -----------------------------------------------------------------------------
+base_extend(x, B::Type) = convert(base_extend(typeof(x), B), x)
+base_extend(A::Type, B::Type) = error("cannot apply base_extend to $A")
+base_extend(P::Type{<:Polynomial}, T::Type) = begin
+    S = promote_rule(P, T)
+    S == Bottom && error("No result for base_extend($P, $T)")
+    return S
+end
 
 # short-circuit the non-conversions
 convert(::Type{P}, p::P) where P <: SparsePolynomialOver{C,O} where {C,O<:NamedMonomialOrder} = p
@@ -55,33 +68,29 @@ remove_variables(T::Type, vars) = T
 
 nestednamingscheme(T::Type{<:Term}) = nestednamingscheme(basering(T)) * namingscheme(T)
 nestednamingscheme(T::Type{<:Polynomial}) = nestednamingscheme(basering(T)) * namingscheme(T)
-fullboundnames(T::Type{<:Term}) = fullboundnames(basering(T))
-fullboundnames(T::Type{<:Polynomial}) = fullboundnames(basering(T))
+boundnames(T::Type{<:Term}) = boundnames(basering(T))
+boundnames(T::Type{<:Polynomial}) = boundnames(basering(T))
 
 _promote_rule(T1::Type{<:Polynomial}, T2::Type) = promote_rule(T1, T2)
 _promote_rule(T1::Type,               T2::Type) = (res = promote_type(T1, T2); res === Any ? Bottom : res)
 
-@generated function promote_rule(::Type{T1}, ::Type{T2}) where T1 <: Polynomial where T2
-    if !isdisjoint(namingscheme(T1), fullboundnames(T2))
-        # FIXME(tkluck): this loses information on the exptype associated to
-        # the namingscheme of T1.
-        T1′ = remove_variables(T1, fullboundnames(T2))
+function promote_rule(::Type{T1}, ::Type{T2}) where T1 <: Polynomial where T2
+    if !isdisjoint(namingscheme(T1), boundnames(T2))
+        T1′ = remove_variables(T1, boundnames(T2))
         return _promote_rule(T1′, T2)
     elseif nestednamingscheme(T1) ⊆ nestednamingscheme(T2)
-        # FIXME(tkluck): this loses information on the exptype associated to
-        # the namingscheme of T1.
         return polynomialtype(_promote_rule(basering(T1), T2))
     elseif isdisjoint(namingscheme(T1), nestednamingscheme(T2))
         if (C = _promote_rule(basering(T1), T2)) !== Bottom
-            return polynomialtype(monomialtype(T1), C, sparse=issparse(T1))
+            return polynomialtype(monomialtype(T1), C, issparse(T1))
         end
     end
     return Bottom
 end
 
 function promote_rule(T1::Type{<:Term}, T2::Type)
-    if !isdisjoint(namingscheme(T1), fullboundnames(T2))
-        T1′ = remove_variables(T1, fullboundnames(T2))
+    if !isdisjoint(namingscheme(T1), boundnames(T2))
+        T1′ = remove_variables(T1, boundnames(T2))
         return _promote_rule(T1′, T2)
     elseif nestednamingscheme(T1) ⊆ nestednamingscheme(T2)
         return _promote_rule(basering(T1), T2)
@@ -120,24 +129,24 @@ promote_canonical_type(T1::Type{<:Polynomial}, T2::Type{<:Polynomial}) = invoke(
 function promote_canonical_type(T1::Type{<:Polynomial}, T2::Type)
     @assert iscanonical(T1) && iscanonical(T2)
 
-    if !isdisjoint(namingscheme(T1), fullboundnames(T2))
-        T1′ = remove_variables(T1, fullboundnames(T2))
+    if !isdisjoint(namingscheme(T1), boundnames(T2))
+        T1′ = remove_variables(T1, boundnames(T2))
         return promote_canonical_type(T1′, T2)
-    elseif !isdisjoint(namingscheme(T2), fullboundnames(T1))
-        T2′ = remove_variables(T2, fullboundnames(T1))
+    elseif !isdisjoint(namingscheme(T2), boundnames(T1))
+        T2′ = remove_variables(T2, boundnames(T1))
         return promote_canonical_type(T1, T2′)
     elseif namingscheme(T1) ≺ namingscheme(T2)
         M = monomialtype(T2)
         C = promote_canonical_type(T1, basering(T2))
-        return polynomialtype(M, C, sparse=issparse(T2))
+        return polynomialtype(M, C, issparse(T2))
     elseif namingscheme(T2) ≺ namingscheme(T1)
         M = monomialtype(T1)
         C = promote_canonical_type(basering(T1), T2)
-        return polynomialtype(M, C, sparse=issparse(T1))
+        return polynomialtype(M, C, issparse(T1))
     else
         M = promote_type(monomialtype(T1), monomialtype(T2))
         C = promote_type(basering(T1), basering(T2))
-        return polynomialtype(M, C, sparse=joinsparse(T1, T2))
+        return polynomialtype(M, C, joinsparse(T1, T2))
     end
 end
 
@@ -156,14 +165,14 @@ function canonicaltype(P::Type{<:PolynomialOver{<:Polynomial}})
     M1 = monomialtype(C)
     M2 = canonicaltype(monomialtype(P))
     if namingscheme(M1) ≺ namingscheme(M2)
-        P′ = polynomialtype(M2, C, sparse=issparse(P))
+        P′ = polynomialtype(M2, C, issparse(P))
     elseif namingscheme(M2) ≺ namingscheme(M1)
         C1 = basering(C)
-        P′ = polynomialtype(M1, polynomialtype(M2, C1), sparse=issparse(C))
+        P′ = polynomialtype(M1, polynomialtype(M2, C1), issparse(C))
     else
         M = promote_type(M1, M2)
         C1 = basering(C)
-        P′ = polynomialtype(M, C1, sparse=joinsparse(P, C))
+        P′ = polynomialtype(M, C1, joinsparse(P, C))
     end
     if P′ == P
         return P
@@ -175,7 +184,7 @@ end
 function canonicaltype(P::Type{<:Polynomial})
     C = canonicaltype(basering(P))
     M = canonicaltype(monomialtype(P))
-    return polynomialtype(M, C, sparse=issparse(P))
+    return polynomialtype(M, C, issparse(P))
 end
 @generated function canonicaltype(::Type{M}) where M <: NamedMonomial
     N = num_variables(M)
@@ -206,7 +215,7 @@ iscanonical(P::Type{<:Polynomial}) = iscanonical(nestednamingscheme(P))
         if namingscheme(T) == namingscheme(S)
             M = promote_type(monomialtype(T), monomialtype(S))
             C = promote_type(basering(T), basering(S))
-            return polynomialtype(M, C, sparse=joinsparse(T, S))
+            return polynomialtype(M, C, joinsparse(T, S))
         else
             return promote_canonical_type(canonicaltype(T), canonicaltype(S))
         end
@@ -255,8 +264,9 @@ function minring(f::NamedPolynomial)
         return base
     else
         syms = variablesymbols(namingscheme(f))
-        scheme = namingscheme(syms[nz]...)
-        return polynomialtype(scheme, base, sparse=issparse(f))
+        zscheme = namingscheme(syms[setdiff(eachindex(syms), nz)]...)
+        M = remove_variables(monomialtype(f), zscheme)
+        return polynomialtype(M, base, issparse(f))
     end
 end
 
@@ -269,7 +279,7 @@ function minring(f::NumberedPolynomial)
     if isone(m)
         return base
     else
-        return polynomialtype(namingscheme(f), base, sparse=issparse(f))
+        return polynomialtype(monomialtype(f), base, issparse(f))
     end
 end
 

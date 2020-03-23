@@ -71,6 +71,18 @@ end
     return polynomialtype(monomialtype(T), basering(T); sparse=sparse)
 end
 
+@pure function polynomialtype(scheme::NamingScheme, basering, exptype, sparse)
+    return polynomialtype(monomialtype(scheme, exptype), basering, sparse)
+end
+
+@pure function polynomialtype(order::MonomialOrder, basering, exptype, sparse)
+    return polynomialtype(monomialtype(order, exptype), basering, sparse)
+end
+
+@pure function polynomialtype(T::Type{<:Term}, sparse)
+    return polynomialtype(monomialtype(T), basering(T), sparse)
+end
+
 for N = [Number, AbstractMonomial, Term, Polynomial]
     @eval begin
         Base.promote_rule(::Type{T}, ::Type{C}) where {T<:$N, C <: Constant} = T

@@ -13,7 +13,7 @@ import ..QuotientRings: QuotientRing
 import ..StandardMonomialOrderings: MonomialOrdering
 import ..Terms: Term, basering
 import ..Util: lazymap, isdisjoint
-import PolynomialRings: exptype, fullboundnames, monomialtype, polynomialtype
+import PolynomialRings: exptype, boundnames, monomialtype, polynomialtype
 import PolynomialRings: generators, base_extend, variablesymbols, allvariablesymbols, ⊗
 
 # -----------------------------------------------------------------------------
@@ -450,7 +450,7 @@ function numbered_polynomial_ring(symbol::Symbol, n::Integer; basering::Type=Rat
 end
 
 function polynomial_ring(scheme::NamingScheme; basering::Type=Rational{BigInt}, exptype::Type=Int16, monomialorder::Symbol=:degrevlex, sparse=true)
-    if !isdisjoint(scheme, nestednamingscheme(basering)) || !isdisjoint(scheme, fullboundnames(basering)) || !isvalid(scheme)
+    if !isdisjoint(scheme, nestednamingscheme(basering)) || !isdisjoint(scheme, boundnames(basering)) || !isvalid(scheme)
         throw(ArgumentError("Duplicated symbols when extending $basering by $scheme"))
     end
     order = MonomialOrdering{monomialorder, typeof(scheme)}()

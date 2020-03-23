@@ -16,15 +16,15 @@ function exptype end
 function namingscheme end
 function nestednamingscheme end
 function boundnames end
-function fullboundnames end
+function boundvalues end
 function num_variables end
 function variablesymbols end
 function allvariablesymbols end
 function iscanonical end
 function canonicaltype end
 function polynomialtype end
+function base_extend end
 
-base_extend(A::Type, B::Type)   = promote_type(A, B)
 base_restrict(A::Type, B::Type) = B
 
 fraction_field(I::Type{<:Integer})  = Rational{I}

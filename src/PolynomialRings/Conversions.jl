@@ -84,30 +84,8 @@ base_restrict(::Type{P}) where P <: Union{Term,Polynomial} = base_restrict(P, in
 # Base extension
 #
 # -----------------------------------------------------------------------------
-function base_extend(t::T, ::Type{C}) where T<:Term where C
-    TT = promote_type(T, C)
-    CC = basering(TT)
-    return TT(monomial(t), unalias(CC, coefficient(t)))
-end
-
-function base_extend(p::P, ::Type{C}) where P<:Polynomial where C
-    # Our implementation of promote_rule is not symmetric: it prefers extending
-    # the basering of the LHS. For example:
-    #     promote_rule(@ring(ℤ[x]), @ring(ℤ[y])) == @ring(ℤ[y][x])
-    # see NamedPromotions module. That's exactly the behaviour we want
-    # for base_extend.
-    PP = promote_rule(P, C)
-    if PP == Bottom
-        # if that yields no result, just apply a symmetric promote_type.
-        PP = promote_type(P, C)
-    end
-    return PP(p)
-end
-
 base_extend(p::P)      where P <: Union{Term,Polynomial} = base_extend(p, fraction_field(basering(p)))
 base_extend(::Type{P}) where P <: Union{Term,Polynomial} = base_extend(P, fraction_field(basering(P)))
-
-base_extend(x, ::Type{C}) where C = convert(promote_type(typeof(x), C), x)
 
 # -----------------------------------------------------------------------------
 #

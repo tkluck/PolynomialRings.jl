@@ -13,7 +13,7 @@ import Base: issubset, isempty, isvalid, *, diff, indexin, promote_rule, promote
 import Base: show
 
 import ..Util: isdisjoint, showsingleton
-import PolynomialRings: boundnames, fullboundnames, iscanonical, canonicaltype, max_variable_index
+import PolynomialRings: boundnames, iscanonical, canonicaltype, max_variable_index
 import PolynomialRings: variablesymbols, namingscheme, nestednamingscheme, num_variables, to_dense_monomials
 
 abstract type NamingScheme end
@@ -189,8 +189,7 @@ diff(x::Union{NamingScheme, NestedNamingScheme}, y::Union{NamingScheme, NestedNa
 
 namingscheme(::Type) = EmptyNamingScheme()
 nestednamingscheme(T::Type) = composeschemes(namingscheme(T))
-boundnames(::Type) = EmptyNamingScheme()
-fullboundnames(T::Type) = composeschemes(boundnames(T))
+boundnames(T::Type) = ()
 
 iscanonical(T::NamingScheme) = (T,) == canonicalscheme(T)
 iscanonical(T::NestedNamingScheme) = T == canonicalscheme(T)

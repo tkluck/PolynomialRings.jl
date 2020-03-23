@@ -18,7 +18,7 @@ import ..Constants: Constant, One, MinusOne, Zero
 import ..Ideals: ring
 import ..Monomials: AbstractMonomial
 import ..NamedValues: type_with_named_values, knownvalue, knownnames, knownvalues
-import ..NamingSchemes: boundnames, fullboundnames, namingscheme, Named
+import ..NamingSchemes: boundnames, namingscheme, Named
 import ..Polynomials: Polynomial, PolynomialOver, basering, variablesymbols
 import ..QuotientRings: QuotientRing, monomial_basis
 import ..QuotientRings: _ideal
@@ -49,7 +49,6 @@ denominatortype(::Type{NumberField{Num, N, Denom, NamedValues}}) where {Num, N, 
 degree(::Type{NumberField{Num, N, Denom, NamedValues}}) where {Num, N, Denom, NamedValues} = N
 minpoly(F::Type{NumberField{Num, N, Denom, NamedValues}}) where {Num, N, Denom, NamedValues} = minpolys[F] :: NTuple{N + 1, Num}
 @pure @generated boundnames(::Type{F})         where F <: NumberField = Named{knownnames(F),}()
-@pure @generated fullboundnames(::Type{F})     where F <: NumberField = Named{knownnames(F),}()
 @pure @generated variablesymbols(::Type{F})    where F <: NumberField = knownnames(F)
 @pure @generated allvariablesymbols(::Type{F}) where F <: NumberField = knownnames(F)
 

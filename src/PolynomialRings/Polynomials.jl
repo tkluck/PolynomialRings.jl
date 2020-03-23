@@ -21,7 +21,7 @@ import PolynomialRings: leading_coefficient, leading_monomial
 import PolynomialRings: leading_term, termtype, monomialorder, exptype, namingscheme, expansion
 import PolynomialRings: polynomialtype, to_dense_monomials
 import PolynomialRings: tail, deg
-import PolynomialRings: variablesymbols, allvariablesymbols, fullboundnames
+import PolynomialRings: variablesymbols, allvariablesymbols, boundnames
 
 # -----------------------------------------------------------------------------
 #
@@ -45,7 +45,7 @@ abstract type DensePolynomialBy{M, C} end
 abstract type DensePolynomialOver{M, C} end
 
 function polynomialtype(M::Type{<:AbstractMonomial}, C::Type; sparse=true)
-    if !isdisjoint(namingscheme(M), nestednamingscheme(C)) || !isdisjoint(namingscheme(M), fullboundnames(C))
+    if !isdisjoint(namingscheme(M), nestednamingscheme(C)) || !isdisjoint(namingscheme(M), boundnames(C))
         error("Duplicate veriable names while creating polynomialring in $M over $C")
     end
     if C <: AbstractMonomial
@@ -62,10 +62,7 @@ function polynomialtype(M::Type{<:AbstractMonomial}, C::Type; sparse=true)
     return sparse ? SparsePolynomial{M, C} : DensePolynomial{M, C}
 end
 
-function polynomialtype(P::Type{<:Polynomial}; sparse=true)
-    polynomialtype(monomialtype(P), basering(P), sparse=sparse)
-end
-
+polynomialtype(P::Type{<:Polynomial}, sparse=true) = polynomialtype(monomialtype(P), basering(P), sparse)
 
 # -----------------------------------------------------------------------------
 #
