@@ -46,6 +46,7 @@ function convert(::Type{P}, a::C) where P<:PolynomialOver{C} where C
         return zero(P)
     else
         M = monomialtype(P)
+        # FIXME: dense polys
         return P([one(M)],[deepcopy(a)])
     end
 end
@@ -55,6 +56,7 @@ function convert(::Type{P}, a::C) where P<:PolynomialOver{C} where C <: Polynomi
         return zero(P)
     else
         M = monomialtype(P)
+        # FIXME: dense polys
         return P([one(M)],[deepcopy(a)])
     end
 end
