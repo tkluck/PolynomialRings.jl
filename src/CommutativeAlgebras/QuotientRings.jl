@@ -15,7 +15,7 @@ import ..Polynomials: Polynomial, exptype, leading_term, basering, PolynomialOve
 import ..Polynomials: termtype, monomialtype, monomialorder
 import ..Terms: Term, monomial, coefficient
 import ..Util: @assertvalid
-import PolynomialRings: allvariablesymbols
+import PolynomialRings: allvariablesymbols, boundvalues
 import PolynomialRings: variablesymbols
 
 # -----------------------------------------------------------------------------
@@ -72,6 +72,9 @@ iszero(a::QuotientRing) = iszero(a.f)
 ==(a::Q, b::Q)                where Q<:QuotientRing = a.f == b.f
 allvariablesymbols(::Type{Q}) where Q<:QuotientRing = allvariablesymbols(ring(Q))
 boundnames(::Type{Q})         where Q<:QuotientRing = nestednamingscheme(ring(Q))
+boundvalues(::Type{Q})        where Q<:QuotientRing = (boundvalues(basering(ring(Q)))..., generators(ring(Q)))
+
+markedcoeff(::Type{Q}, c)     where Q <: QuotientRing = markedcoeff(basering(ring(Q)), c)
 
 expansion(q::QuotientRing, spec...) = ((one(monomialtype(spec...)), q),)
 

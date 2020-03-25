@@ -8,7 +8,7 @@ import ..Expansions: expansion
 import ..Generators: NumberedVariableGenerator
 import ..Polynomials: Polynomial, NamedPolynomial, NumberedPolynomial
 import ..Polynomials: generators, basering
-import PolynomialRings: boundnames, boundvalues, nestednamingscheme
+import PolynomialRings: boundnames, boundvalues, namingscheme
 
 boundnames(T) = ()
 boundvalues(T) = ()
@@ -16,11 +16,10 @@ boundvalues(T) = ()
 convert(::Type{P1}, a::P2) where P1 <: Polynomial where P2 = convert_through_expansion(P1, a)
 
 markednames(T) = boundnames(T)
-markednames(P::Type{<:Polynomial}) = nestednamingscheme(P)
+markednames(P::Type{<:Polynomial}) = (markednames(basering(P))..., namingscheme(P))
 markedvalues(T) = boundvalues(T)
 markedvalues(P::Type{<:NamedPolynomial}) = begin
     v = markedvalues(basering(P))
-    g = map(x -> 1x, generators(P))
     return (v..., generators(P))
 end
 markedvalues(P::Type{<:NumberedPolynomial}) = begin
@@ -38,9 +37,9 @@ convert_through_expansion(T, x) = begin
     for (c, ms) in _multiexpansion(x, markednames(T)...)
         # special cases to avoid relying on implementations of :* and :^ when possible
         if isone(c) && all(isone, ms)
-            @inplace res += one(T)
+            @inplace res += markedcoeff(T, 1)
         elseif isone(c)
-            @inplace res += _subs(one(T), ms .=> markednames(T) .=> markedvalues(T))
+            @inplace res += _subs(markedcoeff(T, 1), ms .=> markednames(T) .=> markedvalues(T))
         elseif all(isone, ms)
             cc = markedcoeff(T, c)
             @inplace res += cc
@@ -69,19 +68,19 @@ _subs(c, pairs::Pair...) = begin
     if isone(m)
         return _subs(c, Base.tail(pairs)...)
     else
-        a = _subs(val, exponents(m, scheme))
+        a = _subsmonom(val, exponents(m, scheme))
         b = _subs(c, Base.tail(pairs)...)
         return a * b
     end
 end
 
-_subs(val, exps) = prod(
+_subsmonom(val, exps) = prod(
     isone(e) ? v : v^e
     for (v, e) in zip(val, exps)
     if !iszero(e)
 )
 
-_subs(val::NumberedVariableGenerator, exps) = prod(
+_subsmonom(val::NumberedVariableGenerator, exps) = prod(
     val[i]^e
     for (i, e) in enumerate(exps)
 )

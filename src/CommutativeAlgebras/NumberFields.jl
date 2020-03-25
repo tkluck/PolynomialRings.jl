@@ -17,14 +17,15 @@ import InPlace: @inplace, inclusiveinplace!, inplace!
 import ..Constants: Constant, One, MinusOne, Zero
 import ..Ideals: ring
 import ..Monomials: AbstractMonomial
+import ..NamedConversions: convert_through_expansion, markedcoeff
 import ..NamedValues: type_with_named_values, knownvalue, knownnames, knownvalues
 import ..NamingSchemes: boundnames, namingscheme, Named
 import ..Polynomials: Polynomial, PolynomialOver, basering, variablesymbols
 import ..QuotientRings: QuotientRing, monomial_basis
 import ..QuotientRings: _ideal
 import ..Terms: coefficient
-import PolynomialRings: allvariablesymbols, fraction_field, basering
-import PolynomialRings: integers, generators, polynomialtype, generators
+import PolynomialRings: allvariablesymbols, fraction_field, basering, checkconstant
+import PolynomialRings: integers, generators, polynomialtype, generators, boundvalues
 
 # -----------------------------------------------------------------------------
 #
@@ -48,7 +49,8 @@ numeratortype(::Type{NumberField{Num, N, Denom, NamedValues}}) where {Num, N, De
 denominatortype(::Type{NumberField{Num, N, Denom, NamedValues}}) where {Num, N, Denom, NamedValues} = Denom
 degree(::Type{NumberField{Num, N, Denom, NamedValues}}) where {Num, N, Denom, NamedValues} = N
 minpoly(F::Type{NumberField{Num, N, Denom, NamedValues}}) where {Num, N, Denom, NamedValues} = minpolys[F] :: NTuple{N + 1, Num}
-@pure @generated boundnames(::Type{F})         where F <: NumberField = Named{knownnames(F),}()
+@pure @generated boundnames(::Type{F})         where F <: NumberField = (namingscheme(knownnames(F)...),)
+@pure @generated boundvalues(::Type{F})        where F <: NumberField = (map(name -> knownvalue(F, name), knownnames(F)),)
 @pure @generated variablesymbols(::Type{F})    where F <: NumberField = knownnames(F)
 @pure @generated allvariablesymbols(::Type{F}) where F <: NumberField = knownnames(F)
 
@@ -378,34 +380,24 @@ function inplace!(op::PlusMinus, a::F, b::F, c::F) where F <: NumberField{BigInt
     return reducefraction(F, a.nums, D)
 end
 
+# -----------------------------------------------------------------------------
+#
+# Conversion
+#
+# -----------------------------------------------------------------------------
 convert(::Type{N}, c::N) where N <: NumberField = c
-convert(N::Type{<:NumberField}, c::Polynomial) = _convert(N, c)
-convert(::Type{N}, c::PolynomialOver{N}) where N <: NumberField = _convert(N, c)
-convert(N::Type{<:NumberField}, c::Number) = _convert(N, c)
-convert(::Type{F}, c) where F <: NumberField = _convert(F, c)
+convert(N::Type{<:NumberField}, c::Polynomial) = convert_through_expansion(N, c)
+convert(::Type{N}, c::PolynomialOver{N}) where N <: NumberField = checkconstant(c)
+convert(N::Type{<:NumberField}, c::Number) = convert_through_expansion(N, c)
+convert(::Type{F}, c) where F <: NumberField = convert_through_expansion(F, c)
 
-function _convert(::Type{F}, c) where F <: NumberField
-    #=
-    We use a switch statement instead of many methods because there is too
-    much possibility of method ambiguity
-    =#
-    if c isa F
-        return c
-    elseif c isa basefield(F) || c isa Number
-        a = convert(numeratortype(F), numerator(c))
-        d = convert(denominatortype(F), denominator(c))
-        nums = ntuple(i -> i == 1 ? a : zero(a), degree(F))
-        return F(nums, d)
-    elseif c isa PolynomialOver{F}
-        # TODO: assert it is constant
-        return iszero(c) ? zero(basering(c)) : c.coeffs[1]
-    elseif c isa Symbol
-        return knownvalue(F, c)
-    elseif namingscheme(typeof(c)) ⊆ boundnames(F)
-        return c(;knownvalues(F)...)
-    else
-        error("Do not know how to convert an element of type $(typeof(c)) to $F")
-    end
+convert(::Type{F}, c::Symbol) where F <: NumberField = knownvalue(F, c)
+
+markedcoeff(::Type{F}, c) where F <: NumberField = begin
+    a = convert(numeratortype(F), numerator(c))
+    d = convert(denominatortype(F), denominator(c))
+    nums = ntuple(i -> i == 1 ? a : zero(a), degree(F))
+    return F(nums, d)
 end
 
 # -----------------------------------------------------------------------------
