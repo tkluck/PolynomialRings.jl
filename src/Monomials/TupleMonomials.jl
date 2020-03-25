@@ -34,10 +34,9 @@ exptype(::Type{TupleMonomial{N,I,Order}}) where I <: Integer where {N,Order} = I
 exp(::Type{M}, exps::NTuple, deg=sum(exps)) where M <: TupleMonomial = M(exps, deg)
 exp(::Type{M}, exps, deg=sum(exps)) where M <: TupleMonomial = M(ntuple(i -> get(exps, i, 0), num_variables(M)), deg)
 
-generators(M::Type{TupleMonomial{N,I,Order}}) where {N,I,Order} = (
+generators(M::Type{TupleMonomial{N,I,Order}}) where {N,I,Order} = ntuple(N) do i
     exp(M, ntuple(j -> j == i ? 1 : 0, N), 1)
-    for i in 1 : N
-)
+end
 
 function max_variable_index(scheme::InfiniteScheme{Name},
                             m::TupleMonomial{N, I, <: MonomialOrder{Scheme}}) where

@@ -150,16 +150,6 @@ function promote_canonical_type(T1::Type{<:Polynomial}, T2::Type)
     end
 end
 
-using PolynomialRings
-
-function convert(::Type{P1}, a::P2) where P1 <: Polynomial where P2 #<: Polynomial
-    res = zero(P1)
-    for (m, c) in expansion(a, monomialorder(P1))
-        push!(res, Term(m, c))
-    end
-    return res
-end
-
 function canonicaltype(P::Type{<:PolynomialOver{<:Polynomial}})
     C = canonicaltype(basering(P))
     M1 = monomialtype(C)

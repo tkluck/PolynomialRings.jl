@@ -197,7 +197,7 @@ Base.copy!(dst::Polynomial, src) = (append!(empty!(dst), src); dst)
 Base.copy!(x::Polynomial, ed::Eduction) = copy!(Transducer(ed), x, ed.coll)
 
 
-generators(::Type{P}) where P <: Polynomial = map(P, generators(termtype(P)))
+generators(::Type{P}) where P <: Polynomial = P.(generators(termtype(P)))
 
 """
     coeff = get(p::Polynomial{M}, m::M, default) where M <: AbstractMonomial

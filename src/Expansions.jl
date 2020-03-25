@@ -530,7 +530,7 @@ linear_coefficients(f, spec...) = linear_coefficients(f, expansionorder(spec...)
 function linear_coefficients(f, spec::NamedMonomialOrder)
     return map(generators(monomialtype(spec))) do m
         coefficient(f, exponents(m, namingscheme(spec)), spec)
-    end
+    end |> collect
 end
 
 function linear_coefficients(f, spec::NumberedMonomialOrder)

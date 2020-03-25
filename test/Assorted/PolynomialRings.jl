@@ -143,7 +143,7 @@ zero(::Foo)       = 0
 
         @ring! ℤ[d[]]
         dd1,dd2,dd3 = d[]
-        @test to_dense_monomials(@namingscheme(d[]), [dd1, dd2, dd3]) == generators(@ring ℤ[d[1:3]])
+        @test to_dense_monomials(@namingscheme(d[]), [dd1, dd2, dd3]) == collect(generators(@ring ℤ[d[1:3]]))
         @test eltype(to_dense_monomials(@namingscheme(d[]), [dd1, dd2, dd3])) == @ring ℤ[d[1:3]]
 
         # the middle one returns a tuple, that's why we need to collect()

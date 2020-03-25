@@ -82,7 +82,7 @@ monomialorderkey(order, a::Term) = monomial(a)
 
 hash(a::Term, h::UInt) = hash(a.m, hash(a.c, h))
 
-generators(::Type{Term{M,C}}) where {M, C} = lazymap(g -> Term{M,C}(g, one(C)), generators(M))
+generators(::Type{Term{M,C}}) where {M, C} = broadcast(g -> Term{M,C}(g, one(C)), generators(M))
 
 iszero(a::Term) = iszero(coefficient(a))
 

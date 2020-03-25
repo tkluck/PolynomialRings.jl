@@ -22,6 +22,7 @@ include("Expansions.jl")
 include("Generators.jl")
 
 include("NamedPromotions.jl")
+include("NamedConversions.jl")
 
 include("PolynomialRings/Broadcast.jl")
 include("PolynomialRings/Operators.jl")
