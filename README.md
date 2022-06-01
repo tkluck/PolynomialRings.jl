@@ -4,9 +4,9 @@
 [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://tkluck.github.io/PolynomialRings.jl/latest)
 
 
-| **Build Status**                                                | **Test coverage**                                       |
-|:---------------------------------------------------------------:|:-------------------------------------------------------:|
-| [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] | [![Coverage Status][codecov-img]][codecov-url]      |
+| **Build Status**        | **Test coverage**                              |
+|:-----------------------:|:----------------------------------------------:|
+| [![][c-i-img]][c-i-url] | [![Coverage Status][codecov-img]][codecov-url] |
 
 A library for arithmetic and algebra with multi-variable polynomials.
 
@@ -32,11 +32,8 @@ Want to know more? Have a look [at the getting started guide][1].
 
 Currently, this library should be considered alpha quality.
 
-[travis-img]: https://travis-ci.org/tkluck/PolynomialRings.jl.svg?branch=master
-[travis-url]: https://travis-ci.org/tkluck/PolynomialRings.jl
-
-[appveyor-img]: https://ci.appveyor.com/api/projects/status/4g6ax1ni7ijx3rn4?svg=true
-[appveyor-url]: https://ci.appveyor.com/project/tkluck/polynomialrings-jl
+[c-i-img]: https://github.com/tkluck/PolynomialRings.jl/workflows/CI/badge.svg
+[c-i-url]: https://github.com/tkluck/PolynomialRings.jl/actions?query=workflow%3ACI
 
 [codecov-img]: https://codecov.io/gh/tkluck/PolynomialRings.jl/branch/master/graph/badge.svg
 [codecov-url]: https://codecov.io/gh/tkluck/PolynomialRings.jl
