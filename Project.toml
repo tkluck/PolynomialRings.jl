@@ -17,7 +17,7 @@ Transducers = "28d57a85-8fef-5791-bfe6-a80928e7c999"
 
 [compat]
 Combinatorics = "1.0"
-DataStructures = "0.17"
+DataStructures = "0.17, 0.18"
 InPlace = "0.3"
 OrderedCollections = "1.1"
 ProgressMeter = "1.2"
