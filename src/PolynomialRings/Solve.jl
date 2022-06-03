@@ -20,7 +20,7 @@ change when I do.
 """
 function matrix_solve_affine(f, y, dims, Type=eltype(y))
     z = sparse(zeros(Type, dims))
-    basis = map(1:length(z)) do i
+    basis = map(eachindex(z)) do i
         b = copy(z)
         b[i] = one(Type)
         b

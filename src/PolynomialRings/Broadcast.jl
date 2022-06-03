@@ -223,7 +223,7 @@ index is equal to `destix`. Suggested use:
 @generated function withownership(bc::BC, destix, myix) where BC <: Broadcasted{Tw, Axes, F, Args} where {Tw <: Termwise, Axes, F, Args}
     argtuple = :( tuple() )
     expr = :( Broadcasted{Tw}(bc.f, $argtuple) )
-    for ix = 1:length(Args.types)
+    for ix = eachindex(Args.types)
         push!(argtuple.args, :( withownership(bc.args[$ix], destix, myix + $(ix - 1)) ))
     end
     return expr
@@ -337,7 +337,7 @@ end
     every possible combination of arguments that are shorter than a given
     length. This is what we are generating below.
     =#
-    indices = 1:length(Args.types)
+    indices = eachindex(Args.types)
     poly_indices = filter(indices) do ix
         Args.types[ix] <: Owned{<:DensePolynomialBy}
     end
@@ -361,7 +361,7 @@ end
         selected_poly_lengths_expr   = lengths_names[selection]
         unselected_poly_lengths_expr = lengths_names[complement]
 
-        args_expr = map(1:length(Args.types)) do ix
+        args_expr = map(eachindex(Args.types)) do ix
             if ix in poly_indices
                 if ix in selection
                     :(view(bcf.args[$ix].value.coeffs, lo:hi))
