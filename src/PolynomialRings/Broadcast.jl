@@ -405,7 +405,7 @@ function merge(a::TermsIterable{Order}, b::TermsIterable{Order}, leftop, rightop
         Order(),
         promote_type(polynomialtype(a), polynomialtype(b)),
         eduction(
-            MergingTransducer(nzterms(a), Order(), leftop′, rightop′, mergeop′, monomial, coefficient, constructterm) |> Filter(!iszero),
+            Filter(!iszero) ∘ MergingTransducer(nzterms(a), Order(), leftop′, rightop′, mergeop′, monomial, coefficient, constructterm),
             nzterms(b),
         ),
         Val(true),
@@ -421,7 +421,7 @@ function termwise(op::typeof(*), a::TermsIterable{Order}, b::Owned{<:Union{TermB
         Order(),
         promote_type(polynomialtype(a), typeof(b.value)),
         eduction(
-            Map(a_i -> value(Owned(*, Owned(a_i, Val(false)), b))) |> Filter(!iszero),
+            Filter(!iszero) ∘ Map(a_i -> value(Owned(*, Owned(a_i, Val(false)), b))),
             nzterms(a),
         ),
         Val(true),
@@ -434,7 +434,7 @@ function termwise(op::typeof(*), a::Owned{<:Union{TermBy{Order}, MonomialBy{Orde
         Order(),
         promote_type(typeof(a.value), polynomialtype(b)),
         eduction(
-            Map(b_i -> value(Owned(*, a, Owned(b_i, Val(false))))) |> Filter(!iszero),
+            Filter(!iszero) ∘ Map(b_i -> value(Owned(*, a, Owned(b_i, Val(false))))),
             nzterms(b),
         ),
         Val(true),
