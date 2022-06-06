@@ -98,6 +98,10 @@ function findmax(order::MonomialOrder, iter)
     return (m, mi)
 end
 
+# resolve ambiguity since Julia 1.8
+findmin(order::MonomialOrder, a::AbstractArray) = invoke(findmin, Tuple{MonomialOrder, Any}, order, a)
+findmax(order::MonomialOrder, a::AbstractArray) = invoke(findmax, Tuple{MonomialOrder, Any}, order, a)
+
 argmin(m::MonomialOrder, iter) = findmin(m, iter)[2]
 argmax(m::MonomialOrder, iter) = findmax(m, iter)[2]
 
