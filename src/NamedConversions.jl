@@ -49,7 +49,7 @@ convert_through_expansion(T, x) = begin
         end
     end
 
-    return res
+    return res::T
 end
 
 _multiexpansion(x) = ((x,()),)
