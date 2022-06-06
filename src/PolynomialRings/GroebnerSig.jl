@@ -250,7 +250,7 @@ function gröbner_basis_sig_incremental(alg::Backend, polynomials::AbstractVecto
 end
 
 function interreduce!(H; order)
-    for i in eachindex(H)
+    for i in 1:length(H)
         xrem!(H[i], H[[1:i-1; i+1:end]], order=order)
         if basering(eltype(H)) <: Integer
             H[i] ÷= content(H[i])
@@ -271,7 +271,7 @@ function gröbner_basis(alg::Arri, o::MonomialOrder, G::AbstractArray{<:Polynomi
     ix = findlast(!iszero, G)
     if !isnothing(ix)
         pushfirst!(H, G[ix])
-        for g in G[ix-1:-1:begin]
+        for g in G[ix-1:-1:1]
             iszero(g) && continue
             pushfirst!(H, g)
             H = gröbner_basis_sig_incremental(alg, H; order=o, kwds...)

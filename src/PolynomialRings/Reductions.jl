@@ -445,8 +445,8 @@ function interreduce!(G::AbstractVector{<:AbstractModuleElement}; kwds...)
 
     lm(f) = leading_monomial(f, order=order)
     S = unique(map(lm, G))
-    @showprogress "Interreducing" for ix in eachindex(G)
-        xrem!(G[ix], G[[begin : ix - 1; ix + 1 : end]]; kwds...)
+    @showprogress "Interreducing" for ix in 1:length(G)
+        xrem!(G[ix], G[[1 : ix - 1; ix + 1 : end]]; kwds...)
         if !iszero(G[ix]) && basering(modulebasering(eltype(G))) <: Integer
             G[ix] ÷= content(G[ix])
         end

@@ -195,7 +195,7 @@ function any_divisor(f::Function, a::M, scheme::NamingScheme) where M <: Abstrac
             return true
         end
         carry = 1
-        for j = eachindex(nonzeros)
+        for j = 1:length(nonzeros)
             if iszero(nonzeros[j]) && !iszero(carry)
                 nonzeros[j] = nonzeros_a[j]
                 carry = 1

@@ -21,7 +21,7 @@ function cyclic_ideal(vars...)
   vars = collect(vars)
 
   p1 = prod(vars) - 1
-  ps = [ sum(j->prod(circshift(vars, j)[1:i]), 1:n) for i=1:n-1 ]
+  ps = [ sum(j->prod(circshift(vars, j)[1:i]), 1:length(vars)) for i=1:length(vars)-1 ]
 
   [p1; ps]
 end
