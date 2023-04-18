@@ -23,6 +23,8 @@ import PolynomialRings: polynomialtype, to_dense_monomials
 import PolynomialRings: tail, deg
 import PolynomialRings: variablesymbols, allvariablesymbols, boundnames
 
+import LinearAlgebra: adjoint, dot
+
 # -----------------------------------------------------------------------------
 #
 # Type shorthands I
@@ -305,5 +307,15 @@ end
 function _debug_isvalid(f::DensePolynomial)
     true
 end
+
+
+# -----------------------------------------------------------------------------
+#
+# Linear algebra
+#
+# -----------------------------------------------------------------------------
+
+adjoint(f::Polynomial{<:Any,<:Real}) = f
+dot(f::Polynomial{<:Any,<:Real}, g::Polynomial) = f*g
 
 end

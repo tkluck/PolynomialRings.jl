@@ -7,4 +7,5 @@ using Test
     #include("Coefficients.jl")
     include("Groebner.jl")
     include("CommutativeAlgebras.jl")
+    include("LinearAlgebra.jl")
 end
