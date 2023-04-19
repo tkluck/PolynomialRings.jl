@@ -69,7 +69,7 @@ end
 
 function exponents(m::VectorMonomial{<:SparseVector, I},
                    scheme::InfiniteScheme;
-                   max_variable_index=max_variable_index(scheme, m)) where {I, Name}
+                   max_variable_index=max_variable_index(scheme, m)) where {I}
     return spzeros(I, max_variable_index)
 end
 
