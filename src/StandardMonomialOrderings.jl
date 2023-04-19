@@ -212,7 +212,7 @@ joinnames(x::Named, y::Numbered) = (isempty(x) || error("Can't join $x and $y");
 joinnames(x::Named, y::Named) = (isdisjoint(x, y) || error("Can't join $x and $y"); namingscheme(variablesymbols(x)..., variablesymbols(y)...))
 joinnames(x, y...) = joinnames(x, joinnames(y...))
 
-function LexCombinationOrder(orders::MonomialOrder...) where Orders
+function LexCombinationOrder(orders::MonomialOrder...)
     orders = flattentuple(map(atoms, orders)...)
     names = joinnames(map(namingscheme, orders)...)
     LexCombinationOrder(orders, names)

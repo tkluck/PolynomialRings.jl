@@ -601,7 +601,7 @@ end
 
 # this is the inner loop for m4gb
 #    @. g -= c * h
-const M4GBBroadcast = Broadcasted{
+const M4GBBroadcast{C, Order, P<: DensePolynomial{<: AbstractMonomial{Order}, C}} = Broadcasted{
     Termwise{Order, P},
     <:Union{Tuple{}, Nothing},
     typeof(-),
@@ -617,9 +617,9 @@ const M4GBBroadcast = Broadcasted{
             },
         },
     },
-} where P <: DensePolynomial{M, C} where M <: AbstractMonomial{Order} where {C, Order}
+}
 
-function materialize!(g::P, bc::M4GBBroadcast{C, Order, M, P}) where {C, Order, M, P <: DensePolynomialBy{Order, C}}
+function materialize!(g::P, bc::M4GBBroadcast{C, Order, P}) where {C, Order, P <: DensePolynomialBy{Order, C}}
     applicable = g === bc.args[1]
     !applicable && return _copyto!(g, bc)
 
