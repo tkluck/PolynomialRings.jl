@@ -23,6 +23,8 @@ jobs:
         version:
           - "1.6"  # LTS
           - "1.7"
+          - "1.8"
+          - "1.9"
           - "1"    # Latest Release
         os:
           - ubuntu-latest
