@@ -1,6 +1,6 @@
 module Signatures
 
-import Base: *, lcm, gcd, show, ==
+import Base: *, lcm, gcd, show, ==, Pair
 import Base: indexed_iterate
 
 import SparseArrays: SparseVector
