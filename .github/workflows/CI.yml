@@ -21,51 +21,45 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - "1.6"  # LTS
-          - "1.7"
-          - "1.8"
-          - "1.9"
+          - "1.10" # LTS
+          - "1.11"
+          - "1.12"
           - "1"    # Latest Release
         os:
           - ubuntu-latest
           - macOS-latest
           - windows-latest
         arch:
-          - x64
           - x86
+          - x64
+          - arm64
         experimental:
           - false
         exclude:
-          # Test 32-bit only on Linux
+          # arm64 only for Apple silicon
+          - os: ubuntu-latest
+            arch: arm64
+          - os: windows-latest
+            arch: arm64
+          # x86 only on Windows where that was common relatively recently
+          - os: ubuntu-latest
+            arch: x86
           - os: macOS-latest
             arch: x86
-          - os: windows-latest
-            arch: x86
         include:
+          # early warning for issues in nightly
           - os: ubuntu-latest
             version: nightly
             arch: x64
             experimental: true
 
+
     steps:
-      - name: Avoid line ending issues on Windows
-        run: git config --global core.autocrlf false
       - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@v1
+      - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
-      - uses: actions/cache@v2
-        env:
-          cache-name: cache-artifacts
-        with:
-          path: ~/.julia/artifacts
-          key: ${{ runner.os }}-${{ matrix.arch }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ matrix.arch }}-test-${{ env.cache-name }}-
-            ${{ runner.os }}-${{ matrix.arch }}-test-
-            ${{ runner.os }}-${{ matrix.arch }}-
-            ${{ runner.os }}-
       - uses: julia-actions/julia-buildpkg@latest
       - run: |
           git config --global user.name Tester
@@ -75,3 +69,4 @@ jobs:
       - uses: codecov/codecov-action@v2
         with:
           files: lcov.info
+
