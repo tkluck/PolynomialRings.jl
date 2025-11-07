@@ -1,6 +1,6 @@
 name = "PolynomialRings"
 uuid = "c8ed2632-8d42-5af4-9089-7afd55769a28"
-version = "0.7.7"
+version = "0.8"
 authors = ["Timo Kluck <tkluck@infty.nl>"]
 
 [deps]
